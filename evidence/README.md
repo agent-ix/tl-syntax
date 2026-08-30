@@ -12,5 +12,9 @@ to the reviewed PGM-01 Draft 7 schema and `PGM01_VALIDATOR` to its
 results. Missing PGM-01 gates are recorded as `skipped-unavailable`, never as
 passes.
 
+The sibling `.sha256` file uses repository-relative paths and covers every file
+in the record without self-reference. Verify it from the repository root with
+`sha256sum --check evidence/<record>.sha256`.
+
 Candidate output informs the human decision described by MP-001. It cannot
 approve, publish, validate, accredit, or certify a release or consuming project.

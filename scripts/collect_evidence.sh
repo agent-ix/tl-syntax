@@ -83,12 +83,9 @@ else
   echo 0 >"$evidence_dir/pgm01-validator.status.txt"
 fi
 
-(
-  cd "$(dirname "$evidence_dir")"
-  find "$(basename "$evidence_dir")" -type f -print0 \
-    | sort -z \
-    | xargs -0 sha256sum
-) >"$checksum_path"
+find "$evidence_dir" -type f -print0 \
+  | sort -z \
+  | xargs -0 sha256sum >"$checksum_path"
 
 if [[ $collection_failed -ne 0 ]]; then
   echo "one or more retained evidence commands failed" >&2
