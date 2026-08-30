@@ -200,8 +200,8 @@ mod tests {
     use super::*;
     use crate::NodeKind;
 
+    // Trace: TC-011, FR-004-AC-3
     #[test]
-    // TL-TEST: FR-004-AC-3; TC-011
     fn proposition_maps_are_unambiguous() {
         let valid = PropositionMapDocument::new(vec![
             PropositionEntry {
@@ -235,8 +235,8 @@ mod tests {
         );
     }
 
+    // Trace: TC-009, FR-004-AC-1
     #[test]
-    // TL-TEST: FR-004-AC-1; TC-009
     fn owned_document_preserves_borrowed_formula() {
         let nodes = vec![Node::new(NodeKind::True)];
         let document =

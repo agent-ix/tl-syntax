@@ -36,7 +36,7 @@ short-trace, and large-bound cases.
 |---|---|---|
 | FR-005-AC-1 | The manifest includes every required fixture class with unique stable identities. | Test (TC-012) |
 | FR-005-AC-2 | Every valid formula fixture deserializes and validates; every malformed fixture is rejected for its declared reason. | Test (TC-013) |
-| FR-005-AC-3 | Corpus bytes and declared expected results are platform-independent repository data. | Inspection |
+| FR-005-AC-3 | Corpus identities and expected results use only platform-independent JSON scalar and array values and remain unique. | Test (TC-014) |
 
 ## Dependencies
 

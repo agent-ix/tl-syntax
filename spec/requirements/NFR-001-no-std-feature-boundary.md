@@ -30,13 +30,20 @@ owned formats to host tools.
 
 | Metric | Target | Threshold | Method |
 |---|---|---|---|
-| Default dependency count | 0 | 0 | Cargo metadata inspection |
-| Required default features | 0 | 0 | `cargo check --no-default-features` |
+| Default dependency count | 0 | 0 | Inspection |
+| Required default features | 0 | 0 | compile-time-check |
 
 ## Verification
 
 CI compiles the crate without default features and separately compiles every
 feature combination used by downstream consumers.
+
+## Acceptance Criteria
+
+| ID | Criteria | Verification |
+|---|---|---|
+| NFR-001-AC-1 | The default feature graph has no normal dependency and exposes the borrowed formula API. | Test (TC-015) |
+| NFR-001-AC-2 | The crate compiles with no default feature, alloc only, serde, and all features. | Test (TC-015) |
 
 ## Dependencies
 

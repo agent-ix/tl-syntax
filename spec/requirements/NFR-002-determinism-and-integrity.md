@@ -29,13 +29,20 @@ identities and reproducible inputs.
 
 | Metric | Target | Threshold | Method |
 |---|---|---|---|
-| Nondeterministic test failures | 0 | 0 | Repeated unit and integration tests |
-| Unversioned serialized document kinds | 0 | 0 | Schema inspection |
+| Nondeterministic test failures | 0 | 0 | Test |
+| Unversioned serialized document kinds | 0 | 0 | Inspection |
 
 ## Verification
 
 Requirement-tagged tests compare values, wire strings, corpus metadata, and
 validation outcomes using fixed checked-in inputs.
+
+## Acceptance Criteria
+
+| ID | Criteria | Verification |
+|---|---|---|
+| NFR-002-AC-1 | Repeated comparisons over identical values produce one stable order. | Test (TC-005) |
+| NFR-002-AC-2 | Every checked-in serialized document names a v1 schema and supported profile where applicable. | Test (TC-014) |
 
 ## Dependencies
 

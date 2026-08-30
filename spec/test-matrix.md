@@ -41,7 +41,7 @@ relationships:
 | TC-002 | Reject inverted intervals | Unit | P0 | FR-001-AC-2 | ✅ implemented |
 | TC-003 | Validate complete node vocabulary | Unit | P0 | FR-002-AC-1 | ✅ implemented |
 | TC-004 | Reject invalid graph references | Unit | P0 | FR-002-AC-2 | ✅ implemented |
-| TC-005 | Preserve deterministic ordering | Unit | P1 | FR-002-AC-3 | ✅ implemented |
+| TC-005 | Preserve deterministic ordering | Unit | P1 | FR-002-AC-3, NFR-002-AC-1 | ✅ implemented |
 | TC-006 | Validate and order identities and spans | Unit | P1 | FR-003-AC-1 | ✅ implemented |
 | TC-007 | Preserve stable profile wire names | Unit | P0 | FR-003-AC-2 | ✅ implemented |
 | TC-008 | Require formula profile field | Integration | P0 | FR-003-AC-3 | ✅ implemented |
@@ -50,5 +50,5 @@ relationships:
 | TC-011 | Reject malformed owned documents | Integration | P0 | FR-004-AC-3 | ✅ implemented |
 | TC-012 | Cover required corpus classes | Integration | P0 | FR-005-AC-1 | ✅ implemented |
 | TC-013 | Enforce declared fixture validity | Integration | P0 | FR-005-AC-2 | ✅ implemented |
-| TC-014 | Inspect checked-in corpus determinism | Inspection | P1 | FR-005-AC-3 | ✅ retained |
-| TC-015 | Compile the allocation-free API | Compile | P0 | NFR-001 | ✅ implemented |
+| TC-014 | Verify checked-in corpus determinism | Integration | P1 | FR-005-AC-3, NFR-002-AC-2 | ✅ implemented |
+| TC-015 | Compile the allocation-free API | Compile | P0 | NFR-001-AC-1, NFR-001-AC-2 | ✅ implemented |

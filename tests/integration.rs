@@ -29,8 +29,8 @@ struct CorpusFixture {
     expected_closed_trace: Option<bool>,
 }
 
+// Trace: TC-008, TC-009, FR-003-AC-3, FR-004-AC-1
 #[test]
-// TL-TEST: FR-003-AC-3, FR-004-AC-1; TC-008, TC-009
 fn formula_document_round_trips_with_required_profile() {
     let document = FormulaDocument::new(
         SemanticProfile::ClosedTraceV1,
@@ -60,8 +60,8 @@ fn formula_document_round_trips_with_required_profile() {
     assert!(serde_json::from_str::<FormulaDocument>(&missing_profile).is_err());
 }
 
+// Trace: TC-010, FR-004-AC-2
 #[test]
-// TL-TEST: FR-004-AC-2; TC-010
 fn unknown_schema_and_profile_versions_are_rejected() {
     let formula = r#"{
         "schema_version":"tl-syntax.formula/v2",
@@ -86,8 +86,8 @@ fn unknown_schema_and_profile_versions_are_rejected() {
     assert!(serde_json::from_str::<PropositionMapDocument>(proposition_map).is_err());
 }
 
+// Trace: TC-011, FR-004-AC-3
 #[test]
-// TL-TEST: FR-004-AC-3; TC-011
 fn checked_values_and_graphs_reject_malformed_wire_data() {
     let inverted_interval = r#"{
         "schema_version":"tl-syntax.formula/v1",
@@ -110,8 +110,8 @@ fn checked_values_and_graphs_reject_malformed_wire_data() {
     assert!(document.validate().is_err());
 }
 
+// Trace: TC-009, FR-004-AC-1
 #[test]
-// TL-TEST: FR-004-AC-1, NFR-002; TC-009, TC-014
 fn proposition_map_round_trips_in_stable_order() {
     let map = PropositionMapDocument::new(vec![
         PropositionEntry {
@@ -131,8 +131,8 @@ fn proposition_map_round_trips_in_stable_order() {
     assert_eq!(FormulaSchemaVersion::V1.as_str(), "tl-syntax.formula/v1");
 }
 
+// Trace: TC-012, TC-013, TC-014, FR-005-AC-1, FR-005-AC-2, FR-005-AC-3, NFR-002-AC-2
 #[test]
-// TL-TEST: FR-005-AC-1, FR-005-AC-2, FR-005-AC-3; TC-012, TC-013, TC-014
 fn shared_corpus_is_complete_stable_and_self_consistent() {
     use std::{collections::BTreeSet, fs, path::PathBuf};
 

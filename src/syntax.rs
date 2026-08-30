@@ -474,8 +474,8 @@ mod serde_checked_values {
 mod tests {
     use super::*;
 
+    // Trace: TC-001, TC-002, FR-001-AC-1, FR-001-AC-2
     #[test]
-    // TL-TEST: FR-001-AC-1, FR-001-AC-2; TC-001, TC-002
     fn intervals_are_inclusive_and_checked() {
         let singleton = Interval::new(4, 4).unwrap();
         assert_eq!(singleton.cardinality(), Some(1));
@@ -484,8 +484,8 @@ mod tests {
         assert_eq!(Interval::new(3, 2), Err(IntervalError { start: 3, end: 2 }));
     }
 
+    // Trace: TC-006, FR-003-AC-1
     #[test]
-    // TL-TEST: FR-003-AC-1; TC-006
     fn spans_are_half_open_and_checked() {
         let span = SourceSpan::new(2, 7).unwrap();
         assert_eq!(span.len(), 5);
@@ -496,8 +496,8 @@ mod tests {
         );
     }
 
+    // Trace: TC-003, FR-002-AC-1
     #[test]
-    // TL-TEST: FR-002-AC-1; TC-003
     fn formula_accepts_complete_operator_vocabulary() {
         let interval = Interval::new(0, 3).unwrap();
         let nodes = [
@@ -547,8 +547,16 @@ mod tests {
         assert_eq!(formula.node(formula.root()), Some(&nodes[11]));
     }
 
+    // Trace: TC-015, NFR-001-AC-1, NFR-001-AC-2
     #[test]
-    // TL-TEST: FR-002-AC-2; TC-004
+    fn allocation_free_core_api_constructs_formula() {
+        let nodes = [Node::new(NodeKind::True)];
+        let formula = Formula::new(SemanticProfile::ClosedTraceV1, NodeId(0), &nodes).unwrap();
+        assert_eq!(formula.nodes(), &nodes);
+    }
+
+    // Trace: TC-004, FR-002-AC-2
+    #[test]
     fn formula_rejects_invalid_references() {
         assert_eq!(
             Formula::new(SemanticProfile::ClosedTraceV1, NodeId(0), &[]),
@@ -567,8 +575,8 @@ mod tests {
         );
     }
 
+    // Trace: TC-005, TC-007, FR-002-AC-3, FR-003-AC-2, NFR-002-AC-1
     #[test]
-    // TL-TEST: FR-002-AC-3, FR-003-AC-2; TC-005, TC-007
     fn identities_profiles_and_nodes_have_stable_order() {
         assert!(PropositionId(1) < PropositionId(2));
         assert!(Node::new(NodeKind::False) < Node::new(NodeKind::True));
