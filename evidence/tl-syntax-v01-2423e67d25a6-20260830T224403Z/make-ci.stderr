@@ -1,0 +1,57 @@
+Warning: can't set `imports_granularity = Crate`, unstable features are only available in nightly channel.
+Warning: can't set `group_imports = StdExternalCrate`, unstable features are only available in nightly channel.
+Warning: can't set `imports_granularity = Crate`, unstable features are only available in nightly channel.
+Warning: can't set `group_imports = StdExternalCrate`, unstable features are only available in nightly channel.
+Warning: can't set `imports_granularity = Crate`, unstable features are only available in nightly channel.
+Warning: can't set `group_imports = StdExternalCrate`, unstable features are only available in nightly channel.
+    Checking tl-syntax v0.1.0 (/home/peter/dev/tl-syntax)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.05s
+    Checking tl-syntax v0.1.0 (/home/peter/dev/tl-syntax)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.05s
+    Checking tl-syntax v0.1.0 (/home/peter/dev/tl-syntax)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.12s
+    Checking tl-syntax v0.1.0 (/home/peter/dev/tl-syntax)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.11s
+    Checking tl-syntax v0.1.0 (/home/peter/dev/tl-syntax)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.36s
+   Compiling tl-syntax v0.1.0 (/home/peter/dev/tl-syntax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.52s
+     Running unittests src/lib.rs (/tmp/tl-syntax-agent-c-evidence-target/debug/deps/tl_syntax-e85d0b7c974875e8)
+     Running tests/evidence_contract.rs (/tmp/tl-syntax-agent-c-evidence-target/debug/deps/evidence_contract-d2927e7a41eb4ad7)
+     Running tests/integration.rs (/tmp/tl-syntax-agent-c-evidence-target/debug/deps/integration-a17efb8bc6b2eb6a)
+   Doc-tests tl_syntax
+warning[license-not-encountered]: license was not encountered
+  ┌─ /home/peter/dev/tl-syntax/deny.toml:6:6
+  │
+6 │     "BSD-2-Clause",
+  │      ━━━━━━━━━━━━ unmatched license allowance
+
+warning[license-not-encountered]: license was not encountered
+  ┌─ /home/peter/dev/tl-syntax/deny.toml:7:6
+  │
+7 │     "BSD-3-Clause",
+  │      ━━━━━━━━━━━━ unmatched license allowance
+
+warning[license-not-encountered]: license was not encountered
+  ┌─ /home/peter/dev/tl-syntax/deny.toml:8:6
+  │
+8 │     "CDLA-Permissive-2.0",
+  │      ━━━━━━━━━━━━━━━━━━━ unmatched license allowance
+
+warning[license-not-encountered]: license was not encountered
+  ┌─ /home/peter/dev/tl-syntax/deny.toml:9:6
+  │
+9 │     "ISC",
+  │      ━━━ unmatched license allowance
+
+warning[license-not-encountered]: license was not encountered
+   ┌─ /home/peter/dev/tl-syntax/deny.toml:10:6
+   │
+10 │     "Unicode-3.0",
+   │      ━━━━━━━━━━━ unmatched license allowance
+
+warning[license-not-encountered]: license was not encountered
+   ┌─ /home/peter/dev/tl-syntax/deny.toml:11:6
+   │
+11 │     "Zlib",
+   │      ━━━━ unmatched license allowance

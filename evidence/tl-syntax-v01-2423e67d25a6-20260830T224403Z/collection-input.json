@@ -1,0 +1,56 @@
+{
+  "commands": [
+    "make ci",
+    "make spec",
+    "quire coverage --scope . --strict",
+    "RUSTDOCFLAGS=-Dwarnings cargo doc --no-deps --all-features",
+    "cargo tree --no-default-features --edges normal",
+    "git diff --check origin/main...2423e67d25a638a3a15cf0f52446d549bcbe5a8c",
+    "python3 scripts/validate_json_schema.py INPUT_SCHEMA collection-input.json",
+    "python3 scripts/validate_json_schema.py MANIFEST_SCHEMA evidence-manifest.json",
+    "python3 scripts/validate_json_schema.py PGM01_SCHEMA evidence-envelope.json",
+    "python3 PGM01_VALIDATOR --fixture evidence-envelope.json"
+  ],
+  "corpus": {
+    "formulaSchema": {
+      "digest": {
+        "algorithm": "sha256",
+        "value": "d12b6fa9c21db2bf54b70e7ccf7b8006b3b74e9034f6d4db0d99b39cd80fad87"
+      },
+      "id": "tl-syntax.formula",
+      "version": "v1"
+    },
+    "manifestDigest": {
+      "algorithm": "sha256",
+      "value": "905b8babd2125f51972cfbd2acca5b74ecb23e7601fc2efc961e0b1a06340f9a"
+    },
+    "propositionMapSchema": {
+      "digest": {
+        "algorithm": "sha256",
+        "value": "b3293adb2e4b29098748bf9061451d4013c5e5a94dde82569496c4001eee6aaf"
+      },
+      "id": "tl-syntax.proposition-map",
+      "version": "v1"
+    },
+    "revision": "tl-syntax-corpus/v1"
+  },
+  "pgm01": {
+    "candidateRevision": "7f8130d3fdb160a98a7a7f445cc1eb7419a3c179",
+    "envelopeSchema": "quire.derivation-evidence/v1",
+    "envelopeSchemaDigest": {
+      "algorithm": "sha256",
+      "value": "0946e235e9e4b0fa79e9b9ec27ae157b303c17de0a9408d3cc04968fb7152256"
+    },
+    "policy": "ix://agent-ix/quire-contract-ir/PGM-01"
+  },
+  "schemaVersion": "tl-syntax.evidence-input/v1",
+  "sourceRevision": "2423e67d25a638a3a15cf0f52446d549bcbe5a8c",
+  "sourceState": "clean",
+  "tools": {
+    "cargo": "cargo 1.94.1 (29ea6fb6a 2026-03-24)",
+    "jsonschema": "3.2.0",
+    "python": "Python 3.10.12",
+    "quire": "0.31.0",
+    "rustc": "rustc 1.94.1 (e408947bf 2026-03-25)"
+  }
+}
