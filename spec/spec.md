@@ -1,0 +1,62 @@
+---
+id: MRS-001
+title: tl-syntax v0.1 master requirements
+type: MasterRequirements
+relationships:
+  - target: ix://agent-ix/quire-contract-ir/PGM-01
+    type: depends_on
+---
+
+# Master Requirements Specification
+
+## Purpose
+
+This specification defines the parser-independent, `no_std` MLTL syntax and
+semantic-profile substrate shared by the temporal crate family. It is the
+authoritative requirements boundary for tl-syntax v0.1.
+
+## Scope
+
+### In Scope
+
+- Discrete bounded MLTL syntax with inclusive intervals.
+- Stable proposition identities, source spans, and semantic-profile identities.
+- A validated borrowed representation usable without allocation.
+- Optional owned and serde representations.
+- Versioned wire documents and a shared conformance corpus.
+
+### Out of Scope
+
+- Text parsing and formatting.
+- Formula rewriting or normalization.
+- Finite-trace evaluation and horizon computation algorithms.
+- Production stream monitoring.
+
+## System Overview
+
+### System Description
+
+tl-syntax is a Rust library whose trusted boundary is construction and
+validation of syntax values. Downstream parsers, rewriters, evaluators, and
+monitor adapters consume those values while retaining profile and source
+identity.
+
+### Intended Users
+
+Embedded Rust consumers use the allocation-free borrowed model. Temporal tools
+use the optional owned and serialization features. Reviewers use the corpus and
+retained evidence to check compatibility and determinism.
+
+## Requirements Architecture
+
+The stakeholder requirements define portability and interoperability needs.
+Functional requirements own interval validation, graph validation, identity,
+versioning, and corpus publication. Non-functional requirements constrain the
+feature boundary and deterministic behavior. The test matrix maps every
+acceptance criterion to executable or inspection evidence.
+
+## References
+
+- [tl-syntax epic](https://github.com/agent-ix/tl-syntax/issues/5).
+- [Contract-derived verification program](https://github.com/agent-ix/quire-contract-ir/issues/1).
+- Cargo package manifest and repository contribution policy.
