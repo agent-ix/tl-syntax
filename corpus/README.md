@@ -18,3 +18,6 @@ compute either value; downstream reference evaluators consume them.
 Malformed files deliberately violate either checked interval decoding or
 formula graph validation. They are corpus inputs, not examples of accepted
 documents.
+
+`SHA256SUMS` pins the exact bytes of every JSON artifact in the revision and is
+verified by `make check-corpus` and `make ci`.

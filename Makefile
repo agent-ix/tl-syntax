@@ -12,6 +12,7 @@ help:
 	@echo "  make lint             - Clippy with -D warnings"
 	@echo "  make test             - cargo test"
 	@echo "  make check-features   - check no-default, alloc, serde, and all features"
+	@echo "  make check-corpus     - verify retained corpus SHA-256 digests"
 	@echo "  make build            - Release build"
 	@echo "  make clean            - cargo clean"
 	@echo "  make deny             - cargo deny check licenses"
@@ -45,6 +46,10 @@ check-features:
 	$(CARGO) check --lib --no-default-features --features serde
 	$(CARGO) check --lib --all-features
 
+.PHONY: check-corpus
+check-corpus:
+	sha256sum --check corpus/SHA256SUMS
+
 .PHONY: build
 build:
 	$(CARGO) build --release
@@ -74,4 +79,4 @@ audit-unsafe:
 # =============================================================================
 
 .PHONY: ci
-ci: fmt-check check-features lint test deny audit-unsafe
+ci: fmt-check check-features lint test check-corpus deny audit-unsafe

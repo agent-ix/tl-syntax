@@ -14,3 +14,4 @@ type: SuiteRegistry
 | SUITE-002 | Strict specification validation | `quire validate --scope . 'spec/**/*.md' --strict --summary` | quire 0.31.0 / quire-rs 0.46.0 | Analysis |
 | SUITE-003 | Strict requirement coverage | `quire coverage --scope . --strict` | quire 0.31.0 / quire-rs 0.46.0 | Analysis |
 | SUITE-004 | Public API documentation | `RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --all-features` | rustdoc | Static |
+| SUITE-005 | Corpus byte integrity | `sha256sum --check corpus/SHA256SUMS` | GNU coreutils | Static |
