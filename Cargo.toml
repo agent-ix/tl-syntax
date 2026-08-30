@@ -13,9 +13,16 @@ repository = "https://github.com/agent-ix/tl-syntax"
 name = "tl_syntax"
 path = "src/lib.rs"
 
+[features]
+default = []
+alloc = []
+serde = ["alloc", "dep:serde"]
+
 [dependencies]
+serde = { version = "1.0", default-features = false, features = ["alloc", "derive"], optional = true }
 
 [dev-dependencies]
+serde_json = "1.0"
 
 [profile.release]
 lto = "thin"

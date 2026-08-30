@@ -1,0 +1,249 @@
+use alloc::{string::String, vec::Vec};
+use core::fmt;
+
+use crate::{Formula, FormulaError, Node, NodeId, PropositionId, SemanticProfile};
+
+/// Version of the serialized formula document.
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+pub enum FormulaSchemaVersion {
+    /// Initial tl-syntax formula schema.
+    #[cfg_attr(feature = "serde", serde(rename = "tl-syntax.formula/v1"))]
+    V1,
+}
+
+impl FormulaSchemaVersion {
+    /// Returns the stable wire identifier.
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::V1 => "tl-syntax.formula/v1",
+        }
+    }
+}
+
+/// Owned, versioned formula exchange document.
+#[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+pub struct FormulaDocument {
+    /// Wire schema identity.
+    pub schema_version: FormulaSchemaVersion,
+    /// Required finite-trace semantic profile.
+    pub semantic_profile: SemanticProfile,
+    /// Root node identity.
+    pub root: NodeId,
+    /// Nodes in stable topological order.
+    pub nodes: Vec<Node>,
+}
+
+impl FormulaDocument {
+    /// Constructs and validates a v1 document.
+    pub fn new(
+        semantic_profile: SemanticProfile,
+        root: NodeId,
+        nodes: Vec<Node>,
+    ) -> Result<Self, FormulaError> {
+        let document = Self {
+            schema_version: FormulaSchemaVersion::V1,
+            semantic_profile,
+            root,
+            nodes,
+        };
+        document.validate()?;
+        Ok(document)
+    }
+
+    /// Validates this document and returns its allocation-free view.
+    pub fn validate(&self) -> Result<Formula<'_>, FormulaError> {
+        Formula::new(self.semantic_profile, self.root, &self.nodes)
+    }
+
+    /// Copies a validated borrowed formula into an owned v1 document.
+    pub fn from_formula(formula: Formula<'_>) -> Self {
+        Self {
+            schema_version: FormulaSchemaVersion::V1,
+            semantic_profile: formula.profile(),
+            root: formula.root(),
+            nodes: formula.nodes().to_vec(),
+        }
+    }
+}
+
+/// Version of the serialized proposition-map document.
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+pub enum PropositionMapSchemaVersion {
+    /// Initial tl-syntax proposition-map schema.
+    #[cfg_attr(feature = "serde", serde(rename = "tl-syntax.proposition-map/v1"))]
+    V1,
+}
+
+impl PropositionMapSchemaVersion {
+    /// Returns the stable wire identifier.
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::V1 => "tl-syntax.proposition-map/v1",
+        }
+    }
+}
+
+/// One proposition identity-to-name mapping.
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+pub struct PropositionEntry {
+    /// Stable proposition identity referenced by formula nodes.
+    pub id: PropositionId,
+    /// Application-defined proposition name.
+    pub name: String,
+}
+
+/// Owned, versioned proposition-map exchange document.
+#[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+pub struct PropositionMapDocument {
+    /// Wire schema identity.
+    pub schema_version: PropositionMapSchemaVersion,
+    /// Entries ordered by strictly increasing proposition identity.
+    pub propositions: Vec<PropositionEntry>,
+}
+
+impl PropositionMapDocument {
+    /// Constructs and validates a v1 proposition map.
+    pub fn new(propositions: Vec<PropositionEntry>) -> Result<Self, PropositionMapError> {
+        let document = Self {
+            schema_version: PropositionMapSchemaVersion::V1,
+            propositions,
+        };
+        document.validate()?;
+        Ok(document)
+    }
+
+    /// Checks identity ordering, uniqueness, and non-empty unique names.
+    pub fn validate(&self) -> Result<(), PropositionMapError> {
+        for (index, entry) in self.propositions.iter().enumerate() {
+            if entry.name.is_empty() {
+                return Err(PropositionMapError::EmptyName { id: entry.id });
+            }
+            if let Some(previous) = index
+                .checked_sub(1)
+                .and_then(|previous| self.propositions.get(previous))
+            {
+                if previous.id >= entry.id {
+                    return Err(PropositionMapError::IdentityNotIncreasing {
+                        previous: previous.id,
+                        current: entry.id,
+                    });
+                }
+            }
+            if let Some(duplicate) = self.propositions[..index]
+                .iter()
+                .find(|candidate| candidate.name == entry.name)
+            {
+                return Err(PropositionMapError::DuplicateName {
+                    first: duplicate.id,
+                    second: entry.id,
+                });
+            }
+        }
+        Ok(())
+    }
+}
+
+/// Validation failure for a proposition-map document.
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub enum PropositionMapError {
+    /// A proposition name is empty.
+    EmptyName {
+        /// Identity associated with the empty name.
+        id: PropositionId,
+    },
+    /// Proposition identities are duplicated or not strictly increasing.
+    IdentityNotIncreasing {
+        /// Previous identity.
+        previous: PropositionId,
+        /// Current rejected identity.
+        current: PropositionId,
+    },
+    /// Two identities use the same proposition name.
+    DuplicateName {
+        /// First identity using the name.
+        first: PropositionId,
+        /// Second identity using the name.
+        second: PropositionId,
+    },
+}
+
+impl fmt::Display for PropositionMapError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::EmptyName { id } => write!(formatter, "proposition {} has an empty name", id.0),
+            Self::IdentityNotIncreasing { previous, current } => write!(
+                formatter,
+                "proposition identity {} does not follow {}",
+                current.0, previous.0
+            ),
+            Self::DuplicateName { first, second } => write!(
+                formatter,
+                "propositions {} and {} have the same name",
+                first.0, second.0
+            ),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use alloc::{string::ToString, vec};
+
+    use super::*;
+    use crate::NodeKind;
+
+    #[test]
+    // TL-TEST: FR-004-AC-3; TC-011
+    fn proposition_maps_are_unambiguous() {
+        let valid = PropositionMapDocument::new(vec![
+            PropositionEntry {
+                id: PropositionId(1),
+                name: "request".to_string(),
+            },
+            PropositionEntry {
+                id: PropositionId(2),
+                name: "response".to_string(),
+            },
+        ])
+        .unwrap();
+        assert_eq!(valid.propositions.len(), 2);
+
+        let duplicate = PropositionMapDocument::new(vec![
+            PropositionEntry {
+                id: PropositionId(1),
+                name: "same".to_string(),
+            },
+            PropositionEntry {
+                id: PropositionId(2),
+                name: "same".to_string(),
+            },
+        ]);
+        assert_eq!(
+            duplicate,
+            Err(PropositionMapError::DuplicateName {
+                first: PropositionId(1),
+                second: PropositionId(2)
+            })
+        );
+    }
+
+    #[test]
+    // TL-TEST: FR-004-AC-1; TC-009
+    fn owned_document_preserves_borrowed_formula() {
+        let nodes = vec![Node::new(NodeKind::True)];
+        let document =
+            FormulaDocument::new(SemanticProfile::OnlinePrefixV1, NodeId(0), nodes.clone())
+                .unwrap();
+        let formula = document.validate().unwrap();
+        assert_eq!(formula.profile(), SemanticProfile::OnlinePrefixV1);
+        assert_eq!(formula.nodes(), nodes);
+    }
+}

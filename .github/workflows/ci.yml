@@ -8,6 +8,22 @@ on:
   workflow_dispatch:
 
 jobs:
+  msrv:
+    name: Rust 1.75 Feature Boundary
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install MSRV
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.75.0
+      - name: Cache cargo artifacts
+        uses: Swatinem/rust-cache@v2
+      - name: Check default no-std API
+        run: cargo check --lib --no-default-features
+      - name: Check complete feature API
+        run: cargo check --lib --all-features
+
   rust:
     name: Rust Checks
     runs-on: ubuntu-24.04
@@ -26,10 +42,17 @@ jobs:
         run: cargo fmt --all -- --check
 
       - name: Lint
-        run: cargo clippy --all-targets -- -D warnings
+        run: cargo clippy --all-targets --all-features -- -D warnings
 
       - name: Test
-        run: cargo test
+        run: cargo test --all-features
+
+      - name: Feature boundary
+        run: |
+          cargo check --lib --no-default-features
+          cargo check --lib --no-default-features --features alloc
+          cargo check --lib --no-default-features --features serde
+          cargo check --lib --all-features
 
       - name: Unsafe audit
         run: bash scripts/check_unsafe_comments.sh
