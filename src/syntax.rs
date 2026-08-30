@@ -547,7 +547,7 @@ mod tests {
         assert_eq!(formula.node(formula.root()), Some(&nodes[11]));
     }
 
-    // Trace: TC-015, NFR-001-AC-1, NFR-001-AC-2
+    // Trace: TC-015, NFR-001-AC-1, NFR-001-AC-2, StR-001-VC-1, StR-001-VC-2
     #[test]
     fn allocation_free_core_api_constructs_formula() {
         let nodes = [Node::new(NodeKind::True)];

@@ -29,7 +29,7 @@ struct CorpusFixture {
     expected_closed_trace: Option<bool>,
 }
 
-// Trace: TC-008, TC-009, FR-003-AC-3, FR-004-AC-1
+// Trace: TC-008, TC-009, FR-003-AC-3, FR-004-AC-1, StR-002-VC-1
 #[test]
 fn formula_document_round_trips_with_required_profile() {
     let document = FormulaDocument::new(
@@ -131,7 +131,7 @@ fn proposition_map_round_trips_in_stable_order() {
     assert_eq!(FormulaSchemaVersion::V1.as_str(), "tl-syntax.formula/v1");
 }
 
-// Trace: TC-012, TC-013, TC-014, FR-005-AC-1, FR-005-AC-2, FR-005-AC-3, NFR-002-AC-2
+// Trace: TC-012, TC-013, TC-014, FR-005-AC-1, FR-005-AC-2, FR-005-AC-3, NFR-002-AC-2, StR-002-VC-2
 #[test]
 fn shared_corpus_is_complete_stable_and_self_consistent() {
     use std::{collections::BTreeSet, fs, path::PathBuf};
