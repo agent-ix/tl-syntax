@@ -15,6 +15,11 @@ This specification defines the parser-independent, `no_std` MLTL syntax and
 semantic-profile substrate shared by the temporal crate family. It is the
 authoritative requirements boundary for tl-syntax v0.1.
 
+The governing compatibility, provenance, evidence, release-order, and
+qualification policy is PGM-01 at
+`ix://agent-ix/quire-contract-ir/PGM-01`. This specification cites that policy
+without redefining or weakening it.
+
 ## Scope
 
 ### In Scope
@@ -59,4 +64,6 @@ acceptance criterion to executable or inspection evidence.
 
 - [tl-syntax epic](https://github.com/agent-ix/tl-syntax/issues/5).
 - [Contract-derived verification program](https://github.com/agent-ix/quire-contract-ir/issues/1).
+- [PGM-01 governance gate](https://github.com/agent-ix/quire-contract-ir/issues/3),
+  identified as `ix://agent-ix/quire-contract-ir/PGM-01`.
 - Cargo package manifest and repository contribution policy.

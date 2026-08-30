@@ -13,6 +13,8 @@ help:
 	@echo "  make test             - cargo test"
 	@echo "  make check-features   - check no-default, alloc, serde, and all features"
 	@echo "  make check-corpus     - verify retained corpus SHA-256 digests"
+	@echo "  make spec             - validate the specification with Quire"
+	@echo "  make evidence-tool    - syntax-check the PGM-01 evidence tooling"
 	@echo "  make build            - Release build"
 	@echo "  make clean            - cargo clean"
 	@echo "  make deny             - cargo deny check licenses"
@@ -50,6 +52,14 @@ check-features:
 check-corpus:
 	sha256sum --check corpus/SHA256SUMS
 
+.PHONY: spec
+spec:
+	quire validate --scope . 'spec/**/*.md'
+
+.PHONY: evidence-tool
+evidence-tool:
+	python3 -m py_compile scripts/build_evidence_envelope.py scripts/validate_json_schema.py
+
 .PHONY: build
 build:
 	$(CARGO) build --release
@@ -79,4 +89,4 @@ audit-unsafe:
 # =============================================================================
 
 .PHONY: ci
-ci: fmt-check check-features lint test check-corpus deny audit-unsafe
+ci: fmt-check check-features lint test check-corpus deny audit-unsafe evidence-tool
