@@ -3,7 +3,9 @@
 Run `scripts/collect_evidence.sh` from a clean repository root. The collector
 creates a revision-and-UTC-time-scoped directory and refuses to overwrite an
 existing record. It preserves command stdout and stderr separately, tool and
-source identities, outcomes, limitations, and SHA-256 digests.
+source identities, outcomes, limitations, and SHA-256 digests. Captured text
+normalizes repeated terminal newlines to one newline so the retained PR range
+remains whitespace-clean; no other output bytes are changed.
 
 The collector emits a canonical `quire.derivation-evidence/v1` record plus
 separately versioned collection-input and manifest records. Set `PGM01_SCHEMA`

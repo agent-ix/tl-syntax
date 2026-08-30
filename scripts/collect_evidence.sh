@@ -33,6 +33,10 @@ run_and_retain() {
   "$@" >"$evidence_dir/$name.stdout" 2>"$evidence_dir/$name.stderr"
   local status=$?
   set -e
+  local output_file
+  for output_file in "$evidence_dir/$name.stdout" "$evidence_dir/$name.stderr"; do
+    python3 -c 'from pathlib import Path; import sys; p = Path(sys.argv[1]); data = p.read_bytes(); p.write_bytes(data.rstrip(b"\n") + b"\n" if data else data)' "$output_file"
+  done
   echo "$status" >"$evidence_dir/$name.status.txt"
   if [[ $status -ne 0 ]]; then
     collection_failed=1
