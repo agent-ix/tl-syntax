@@ -4,6 +4,9 @@
 from __future__ import annotations
 
 import importlib.util
+import json
+import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -72,6 +75,15 @@ def main() -> int:
     assert MODULE.validate_report(report), "a skipped/undefined verification method was accepted"
 
     with tempfile.TemporaryDirectory() as directory:
+        bad_report = Path(directory) / "bad-report.json"
+        bad_report.write_text(json.dumps(report), encoding="utf-8")
+        actual = subprocess.run(
+            [sys.executable, str(ROOT / "scripts" / "check_traceability_coverage.py"),
+             "--report", str(bad_report)], check=False, capture_output=True,
+        )
+        assert actual.returncode != 0, "traceability gate exit contract accepted a bad report"
+
+    with tempfile.TemporaryDirectory() as directory:
         matrix = Path(directory) / "matrix.md"
         matrix.write_text(
             "## Functional Requirement Coverage\n\n"
@@ -79,6 +91,13 @@ def main() -> int:
             encoding="utf-8",
         )
         assert MODULE.validate_matrix_statuses(matrix), "a fabricated matrix status was accepted"
+        matrix.write_text(
+            "## Functional Requirement Coverage\n\n"
+            "| Functional Req | Description | Status |\n|---|---|---|\n"
+            "| FR-001 | | ✅ covered |\n",
+            encoding="utf-8",
+        )
+        assert MODULE.validate_matrix_statuses(matrix), "an empty matrix description was accepted"
         status, report = MODULE.load_report(Path(directory) / "missing.json")
         assert status == 125 and report is None, "missing tooling/input was not unavailable"
 
@@ -118,12 +137,43 @@ def main() -> int:
             assert MODULE.validate_verification_references(root), (
                 f"uncatalogued stakeholder method {verification!r} was accepted"
             )
+        review = root / "evidence" / "reviews" / "current.md"
+        review.parent.mkdir(parents=True)
+        subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+        subprocess.run(["git", "config", "user.name", "Policy Test"], cwd=root, check=True)
+        subprocess.run(
+            ["git", "config", "user.email", "policy-test@example.invalid"], cwd=root, check=True
+        )
+        subprocess.run(["git", "add", "."], cwd=root, check=True)
+        subprocess.run(["git", "commit", "-qm", "fixture"], cwd=root, check=True)
+        subject = subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=root, check=True,
+            capture_output=True, text=True,
+        ).stdout.strip()
+        review.write_text(
+            f"Source subject: `{subject}`\n", encoding="utf-8"
+        )
+        requirement.write_text(
+            "| ID | Criteria | Verification |\n|---|---|---|\n"
+            "| StR-001-VC-1 | criterion | Inspection (evidence/reviews/current.md) |\n",
+            encoding="utf-8",
+        )
+        assert MODULE.validate_verification_references(root) == []
+        for index in range(MODULE.MAX_INSPECTION_DISTANCE + 1):
+            subprocess.run(
+                ["git", "commit", "--allow-empty", "-qm", f"later {index}"],
+                cwd=root,
+                check=True,
+            )
+        assert MODULE.validate_verification_references(root), (
+            "a stale inspection subject escaped the recent-ancestor requirement"
+        )
         requirement.write_text(
             "| ID | Criteria | Verification |\n|---|---|---|\n"
             "| StR-001-VC-1 | criterion | Inspection |\n",
             encoding="utf-8",
         )
-        assert MODULE.validate_verification_references(root) == []
+        assert MODULE.validate_verification_references(root), "bare Inspection escaped its record binding"
     print("strict traceability coverage behavior is valid")
     return 0
 

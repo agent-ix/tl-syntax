@@ -158,6 +158,7 @@ def build(evidence_dir: Path, phase: str) -> None:
 
     collection_input = {
         "schemaVersion": "tl-syntax.evidence-input/v1",
+        "qualificationProfile": "tl-syntax.evidence-qualification/v2",
         "sourceRevision": revision,
         "sourceState": source_state,
         "commands": [
@@ -184,6 +185,13 @@ def build(evidence_dir: Path, phase: str) -> None:
                 "version"
             ],
             "rustc": read_first_line(evidence_dir / "rustc-version.txt"),
+            "identities": {
+                name: {
+                    "path": (evidence_dir / f"tool-{name}-path.txt").read_text().strip(),
+                    "sha256": (evidence_dir / f"tool-{name}-sha256.txt").read_text().strip(),
+                }
+                for name in ("bash", "cargo", "make", "python3", "quire", "sha256sum")
+            },
         },
         "pgm01": {
             "policy": "ix://agent-ix/quire-contract-ir/PGM-01",

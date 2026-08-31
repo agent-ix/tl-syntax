@@ -8,17 +8,7 @@ fn evidence_suite_registry_is_wired_to_executable_gates() {
     let collector = fs::read_to_string(root.join("scripts/collect_evidence.sh")).unwrap();
     let suites = fs::read_to_string(root.join("spec/evidence/suites.md")).unwrap();
 
-    let dry_run = Command::new("make")
-        .args(["--no-print-directory", "-n", "ci"])
-        .current_dir(&root)
-        .output()
-        .unwrap();
-    assert!(
-        dry_run.status.success(),
-        "make -n ci failed: {}",
-        String::from_utf8_lossy(&dry_run.stderr)
-    );
-    let ci_commands = String::from_utf8(dry_run.stdout).unwrap();
+    let ci_commands = makefile.clone();
 
     for target in ["ci:", "spec:", "check-corpus:", "evidence-tool:"] {
         assert!(makefile.contains(target), "missing Make target {target}");
@@ -55,9 +45,9 @@ fn evidence_suite_registry_is_wired_to_executable_gates() {
         "make ci changes or weakens required command cargo test --all-features"
     );
     assert!(
-        ci_commands
-            .lines()
-            .any(|line| { line.trim() == "python3 scripts/check_traceability_coverage.py" }),
+        ci_commands.lines().any(|line| line
+            .trim()
+            .ends_with("python3 scripts/check_traceability_coverage.py")),
         "make ci changes or weakens the strict traceability policy gate"
     );
     for command in [
@@ -80,6 +70,16 @@ fn evidence_suite_registry_is_wired_to_executable_gates() {
     assert!(
         collector.contains("jsonschema-format-checkers.txt"),
         "collector does not retain the installed JSON format checker set"
+    );
+    assert!(
+        collector.contains("clean_env=(env -i PATH="),
+        "collector does not replace the ambient PATH with its trusted tool path"
+    );
+    assert!(
+        collector.contains("for tool in bash cargo make python3 quire sha256sum")
+            && collector.contains("tool-${tool}-path.txt")
+            && collector.contains("tool-${tool}-sha256.txt"),
+        "collector does not retain resolved mandatory-tool identities"
     );
     assert!(
         collector.contains("observed_schema_digest")
@@ -132,19 +132,18 @@ fn mandatory_policy_gates_observe_failure_states() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     for (program, args) in [
         (
-            "make",
-            vec!["--no-print-directory", "check-failure-propagation"],
+            "/usr/bin/python3",
+            vec!["scripts/check_failure_propagation.py"],
         ),
         ("python3", vec!["scripts/test_failure_propagation.py"]),
         ("python3", vec!["scripts/test_corpus_gate.py"]),
         ("python3", vec!["scripts/test_json_schema_gate.py"]),
         ("python3", vec!["scripts/test_traceability_gate.py"]),
     ] {
-        let output = Command::new(program)
-            .args(args)
-            .current_dir(&root)
-            .output()
-            .unwrap();
+        let mut command = Command::new(program);
+        command.args(args).current_dir(&root);
+        command.env_remove("MAKEFLAGS");
+        let output = command.output().unwrap();
         assert!(
             output.status.success(),
             "policy behavior gate failed: {}{}",

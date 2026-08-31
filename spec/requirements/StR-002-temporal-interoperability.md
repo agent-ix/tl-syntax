@@ -26,7 +26,7 @@ its expected result was produced.
 | ID | Criteria | Validation |
 |---|---|---|
 | StR-002-VC-1 | A serialized formula names a supported schema and semantic profile. | Test (TC-008) |
-| StR-002-VC-2 | The corpus manifest names a stable revision and fixture identities. | Inspection |
+| StR-002-VC-2 | The corpus manifest names a stable revision and fixture identities. | Inspection (evidence/reviews/2026-08-31-current-inspections.md) |
 
 ## Stakeholders
 

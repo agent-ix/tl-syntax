@@ -79,6 +79,11 @@ def main() -> int:
             "unlisted retained artifact" in error
             for error in VERIFY_MODULE.verify(checksum)
         ), "an added file escaped exact-membership verification"
+        rejected = subprocess.run(
+            [sys.executable, str(ROOT / "scripts" / "verify_evidence_manifest.py"),
+             str(checksum)], check=False, capture_output=True,
+        )
+        assert rejected.returncode != 0, "manifest verifier exit contract accepted an extra file"
 
     with tempfile.TemporaryDirectory() as directory:
         evidence_dir = Path(directory)
@@ -89,6 +94,16 @@ def main() -> int:
             "sealed-pgm01-schema", "sealed-pgm01-validator",
         ):
             (evidence_dir / f"{name}.status.txt").write_text("0\n", encoding="utf-8")
+            (evidence_dir / f"{name}.stdout").write_text("verified\n", encoding="utf-8")
+            (evidence_dir / f"{name}.stderr").write_text("", encoding="utf-8")
+        (evidence_dir / "make-ci.stdout").write_text(
+            "test result: ok. 1 passed; 0 failed; 0 ignored\n" * 5,
+            encoding="utf-8",
+        )
+        (evidence_dir / "collection-input.json").write_text(
+            json.dumps({"qualificationProfile": "tl-syntax.evidence-qualification/v2"}),
+            encoding="utf-8",
+        )
         (evidence_dir / "source-revision.txt").write_text(
             subprocess.run(
                 ["git", "rev-parse", "HEAD"], cwd=ROOT, check=True,
@@ -106,6 +121,16 @@ def main() -> int:
         assert finalizer is not None and finalizer.loader is not None
         finalizer_module = importlib.util.module_from_spec(finalizer)
         finalizer.loader.exec_module(finalizer_module)
+        healthy_summary = finalizer_module.summary(evidence_dir)
+        assert healthy_summary["overallStatus"] == "passed"
+        (evidence_dir / "make-ci.stdout").write_text("", encoding="utf-8")
+        assert finalizer_module.summary(evidence_dir)["overallStatus"] == "failed", (
+            "an empty successful CI transcript was accepted"
+        )
+        (evidence_dir / "make-ci.stdout").write_text(
+            "test result: ok. 1 passed; 0 failed; 0 ignored\n" * 5,
+            encoding="utf-8",
+        )
         (evidence_dir / "collection-summary.json").write_text(
             json.dumps(finalizer_module.summary(evidence_dir), indent=2, sort_keys=True) + "\n",
             encoding="utf-8",

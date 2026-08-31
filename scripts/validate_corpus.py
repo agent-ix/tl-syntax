@@ -336,6 +336,12 @@ def validate() -> None:
 
 
 def main() -> int:
+    global CORPUS
+    if len(sys.argv) == 3 and sys.argv[1] == "--corpus":
+        CORPUS = Path(sys.argv[2])
+    elif len(sys.argv) != 1:
+        print("usage: validate_corpus.py [--corpus DIRECTORY]", file=sys.stderr)
+        return 2
     try:
         validate()
     except (AssertionError, OSError, json.JSONDecodeError) as error:

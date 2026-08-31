@@ -24,7 +24,7 @@ restricted targets to adopt host-only facilities.
 | ID | Criteria | Validation |
 |---|---|---|
 | StR-001-VC-1 | The crate compiles with default features for a no-std library target. | Test (TC-019) |
-| StR-001-VC-2 | Borrowed validated formulas require no owned collection. | Inspection |
+| StR-001-VC-2 | Borrowed validated formulas require no owned collection. | Inspection (evidence/reviews/2026-08-31-current-inspections.md) |
 
 ## Stakeholders
 

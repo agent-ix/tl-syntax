@@ -5,10 +5,10 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
 import re
 import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -16,6 +16,9 @@ ROOT = Path(__file__).resolve().parent.parent
 LINE = re.compile(r"^([0-9a-f]{64})  (.+)$")
 ANCHORS = Path("evidence/ANCHORS")
 STATIC_MANIFEST = Path("evidence/STATIC.sha256")
+RECORD_NAME = re.compile(
+    r"^tl-syntax-v01-([0-9a-f]{12})-([0-9]{8}T[0-9]{6}Z)\.sha256$"
+)
 
 
 def sha256(path: Path) -> str:
@@ -47,41 +50,82 @@ def parse_manifest(path: Path, root: Path) -> tuple[dict[Path, str], list[str]]:
     return entries, errors
 
 
-def active_collection(path: Path, root: Path) -> bool:
-    marker = path / ".collecting"
-    token = os.environ.get("TL_SYNTAX_COLLECTION_TOKEN")
-    if not marker.is_file() or not token:
-        return False
-    tracked = subprocess.run(
-        ["git", "ls-files", "--error-unmatch", str(marker.relative_to(root))],
-        cwd=root,
-        check=False,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+def git_output(root: Path, *args: str) -> str:
+    return subprocess.run(
+        ["git", *args], cwd=root, check=True, capture_output=True, text=True
+    ).stdout
+
+
+def historical_record_manifests(root: Path) -> set[Path]:
+    output = git_output(
+        root,
+        "log",
+        "--format=",
+        "--diff-filter=A",
+        "--name-only",
+        "HEAD",
+        "--",
+        ":(glob)evidence/tl-syntax-v01-*.sha256",
     )
-    if tracked.returncode == 0:
-        return False
+    return {Path(line) for line in output.splitlines() if line}
+
+
+def validate_record_identity(root: Path, manifest: Path) -> list[str]:
+    match = RECORD_NAME.fullmatch(manifest.name)
+    if match is None:
+        return [f"retained record manifest has an invalid name: {manifest}"]
+    record = root / manifest.with_suffix("")
     try:
-        value = json.loads(marker.read_text(encoding="utf-8"))
-        revision = subprocess.run(
-            ["git", "rev-parse", "HEAD"],
-            cwd=root,
-            check=True,
-            capture_output=True,
-            text=True,
-        ).stdout.strip()
-        pid = value["pid"]
-        if value["token"] != token or value["sourceRevision"] != revision:
-            return False
-        if not isinstance(pid, int) or pid <= 1:
-            return False
-        os.kill(pid, 0)
-        command_line = Path(f"/proc/{pid}/cmdline").read_bytes().replace(b"\0", b" ")
-        if b"scripts/collect_evidence.sh" not in command_line:
-            return False
-    except (KeyError, OSError, ValueError, json.JSONDecodeError, subprocess.CalledProcessError):
-        return False
-    return True
+        revision = (record / "source-revision.txt").read_text(encoding="utf-8").strip()
+        envelope = json.loads((record / "evidence-envelope.json").read_text(encoding="utf-8"))
+        recorded_at = datetime.fromisoformat(envelope["recordedAt"].replace("Z", "+00:00"))
+        named_at = datetime.strptime(match.group(2), "%Y%m%dT%H%M%SZ").replace(
+            tzinfo=timezone.utc
+        )
+    except (KeyError, OSError, TypeError, ValueError, json.JSONDecodeError) as error:
+        return [f"cannot derive retained record identity for {manifest}: {error}"]
+    errors: list[str] = []
+    if not revision.startswith(match.group(1)):
+        errors.append(f"record name revision disagrees with source-revision.txt: {manifest}")
+    if abs((recorded_at - named_at).total_seconds()) > 300:
+        errors.append(f"record name timestamp disagrees with envelope recordedAt: {manifest}")
+    return errors
+
+
+def validate_record_history(root: Path, manifests: set[Path]) -> list[str]:
+    if not (root / ".git").exists():
+        return []
+    errors: list[str] = []
+    try:
+        historical = historical_record_manifests(root)
+    except subprocess.CalledProcessError as error:
+        return [f"cannot derive retained record history: {error}"]
+    if not historical.issubset(manifests):
+        errors.append(
+            "historically introduced evidence record was removed: "
+            f"{sorted(map(str, historical - manifests))}"
+        )
+    for manifest in sorted(manifests):
+        try:
+            commits = git_output(
+                root, "log", "--diff-filter=A", "--format=%H", "HEAD", "--", str(manifest)
+            ).splitlines()
+            if len(commits) != 1:
+                errors.append(
+                    f"record manifest must have exactly one introduction commit: {manifest}"
+                )
+                continue
+            introduced = subprocess.run(
+                ["git", "show", f"{commits[0]}:{manifest}"],
+                cwd=root,
+                check=True,
+                capture_output=True,
+            ).stdout
+            if hashlib.sha256(introduced).hexdigest() != sha256(root / manifest):
+                errors.append(f"record manifest changed after its introduction: {manifest}")
+        except (OSError, subprocess.CalledProcessError) as error:
+            errors.append(f"cannot verify record introduction for {manifest}: {error}")
+    return errors
 
 
 def verify_tree(root: Path = ROOT) -> list[str]:
@@ -95,19 +139,19 @@ def verify_tree(root: Path = ROOT) -> list[str]:
             errors.append(f"retained evidence contains a symlink: {path.relative_to(root)}")
 
     record_dirs: set[Path] = set()
-    active_dirs: set[Path] = set()
     for path in sorted(item for item in evidence.iterdir() if item.is_dir()):
         checksum = path.with_name(f"{path.name}.sha256")
         if checksum.is_file():
             record_dirs.add(path)
-        elif active_collection(path, root):
-            active_dirs.add(path)
 
     record_manifests = {
         path.relative_to(root)
         for path in evidence.glob("*.sha256")
         if path.name != STATIC_MANIFEST.name
     }
+    for relative in sorted(record_manifests):
+        errors.extend(validate_record_identity(root, relative))
+    errors.extend(validate_record_history(root, record_manifests))
     for relative in sorted(record_manifests):
         if not (root / relative).with_suffix("").is_dir():
             errors.append(f"record manifest has no sibling directory: {relative}")
@@ -140,8 +184,6 @@ def verify_tree(root: Path = ROOT) -> list[str]:
         if not path.is_file() or path.is_symlink():
             continue
         if any(record in path.parents for record in record_dirs):
-            continue
-        if any(active in path.parents for active in active_dirs):
             continue
         relative = path.relative_to(root)
         if relative not in excluded_files:

@@ -6,6 +6,8 @@ from __future__ import annotations
 import importlib.util
 import json
 import shutil
+import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -31,6 +33,11 @@ def main() -> int:
         )
         fixture["expected_closed_trace"] = not fixture["expected_closed_trace"]
         manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+        actual = subprocess.run(
+            [sys.executable, str(ROOT / "scripts" / "validate_corpus.py"),
+             "--corpus", str(corpus)], check=False, capture_output=True,
+        )
+        assert actual.returncode != 0, "corpus validator exit contract accepted a mutation"
         MODULE.CORPUS = corpus
         try:
             MODULE.validate()

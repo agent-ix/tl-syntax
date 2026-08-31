@@ -14,6 +14,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent.parent
 TARGET_ID = re.compile(r"^TC-[0-9]{3}$")
 TEST_METHOD = re.compile(r"^Test \(TC-[0-9]{3}(?:, TC-[0-9]{3})*\)$")
+INSPECTION_METHOD = re.compile(r"^Inspection \((evidence/reviews/[^)]+\.md)\)$")
 REFERENCE = re.compile(r"\b(?:TC|SUITE)-[0-9]{3}\b")
 CRITERION_SOURCES = {
     "acceptance-criterion",
@@ -27,6 +28,7 @@ ALLOWED_DIAGNOSTICS = {
     # validate_matrix_statuses supplies the skipped classification independently.
     "status-column-matches-nothing",
 }
+MAX_INSPECTION_DISTANCE = 5
 
 
 def validate_report(report: dict[str, Any]) -> list[str]:
@@ -140,6 +142,9 @@ def validate_matrix_statuses(path: Path) -> list[str]:
         if status_name not in header or len(cells) != len(header):
             errors.append(f"{path}:{number} has no parseable status column")
             continue
+        for index, cell in enumerate(cells):
+            if index != header.index(status_name) and not cell:
+                errors.append(f"{path}:{number} has an empty {header[index]!r} cell")
         status = cells[header.index(status_name)]
         expected = "✅ implemented" if section == "Test Case Summary" else "✅ covered"
         if status != expected:
@@ -162,8 +167,40 @@ def validate_verification_references(root: Path = ROOT) -> list[str]:
             cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
             verification = cells[-1] if cells else ""
             targets = REFERENCE.findall(verification)
-            if verification == "Inspection":
-                pass
+            inspection = INSPECTION_METHOD.fullmatch(verification)
+            if inspection is not None:
+                review = root / inspection.group(1)
+                try:
+                    review_text = review.read_text(encoding="utf-8")
+                except OSError as error:
+                    errors.append(f"{path}:{number} names an unreadable inspection: {error}")
+                    continue
+                if re.search(r"^Source subject: `[0-9a-f]{40}`$", review_text, re.MULTILINE) is None:
+                    errors.append(f"{path}:{number} names an inspection without an exact source subject")
+                    continue
+                subject = re.search(
+                    r"^Source subject: `([0-9a-f]{40})`$", review_text, re.MULTILINE
+                ).group(1)
+                ancestor = subprocess.run(
+                    ["git", "merge-base", "--is-ancestor", subject, "HEAD"],
+                    cwd=root,
+                    check=False,
+                    capture_output=True,
+                )
+                if ancestor.returncode != 0:
+                    errors.append(f"{path}:{number} names a non-ancestor inspection subject")
+                    continue
+                distance = subprocess.run(
+                    ["git", "rev-list", "--count", f"{subject}..HEAD"],
+                    cwd=root,
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                ).stdout.strip()
+                if int(distance) > MAX_INSPECTION_DISTANCE:
+                    errors.append(
+                        f"{path}:{number} names a stale inspection subject {distance} commits behind HEAD"
+                    )
             elif TEST_METHOD.fullmatch(verification) is None:
                 errors.append(f"{path}:{number} declares an empty or uncatalogued verification method")
             for target in targets:

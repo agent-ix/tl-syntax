@@ -29,6 +29,6 @@ evidence is retained. Hosted CI remains manual-only.
 
 | ID | Severity | Summary | Refs |
 |---|---|---|---|
-| FND-301 | high | Failure propagation, bypass, fabricated targets, and optional format enforcement could produce false green results; executable policy and mutation tests now close those paths. | NFR-002, TC-018 |
-| FND-302 | medium | Feature, corpus, formatting, verification-method, and diagnostic controls were incomplete; executable boundary tests and stricter policy parsing close them. | NFR-001, FR-005, TC-019 |
-| FND-303 | low | Evidence anchoring, documentation, API ownership, semantic-schema disclosure, and decode allocation needed hardening; exact-candidate collection and the human release decision remain separate. | FR-001, FR-003, FR-004, MP-001, AA-001 |
+| FND-501 | high | Failure propagation, bypass, fabricated targets, and optional format enforcement could produce false green results; executable policy and mutation tests now close those paths. | NFR-002, TC-018 |
+| FND-502 | medium | Feature, corpus, formatting, verification-method, and diagnostic controls were incomplete; executable boundary tests and stricter policy parsing close them. | NFR-001, FR-005, TC-019 |
+| FND-503 | low | Evidence anchoring, documentation, API ownership, semantic-schema disclosure, and decode allocation needed hardening; exact-candidate collection and the human release decision remain separate. | FR-001, FR-003, FR-004, MP-001, AA-001 |

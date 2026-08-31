@@ -7,6 +7,7 @@ import argparse
 import os
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -22,6 +23,7 @@ GUARD_TARGET = "check-failure-propagation"
 TARGET = re.compile(r"^([A-Za-z0-9_.-]+):(?:\s+(.*?))?\s*$")
 SHELL_CONTROL = re.compile(r"&&|\|\||[;|]")
 IGNORE_ATTRIBUTE = re.compile(r"#\s*\[[^\]]*\bignore\b[^\]]*\]")
+CFG_ATTRIBUTE = re.compile(r"#\s*\[\s*cfg\s*\(([^\]]*)\)\s*\]")
 MAKEFLAGS_ASSIGNMENT = re.compile(r"^\s*MAKEFLAGS\s*(?::|\+|\?)?=\s*(.*)$")
 
 
@@ -46,7 +48,9 @@ def parse_makefile(text: str) -> tuple[dict[str, list[str]], dict[str, list[str]
 
 
 def makeflags_ignore_errors(value: str) -> bool:
-    """Return whether GNU Make flags request ignored recipe failures."""
+    """Return whether GNU Make flags can change CI recipe execution."""
+    if value.strip():
+        return True
     try:
         tokens = shlex.split(value)
     except ValueError:
@@ -63,13 +67,48 @@ def makeflags_ignore_errors(value: str) -> bool:
 
 def inspect_ignored_tests(root: Path) -> list[str]:
     errors: list[str] = []
-    for directory in ("src", "tests"):
-        source_root = root / directory
-        if not source_root.exists():
+    for source in root.rglob("*.rs"):
+        if ".git" in source.parts or "target" in source.parts:
             continue
-        for source in source_root.rglob("*.rs"):
-            if IGNORE_ATTRIBUTE.search(source.read_text(encoding="utf-8")):
-                errors.append(f"{source.relative_to(root)} disables a Rust test with #[ignore]")
+        text = source.read_text(encoding="utf-8")
+        if IGNORE_ATTRIBUTE.search(text):
+            errors.append(f"{source.relative_to(root)} disables a Rust test with #[ignore]")
+        for match in CFG_ATTRIBUTE.finditer(text):
+            expression = " ".join(match.group(1).split())
+            permitted = source.is_relative_to(root / "src") and expression in {
+                "test", 'feature = "alloc"', 'feature = "serde"'
+            }
+            if not permitted:
+                errors.append(
+                    f"{source.relative_to(root)} conditionally removes Rust code with #[cfg({expression})]"
+                )
+    return errors
+
+
+def inspect_toolchain() -> list[str]:
+    expected = {
+        "bash": "/usr/bin/bash",
+        "cargo": str(Path.home() / ".cargo" / "bin" / "cargo"),
+        "make": "/usr/bin/make",
+        "python3": "/usr/bin/python3",
+        "sha256sum": "/usr/bin/sha256sum",
+    }
+    errors = [
+        f"{name} must resolve to {path}, got {shutil.which(name)}"
+        for name, path in expected.items()
+        if shutil.which(name) != path
+    ]
+    quire = shutil.which("quire")
+    quire_prefixes = (
+        Path.home() / ".npm-global" / "bin",
+        Path("/opt/hostedtoolcache/node"),
+    )
+    if quire is None or not any(
+        Path(quire).is_relative_to(prefix) for prefix in quire_prefixes
+    ):
+        errors.append(
+            f"quire must resolve under a declared npm tool prefix, got {quire}"
+        )
     return errors
 
 
@@ -116,9 +155,7 @@ def inspect_makefile(path: Path, root: Path = ROOT) -> list[str]:
 
 def inspect_expanded_recipes(makefile: Path, root: Path) -> list[str]:
     errors: list[str] = []
-    make = shlex.split(os.environ.get("MAKE", "make"))
-    if not make:
-        return ["MAKE does not identify an executable"]
+    make = ["/usr/bin/make"]
     clean_env = dict(os.environ)
     clean_env.pop("MAKEFLAGS", None)
     clean_env.pop("PYTHONOPTIMIZE", None)
@@ -149,9 +186,7 @@ def probe_command_positions(makefile: Path) -> list[str]:
     """Substitute false at every recipe position and require Make to fail."""
     _, recipes = parse_makefile(makefile.read_text(encoding="utf-8"))
     errors: list[str] = []
-    make = shlex.split(os.environ.get("MAKE", "make"))
-    if not make:
-        return ["MAKE does not identify an executable"]
+    make = ["/usr/bin/make"]
     with tempfile.TemporaryDirectory() as directory:
         probe = Path(directory) / "Makefile"
         clean_env = dict(os.environ)
@@ -198,6 +233,10 @@ def main() -> int:
         errors.append("ambient MAKEFLAGS enables ignored recipe failures")
     if os.environ.get("PYTHONOPTIMIZE") or sys.flags.optimize:
         errors.append("optimized Python disables policy assertions")
+    if os.environ.get("MAKE"):
+        errors.append("ambient MAKE override is not permitted")
+    if not args.static_only:
+        errors.extend(inspect_toolchain())
     if not errors and not args.static_only:
         errors.extend(inspect_expanded_recipes(makefile, ROOT))
     if not errors and not args.inspect_only and not args.static_only:

@@ -16,6 +16,7 @@ REQUIRED_TESTS = {
     "test_evidence_tree.py",
     "test_failure_propagation.py",
     "test_json_schema_gate.py",
+    "test_shell_gates.py",
     "test_traceability_gate.py",
 }
 

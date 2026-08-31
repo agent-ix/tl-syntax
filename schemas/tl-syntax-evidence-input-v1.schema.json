@@ -14,8 +14,19 @@
     "pgm01",
     "corpus"
   ],
+  "allOf": [
+    {
+      "if": {"required": ["qualificationProfile"]},
+      "then": {
+        "properties": {
+          "tools": {"required": ["identities"]}
+        }
+      }
+    }
+  ],
   "properties": {
     "schemaVersion": {"const": "tl-syntax.evidence-input/v1"},
+    "qualificationProfile": {"const": "tl-syntax.evidence-qualification/v2"},
     "sourceRevision": {"type": "string", "pattern": "^[0-9a-f]{40,64}$"},
     "sourceState": {"enum": ["clean", "modified"]},
     "commands": {
@@ -32,7 +43,12 @@
         "jsonschema": {"type": "string", "minLength": 1},
         "python": {"type": "string", "minLength": 1},
         "quire": {"type": "string", "minLength": 1},
-        "rustc": {"type": "string", "minLength": 1}
+        "rustc": {"type": "string", "minLength": 1},
+        "identities": {
+          "type": "object",
+          "additionalProperties": {"$ref": "#/definitions/toolIdentity"},
+          "required": ["bash", "cargo", "make", "python3", "quire", "sha256sum"]
+        }
       }
     },
     "pgm01": {
@@ -81,6 +97,15 @@
         "id": {"type": "string", "minLength": 1},
         "version": {"type": "string", "pattern": "^v[1-9][0-9]*$"},
         "digest": {"$ref": "#/definitions/digest"}
+      }
+    },
+    "toolIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^/"},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
       }
     }
   }

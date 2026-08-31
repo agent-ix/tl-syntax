@@ -111,7 +111,7 @@ def main() -> int:
         assert MODULE.probe_command_positions(synthetic), "command-position probe was gutted"
 
     assert MODULE.probe_command_positions(ROOT / "Makefile") == []
-    for value in ("i", "ik", "-i", "--ignore-errors"):
+    for value in ("i", "ik", "-i", "--ignore-errors", "-t", "-n", "--eval=.IGNORE:"):
         assert MODULE.makeflags_ignore_errors(value), f"MAKEFLAGS={value!r} escaped inspection"
     ignored_make = subprocess.run(
         ["make", "--no-print-directory", "-i", "-f", str(ROOT / "Makefile"), "ci"],
@@ -121,6 +121,19 @@ def main() -> int:
         stderr=subprocess.DEVNULL,
     )
     assert ignored_make.returncode != 0, "make -i converted local CI to a false success"
+    with tempfile.TemporaryDirectory() as directory:
+        shim = Path(directory) / "cargo"
+        shim.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        shim.chmod(0o755)
+        shadowed_env = dict(os.environ)
+        shadowed_env.pop("MAKEFLAGS", None)
+        shadowed_env["PATH"] = f"{directory}:{shadowed_env['PATH']}"
+        shadowed = subprocess.run(
+            ["/usr/bin/make", "--no-print-directory", "ci"], cwd=ROOT,
+            check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            env=shadowed_env,
+        )
+        assert shadowed.returncode != 0, "PATH-shadowed Cargo bypassed local CI"
     print("failure-propagation policy behavior is valid")
     return 0
 
