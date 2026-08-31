@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 import subprocess
 import sys
 import tempfile
@@ -25,18 +26,18 @@ def main() -> int:
 
     mutations = [
         original.replace(
-            "\t$(CARGO) clippy --all-targets --all-features -- -D warnings",
-            "\t-$(CARGO) clippy --all-targets --all-features -- -D warnings",
+            "\tcargo clippy --all-targets --all-features -- -D warnings",
+            "\t-cargo clippy --all-targets --all-features -- -D warnings",
             1,
         ),
         original.replace(
-            "\t$(CARGO) test --all-features",
-            "\t$(CARGO) test --all-features || true",
+            "\tcargo test --all-features",
+            "\tcargo test --all-features || true",
             1,
         ),
         original.replace(
-            "\t$(CARGO) test --all-features",
-            "\t$(CARGO) test --all-features; true",
+            "\tcargo test --all-features",
+            "\tcargo test --all-features; true",
             1,
         ),
         original + "\n.IGNORE: test\n",
@@ -65,22 +66,49 @@ def main() -> int:
                 text=True,
             )
             assert result.returncode != 0, f"mutation {index} produced a false pass"
+            if index in {3, 4}:
+                make_result = subprocess.run(
+                    ["make", "--no-print-directory", "-f", str(path), "ci"],
+                    cwd=ROOT,
+                    check=False,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    env={key: value for key, value in os.environ.items() if key != "MAKEFLAGS"},
+                )
+                assert make_result.returncode != 0, (
+                    f"Make recipe-control mutation {index} converted CI to success"
+                )
 
         ignored_root = Path(directory) / "ignored"
         (ignored_root / "tests").mkdir(parents=True)
         (ignored_root / "tests" / "disabled.rs").write_text(
-            "#[test]\n#[ignore]\nfn disabled() {}\n", encoding="utf-8"
+            "#[test]\n#[cfg_attr(all(), ignore)]\nfn disabled() {}\n", encoding="utf-8"
         )
-        assert MODULE.inspect_ignored_tests(ignored_root), "#[ignore] escaped inspection"
+        assert MODULE.inspect_ignored_tests(ignored_root), "cfg_attr(ignore) escaped inspection"
+
+        hidden = Path(directory) / "hidden.mk"
+        hidden.write_text(
+            original.replace(
+                "cargo check --lib --no-default-features --features alloc",
+                "$(ALLOC_CHECK)",
+                1,
+            )
+            + "\nALLOC_CHECK = cargo check --lib --no-default-features --features alloc || true\n",
+            encoding="utf-8",
+        )
+        assert MODULE.inspect_expanded_recipes(hidden, ROOT), (
+            "expanded recipe hid a false-success operator"
+        )
 
         synthetic = Path(directory) / "synthetic.mk"
         synthetic.write_text(
-            "".join(f".PHONY: {target}\n{target}:\n\t@true\n" for target in MODULE.PROBES),
+            "".join(
+                f".PHONY: {target}\n{target}:\n\t-true\n"
+                for target in MODULE.PROBES
+            ),
             encoding="utf-8",
         )
-        assert len(MODULE.probe_targets(synthetic, Path(directory))) == len(MODULE.PROBES), (
-            "the real-tool behavioral probe was not exercised"
-        )
+        assert MODULE.probe_command_positions(synthetic), "command-position probe was gutted"
 
     assert MODULE.probe_command_positions(ROOT / "Makefile") == []
     for value in ("i", "ik", "-i", "--ignore-errors"):

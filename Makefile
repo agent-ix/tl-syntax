@@ -8,12 +8,29 @@ QUIRE ?= quire
 SHA256SUM ?= sha256sum
 BASH ?= bash
 
-tl_make_short_flags := $(firstword $(MAKEFLAGS))
-ifneq ($(filter -%,$(tl_make_short_flags)),)
-tl_make_short_flags :=
+ifneq ($(filter ci,$(MAKECMDGOALS)),)
+ifneq ($(strip $(PYTHONOPTIMIZE)),)
+$(error local CI refuses optimized Python policy execution)
 endif
-ifneq ($(findstring i,$(tl_make_short_flags)),)
-$(error local CI refuses Make ignore-errors mode)
+ifneq ($(notdir $(CARGO)),cargo)
+$(error local CI refuses a CARGO override)
+endif
+ifneq ($(notdir $(PYTHON)),python3)
+$(error local CI refuses a PYTHON override)
+endif
+ifneq ($(notdir $(QUIRE)),quire)
+$(error local CI refuses a QUIRE override)
+endif
+ifneq ($(notdir $(SHA256SUM)),sha256sum)
+$(error local CI refuses a SHA256SUM override)
+endif
+ifneq ($(notdir $(BASH)),bash)
+$(error local CI refuses a BASH override)
+endif
+tl_ci_static_status := $(shell env -u PYTHONOPTIMIZE MAKEFLAGS='$(MAKEFLAGS)' python3 scripts/check_failure_propagation.py --makefile '$(firstword $(MAKEFILE_LIST))' --static-only >/dev/null 2>&1; echo $$?)
+ifneq ($(tl_ci_static_status),0)
+$(error local CI refuses unsafe Make recipe controls)
+endif
 endif
 
 .PHONY: help
@@ -42,61 +59,61 @@ help:
 
 .PHONY: fmt
 fmt:
-	$(CARGO) fmt --all
+	cargo fmt --all
 
 .PHONY: fmt-check
 fmt-check:
-	$(CARGO) fmt --all -- --check
+	cargo fmt --all -- --check
 
 .PHONY: lint
 lint:
-	$(CARGO) clippy --all-targets --all-features -- -D warnings
+	cargo clippy --all-targets --all-features -- -D warnings
 
 .PHONY: test
 test:
-	$(CARGO) test --all-features
+	cargo test --all-features
 
 .PHONY: check-failure-propagation
 check-failure-propagation:
-	$(PYTHON) scripts/check_failure_propagation.py
+	python3 scripts/check_failure_propagation.py
 
 .PHONY: check-features
 check-features:
-	$(CARGO) check --lib --no-default-features
-	$(CARGO) check --lib --no-default-features --features alloc
-	$(CARGO) check --lib --no-default-features --features serde
-	$(CARGO) check --lib --all-features
+	cargo check --lib --no-default-features
+	cargo check --lib --no-default-features --features alloc
+	cargo check --lib --no-default-features --features serde
+	cargo check --lib --all-features
 
 .PHONY: check-default-dependencies
 check-default-dependencies:
-	$(PYTHON) scripts/check_default_dependencies.py
+	python3 scripts/check_default_dependencies.py
 
 .PHONY: check-corpus
 check-corpus:
-	$(SHA256SUM) --check corpus/SHA256SUMS
-	$(PYTHON) scripts/validate_corpus.py
+	sha256sum --check corpus/SHA256SUMS
+	python3 scripts/validate_corpus.py
 
 .PHONY: verify-evidence
 verify-evidence:
-	$(BASH) scripts/verify_evidence.sh
+	bash scripts/verify_evidence.sh
 
 .PHONY: spec
 spec:
-	$(QUIRE) validate --scope . 'spec/**/*.md' --strict --summary
-	$(PYTHON) scripts/check_traceability_coverage.py
+	quire validate --scope . 'spec/**/*.md' --strict --summary
+	python3 scripts/check_traceability_coverage.py
 
 .PHONY: evidence-tool
 evidence-tool:
-	$(PYTHON) -m compileall -q scripts
-	$(PYTHON) scripts/run_policy_tests.py
+	python3 -m compileall -q scripts
+	python3 scripts/run_policy_tests.py
 
 .PHONY: build
 build:
-	$(CARGO) build --release
+	cargo build --release
 
 .PHONY: clean
 clean:
-	$(CARGO) clean
+	cargo clean
 
 # =============================================================================
 # Supply chain & safety
@@ -104,18 +121,18 @@ clean:
 
 .PHONY: deny
 deny:
-	$(CARGO) deny check advisories
-	$(CARGO) deny check bans
-	$(CARGO) deny check licenses
-	$(CARGO) deny check sources
+	cargo deny check advisories
+	cargo deny check bans
+	cargo deny check licenses
+	cargo deny check sources
 
 .PHONY: cargo-audit
 cargo-audit:
-	$(CARGO) audit
+	cargo audit
 
 .PHONY: audit-unsafe
 audit-unsafe:
-	$(BASH) scripts/check_unsafe_comments.sh
+	bash scripts/check_unsafe_comments.sh
 
 # =============================================================================
 # Composite

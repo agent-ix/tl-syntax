@@ -13,6 +13,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
 TARGET_ID = re.compile(r"^TC-[0-9]{3}$")
+TEST_METHOD = re.compile(r"^Test \(TC-[0-9]{3}(?:, TC-[0-9]{3})*\)$")
 REFERENCE = re.compile(r"\b(?:TC|SUITE)-[0-9]{3}\b")
 CRITERION_SOURCES = {
     "acceptance-criterion",
@@ -161,10 +162,10 @@ def validate_verification_references(root: Path = ROOT) -> list[str]:
             cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
             verification = cells[-1] if cells else ""
             targets = REFERENCE.findall(verification)
-            if verification.startswith("Test") and not any(
-                TARGET_ID.fullmatch(target) for target in targets
-            ):
-                errors.append(f"{path}:{number} Test verification declares no TC target")
+            if verification == "Inspection":
+                pass
+            elif TEST_METHOD.fullmatch(verification) is None:
+                errors.append(f"{path}:{number} declares an empty or uncatalogued verification method")
             for target in targets:
                 if target not in declared:
                     errors.append(

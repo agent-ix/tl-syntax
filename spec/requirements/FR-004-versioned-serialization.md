@@ -33,17 +33,17 @@ explicit and versioned.
 - Proposition maps shall reject duplicate or non-increasing identities plus
   empty or duplicate names.
 - Unknown schema or semantic-profile strings shall fail deserialization.
-- Formula wire decoding shall stop after 100,000 nodes, before constructing an
-  unbounded temporary node vector or running graph validation.
+- Formula wire decoding and owned programmatic construction shall reject more
+  than 100,000 nodes before graph validation.
 
 ## Acceptance Criteria
 
 | ID | Criteria | Verification |
 |---|---|---|
-| FR-004-AC-1 | Supported formula and proposition-map documents round-trip without loss, and `FormulaDocument::from_formula` preserves the borrowed formula's profile, root, and nodes. | Test (TC-009, TC-017) |
+| FR-004-AC-1 | Supported formula and proposition-map documents within the 100,000-node document limit round-trip without loss, and `FormulaDocument::from_formula` preserves the borrowed formula's profile, root, and nodes or returns the typed document-limit error above that bound. | Test (TC-009, TC-017, TC-020) |
 | FR-004-AC-2 | Unknown schema and profile versions fail to deserialize. | Test (TC-010) |
 | FR-004-AC-3 | Malformed formula graphs and proposition maps fail validation. | Test (TC-011) |
-| FR-004-AC-4 | Formula JSON containing more than 100,000 nodes fails during bounded sequence decoding. | Test (TC-020) |
+| FR-004-AC-4 | Formula JSON and owned programmatic construction containing more than 100,000 nodes fail at the documented bound before graph validation. | Test (TC-020) |
 
 ## Dependencies
 

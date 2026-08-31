@@ -109,6 +109,21 @@ def main() -> int:
         assert MODULE.validate_verification_references(root), (
             "a fabricated stakeholder target was accepted"
         )
+        for verification in ("", "Demonstration"):
+            requirement.write_text(
+                "| ID | Criteria | Verification |\n|---|---|---|\n"
+                f"| StR-001-VC-1 | criterion | {verification} |\n",
+                encoding="utf-8",
+            )
+            assert MODULE.validate_verification_references(root), (
+                f"uncatalogued stakeholder method {verification!r} was accepted"
+            )
+        requirement.write_text(
+            "| ID | Criteria | Verification |\n|---|---|---|\n"
+            "| StR-001-VC-1 | criterion | Inspection |\n",
+            encoding="utf-8",
+        )
+        assert MODULE.validate_verification_references(root) == []
     print("strict traceability coverage behavior is valid")
     return 0
 

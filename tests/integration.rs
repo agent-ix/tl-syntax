@@ -1,8 +1,8 @@
 #![cfg(feature = "serde")]
 
 use tl_syntax::{
-    FormulaDocument, FormulaSchemaVersion, Interval, Node, NodeId, NodeKind, PropositionEntry,
-    PropositionId, PropositionMapDocument, SemanticProfile, SourceSpan,
+    Formula, FormulaDocument, FormulaSchemaVersion, Interval, Node, NodeId, NodeKind,
+    PropositionEntry, PropositionId, PropositionMapDocument, SemanticProfile, SourceSpan,
 };
 
 use proptest::prelude::*;
@@ -285,6 +285,15 @@ fn formula_wire_decode_stops_at_the_document_node_limit() {
 // Trace: TC-011, FR-004-AC-3
 #[test]
 fn unknown_node_fields_and_invalid_proposition_maps_are_rejected_on_decode() {
+    let unknown_formula_document_field = r#"{
+        "schema_version":"tl-syntax.formula/v1",
+        "semantic_profile":"mltl.closed-trace/v1",
+        "root":0,
+        "nodes":[{"kind":"true"}],
+        "unexpected":1
+    }"#;
+    assert!(serde_json::from_str::<FormulaDocument>(unknown_formula_document_field).is_err());
+
     let unknown_node_field = r#"{
         "schema_version":"tl-syntax.formula/v1",
         "semantic_profile":"mltl.closed-trace/v1",
@@ -320,12 +329,31 @@ fn unknown_node_fields_and_invalid_proposition_maps_are_rejected_on_decode() {
         ]
     }"#;
     assert!(serde_json::from_str::<PropositionMapDocument>(duplicate_name).is_err());
+
+    let unknown_proposition_document_field = r#"{
+        "schema_version":"tl-syntax.proposition-map/v1",
+        "propositions":[],
+        "unexpected":1
+    }"#;
+    assert!(
+        serde_json::from_str::<PropositionMapDocument>(unknown_proposition_document_field).is_err()
+    );
+
+    let unknown_proposition_entry_field = r#"{
+        "schema_version":"tl-syntax.proposition-map/v1",
+        "propositions":[{"id":0,"name":"request","unexpected":1}]
+    }"#;
+    assert!(
+        serde_json::from_str::<PropositionMapDocument>(unknown_proposition_entry_field).is_err()
+    );
 }
 
 // Trace: TC-020, FR-004-AC-4
 #[test]
 fn programmatic_formula_documents_obey_the_wire_node_limit() {
     let nodes = vec![Node::new(NodeKind::True); tl_syntax::MAX_FORMULA_DOCUMENT_NODES + 1];
+    let formula = Formula::new(SemanticProfile::ClosedTraceV1, NodeId(0), &nodes).unwrap();
+    assert!(FormulaDocument::from_formula(formula).is_err());
     assert!(FormulaDocument::new(SemanticProfile::ClosedTraceV1, NodeId(0), nodes).is_err());
 }
 

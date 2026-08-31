@@ -278,6 +278,7 @@ impl PropositionMapDocument {
 
 /// Validation failure for a proposition-map document.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[non_exhaustive]
 pub enum PropositionMapError {
     /// A proposition name is empty.
     EmptyName {

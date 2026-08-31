@@ -35,6 +35,7 @@ Backported from `agent-ix/ecaz`:
 ```
 src/lib.rs             # crate root
 src/document.rs        # bounded owned/wire documents (alloc + serde)
+src/syntax.rs          # intervals, spans, nodes, profiles, and borrowed validation
 tests/integration.rs   # end-to-end tests
 corpus/                # pinned formula schemas, fixtures, traces, and oracles
 evidence/              # retained records and Git/PR-review integrity anchors

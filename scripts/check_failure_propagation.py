@@ -15,22 +15,13 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 PROBES = {
-    "fmt-check": "CARGO",
-    "check-features": "CARGO",
-    "check-default-dependencies": "PYTHON",
-    "lint": "CARGO",
-    "test": "CARGO",
-    "check-corpus": "SHA256SUM",
-    "deny": "CARGO",
-    "audit-unsafe": "BASH",
-    "evidence-tool": "PYTHON",
-    "spec": "QUIRE",
-    "verify-evidence": "BASH",
+    "fmt-check", "check-features", "check-default-dependencies", "lint", "test",
+    "check-corpus", "deny", "audit-unsafe", "evidence-tool", "spec", "verify-evidence",
 }
 GUARD_TARGET = "check-failure-propagation"
 TARGET = re.compile(r"^([A-Za-z0-9_.-]+):(?:\s+(.*?))?\s*$")
 SHELL_CONTROL = re.compile(r"&&|\|\||[;|]")
-IGNORE_ATTRIBUTE = re.compile(r"#\s*\[\s*ignore(?:\s|\]|\()")
+IGNORE_ATTRIBUTE = re.compile(r"#\s*\[[^\]]*\bignore\b[^\]]*\]")
 MAKEFLAGS_ASSIGNMENT = re.compile(r"^\s*MAKEFLAGS\s*(?::|\+|\?)?=\s*(.*)$")
 
 
@@ -123,24 +114,34 @@ def inspect_makefile(path: Path, root: Path = ROOT) -> list[str]:
     return errors
 
 
-def probe_targets(makefile: Path, root: Path) -> list[str]:
+def inspect_expanded_recipes(makefile: Path, root: Path) -> list[str]:
     errors: list[str] = []
     make = shlex.split(os.environ.get("MAKE", "make"))
     if not make:
         return ["MAKE does not identify an executable"]
-    for target, variable in PROBES.items():
+    clean_env = dict(os.environ)
+    clean_env.pop("MAKEFLAGS", None)
+    clean_env.pop("PYTHONOPTIMIZE", None)
+    for target in sorted(PROBES):
         try:
             result = subprocess.run(
-                [*make, "--no-print-directory", "-f", str(makefile), target, f"{variable}=false"],
+                [*make, "--no-print-directory", "-n", "-f", str(makefile), target],
                 cwd=root,
                 check=False,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
+                capture_output=True,
+                text=True,
+                env=clean_env,
             )
         except FileNotFoundError:
             return [f"required Make executable is unavailable: {make[0]}"]
-        if result.returncode == 0:
-            errors.append(f"mandatory target {target} swallowed a deliberately failing {variable}")
+        if result.returncode != 0:
+            errors.append(f"cannot expand mandatory target {target}: {result.stderr.strip()}")
+            continue
+        for command in result.stdout.splitlines():
+            if SHELL_CONTROL.search(command):
+                errors.append(
+                    f"expanded mandatory target {target} uses forbidden shell control operators: {command}"
+                )
     return errors
 
 
@@ -153,7 +154,9 @@ def probe_command_positions(makefile: Path) -> list[str]:
         return ["MAKE does not identify an executable"]
     with tempfile.TemporaryDirectory() as directory:
         probe = Path(directory) / "Makefile"
-        for target in PROBES:
+        clean_env = dict(os.environ)
+        clean_env.pop("MAKEFLAGS", None)
+        for target in sorted(PROBES):
             commands = recipes.get(target, [])
             for selected in range(len(commands)):
                 lines = [f".PHONY: {target}", f"{target}:"]
@@ -171,6 +174,7 @@ def probe_command_positions(makefile: Path) -> list[str]:
                         check=False,
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL,
+                        env=clean_env,
                     )
                 except FileNotFoundError:
                     return [f"required Make executable is unavailable: {make[0]}"]
@@ -186,13 +190,17 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--makefile", type=Path, default=ROOT / "Makefile")
     parser.add_argument("--inspect-only", action="store_true")
+    parser.add_argument("--static-only", action="store_true")
     args = parser.parse_args()
     makefile = args.makefile.resolve()
     errors = inspect_makefile(makefile)
     if makeflags_ignore_errors(os.environ.get("MAKEFLAGS", "")):
         errors.append("ambient MAKEFLAGS enables ignored recipe failures")
-    if not errors and not args.inspect_only:
-        errors.extend(probe_targets(makefile, ROOT))
+    if os.environ.get("PYTHONOPTIMIZE") or sys.flags.optimize:
+        errors.append("optimized Python disables policy assertions")
+    if not errors and not args.static_only:
+        errors.extend(inspect_expanded_recipes(makefile, ROOT))
+    if not errors and not args.inspect_only and not args.static_only:
         errors.extend(probe_command_positions(makefile))
     for error in errors:
         print(error, file=sys.stderr)

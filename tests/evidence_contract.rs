@@ -153,17 +153,23 @@ fn mandatory_policy_gates_observe_failure_states() {
         );
     }
 
-    let disabled_guard = Command::new("make")
+    let mut probe_dir = std::env::temp_dir();
+    probe_dir.push(format!("tl-syntax-policy-probe-{}", std::process::id()));
+    let _ = fs::remove_dir_all(&probe_dir);
+    fs::create_dir(&probe_dir).unwrap();
+    fs::write(probe_dir.join("test_fails.py"), "raise SystemExit(7)\n").unwrap();
+    let disabled_guard = Command::new("python3")
         .args([
-            "--no-print-directory",
-            "check-failure-propagation",
-            "PYTHON=false",
+            "scripts/run_policy_tests.py",
+            "--directory",
+            probe_dir.to_str().unwrap(),
         ])
         .current_dir(&root)
         .output()
         .unwrap();
+    fs::remove_dir_all(&probe_dir).unwrap();
     assert!(
         !disabled_guard.status.success(),
-        "check-failure-propagation target no longer invokes its executable policy"
+        "policy runner swallowed a discovered failing test"
     );
 }

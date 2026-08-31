@@ -26,7 +26,6 @@ COLLECTION_FINALIZER = ROOT / "scripts" / "finalize_collection.py"
 CORPUS_VALIDATOR = ROOT / "scripts" / "validate_corpus.py"
 TRACEABILITY_VALIDATOR = ROOT / "scripts" / "check_traceability_coverage.py"
 EVIDENCE_VERIFIER = ROOT / "scripts" / "verify_evidence_manifest.py"
-EVIDENCE_ANCHORS = ROOT / "evidence" / "ANCHORS"
 
 COMMANDS = (
     "make-ci",
@@ -103,7 +102,7 @@ def classify_result(
     return "inconclusive", "unrecognized collection phase cannot be conclusive"
 
 
-def hash_parameter_files() -> str:
+def parameter_paths() -> tuple[Path, ...]:
     fixed_paths = {
         ROOT / "Cargo.toml",
         ROOT / "Cargo.lock",
@@ -117,7 +116,6 @@ def hash_parameter_files() -> str:
         CORPUS_VALIDATOR,
         TRACEABILITY_VALIDATOR,
         EVIDENCE_VERIFIER,
-        EVIDENCE_ANCHORS,
         INPUT_SCHEMA,
         MANIFEST_SCHEMA,
     }
@@ -126,11 +124,16 @@ def hash_parameter_files() -> str:
         for path in (ROOT / "scripts").iterdir()
         if path.is_file() and path.suffix in {".py", ".sh"}
     }
+    return tuple(sorted(paths, key=lambda path: str(path.relative_to(ROOT))))
+
+
+def hash_parameter_files(read_bytes: Any | None = None) -> str:
+    reader = read_bytes or (lambda path: path.read_bytes())
     state = hashlib.sha256()
-    for path in sorted(paths):
+    for path in parameter_paths():
         state.update(str(path.relative_to(ROOT)).encode("utf-8"))
         state.update(b"\0")
-        state.update(path.read_bytes())
+        state.update(reader(path))
         state.update(b"\0")
     return state.hexdigest()
 

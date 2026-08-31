@@ -47,6 +47,7 @@ impl Interval {
 
 /// Error returned when an inclusive interval is inverted.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[non_exhaustive]
 pub struct IntervalError {
     /// Rejected lower bound.
     pub start: u32,
@@ -104,6 +105,7 @@ impl SourceSpan {
 
 /// Error returned when a source span is inverted.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[non_exhaustive]
 pub struct SourceSpanError {
     /// Rejected start offset.
     pub start: u32,
@@ -375,6 +377,7 @@ impl<'a> Formula<'a> {
 
 /// Structural validation failure for a formula node table.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[non_exhaustive]
 pub enum FormulaError {
     /// The selected root is not present in the node table.
     RootOutOfRange {

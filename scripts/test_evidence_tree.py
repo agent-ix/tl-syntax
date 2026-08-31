@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import hashlib
 import importlib.util
+import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -48,8 +50,20 @@ def main() -> int:
             encoding="utf-8",
         )
         assert MODULE.verify_tree(root) == []
+        healthy = subprocess.run(
+            [sys.executable, str(ROOT / "scripts" / "verify_evidence_tree.py"), "--root", str(root)],
+            check=False,
+            capture_output=True,
+        )
+        assert healthy.returncode == 0
         (reviews / "unlisted.md").write_text("outside boundary\n", encoding="utf-8")
         assert MODULE.verify_tree(root), "an unlisted evidence document escaped verification"
+        rejected = subprocess.run(
+            [sys.executable, str(ROOT / "scripts" / "verify_evidence_tree.py"), "--root", str(root)],
+            check=False,
+            capture_output=True,
+        )
+        assert rejected.returncode != 0, "evidence verifier exit contract was gutted"
     print("repository-wide evidence integrity behavior is valid")
     return 0
 

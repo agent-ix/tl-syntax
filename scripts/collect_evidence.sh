@@ -75,7 +75,7 @@ python3 -c 'from jsonschema import FormatChecker; print("\n".join(sorted(FormatC
 quire provenance --pretty >"$evidence_dir/quire-provenance.json"
 cargo metadata --format-version 1 --all-features >"$evidence_dir/metadata.json"
 
-run_and_retain make-ci env -u MAKEFLAGS make ci
+run_and_retain make-ci env -u MAKEFLAGS -u CARGO -u PYTHON -u QUIRE -u SHA256SUM -u BASH -u PYTHONOPTIMIZE make ci
 run_and_retain make-spec make spec
 run_and_retain quire-coverage python3 scripts/check_traceability_coverage.py
 run_and_retain rustdoc env RUSTDOCFLAGS=-Dwarnings cargo doc --no-deps --all-features

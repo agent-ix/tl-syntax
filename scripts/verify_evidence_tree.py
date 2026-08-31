@@ -76,6 +76,9 @@ def active_collection(path: Path, root: Path) -> bool:
         if not isinstance(pid, int) or pid <= 1:
             return False
         os.kill(pid, 0)
+        command_line = Path(f"/proc/{pid}/cmdline").read_bytes().replace(b"\0", b" ")
+        if b"scripts/collect_evidence.sh" not in command_line:
+            return False
     except (KeyError, OSError, ValueError, json.JSONDecodeError, subprocess.CalledProcessError):
         return False
     return True
@@ -159,7 +162,14 @@ def verify_tree(root: Path = ROOT) -> list[str]:
 
 
 def main() -> int:
-    errors = verify_tree()
+    if len(sys.argv) == 1:
+        root = ROOT
+    elif len(sys.argv) == 3 and sys.argv[1] == "--root":
+        root = Path(sys.argv[2])
+    else:
+        print("usage: verify_evidence_tree.py [--root REPOSITORY]", file=sys.stderr)
+        return 2
+    errors = verify_tree(root)
     for error in errors:
         print(error, file=sys.stderr)
     return 1 if errors else 0

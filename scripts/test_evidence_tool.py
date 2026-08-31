@@ -5,6 +5,9 @@ from __future__ import annotations
 
 import importlib.util
 import hashlib
+import json
+import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -76,6 +79,48 @@ def main() -> int:
             "unlisted retained artifact" in error
             for error in VERIFY_MODULE.verify(checksum)
         ), "an added file escaped exact-membership verification"
+
+    with tempfile.TemporaryDirectory() as directory:
+        evidence_dir = Path(directory)
+        for name in (
+            "make-ci", "make-spec", "quire-coverage", "rustdoc",
+            "default-dependencies", "diff-integrity", "input-schema",
+            "manifest-schema", "pgm01-schema", "pgm01-validator",
+            "sealed-pgm01-schema", "sealed-pgm01-validator",
+        ):
+            (evidence_dir / f"{name}.status.txt").write_text("0\n", encoding="utf-8")
+        (evidence_dir / "source-revision.txt").write_text(
+            subprocess.run(
+                ["git", "rev-parse", "HEAD"], cwd=ROOT, check=True,
+                capture_output=True, text=True,
+            ).stdout,
+            encoding="utf-8",
+        )
+        (evidence_dir / "evidence-envelope.json").write_text(
+            json.dumps({"result": {"status": "conclusive", "summary": "fabricated"}}) + "\n",
+            encoding="utf-8",
+        )
+        finalizer = importlib.util.spec_from_file_location(
+            "finalize_collection", ROOT / "scripts" / "finalize_collection.py"
+        )
+        assert finalizer is not None and finalizer.loader is not None
+        finalizer_module = importlib.util.module_from_spec(finalizer)
+        finalizer.loader.exec_module(finalizer_module)
+        (evidence_dir / "collection-summary.json").write_text(
+            json.dumps(finalizer_module.summary(evidence_dir), indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        rejected = subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "scripts" / "finalize_collection.py"),
+                "--check",
+                str(evidence_dir),
+            ],
+            check=False,
+            capture_output=True,
+        )
+        assert rejected.returncode != 0, "finalizer exit contract accepted a fabricated result"
     print("evidence outcome behavior is valid")
     return 0
 
