@@ -15,10 +15,10 @@ jobs:
           toolchain: 1.75.0
       - name: Cache cargo artifacts
         uses: Swatinem/rust-cache@v2
-      - name: Check default no-std API
-        run: cargo check --lib --no-default-features
-      - name: Check complete feature API
-        run: cargo check --lib --all-features
+      - name: Check complete target and feature boundary
+        run: |
+          cargo check --lib --no-default-features
+          cargo check --all-targets --all-features
 
   rust:
     name: Rust Checks
@@ -34,24 +34,19 @@ jobs:
       - name: Cache cargo artifacts
         uses: Swatinem/rust-cache@v2
 
-      - name: Format
-        run: cargo fmt --all -- --check
+      - name: Install evidence tools
+        run: pip install 'jsonschema==4.25.1'
 
-      - name: Lint
-        run: cargo clippy --all-targets --all-features -- -D warnings
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
 
-      - name: Test
-        run: cargo test --all-features
+      - name: Install Quire
+        run: npm install --global '@agent-ix/quire-cli@0.31.0'
 
-      - name: Feature boundary
-        run: |
-          cargo check --lib --no-default-features
-          cargo check --lib --no-default-features --features alloc
-          cargo check --lib --no-default-features --features serde
-          cargo check --lib --all-features
-
-      - name: Unsafe audit
-        run: bash scripts/check_unsafe_comments.sh
+      - name: Complete local gate
+        run: make ci
 
   licenses:
     name: License Check
@@ -66,5 +61,5 @@ jobs:
         uses: taiki-e/install-action@v2
         with:
           tool: cargo-deny
-      - name: cargo deny check licenses
-        run: cargo deny check licenses
+      - name: cargo deny policy
+        run: cargo deny check licenses sources

@@ -27,7 +27,8 @@ Globally, Until, and Release nodes.
 
 - The validator shall reject an absent root.
 - The validator shall reject every operand that does not precede its owner.
-- The validator shall reject every temporal node carrying an invalid interval.
+- Temporal nodes shall accept only `Interval` values whose private bounds and
+  checked deserialization reject inversion before formula validation.
 - The public node, formula, and identity values shall implement deterministic
   equality and ordering.
 

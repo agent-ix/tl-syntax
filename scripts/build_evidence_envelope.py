@@ -22,6 +22,8 @@ MANIFEST_SCHEMA = ROOT / "schemas" / "tl-syntax-evidence-manifest-v1.schema.json
 COLLECTOR = ROOT / "scripts" / "collect_evidence.sh"
 BUILDER = Path(__file__).resolve()
 SCHEMA_VALIDATOR = ROOT / "scripts" / "validate_json_schema.py"
+COLLECTION_FINALIZER = ROOT / "scripts" / "finalize_collection.py"
+CORPUS_VALIDATOR = ROOT / "scripts" / "validate_corpus.py"
 
 COMMANDS = (
     "make-ci",
@@ -30,6 +32,10 @@ COMMANDS = (
     "rustdoc",
     "default-dependencies",
     "diff-integrity",
+    "input-schema",
+    "manifest-schema",
+    "pgm01-schema",
+    "pgm01-validator",
 )
 
 
@@ -56,15 +62,41 @@ def read_first_line(path: Path) -> str:
 def command_outcomes(evidence_dir: Path) -> list[dict[str, object]]:
     outcomes: list[dict[str, object]] = []
     for name in COMMANDS:
-        exit_code = int((evidence_dir / f"{name}.status.txt").read_text().strip())
+        status_path = evidence_dir / f"{name}.status.txt"
+        stdout_path = evidence_dir / f"{name}.stdout"
+        if not status_path.exists():
+            outcomes.append({"name": name, "status": "inconclusive", "exitCode": None})
+            continue
+        exit_code = int(status_path.read_text().strip())
+        skipped = (
+            stdout_path.exists()
+            and stdout_path.read_text(encoding="utf-8").strip() == "skipped-unavailable"
+        )
         outcomes.append(
             {
                 "name": name,
-                "status": "passed" if exit_code == 0 else "failed",
+                "status": (
+                    "skipped-unavailable"
+                    if skipped
+                    else "passed" if exit_code == 0 else "failed"
+                ),
                 "exitCode": exit_code,
             }
         )
     return outcomes
+
+
+def classify_result(
+    phase: str, outcomes: list[dict[str, object]]
+) -> tuple[str, str]:
+    statuses = {outcome["status"] for outcome in outcomes}
+    if phase == "sealed-failed" or "failed" in statuses:
+        return "error", "one or more retained tl-syntax checks failed"
+    if phase in {"provisional", "final"}:
+        return "inconclusive", "exact finalized-envelope validation is external or pending"
+    if "inconclusive" in statuses or "skipped-unavailable" in statuses:
+        return "inconclusive", "schema or governance validation is unavailable or pending"
+    return "conclusive", "all retained tl-syntax checks passed"
 
 
 def hash_parameter_files() -> str:
@@ -77,6 +109,8 @@ def hash_parameter_files() -> str:
         COLLECTOR,
         BUILDER,
         SCHEMA_VALIDATOR,
+        COLLECTION_FINALIZER,
+        CORPUS_VALIDATOR,
         INPUT_SCHEMA,
         MANIFEST_SCHEMA,
     )
@@ -93,7 +127,7 @@ def schema_identity(name: str, path: Path) -> dict[str, object]:
     return {"id": name, "version": "v1", "digest": digest(sha256_file(path))}
 
 
-def build(evidence_dir: Path) -> None:
+def build(evidence_dir: Path, phase: str) -> None:
     evidence_dir = evidence_dir.resolve()
     relative_dir = str(evidence_dir.relative_to(ROOT))
     revision = (evidence_dir / "source-revision.txt").read_text().strip()
@@ -122,6 +156,10 @@ def build(evidence_dir: Path) -> None:
             "python3 scripts/validate_json_schema.py MANIFEST_SCHEMA evidence-manifest.json",
             "python3 scripts/validate_json_schema.py PGM01_SCHEMA evidence-envelope.json",
             "python3 PGM01_VALIDATOR --fixture evidence-envelope.json",
+            "python3 scripts/build_evidence_envelope.py EVIDENCE_DIR final",
+            "python3 scripts/validate_json_schema.py PGM01_SCHEMA finalized-evidence-envelope.json",
+            "python3 PGM01_VALIDATOR --fixture finalized-evidence-envelope.json",
+            "python3 scripts/finalize_collection.py EVIDENCE_DIR",
         ],
         "tools": {
             "cargo": read_first_line(evidence_dir / "cargo-version.txt"),
@@ -157,18 +195,7 @@ def build(evidence_dir: Path) -> None:
         "collection-input.json",
         "evidence-envelope.json",
         "evidence-manifest.json",
-        "input-schema.stdout",
-        "input-schema.stderr",
-        "input-schema.status.txt",
-        "manifest-schema.stdout",
-        "manifest-schema.stderr",
-        "manifest-schema.status.txt",
-        "pgm01-schema.stdout",
-        "pgm01-schema.stderr",
-        "pgm01-schema.status.txt",
-        "pgm01-validator.stdout",
-        "pgm01-validator.stderr",
-        "pgm01-validator.status.txt",
+        "collection-summary.json",
     }
     artifacts = []
     for path in sorted(evidence_dir.iterdir(), key=lambda item: item.name):
@@ -178,13 +205,28 @@ def build(evidence_dir: Path) -> None:
             )
 
     outcomes = command_outcomes(evidence_dir)
-    all_local_passed = all(outcome["status"] == "passed" for outcome in outcomes)
+    any_failed = any(outcome["status"] == "failed" for outcome in outcomes)
+    any_inconclusive = any(
+        outcome["status"] in {"inconclusive", "skipped-unavailable"}
+        for outcome in outcomes
+    )
     limitations = [
         "the merged PGM-01 policy's manual-dispatch CI was not dispatched",
         "independent CODEOWNER approval and the human source-release decision are pending",
+        "local deterministic checks were collected on one host target; cross-platform release review remains pending",
     ]
-    if not all_local_passed:
+    if any_failed:
         limitations.append("one or more locally collected commands failed")
+    if any_inconclusive:
+        limitations.append("one or more schema or governance checks were unavailable or pending")
+    if phase == "provisional":
+        limitations.append("this provisional envelope precedes its own schema and governance checks")
+    if phase == "final":
+        limitations.append(
+            "the exact finalized envelope is validated externally and does not self-attest"
+        )
+    if phase == "sealed-failed":
+        limitations.append("validation of the finalized envelope failed; see sealed validation artifacts")
 
     manifest = {
         "schemaVersion": "tl-syntax.evidence-manifest/v1",
@@ -202,12 +244,7 @@ def build(evidence_dir: Path) -> None:
         for line in (evidence_dir / "rustc-version.txt").read_text().splitlines()
         if line.startswith("host: ")
     )
-    result_status = "conclusive" if all_local_passed else "error"
-    result_summary = (
-        "all locally collected tl-syntax checks passed; external review gates remain pending"
-        if all_local_passed
-        else "one or more locally collected tl-syntax checks failed"
-    )
+    result_status, result_summary = classify_result(phase, outcomes)
     envelope = {
         "schemaVersion": "quire.derivation-evidence/v1",
         "recordId": evidence_dir.name,
@@ -275,10 +312,14 @@ def build(evidence_dir: Path) -> None:
 
 
 def main() -> int:
-    if len(sys.argv) != 2:
-        print("usage: build_evidence_envelope.py EVIDENCE_DIR", file=sys.stderr)
+    if len(sys.argv) not in {2, 3}:
+        print("usage: build_evidence_envelope.py EVIDENCE_DIR [PHASE]", file=sys.stderr)
         return 2
-    build(Path(sys.argv[1]))
+    phase = sys.argv[2] if len(sys.argv) == 3 else "final"
+    if phase not in {"provisional", "final", "sealed-failed"}:
+        print(f"unknown evidence build phase: {phase}", file=sys.stderr)
+        return 2
+    build(Path(sys.argv[1]), phase)
     return 0
 
 

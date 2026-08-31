@@ -28,6 +28,9 @@ impl Interval {
     }
 
     /// Returns the number of discrete instants in the interval.
+    ///
+    /// Returns `None` only for `[0, u32::MAX]`, whose cardinality is
+    /// `u32::MAX + 1` and therefore cannot be represented by `u32`.
     pub const fn cardinality(self) -> Option<u32> {
         if self.start == 0 && self.end == u32::MAX {
             None
@@ -160,7 +163,7 @@ impl SemanticProfile {
 
 /// One MLTL syntax node. Operands are indices into the containing node table.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Node {
     /// Operator and operands.
     #[cfg_attr(feature = "serde", serde(flatten))]
@@ -191,7 +194,10 @@ impl Node {
 /// The complete bounded MLTL operator vocabulary.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-#[cfg_attr(feature = "serde", serde(tag = "kind", rename_all = "snake_case"))]
+#[cfg_attr(
+    feature = "serde",
+    serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)
+)]
 pub enum NodeKind {
     /// Boolean false.
     False,
@@ -329,10 +335,12 @@ impl<'a> Formula<'a> {
                     None => true,
                 };
                 if operand_is_invalid {
-                    return Err(FormulaError::OperandNotPreceding {
-                        node: NodeId(index as u32),
-                        operand,
-                    });
+                    let node = u32::try_from(index).map(NodeId).map_err(|_| {
+                        FormulaError::TooManyNodes {
+                            node_count: nodes.len(),
+                        }
+                    })?;
+                    return Err(FormulaError::OperandNotPreceding { node, operand });
                 }
             }
         }
@@ -415,12 +423,147 @@ impl fmt::Display for FormulaError {
 mod serde_checked_values {
     use serde::{de::Error as _, Deserialize, Deserializer, Serialize, Serializer};
 
-    use super::{Interval, SourceSpan};
+    use super::{Interval, Node, NodeId, NodeKind, PropositionId, SourceSpan};
 
     #[derive(Deserialize, Serialize)]
+    #[serde(deny_unknown_fields)]
     struct Bounds {
         start: u32,
         end: u32,
+    }
+
+    #[derive(Deserialize)]
+    #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+    enum NodeWire {
+        False {
+            #[serde(default)]
+            span: Option<SourceSpan>,
+        },
+        True {
+            #[serde(default)]
+            span: Option<SourceSpan>,
+        },
+        Proposition {
+            proposition: PropositionId,
+            #[serde(default)]
+            span: Option<SourceSpan>,
+        },
+        Not {
+            operand: NodeId,
+            #[serde(default)]
+            span: Option<SourceSpan>,
+        },
+        And {
+            left: NodeId,
+            right: NodeId,
+            #[serde(default)]
+            span: Option<SourceSpan>,
+        },
+        Or {
+            left: NodeId,
+            right: NodeId,
+            #[serde(default)]
+            span: Option<SourceSpan>,
+        },
+        Implies {
+            left: NodeId,
+            right: NodeId,
+            #[serde(default)]
+            span: Option<SourceSpan>,
+        },
+        Equivalent {
+            left: NodeId,
+            right: NodeId,
+            #[serde(default)]
+            span: Option<SourceSpan>,
+        },
+        Future {
+            interval: Interval,
+            operand: NodeId,
+            #[serde(default)]
+            span: Option<SourceSpan>,
+        },
+        Globally {
+            interval: Interval,
+            operand: NodeId,
+            #[serde(default)]
+            span: Option<SourceSpan>,
+        },
+        Until {
+            interval: Interval,
+            left: NodeId,
+            right: NodeId,
+            #[serde(default)]
+            span: Option<SourceSpan>,
+        },
+        Release {
+            interval: Interval,
+            left: NodeId,
+            right: NodeId,
+            #[serde(default)]
+            span: Option<SourceSpan>,
+        },
+    }
+
+    impl<'de> Deserialize<'de> for Node {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where
+            D: Deserializer<'de>,
+        {
+            let (kind, span) = match NodeWire::deserialize(deserializer)? {
+                NodeWire::False { span } => (NodeKind::False, span),
+                NodeWire::True { span } => (NodeKind::True, span),
+                NodeWire::Proposition { proposition, span } => {
+                    (NodeKind::Proposition { proposition }, span)
+                }
+                NodeWire::Not { operand, span } => (NodeKind::Not { operand }, span),
+                NodeWire::And { left, right, span } => (NodeKind::And { left, right }, span),
+                NodeWire::Or { left, right, span } => (NodeKind::Or { left, right }, span),
+                NodeWire::Implies { left, right, span } => {
+                    (NodeKind::Implies { left, right }, span)
+                }
+                NodeWire::Equivalent { left, right, span } => {
+                    (NodeKind::Equivalent { left, right }, span)
+                }
+                NodeWire::Future {
+                    interval,
+                    operand,
+                    span,
+                } => (NodeKind::Future { interval, operand }, span),
+                NodeWire::Globally {
+                    interval,
+                    operand,
+                    span,
+                } => (NodeKind::Globally { interval, operand }, span),
+                NodeWire::Until {
+                    interval,
+                    left,
+                    right,
+                    span,
+                } => (
+                    NodeKind::Until {
+                        interval,
+                        left,
+                        right,
+                    },
+                    span,
+                ),
+                NodeWire::Release {
+                    interval,
+                    left,
+                    right,
+                    span,
+                } => (
+                    NodeKind::Release {
+                        interval,
+                        left,
+                        right,
+                    },
+                    span,
+                ),
+            };
+            Ok(Self { kind, span })
+        }
     }
 
     impl Serialize for Interval {
@@ -472,7 +615,33 @@ mod serde_checked_values {
 
 #[cfg(test)]
 mod tests {
+    use proptest::prelude::*;
+
     use super::*;
+
+    proptest! {
+        // Trace: TC-001, TC-002, FR-001-AC-1, FR-001-AC-2
+        #[test]
+        fn interval_construction_and_cardinality_hold_for_all_bounds(start: u32, end: u32) {
+            let interval = Interval::new(start, end);
+            assert_eq!(interval.is_ok(), start <= end);
+            if let Ok(interval) = interval {
+                let cardinality = u64::from(end) - u64::from(start) + 1;
+                assert_eq!(interval.cardinality().map(u64::from), u32::try_from(cardinality).ok().map(u64::from));
+            }
+        }
+
+        // Trace: TC-006, FR-003-AC-1
+        #[test]
+        fn source_span_construction_and_length_hold_for_all_offsets(start: u32, end: u32) {
+            let span = SourceSpan::new(start, end);
+            assert_eq!(span.is_ok(), start <= end);
+            if let Ok(span) = span {
+                assert_eq!(span.len(), end - start);
+                assert_eq!(span.is_empty(), start == end);
+            }
+        }
+    }
 
     // Trace: TC-001, TC-002, FR-001-AC-1, FR-001-AC-2
     #[test]

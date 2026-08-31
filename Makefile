@@ -12,12 +12,14 @@ help:
 	@echo "  make lint             - Clippy with -D warnings"
 	@echo "  make test             - cargo test"
 	@echo "  make check-features   - check no-default, alloc, serde, and all features"
+	@echo "  make check-default-dependencies - require an empty default dependency graph"
 	@echo "  make check-corpus     - verify retained corpus SHA-256 digests"
+	@echo "  make verify-evidence  - verify every retained evidence SHA-256 manifest"
 	@echo "  make spec             - validate the specification with Quire"
 	@echo "  make evidence-tool    - syntax-check the PGM-01 evidence tooling"
 	@echo "  make build            - Release build"
 	@echo "  make clean            - cargo clean"
-	@echo "  make deny             - cargo deny check licenses"
+	@echo "  make deny             - cargo deny check licenses and sources"
 	@echo "  make audit-unsafe     - Enforce // SAFETY: comments on unsafe blocks"
 	@echo "  make ci               - All CI gates locally (fmt-check + lint + test + deny + audit-unsafe)"
 
@@ -48,17 +50,28 @@ check-features:
 	$(CARGO) check --lib --no-default-features --features serde
 	$(CARGO) check --lib --all-features
 
+.PHONY: check-default-dependencies
+check-default-dependencies:
+	python3 scripts/check_default_dependencies.py
+
 .PHONY: check-corpus
 check-corpus:
 	sha256sum --check corpus/SHA256SUMS
+	python3 scripts/validate_corpus.py
+
+.PHONY: verify-evidence
+verify-evidence:
+	bash scripts/verify_evidence.sh
 
 .PHONY: spec
 spec:
 	quire validate --scope . 'spec/**/*.md'
+	quire coverage --scope . --strict
 
 .PHONY: evidence-tool
 evidence-tool:
-	python3 -m py_compile scripts/build_evidence_envelope.py scripts/validate_json_schema.py
+	python3 -m py_compile scripts/build_evidence_envelope.py scripts/check_default_dependencies.py scripts/finalize_collection.py scripts/test_evidence_tool.py scripts/validate_corpus.py scripts/validate_json_schema.py
+	python3 scripts/test_evidence_tool.py
 
 .PHONY: build
 build:
@@ -75,6 +88,7 @@ clean:
 .PHONY: deny
 deny:
 	$(CARGO) deny check licenses
+	$(CARGO) deny check sources
 
 .PHONY: cargo-audit
 cargo-audit:
@@ -89,4 +103,4 @@ audit-unsafe:
 # =============================================================================
 
 .PHONY: ci
-ci: fmt-check check-features lint test check-corpus deny audit-unsafe evidence-tool
+ci: fmt-check check-features check-default-dependencies lint test check-corpus deny audit-unsafe evidence-tool spec verify-evidence

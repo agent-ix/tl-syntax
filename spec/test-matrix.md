@@ -31,7 +31,7 @@ relationships:
 | Non-Functional Req | Verification Method | Evidence/Test Cases | Status |
 |---|---|---|---|
 | NFR-001 | Compile and inspection | TC-015 | ✅ covered |
-| NFR-002 | Tests and inspection | TC-005, TC-014 | ✅ covered |
+| NFR-002 | Tests and inspection | TC-005, TC-014, TC-016 | ✅ covered |
 
 ## Test Case Summary
 
@@ -52,3 +52,4 @@ relationships:
 | TC-013 | Enforce declared fixture validity | Integration | P0 | FR-005-AC-2 | ✅ implemented |
 | TC-014 | Verify checked-in corpus determinism | Integration | P1 | FR-005-AC-3, NFR-002-AC-2 | ✅ implemented |
 | TC-015 | Compile the allocation-free API | Compile | P0 | NFR-001-AC-1, NFR-001-AC-2 | ✅ implemented |
+| TC-016 | Reject false-success evidence classifications | Integration | P0 | NFR-002-AC-3 | ✅ implemented |

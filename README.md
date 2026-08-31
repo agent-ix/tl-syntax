@@ -25,13 +25,12 @@ use tl_syntax::{Formula, Interval, Node, NodeId, NodeKind, PropositionId, Semant
 let nodes = [
     Node::new(NodeKind::Proposition { proposition: PropositionId(0) }),
     Node::new(NodeKind::Future {
-        interval: Interval::new(1, 3)?,
+        interval: Interval::new(1, 3).unwrap(),
         operand: NodeId(0),
     }),
 ];
-let formula = Formula::new(SemanticProfile::ClosedTraceV1, NodeId(1), &nodes)?;
+let formula = Formula::new(SemanticProfile::ClosedTraceV1, NodeId(1), &nodes).unwrap();
 assert_eq!(formula.root(), NodeId(1));
-# Ok::<(), Box<dyn std::error::Error>>(())
 ```
 
 ## Wire formats and corpus

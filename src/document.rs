@@ -24,16 +24,42 @@ impl FormulaSchemaVersion {
 /// Owned, versioned formula exchange document.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "serde", serde(try_from = "FormulaDocumentWire"))]
 pub struct FormulaDocument {
     /// Wire schema identity.
-    pub schema_version: FormulaSchemaVersion,
+    schema_version: FormulaSchemaVersion,
     /// Required finite-trace semantic profile.
-    pub semantic_profile: SemanticProfile,
+    semantic_profile: SemanticProfile,
     /// Root node identity.
-    pub root: NodeId,
+    root: NodeId,
     /// Nodes in stable topological order.
-    pub nodes: Vec<Node>,
+    nodes: Vec<Node>,
+}
+
+#[cfg(feature = "serde")]
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct FormulaDocumentWire {
+    schema_version: FormulaSchemaVersion,
+    semantic_profile: SemanticProfile,
+    root: NodeId,
+    nodes: Vec<Node>,
+}
+
+#[cfg(feature = "serde")]
+impl TryFrom<FormulaDocumentWire> for FormulaDocument {
+    type Error = FormulaError;
+
+    fn try_from(wire: FormulaDocumentWire) -> Result<Self, Self::Error> {
+        let document = Self {
+            schema_version: wire.schema_version,
+            semantic_profile: wire.semantic_profile,
+            root: wire.root,
+            nodes: wire.nodes,
+        };
+        document.validate()?;
+        Ok(document)
+    }
 }
 
 impl FormulaDocument {
@@ -56,6 +82,26 @@ impl FormulaDocument {
     /// Validates this document and returns its allocation-free view.
     pub fn validate(&self) -> Result<Formula<'_>, FormulaError> {
         Formula::new(self.semantic_profile, self.root, &self.nodes)
+    }
+
+    /// Returns the wire schema version.
+    pub const fn schema_version(&self) -> FormulaSchemaVersion {
+        self.schema_version
+    }
+
+    /// Returns the required finite-trace semantic profile.
+    pub const fn semantic_profile(&self) -> SemanticProfile {
+        self.semantic_profile
+    }
+
+    /// Returns the root node identity.
+    pub const fn root(&self) -> NodeId {
+        self.root
+    }
+
+    /// Returns the nodes in stable topological order.
+    pub fn nodes(&self) -> &[Node] {
+        &self.nodes
     }
 
     /// Copies a validated borrowed formula into an owned v1 document.
@@ -101,12 +147,34 @@ pub struct PropositionEntry {
 /// Owned, versioned proposition-map exchange document.
 #[derive(Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
+#[cfg_attr(feature = "serde", serde(try_from = "PropositionMapDocumentWire"))]
 pub struct PropositionMapDocument {
     /// Wire schema identity.
-    pub schema_version: PropositionMapSchemaVersion,
+    schema_version: PropositionMapSchemaVersion,
     /// Entries ordered by strictly increasing proposition identity.
-    pub propositions: Vec<PropositionEntry>,
+    propositions: Vec<PropositionEntry>,
+}
+
+#[cfg(feature = "serde")]
+#[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct PropositionMapDocumentWire {
+    schema_version: PropositionMapSchemaVersion,
+    propositions: Vec<PropositionEntry>,
+}
+
+#[cfg(feature = "serde")]
+impl TryFrom<PropositionMapDocumentWire> for PropositionMapDocument {
+    type Error = PropositionMapError;
+
+    fn try_from(wire: PropositionMapDocumentWire) -> Result<Self, Self::Error> {
+        let document = Self {
+            schema_version: wire.schema_version,
+            propositions: wire.propositions,
+        };
+        document.validate()?;
+        Ok(document)
+    }
 }
 
 impl PropositionMapDocument {
@@ -148,6 +216,16 @@ impl PropositionMapDocument {
             }
         }
         Ok(())
+    }
+
+    /// Returns the wire schema version.
+    pub const fn schema_version(&self) -> PropositionMapSchemaVersion {
+        self.schema_version
+    }
+
+    /// Returns proposition entries in strictly increasing identity order.
+    pub fn propositions(&self) -> &[PropositionEntry] {
+        &self.propositions
     }
 }
 
@@ -214,7 +292,7 @@ mod tests {
             },
         ])
         .unwrap();
-        assert_eq!(valid.propositions.len(), 2);
+        assert_eq!(valid.propositions().len(), 2);
 
         let duplicate = PropositionMapDocument::new(vec![
             PropositionEntry {
@@ -233,6 +311,32 @@ mod tests {
                 second: PropositionId(2)
             })
         );
+
+        assert_eq!(
+            PropositionMapDocument::new(vec![PropositionEntry {
+                id: PropositionId(1),
+                name: String::new(),
+            }]),
+            Err(PropositionMapError::EmptyName {
+                id: PropositionId(1)
+            })
+        );
+        assert_eq!(
+            PropositionMapDocument::new(vec![
+                PropositionEntry {
+                    id: PropositionId(2),
+                    name: "later".to_string(),
+                },
+                PropositionEntry {
+                    id: PropositionId(1),
+                    name: "earlier".to_string(),
+                },
+            ]),
+            Err(PropositionMapError::IdentityNotIncreasing {
+                previous: PropositionId(2),
+                current: PropositionId(1)
+            })
+        );
     }
 
     // Trace: TC-009, FR-004-AC-1
@@ -245,5 +349,10 @@ mod tests {
         let formula = document.validate().unwrap();
         assert_eq!(formula.profile(), SemanticProfile::OnlinePrefixV1);
         assert_eq!(formula.nodes(), nodes);
+        let copied = FormulaDocument::from_formula(formula);
+        assert_eq!(copied.schema_version(), FormulaSchemaVersion::V1);
+        assert_eq!(copied.semantic_profile(), SemanticProfile::OnlinePrefixV1);
+        assert_eq!(copied.root(), NodeId(0));
+        assert_eq!(copied.nodes(), nodes);
     }
 }

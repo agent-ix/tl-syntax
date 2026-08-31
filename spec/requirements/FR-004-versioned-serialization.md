@@ -30,8 +30,8 @@ explicit and versioned.
 
 - Formula documents shall carry the formula schema version and semantic profile.
 - Proposition-map documents shall carry the proposition-map schema version.
-- Proposition maps shall reject duplicate or non-increasing identities and
-  duplicate names.
+- Proposition maps shall reject duplicate or non-increasing identities plus
+  empty or duplicate names.
 - Unknown schema or semantic-profile strings shall fail deserialization.
 
 ## Acceptance Criteria

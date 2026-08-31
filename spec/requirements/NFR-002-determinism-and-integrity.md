@@ -18,7 +18,8 @@ on every supported platform.
 
 ## Scope
 
-The requirement covers all public syntax values and checked-in JSON artifacts.
+The requirement covers all public syntax values, checked-in JSON artifacts, and
+retained evidence classifications.
 
 ## Rationale
 
@@ -43,6 +44,7 @@ validation outcomes using fixed checked-in inputs.
 |---|---|---|
 | NFR-002-AC-1 | Repeated comparisons over identical values produce one stable order. | Test (TC-005) |
 | NFR-002-AC-2 | Every checked-in serialized document names a v1 schema and supported profile where applicable. | Test (TC-014) |
+| NFR-002-AC-3 | Missing, skipped, failed, or not-yet-sealed checks cannot be classified as conclusive passing evidence. | Test (TC-016) |
 
 ## Dependencies
 

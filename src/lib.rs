@@ -1,8 +1,6 @@
 #![no_std]
-//! Parser-independent syntax and semantic-profile identities for bounded MLTL.
-//!
-//! The default feature set has no dependencies and does not require allocation.
-//! Enable `alloc` for owned documents and `serde` for the versioned wire model.
+#![forbid(unsafe_code)]
+#![doc = include_str!("../README.md")]
 
 #[cfg(feature = "alloc")]
 extern crate alloc;

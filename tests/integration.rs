@@ -5,6 +5,8 @@ use tl_syntax::{
     PropositionId, PropositionMapDocument, SemanticProfile, SourceSpan,
 };
 
+use proptest::prelude::*;
+
 #[derive(serde::Deserialize)]
 struct CorpusManifest {
     corpus_revision: String,
@@ -27,6 +29,43 @@ struct CorpusFixture {
     expected_horizon: Option<u32>,
     #[serde(default)]
     expected_closed_trace: Option<bool>,
+}
+
+proptest! {
+    // Trace: TC-009, FR-004-AC-1
+    #[test]
+    fn generated_owned_formulas_round_trip(
+        proposition in any::<u32>(),
+        first_bound in any::<u32>(),
+        second_bound in any::<u32>(),
+        closed_trace in any::<bool>(),
+    ) {
+        let start = first_bound.min(second_bound);
+        let end = first_bound.max(second_bound);
+        let profile = if closed_trace {
+            SemanticProfile::ClosedTraceV1
+        } else {
+            SemanticProfile::OnlinePrefixV1
+        };
+        let document = FormulaDocument::new(
+            profile,
+            NodeId(1),
+            vec![
+                Node::new(NodeKind::Proposition {
+                    proposition: PropositionId(proposition),
+                }),
+                Node::new(NodeKind::Future {
+                    interval: Interval::new(start, end).unwrap(),
+                    operand: NodeId(0),
+                }),
+            ],
+        )
+        .unwrap();
+        let encoded = serde_json::to_vec(&document).unwrap();
+        let decoded: FormulaDocument = serde_json::from_slice(&encoded).unwrap();
+        assert_eq!(decoded, document);
+        decoded.validate().unwrap();
+    }
 }
 
 // Trace: TC-008, TC-009, FR-003-AC-3, FR-004-AC-1, StR-002-VC-1
@@ -106,8 +145,28 @@ fn checked_values_and_graphs_reject_malformed_wire_data() {
         "root":0,
         "nodes":[{"kind":"not","operand":1}]
     }"#;
-    let document: FormulaDocument = serde_json::from_str(forward_reference).unwrap();
-    assert!(document.validate().is_err());
+    assert!(serde_json::from_str::<FormulaDocument>(forward_reference).is_err());
+}
+
+// Trace: TC-011, FR-004-AC-3
+#[test]
+fn unknown_node_fields_and_invalid_proposition_maps_are_rejected_on_decode() {
+    let unknown_node_field = r#"{
+        "schema_version":"tl-syntax.formula/v1",
+        "semantic_profile":"mltl.closed-trace/v1",
+        "root":0,
+        "nodes":[{"kind":"true","unexpected":1}]
+    }"#;
+    assert!(serde_json::from_str::<FormulaDocument>(unknown_node_field).is_err());
+
+    let duplicate_name = r#"{
+        "schema_version":"tl-syntax.proposition-map/v1",
+        "propositions":[
+          {"id":0,"name":"same"},
+          {"id":1,"name":"same"}
+        ]
+    }"#;
+    assert!(serde_json::from_str::<PropositionMapDocument>(duplicate_name).is_err());
 }
 
 // Trace: TC-009, FR-004-AC-1

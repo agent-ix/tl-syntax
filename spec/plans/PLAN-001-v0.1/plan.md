@@ -24,15 +24,17 @@ PGM-01
   -> human v0.1 source-release decision
 ```
 
-## Work Packages
+## Task File Mapping
 
-1. Validate the requirements, matrix, composite review, and assurance packet.
-2. Implement core values and borrowed graph validation with no default features.
-3. Implement optional owned and serde documents with strict version enums.
-4. Add requirement-tagged tests and checked-in corpus fixtures.
-5. Run CI, feature checks, corpus verification, code review, and gap analysis.
-6. Package the exact candidate's results in the PGM-01 evidence envelope and
-   reconcile its policy/schema identities against the merged PGM-01 policy.
+| Task | Scope | Exit evidence |
+|---|---|---|
+| Task-001 | Specification and assurance foundation | Validated requirements, matrix, reviews, and assurance packet |
+| Task-002 | Checked values and identities | Requirement-tagged unit and property tests |
+| Task-003 | Borrowed formula graph | Complete operator and graph-invariant tests |
+| Task-004 | Wire documents and corpus | Strict serde tests, schemas, fixtures, and semantic corpus checker |
+| Task-005 | Verification and review remediation | Complete local gate and resolved automated-review findings |
+| Task-006 | Exact-candidate evidence | Sealed PGM-01 validations and checksummed retained record |
+| Task-007 | Human source-release decision | Maintainer review and explicit release decision |
 
 ## Exit Criteria
 
