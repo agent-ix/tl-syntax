@@ -32,7 +32,7 @@ PGM-01
 4. Add requirement-tagged tests and checked-in corpus fixtures.
 5. Run CI, feature checks, corpus verification, code review, and gap analysis.
 6. Package the exact candidate's results in the PGM-01 evidence envelope and
-   reconcile its policy/schema identities again after PGM-01 merges.
+   reconcile its policy/schema identities against the merged PGM-01 policy.
 
 ## Exit Criteria
 

@@ -15,9 +15,9 @@ Strict specification validation is grammar-clean and strict requirement
 coverage reports zero unbacked rows and zero contradicted statuses. Repository
 CI, all feature combinations, documentation, licensing, unsafe audit, and corpus
 tests pass locally. The candidate now cites and maps all ten PGM-01 requirements,
-pins the reviewed policy/schema candidate, and can retain a schema-validated
+pins the merged policy and reviewed schema, and can retain a schema-validated
 canonical evidence envelope. Advisory module diagnostics do not contradict a
-requirement. PGM-01 merge, human review/release ownership, and downstream corpus
+requirement. Human review/release ownership and downstream corpus
 pins remain external program gates rather than hidden successful outcomes.
 
 ## Findings
@@ -27,4 +27,3 @@ pins remain external program gates rather than hidden successful outcomes.
 | FND-301 | low | The installed process module expects `Status` while its validated functional-coverage table contract requires `Coverage Status`; status classification for those five aggregate rows is skipped, but all underlying criterion and test rows are independently backed. | TM-001, SUITE-003 |
 | FND-302 | low | The coverage report emits advisory diagnostics for an absent optional Inspections archetype and generic property-shape classification; neither creates an unbacked row or contradicted status. | SUITE-003 |
 | FND-303 | medium | AP-001 requires a human maintainer code review and v0.1 source-release decision; downstream temporal repositories must pin and report `tl-syntax-corpus/v1` before their own releases. | AP-001, AA-001 |
-| FND-304 | medium | PGM-01 is still an in-review candidate. The exact policy revision and envelope schema digest are provisionally pinned and must be reconciled after merge. | PGM-01, SR-004, SUITE-007 |

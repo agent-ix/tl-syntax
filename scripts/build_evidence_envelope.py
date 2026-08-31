@@ -13,7 +13,7 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parent.parent
-PGM01_CANDIDATE_REVISION = "7f8130d3fdb160a98a7a7f445cc1eb7419a3c179"
+PGM01_POLICY_REVISION = "7dac9d8c19952412b56a0347387666e2ca81e01d"
 PGM01_ENVELOPE_SCHEMA_DIGEST = (
     "0946e235e9e4b0fa79e9b9ec27ae157b303c17de0a9408d3cc04968fb7152256"
 )
@@ -134,7 +134,7 @@ def build(evidence_dir: Path) -> None:
         },
         "pgm01": {
             "policy": "ix://agent-ix/quire-contract-ir/PGM-01",
-            "candidateRevision": PGM01_CANDIDATE_REVISION,
+            "candidateRevision": PGM01_POLICY_REVISION,
             "envelopeSchema": "quire.derivation-evidence/v1",
             "envelopeSchemaDigest": digest(PGM01_ENVELOPE_SCHEMA_DIGEST),
         },
@@ -180,8 +180,7 @@ def build(evidence_dir: Path) -> None:
     outcomes = command_outcomes(evidence_dir)
     all_local_passed = all(outcome["status"] == "passed" for outcome in outcomes)
     limitations = [
-        "PGM-01 is an in-review candidate and must be reconciled again after merge",
-        "the current candidate has no newly dispatched remote CI run",
+        "the merged PGM-01 policy's manual-dispatch CI was not dispatched",
         "independent CODEOWNER approval and the human source-release decision are pending",
     ]
     if not all_local_passed:
@@ -266,7 +265,7 @@ def build(evidence_dir: Path) -> None:
                 "componentClass": "linked-runtime",
                 "corpusRevision": "tl-syntax-corpus/v1",
                 "envelopeSchemaDigest": PGM01_ENVELOPE_SCHEMA_DIGEST,
-                "pgm01CandidateRevision": PGM01_CANDIDATE_REVISION,
+                "pgm01CandidateRevision": PGM01_POLICY_REVISION,
                 "reviewState": "pending",
                 "sourceState": source_state,
             }
