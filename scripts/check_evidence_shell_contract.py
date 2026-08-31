@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = ROOT / "scripts" / "verify_evidence.sh"
 REQUIRED = (
     "/usr/bin/python3 scripts/verify_evidence_tree.py",
+    "/usr/bin/python3 scripts/evidence_profile.py --verify-census",
     "/usr/bin/python3 scripts/verify_evidence_manifest.py \"$checksum\"",
     "/usr/bin/python3 scripts/finalize_collection.py --check \"${checksum%.sha256}\"",
 )

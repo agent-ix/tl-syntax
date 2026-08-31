@@ -54,6 +54,6 @@ relationships:
 | TC-015 | Compile the allocation-free API | Compile | P0 | NFR-001-AC-1, NFR-001-AC-2 | ✅ implemented |
 | TC-016 | Reject false-success evidence classifications | Integration | P0 | NFR-002-AC-3 | ✅ implemented |
 | TC-017 | Round-trip every supported node wire variant and tag | Integration | P0 | FR-004-AC-1 | ✅ implemented |
-| TC-018 | Reject swallowed command failures and incomplete traceability reports | Integration | P0 | NFR-002-AC-4 | ✅ implemented |
+| TC-018 | Reject swallowed command failures, disabled per-record validators, zero-active evidence censuses, and incomplete traceability reports | Integration | P0 | NFR-002-AC-4 | ✅ implemented |
 | TC-019 | Execute the no-std feature matrix and empty-default-dependency gate | Integration | P0 | NFR-001-AC-1, NFR-001-AC-2 | ✅ implemented |
 | TC-020 | Bound formula node allocation during wire decoding and owned construction | Integration | P0 | FR-004-AC-1, FR-004-AC-4 | ✅ implemented |

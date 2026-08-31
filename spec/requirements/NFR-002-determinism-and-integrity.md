@@ -46,7 +46,7 @@ validation outcomes using fixed checked-in inputs.
 | NFR-002-AC-1 | Repeated comparisons over identical values produce one stable order. | Test (TC-005) |
 | NFR-002-AC-2 | Every checked-in serialized document names a v1 schema and supported profile where applicable. | Test (TC-014) |
 | NFR-002-AC-3 | Missing, skipped, failed, or not-yet-sealed checks cannot be classified as conclusive passing evidence. | Test (TC-016) |
-| NFR-002-AC-4 | Mandatory local CI verifies source-locked executable paths and SHA-256 identities, binds the compiled non-ignored Rust test census to requirement-tagged tests, propagates non-zero exits, and rejects incomplete traceability or successful evidence without source-derived positive output. | Test (TC-018) |
+| NFR-002-AC-4 | Mandatory local CI verifies source-locked executable paths and SHA-256 identities, binds the compiled non-ignored Rust test census to requirement-tagged tests, behaviorally verifies every per-record evidence validator, requires an exact census containing at least one active v2-qualified record, propagates non-zero exits, and rejects incomplete traceability or successful evidence without source-derived positive output. | Test (TC-018) |
 
 ## Dependencies
 

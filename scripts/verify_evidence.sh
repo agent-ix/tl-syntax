@@ -2,6 +2,7 @@
 set -euo pipefail
 
 /usr/bin/python3 scripts/verify_evidence_tree.py
+/usr/bin/python3 scripts/evidence_profile.py --verify-census
 found=0
 while IFS= read -r -d '' checksum; do
   found=1
