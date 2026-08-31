@@ -42,8 +42,10 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Install Quire
-        run: npm install --global '@agent-ix/quire-cli@0.31.0'
+      - name: Install specification tools and modules
+        run: |
+          npm install --global '@agent-ix/quire-cli@0.31.0' '@agent-ix/quoin@0.22.5'
+          quoin module ensure-defaults
 
       - name: Install cargo-deny
         uses: taiki-e/install-action@v2
