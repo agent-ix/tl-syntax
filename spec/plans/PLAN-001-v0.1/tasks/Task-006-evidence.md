@@ -20,6 +20,6 @@ explicit limitations in a checksummed evidence record.
 
 ## Completion Evidence
 
-The retained `592f2140e12a` record has a passing collection summary, two passing sealed PGM-01
+The retained `269d352d1050` record has a passing collection summary, two passing sealed PGM-01
 validations, and a checksum manifest that verifies every artifact. Its envelope remains
 non-self-attesting and explicitly inconclusive; the post-seal summary records the external result.
