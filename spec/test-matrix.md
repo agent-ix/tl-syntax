@@ -16,7 +16,7 @@ relationships:
 | FR-001 | FR-001-AC-1, FR-001-AC-2 | TC-001, TC-002 | ✅ covered |
 | FR-002 | FR-002-AC-1, FR-002-AC-2, FR-002-AC-3 | TC-003, TC-004, TC-005 | ✅ covered |
 | FR-003 | FR-003-AC-1, FR-003-AC-2, FR-003-AC-3 | TC-006, TC-007, TC-008 | ✅ covered |
-| FR-004 | FR-004-AC-1, FR-004-AC-2, FR-004-AC-3 | TC-009, TC-010, TC-011 | ✅ covered |
+| FR-004 | FR-004-AC-1, FR-004-AC-2, FR-004-AC-3 | TC-009, TC-010, TC-011, TC-017 | ✅ covered |
 | FR-005 | FR-005-AC-1, FR-005-AC-2, FR-005-AC-3 | TC-012, TC-013, TC-014 | ✅ covered |
 
 ## Stakeholder Requirement Coverage
@@ -53,3 +53,4 @@ relationships:
 | TC-014 | Verify checked-in corpus determinism | Integration | P1 | FR-005-AC-3, NFR-002-AC-2 | ✅ implemented |
 | TC-015 | Compile the allocation-free API | Compile | P0 | NFR-001-AC-1, NFR-001-AC-2 | ✅ implemented |
 | TC-016 | Reject false-success evidence classifications | Integration | P0 | NFR-002-AC-3 | ✅ implemented |
+| TC-017 | Round-trip every supported node wire variant and tag | Integration | P0 | FR-004-AC-1 | ✅ implemented |

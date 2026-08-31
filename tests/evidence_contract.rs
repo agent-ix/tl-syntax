@@ -38,6 +38,25 @@ fn evidence_suite_registry_is_wired_to_executable_gates() {
     ] {
         assert!(ci_commands.contains(command), "make ci omits {command}");
     }
+    let exact_cargo_test = ci_commands.lines().any(|line| {
+        let fields = line.split_whitespace().collect::<Vec<_>>();
+        fields.len() == 3
+            && PathBuf::from(fields[0])
+                .file_name()
+                .and_then(|name| name.to_str())
+                == Some("cargo")
+            && fields[1..] == ["test", "--all-features"]
+    });
+    assert!(
+        exact_cargo_test,
+        "make ci changes or weakens required command cargo test --all-features"
+    );
+    assert!(
+        ci_commands
+            .lines()
+            .any(|line| line.trim() == "quire coverage --scope . --strict"),
+        "make ci changes or weakens required strict coverage command"
+    );
     for command in [
         "make ci",
         "make spec",

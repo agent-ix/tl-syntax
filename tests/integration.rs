@@ -99,6 +99,84 @@ fn formula_document_round_trips_with_required_profile() {
     assert!(serde_json::from_str::<FormulaDocument>(&missing_profile).is_err());
 }
 
+// Trace: TC-017, FR-004-AC-1
+#[test]
+fn every_supported_node_variant_round_trips_with_its_stable_wire_tag() {
+    let interval = Interval::new(2, 5).unwrap();
+    let document = FormulaDocument::new(
+        SemanticProfile::ClosedTraceV1,
+        NodeId(11),
+        vec![
+            Node::new(NodeKind::False),
+            Node::new(NodeKind::True),
+            Node::new(NodeKind::Proposition {
+                proposition: PropositionId(17),
+            }),
+            Node::new(NodeKind::Not { operand: NodeId(2) }),
+            Node::new(NodeKind::And {
+                left: NodeId(1),
+                right: NodeId(3),
+            }),
+            Node::new(NodeKind::Or {
+                left: NodeId(0),
+                right: NodeId(4),
+            }),
+            Node::new(NodeKind::Implies {
+                left: NodeId(4),
+                right: NodeId(5),
+            }),
+            Node::new(NodeKind::Equivalent {
+                left: NodeId(5),
+                right: NodeId(6),
+            }),
+            Node::new(NodeKind::Future {
+                interval,
+                operand: NodeId(7),
+            }),
+            Node::new(NodeKind::Globally {
+                interval,
+                operand: NodeId(8),
+            }),
+            Node::new(NodeKind::Until {
+                interval,
+                left: NodeId(8),
+                right: NodeId(9),
+            }),
+            Node::new(NodeKind::Release {
+                interval,
+                left: NodeId(9),
+                right: NodeId(10),
+            }),
+        ],
+    )
+    .unwrap();
+
+    let encoded = serde_json::to_string(&document).unwrap();
+    let decoded: FormulaDocument = serde_json::from_str(&encoded).unwrap();
+    assert_eq!(decoded, document, "round-trip lost or reordered a node");
+    decoded.validate().unwrap();
+
+    for kind in [
+        "false",
+        "true",
+        "proposition",
+        "not",
+        "and",
+        "or",
+        "implies",
+        "equivalent",
+        "future",
+        "globally",
+        "until",
+        "release",
+    ] {
+        assert!(
+            encoded.contains(&format!(r#""kind":"{kind}""#)),
+            "missing stable wire tag {kind}"
+        );
+    }
+}
+
 // Trace: TC-010, FR-004-AC-2
 #[test]
 fn unknown_schema_and_profile_versions_are_rejected() {

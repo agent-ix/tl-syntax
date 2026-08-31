@@ -19,6 +19,21 @@ EXPECTED_VALID = {
     "short-trace-future-v1": (2, False),
     "large-bound-future-v1": (4294967295, False),
 }
+OPERATOR_FIELDS = {
+    "false": (),
+    "true": (),
+    "proposition": (),
+    "not": ("operand",),
+    "and": ("left", "right"),
+    "or": ("left", "right"),
+    "implies": ("left", "right"),
+    "equivalent": ("left", "right"),
+    "future": ("operand",),
+    "globally": ("operand",),
+    "until": ("left", "right"),
+    "release": ("left", "right"),
+}
+TEMPORAL_KINDS = {"future", "globally", "until", "release"}
 
 
 def load_json(path: Path) -> Any:
@@ -27,11 +42,98 @@ def load_json(path: Path) -> Any:
 
 def operand_ids(node: dict[str, Any]) -> list[int]:
     kind = node.get("kind")
-    if kind in {"not", "future", "globally"}:
-        return [node.get("operand")]
-    if kind in {"and", "or", "implies", "equivalent", "until", "release"}:
-        return [node.get("left"), node.get("right")]
-    return []
+    if kind not in OPERATOR_FIELDS:
+        raise AssertionError(f"validator does not recognize formula operator {kind!r}")
+    return [node.get(field) for field in OPERATOR_FIELDS[kind]]
+
+
+def schema_operator_kinds(schema: dict[str, Any]) -> set[str]:
+    kinds: set[str] = set()
+    for variant in schema["$defs"]["node"]["oneOf"]:
+        declaration = variant["properties"]["kind"]
+        if "const" in declaration:
+            kinds.add(declaration["const"])
+        else:
+            kinds.update(declaration["enum"])
+    return kinds
+
+
+def formula_document(node: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "schema_version": "tl-syntax.formula/v1",
+        "semantic_profile": "mltl.closed-trace/v1",
+        "root": 0,
+        "nodes": [node],
+    }
+
+
+def representative_node(kind: str) -> dict[str, Any]:
+    node: dict[str, Any] = {"kind": kind}
+    if kind == "proposition":
+        node["proposition"] = 0
+    for field in OPERATOR_FIELDS[kind]:
+        node[field] = 0 if field == "operand" else int(field == "right")
+    if kind in TEMPORAL_KINDS:
+        node["interval"] = {"start": 0, "end": 1}
+    return node
+
+
+def validate_formula_schema_contract(
+    schema_value: dict[str, Any], schema: Draft7Validator
+) -> None:
+    expected_kinds = set(OPERATOR_FIELDS)
+    observed_kinds = schema_operator_kinds(schema_value)
+    if observed_kinds != expected_kinds:
+        raise AssertionError(
+            "formula schema operator vocabulary drift: "
+            f"expected {sorted(expected_kinds)}, observed {sorted(observed_kinds)}"
+        )
+
+    for kind in sorted(expected_kinds):
+        errors = list(schema.iter_errors(formula_document(representative_node(kind))))
+        if errors:
+            raise AssertionError(
+                f"formula schema rejects supported operator {kind}: {errors[0].message}"
+            )
+
+    invalid_documents = [
+        {
+            "schema_version": "tl-syntax.formula/v1",
+            "semantic_profile": "mltl.closed-trace/v1",
+            "root": 0,
+            "nodes": [],
+        },
+        {
+            "schema_version": "tl-syntax.formula/v1",
+            "semantic_profile": "totally.made.up/v9",
+            "root": 0,
+            "nodes": [{"kind": "true"}],
+        },
+        {
+            "schema_version": "tl-syntax.formula/v1",
+            "semantic_profile": "mltl.closed-trace/v1",
+            "root": -1,
+            "nodes": [{"kind": "true"}],
+        },
+        formula_document({"kind": "true", "FABRICATED": "x", "operand": 99}),
+        formula_document({"kind": "until"}),
+        formula_document(
+            {
+                "kind": "future",
+                "interval": {"start": 0, "end": 1, "FABRICATED": 1},
+                "operand": 0,
+            }
+        ),
+        formula_document({"kind": "true", "span": {"start": 0, "end": 1, "JUNK": 1}}),
+    ]
+    if any(not list(schema.iter_errors(document)) for document in invalid_documents):
+        raise AssertionError("formula schema accepted a required constraint probe")
+
+    inverted = formula_document(
+        {"kind": "future", "interval": {"start": 3, "end": 2}, "operand": 0}
+    )
+    if semantic_formula_error(inverted, schema) != "interval_inverted":
+        raise AssertionError("semantic corpus gate accepted an inverted interval")
 
 
 def semantic_formula_error(document: Any, schema: Draft7Validator) -> str | None:
@@ -83,6 +185,7 @@ def main() -> int:
     Draft7Validator.check_schema(proposition_schema_value)
     formula_schema = Draft7Validator(formula_schema_value)
     proposition_schema = Draft7Validator(proposition_schema_value)
+    validate_formula_schema_contract(formula_schema_value, formula_schema)
 
     validate_proposition_map(load_json(CORPUS / "propositions.json"), proposition_schema)
     manifest = load_json(CORPUS / "manifest.json")
@@ -112,22 +215,6 @@ def main() -> int:
     if observed_valid != set(EXPECTED_VALID):
         raise AssertionError("valid fixture population differs from the reviewed expectation set")
 
-    probes = [
-        {
-            "schema_version": "tl-syntax.formula/v1",
-            "semantic_profile": "mltl.closed-trace/v1",
-            "root": 0,
-            "nodes": [{"kind": "true", "FABRICATED": "x", "operand": 99}],
-        },
-        {
-            "schema_version": "tl-syntax.formula/v1",
-            "semantic_profile": "mltl.closed-trace/v1",
-            "root": 0,
-            "nodes": [{"kind": "until"}],
-        },
-    ]
-    if any(not list(formula_schema.iter_errors(probe)) for probe in probes):
-        raise AssertionError("formula node schema accepted an unknown-field or arity probe")
     print("corpus schemas, rejection reasons, and reviewed expectations are valid")
     return 0
 
