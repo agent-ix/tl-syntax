@@ -671,6 +671,9 @@ mod tests {
         assert_eq!(span.end(), 7);
         assert_eq!(span.len(), 5);
         assert!(!span.is_empty());
+        let node = Node::with_span(NodeKind::True, span);
+        assert_eq!(node.kind, NodeKind::True);
+        assert_eq!(node.span, Some(span));
         assert_eq!(
             SourceSpan::new(2, 1),
             Err(SourceSpanError { start: 2, end: 1 })

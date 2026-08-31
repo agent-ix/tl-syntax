@@ -262,6 +262,23 @@ fn checked_values_and_graphs_reject_malformed_wire_data() {
     assert!(serde_json::from_str::<FormulaDocument>(forward_reference).is_err());
 }
 
+// Trace: TC-020, FR-004-AC-4
+#[test]
+fn formula_wire_decode_stops_at_the_document_node_limit() {
+    let mut formula = String::from(
+        r#"{"schema_version":"tl-syntax.formula/v1","semantic_profile":"mltl.closed-trace/v1","root":0,"nodes":["#,
+    );
+    for index in 0..=tl_syntax::MAX_FORMULA_DOCUMENT_NODES {
+        if index != 0 {
+            formula.push(',');
+        }
+        formula.push_str(r#"{"kind":"true"}"#);
+    }
+    formula.push_str("]}");
+    let error = serde_json::from_str::<FormulaDocument>(&formula).unwrap_err();
+    assert!(error.to_string().contains("100000-node wire limit"));
+}
+
 // Trace: TC-011, FR-004-AC-3
 #[test]
 fn unknown_node_fields_and_invalid_proposition_maps_are_rejected_on_decode() {

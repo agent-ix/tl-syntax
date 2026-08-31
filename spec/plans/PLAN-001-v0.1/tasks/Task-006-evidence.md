@@ -20,6 +20,11 @@ explicit limitations in a checksummed evidence record.
 
 ## Completion Evidence
 
+The exact-head remediation source revision requires its own clean-source record;
+older records remain immutable historical evidence and do not cover later
+source or specification changes. The current PR must therefore retain and
+anchor a new passing record before requesting another merge decision.
+
 The retained `835833fb2338` record has a passing collection summary, two passing sealed PGM-01
 validations, and an anchored checksum manifest that exactly enumerates every artifact. Its envelope
 remains non-self-attesting and explicitly inconclusive; the post-seal summary records the external

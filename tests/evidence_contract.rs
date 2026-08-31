@@ -9,7 +9,7 @@ fn evidence_suite_registry_is_wired_to_executable_gates() {
     let suites = fs::read_to_string(root.join("spec/evidence/suites.md")).unwrap();
 
     let dry_run = Command::new("make")
-        .args(["--no-print-directory", "-n", "ci", "DRY_RUN_INSPECTION=1"])
+        .args(["--no-print-directory", "-n", "ci"])
         .current_dir(&root)
         .output()
         .unwrap();
@@ -34,6 +34,8 @@ fn evidence_suite_registry_is_wired_to_executable_gates() {
         "cargo deny check licenses",
         "cargo deny check sources",
         "test_evidence_tool.py",
+        "test_failure_propagation.py",
+        "test_json_schema_gate.py",
         "test_traceability_gate.py",
         "quire validate --scope . 'spec/**/*.md' --strict --summary",
         "check_traceability_coverage.py",
@@ -41,10 +43,7 @@ fn evidence_suite_registry_is_wired_to_executable_gates() {
     ] {
         assert!(ci_commands.contains(command), "make ci omits {command}");
     }
-    assert!(
-        makefile.contains("test target swallowed a deliberately failing cargo command"),
-        "failure-propagation sentinel is missing"
-    );
+    assert!(ci_commands.contains("scripts/check_failure_propagation.py"));
     let exact_cargo_test = ci_commands.lines().any(|line| {
         let fields = line.split_whitespace().collect::<Vec<_>>();
         fields.len() == 3
@@ -122,6 +121,9 @@ fn mandatory_policy_gates_observe_failure_states() {
             "make",
             vec!["--no-print-directory", "check-failure-propagation"],
         ),
+        ("python3", vec!["scripts/test_failure_propagation.py"]),
+        ("python3", vec!["scripts/test_corpus_gate.py"]),
+        ("python3", vec!["scripts/test_json_schema_gate.py"]),
         ("python3", vec!["scripts/test_traceability_gate.py"]),
     ] {
         let output = Command::new(program)
@@ -136,4 +138,18 @@ fn mandatory_policy_gates_observe_failure_states() {
             String::from_utf8_lossy(&output.stderr)
         );
     }
+
+    let disabled_guard = Command::new("make")
+        .args([
+            "--no-print-directory",
+            "check-failure-propagation",
+            "PYTHON=false",
+        ])
+        .current_dir(&root)
+        .output()
+        .unwrap();
+    assert!(
+        !disabled_guard.status.success(),
+        "check-failure-propagation target no longer invokes its executable policy"
+    );
 }

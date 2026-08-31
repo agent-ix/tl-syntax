@@ -29,7 +29,7 @@ short-trace, and large-bound cases.
 - The manifest shall report one stable corpus revision.
 - Every fixture shall identify its semantic profile and expected validation state.
 - Evaluator cases shall include a horizon derived from the bounded-MLTL node
-  graph and a reviewed `mltl.closed-trace/v1` outcome. For the empty trace,
+  graph and an independently derived `mltl.closed-trace/v1` outcome. For the empty trace,
   constants retain their Boolean value, propositions are absent, and temporal
   witnesses outside the trace are absent.
 
@@ -39,7 +39,7 @@ short-trace, and large-bound cases.
 |---|---|---|
 | FR-005-AC-1 | The manifest includes every required fixture class with unique stable identities. | Test (TC-012) |
 | FR-005-AC-2 | Every valid formula fixture deserializes and validates, its declared horizon equals the value derived from its node graph, and every malformed fixture is rejected for its declared reason. | Test (TC-013) |
-| FR-005-AC-3 | The `tl-syntax-corpus/v1` identity and reviewed closed-trace results use only platform-independent JSON scalar and array values and remain unique. | Test (TC-014) |
+| FR-005-AC-3 | The `tl-syntax-corpus/v1` identity and independently derived closed-trace results use only platform-independent JSON scalar and array values and remain unique. | Test (TC-014) |
 
 ## Dependencies
 

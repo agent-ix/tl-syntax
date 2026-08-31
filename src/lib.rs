@@ -13,7 +13,7 @@ mod document;
 #[cfg(feature = "alloc")]
 pub use document::{
     FormulaDocument, FormulaSchemaVersion, PropositionEntry, PropositionMapDocument,
-    PropositionMapError, PropositionMapSchemaVersion,
+    PropositionMapError, PropositionMapSchemaVersion, MAX_FORMULA_DOCUMENT_NODES,
 };
 pub use syntax::{
     Formula, FormulaError, Interval, IntervalError, Node, NodeId, NodeKind, PropositionId,

@@ -3,6 +3,10 @@
 # =============================================================================
 
 CARGO ?= cargo
+PYTHON ?= python3
+QUIRE ?= quire
+SHA256SUM ?= sha256sum
+BASH ?= bash
 
 .PHONY: help
 help:
@@ -11,7 +15,7 @@ help:
 	@echo "  make fmt-check        - Verify formatting (CI gate)"
 	@echo "  make lint             - Clippy with -D warnings"
 	@echo "  make test             - cargo test"
-	@echo "  make check-failure-propagation - prove test failures make CI fail"
+	@echo "  make check-failure-propagation - prove every mandatory gate propagates failures"
 	@echo "  make check-features   - check no-default, alloc, serde, and all features"
 	@echo "  make check-default-dependencies - require an empty default dependency graph"
 	@echo "  make check-corpus     - verify retained corpus SHA-256 digests"
@@ -46,12 +50,7 @@ test:
 
 .PHONY: check-failure-propagation
 check-failure-propagation:
-	@if [ "$(DRY_RUN_INSPECTION)" != "1" ]; then \
-		if $(MAKE) --no-print-directory test CARGO=false >/dev/null 2>&1; then \
-			echo "test target swallowed a deliberately failing cargo command" >&2; \
-			exit 1; \
-		fi; \
-	fi
+	$(PYTHON) scripts/check_failure_propagation.py
 
 .PHONY: check-features
 check-features:
@@ -62,27 +61,30 @@ check-features:
 
 .PHONY: check-default-dependencies
 check-default-dependencies:
-	python3 scripts/check_default_dependencies.py
+	$(PYTHON) scripts/check_default_dependencies.py
 
 .PHONY: check-corpus
 check-corpus:
-	sha256sum --check corpus/SHA256SUMS
-	python3 scripts/validate_corpus.py
+	$(SHA256SUM) --check corpus/SHA256SUMS
+	$(PYTHON) scripts/validate_corpus.py
 
 .PHONY: verify-evidence
 verify-evidence:
-	bash scripts/verify_evidence.sh
+	$(BASH) scripts/verify_evidence.sh
 
 .PHONY: spec
 spec:
-	quire validate --scope . 'spec/**/*.md' --strict --summary
-	python3 scripts/check_traceability_coverage.py
+	$(QUIRE) validate --scope . 'spec/**/*.md' --strict --summary
+	$(PYTHON) scripts/check_traceability_coverage.py
 
 .PHONY: evidence-tool
 evidence-tool:
-	python3 -m py_compile scripts/build_evidence_envelope.py scripts/check_default_dependencies.py scripts/check_traceability_coverage.py scripts/finalize_collection.py scripts/test_evidence_tool.py scripts/test_traceability_gate.py scripts/validate_corpus.py scripts/validate_json_schema.py scripts/verify_evidence_manifest.py
-	python3 scripts/test_evidence_tool.py
-	python3 scripts/test_traceability_gate.py
+	$(PYTHON) -m py_compile scripts/build_evidence_envelope.py scripts/check_default_dependencies.py scripts/check_failure_propagation.py scripts/check_traceability_coverage.py scripts/finalize_collection.py scripts/test_corpus_gate.py scripts/test_evidence_tool.py scripts/test_failure_propagation.py scripts/test_json_schema_gate.py scripts/test_traceability_gate.py scripts/validate_corpus.py scripts/validate_json_schema.py scripts/verify_evidence_manifest.py
+	$(PYTHON) scripts/test_corpus_gate.py
+	$(PYTHON) scripts/test_evidence_tool.py
+	$(PYTHON) scripts/test_failure_propagation.py
+	$(PYTHON) scripts/test_json_schema_gate.py
+	$(PYTHON) scripts/test_traceability_gate.py
 
 .PHONY: build
 build:
@@ -109,7 +111,7 @@ cargo-audit:
 
 .PHONY: audit-unsafe
 audit-unsafe:
-	bash scripts/check_unsafe_comments.sh
+	$(BASH) scripts/check_unsafe_comments.sh
 
 # =============================================================================
 # Composite

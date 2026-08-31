@@ -119,6 +119,11 @@ find "$evidence_dir" -type f -print0 \
   | sort -z \
   | xargs -0 sha256sum >"$checksum_path"
 
+anchor="$(sha256sum "$checksum_path")"
+if ! grep -Fqx "$anchor" evidence/ANCHORS; then
+  printf '%s\n' "$anchor" >>evidence/ANCHORS
+fi
+
 if [[ $collection_failed -ne 0 ]]; then
   echo "one or more retained evidence commands failed" >&2
   exit 1

@@ -7,6 +7,11 @@ description: "Chronological changes to the tl-syntax v0.1 plan bundle."
 
 ## History
 
+- **2026-08-31** - Remediated exact-head findings with behavioral checks for every local-CI
+  prerequisite, strict format and trace-target handling, independent corpus evaluation, executable
+  no-std boundaries, bounded wire decoding, and strengthened retained-evidence integrity. A new
+  clean-source evidence record supersedes older records for this candidate; hosted CI was not
+  dispatched.
 - **2026-08-31** - Closed the exact-head gate review: added behavioral failure propagation and
   complete-JSON traceability policy gates, derived corpus horizons, exact evidence membership,
   complete cargo-deny policy checks, public-API ownership tests, and logarithmic proposition-name

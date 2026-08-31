@@ -4,10 +4,27 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
 from typing import Any
+
+
+ROOT = Path(__file__).resolve().parent.parent
+TARGET_ID = re.compile(r"^TC-[0-9]{3}$")
+CRITERION_SOURCES = {
+    "acceptance-criterion",
+    "nfr-acceptance-criterion",
+    "stakeholder-validation-criterion",
+}
+ALLOWED_DIAGNOSTICS = {
+    "archetype-matches-nothing",
+    "catch-all-universal",
+    # The installed module requires a structurally invalid alternate header.
+    # validate_matrix_statuses supplies the skipped classification independently.
+    "status-column-matches-nothing",
+}
 
 
 def validate_report(report: dict[str, Any]) -> list[str]:
@@ -57,6 +74,76 @@ def validate_report(report: dict[str, Any]) -> list[str]:
             errors.append(f"coverage report has no {field} list")
         elif findings:
             errors.append(f"coverage report contains {len(findings)} {field}")
+
+    minted = report.get("minted_targets")
+    if not isinstance(minted, list):
+        errors.append("coverage report has no minted_targets list")
+        test_targets: set[str] = set()
+    else:
+        test_targets = {
+            item.get("id")
+            for item in minted
+            if isinstance(item, dict)
+            and item.get("target") == "test-case"
+            and isinstance(item.get("id"), str)
+        }
+    obligations = report.get("obligations")
+    if not isinstance(obligations, list):
+        errors.append("coverage report has no obligations list")
+    else:
+        for obligation in obligations:
+            if not isinstance(obligation, dict) or obligation.get("source") not in CRITERION_SOURCES:
+                continue
+            identity = obligation.get("id", "<unknown>")
+            targets = obligation.get("target_ids")
+            if obligation.get("method") != "Test" or not isinstance(targets, list) or not targets:
+                errors.append(f"{identity} does not declare one or more Test targets")
+                continue
+            for target in targets:
+                if not isinstance(target, str) or TARGET_ID.fullmatch(target) is None:
+                    errors.append(f"{identity} declares malformed verification target {target!r}")
+                elif target not in test_targets:
+                    errors.append(f"{identity} declares nonexistent verification target {target}")
+
+    diagnostics = report.get("diagnostics")
+    if not isinstance(diagnostics, list):
+        errors.append("coverage report has no diagnostics list")
+    else:
+        for diagnostic in diagnostics:
+            reason = diagnostic.get("reason") if isinstance(diagnostic, dict) else None
+            if reason not in ALLOWED_DIAGNOSTICS:
+                errors.append(f"coverage report contains blocking diagnostic {reason!r}")
+    return errors
+
+
+def validate_matrix_statuses(path: Path) -> list[str]:
+    """Enforce status values that the installed module cannot classify safely."""
+    errors: list[str] = []
+    section = ""
+    header: list[str] | None = None
+    for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+        if line.startswith("## "):
+            section = line[3:].strip()
+            header = None
+            continue
+        if not line.startswith("|"):
+            continue
+        cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+        if header is None:
+            header = cells
+            continue
+        if all(set(cell) <= {"-", ":"} for cell in cells):
+            continue
+        status_name = "Status" if "Status" in header else "Coverage Status"
+        if status_name not in header or len(cells) != len(header):
+            errors.append(f"{path}:{number} has no parseable status column")
+            continue
+        status = cells[header.index(status_name)]
+        expected = "✅ implemented" if section == "Test Case Summary" else "✅ covered"
+        if status != expected:
+            errors.append(
+                f"{path}:{number} status {status!r} does not equal required {expected!r}"
+            )
     return errors
 
 
@@ -64,16 +151,23 @@ def load_report(path: Path | None) -> tuple[int, dict[str, Any] | None]:
     if path is not None:
         try:
             return 0, json.loads(path.read_text(encoding="utf-8"))
+        except FileNotFoundError as error:
+            print(f"coverage report unavailable: {error}", file=sys.stderr)
+            return 125, None
         except (OSError, json.JSONDecodeError) as error:
             print(f"cannot read coverage report {path}: {error}", file=sys.stderr)
             return 2, None
 
-    result = subprocess.run(
-        ["quire", "coverage", "--scope", ".", "--strict", "--json"],
-        check=False,
-        capture_output=True,
-        text=True,
-    )
+    try:
+        result = subprocess.run(
+            ["quire", "coverage", "--scope", ".", "--strict", "--json"],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    except FileNotFoundError as error:
+        print(f"traceability coverage unavailable: {error}", file=sys.stderr)
+        return 125, None
     sys.stderr.write(result.stderr)
     if result.returncode != 0:
         return result.returncode, None
@@ -100,6 +194,7 @@ def main() -> int:
     if status != 0 or report is None:
         return status
     errors = validate_report(report)
+    errors.extend(validate_matrix_statuses(ROOT / "spec" / "test-matrix.md"))
     for error in errors:
         print(error, file=sys.stderr)
     if errors:

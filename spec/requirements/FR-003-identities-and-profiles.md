@@ -28,6 +28,8 @@ trace or online-prefix semantic-profile identity without parser-specific state.
 
 - A source span shall reject an end offset smaller than its start offset and
   expose its preserved endpoints, length, and emptiness.
+- `Node::with_span` shall associate a checked source span with the constructed
+  syntax node without changing its operator.
 - Closed Trace v1 shall identify Boolean evaluation over a complete finite trace.
 - Online Prefix v1 shall identify pending-until-decidable prefix semantics.
 
@@ -35,7 +37,7 @@ trace or online-prefix semantic-profile identity without parser-specific state.
 
 | ID | Criteria | Verification |
 |---|---|---|
-| FR-003-AC-1 | Proposition identities and valid source spans compare and order deterministically; spans preserve their endpoints and report correct length and emptiness. | Test (TC-006) |
+| FR-003-AC-1 | Proposition identities and valid source spans compare and order deterministically; spans preserve their endpoints, report correct length and emptiness, and `Node::with_span` preserves both the operator and span. | Test (TC-006) |
 | FR-003-AC-2 | Both v1 semantic profiles have distinct stable wire names. | Test (TC-007) |
 | FR-003-AC-3 | Every serialized formula document requires a semantic profile. | Test (TC-008) |
 

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import importlib.util
+import tempfile
 from pathlib import Path
 
 
@@ -26,6 +27,19 @@ def complete_report() -> dict[str, object]:
         "unbacked_rows": [],
         "status_lies": [],
         "untracked_symbols": [],
+        "minted_targets": [
+            {"id": "TC-001", "target": "test-case"},
+            {"id": "TC-002", "target": "test-case"},
+        ],
+        "obligations": [
+            {
+                "source": "acceptance-criterion",
+                "id": "FR-001-AC-1",
+                "method": "Test",
+                "target_ids": ["TC-001"],
+            }
+        ],
+        "diagnostics": [],
     }
 
 
@@ -48,6 +62,25 @@ def main() -> int:
     report = complete_report()
     report["status_lies"] = [{"id": "TC-fabricated"}]
     assert MODULE.validate_report(report), "a contradicted coverage status was accepted"
+
+    report = complete_report()
+    report["obligations"][0]["target_ids"] = ["TC-999"]
+    assert MODULE.validate_report(report), "a fabricated verification target was accepted"
+
+    report = complete_report()
+    report["diagnostics"] = [{"reason": "uncatalogued-verification-method"}]
+    assert MODULE.validate_report(report), "a skipped/undefined verification method was accepted"
+
+    with tempfile.TemporaryDirectory() as directory:
+        matrix = Path(directory) / "matrix.md"
+        matrix.write_text(
+            "## Functional Requirement Coverage\n\n"
+            "| Functional Req | Status |\n|---|---|\n| FR-001 | 🚧 fabricated |\n",
+            encoding="utf-8",
+        )
+        assert MODULE.validate_matrix_statuses(matrix), "a fabricated matrix status was accepted"
+        status, report = MODULE.load_report(Path(directory) / "missing.json")
+        assert status == 125 and report is None, "missing tooling/input was not unavailable"
     print("strict traceability coverage behavior is valid")
     return 0
 

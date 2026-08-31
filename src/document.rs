@@ -3,6 +3,12 @@ use core::fmt;
 
 use crate::{Formula, FormulaError, Node, NodeId, PropositionId, SemanticProfile};
 
+/// Maximum node count accepted by the v1 JSON wire decoder.
+///
+/// This bounds temporary allocation before graph validation. The borrowed and
+/// programmatic owned APIs remain governed by their node-identity model.
+pub const MAX_FORMULA_DOCUMENT_NODES: usize = 100_000;
+
 /// Version of the serialized formula document.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
@@ -43,7 +49,50 @@ struct FormulaDocumentWire {
     schema_version: FormulaSchemaVersion,
     semantic_profile: SemanticProfile,
     root: NodeId,
+    #[serde(deserialize_with = "deserialize_formula_nodes")]
     nodes: Vec<Node>,
+}
+
+#[cfg(feature = "serde")]
+fn deserialize_formula_nodes<'de, D>(deserializer: D) -> Result<Vec<Node>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    struct NodeVisitor;
+
+    impl<'de> serde::de::Visitor<'de> for NodeVisitor {
+        type Value = Vec<Node>;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write!(
+                formatter,
+                "at most {MAX_FORMULA_DOCUMENT_NODES} formula nodes"
+            )
+        }
+
+        fn visit_seq<A>(self, mut sequence: A) -> Result<Self::Value, A::Error>
+        where
+            A: serde::de::SeqAccess<'de>,
+        {
+            let mut nodes = Vec::with_capacity(
+                sequence
+                    .size_hint()
+                    .unwrap_or(0)
+                    .min(MAX_FORMULA_DOCUMENT_NODES),
+            );
+            while let Some(node) = sequence.next_element()? {
+                if nodes.len() == MAX_FORMULA_DOCUMENT_NODES {
+                    return Err(serde::de::Error::custom(
+                        "formula document exceeds the 100000-node wire limit",
+                    ));
+                }
+                nodes.push(node);
+            }
+            Ok(nodes)
+        }
+    }
+
+    deserializer.deserialize_seq(NodeVisitor)
 }
 
 #[cfg(feature = "serde")]

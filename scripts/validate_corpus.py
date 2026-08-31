@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate corpus schemas, derive horizons, and check reviewed result oracles."""
+"""Validate corpus schemas and independently derive horizons and result oracles."""
 
 from __future__ import annotations
 
@@ -8,18 +8,15 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from jsonschema import Draft7Validator
+try:
+    from jsonschema import Draft7Validator
+except ImportError as error:
+    print(f"corpus validation unavailable: {error}", file=sys.stderr)
+    raise SystemExit(125) from error
 
 
 ROOT = Path(__file__).resolve().parent.parent
 CORPUS = ROOT / "corpus"
-EXPECTED_CLOSED_TRACE = {
-    "primitive-true-v1": True,
-    "nested-not-future-v1": True,
-    "boundary-singleton-globally-v1": True,
-    "short-trace-future-v1": False,
-    "large-bound-future-v1": False,
-}
 OPERATOR_FIELDS = {
     "false": (),
     "true": (),
@@ -79,6 +76,77 @@ def formula_horizon(document: dict[str, Any]) -> int:
         raise AssertionError("formula root is invalid while deriving its horizon") from error
 
 
+def evaluate_closed_trace(document: dict[str, Any], trace: list[list[int]]) -> bool:
+    """Evaluate a valid topological formula under complete finite-trace semantics."""
+    nodes = document["nodes"]
+    memo: dict[tuple[int, int], bool] = {}
+
+    def distinct_instants(start: int, end: int) -> range | tuple[int, ...]:
+        """Represent the finite prefix plus one equivalent out-of-trace instant."""
+        if start > end:
+            return ()
+        prefix_end = min(end, len(trace) - 1)
+        prefix = tuple(range(start, prefix_end + 1)) if start <= prefix_end else ()
+        outside = max(start, len(trace))
+        return prefix + ((outside,) if outside <= end else ())
+
+    def evaluate(node_id: int, instant: int) -> bool:
+        key = (node_id, min(instant, len(trace)))
+        if key in memo:
+            return memo[key]
+        node = nodes[node_id]
+        kind = node["kind"]
+        if kind == "false":
+            value = False
+        elif kind == "true":
+            value = True
+        elif kind == "proposition":
+            value = instant < len(trace) and node["proposition"] in trace[instant]
+        elif kind == "not":
+            value = not evaluate(node["operand"], instant)
+        elif kind == "and":
+            value = evaluate(node["left"], instant) and evaluate(node["right"], instant)
+        elif kind == "or":
+            value = evaluate(node["left"], instant) or evaluate(node["right"], instant)
+        elif kind == "implies":
+            value = not evaluate(node["left"], instant) or evaluate(node["right"], instant)
+        elif kind == "equivalent":
+            value = evaluate(node["left"], instant) == evaluate(node["right"], instant)
+        else:
+            interval = node["interval"]
+            start = instant + interval["start"]
+            end = instant + interval["end"]
+            candidates = distinct_instants(start, end)
+            if kind == "future":
+                value = any(evaluate(node["operand"], item) for item in candidates)
+            elif kind == "globally":
+                value = all(evaluate(node["operand"], item) for item in candidates)
+            elif kind == "until":
+                value = any(
+                    evaluate(node["right"], witness)
+                    and all(
+                        evaluate(node["left"], item)
+                        for item in distinct_instants(instant, witness - 1)
+                    )
+                    for witness in candidates
+                )
+            elif kind == "release":
+                value = all(
+                    evaluate(node["right"], witness)
+                    or any(
+                        evaluate(node["left"], item)
+                        for item in distinct_instants(instant, witness - 1)
+                    )
+                    for witness in candidates
+                )
+            else:
+                raise AssertionError(f"cannot evaluate operator {kind!r}")
+        memo[key] = value
+        return value
+
+    return evaluate(document["root"], 0)
+
+
 def schema_operator_kinds(schema: dict[str, Any]) -> set[str]:
     kinds: set[str] = set()
     for variant in schema["$defs"]["node"]["oneOf"]:
@@ -113,6 +181,18 @@ def representative_node(kind: str) -> dict[str, Any]:
 def validate_formula_schema_contract(
     schema_value: dict[str, Any], schema: Draft7Validator
 ) -> None:
+    expected_semantics = [
+        "interval start must not exceed end",
+        "span start must not exceed end",
+        "root must index an existing node",
+        "every operand must reference a preceding node",
+    ]
+    if schema_value.get("x-tl-syntax-semantic-validator") != "python3 scripts/validate_corpus.py":
+        raise AssertionError("formula schema does not declare its mandatory semantic validator")
+    if schema_value.get("x-tl-syntax-semantic-constraints") != expected_semantics:
+        raise AssertionError("formula schema semantic constraint declaration drifted")
+    if schema_value["properties"]["nodes"].get("maxItems") != 100_000:
+        raise AssertionError("formula schema wire node limit drifted")
     expected_kinds = set(OPERATOR_FIELDS)
     observed_kinds = schema_operator_kinds(schema_value)
     if observed_kinds != expected_kinds:
@@ -236,11 +316,11 @@ def validate() -> None:
                     f"{identity} horizon drift: derived {derived_horizon}, "
                     f"declared {declared_horizon}"
                 )
-            expected_closed = EXPECTED_CLOSED_TRACE.get(identity)
+            expected_closed = evaluate_closed_trace(document, fixture["trace"])
             declared_closed = fixture.get("expected_closed_trace")
-            if expected_closed is None or declared_closed != expected_closed:
+            if declared_closed != expected_closed:
                 raise AssertionError(
-                    f"{identity} closed-trace oracle drift: reviewed {expected_closed}, "
+                    f"{identity} closed-trace oracle drift: derived {expected_closed}, "
                     f"declared {declared_closed}"
                 )
             observed_valid.add(identity)
@@ -252,18 +332,18 @@ def validate() -> None:
                 )
         else:
             raise AssertionError(f"{identity} has unknown expected_validation")
-    if observed_valid != set(EXPECTED_CLOSED_TRACE):
-        raise AssertionError("valid fixture population differs from the reviewed expectation set")
-
-    print("corpus schemas, derived horizons, rejection reasons, and reviewed oracles are valid")
+    print("corpus schemas, derived horizons, rejection reasons, and derived oracles are valid")
 
 
 def main() -> int:
     try:
         validate()
-    except (AssertionError, KeyError, TypeError, ValueError, OSError, json.JSONDecodeError) as error:
+    except (AssertionError, OSError, json.JSONDecodeError) as error:
         print(f"corpus validation failed: {error}", file=sys.stderr)
         return 1
+    except (KeyError, TypeError, ValueError) as error:
+        print(f"corpus validator error: {type(error).__name__}: {error}", file=sys.stderr)
+        return 2
     return 0
 
 
