@@ -1,0 +1,11 @@
+date
+email
+hostname
+idn-email
+idn-hostname
+ipv4
+ipv6
+json-pointer
+regex
+relative-json-pointer
+time
