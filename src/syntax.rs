@@ -388,6 +388,13 @@ pub enum FormulaError {
         /// Number of supplied nodes.
         node_count: usize,
     },
+    /// An owned exchange document exceeds its bounded wire node count.
+    DocumentNodeLimitExceeded {
+        /// Number of supplied nodes.
+        node_count: usize,
+        /// Maximum supported document node count.
+        limit: usize,
+    },
     /// An operand is a self-reference, forward reference, or absent reference.
     OperandNotPreceding {
         /// Node containing the operand.
@@ -409,6 +416,10 @@ impl fmt::Display for FormulaError {
                 formatter,
                 "formula node table length {} exceeds the 32-bit identity space",
                 node_count
+            ),
+            Self::DocumentNodeLimitExceeded { node_count, limit } => write!(
+                formatter,
+                "formula document node table length {node_count} exceeds the {limit}-node limit"
             ),
             Self::OperandNotPreceding { node, operand } => write!(
                 formatter,

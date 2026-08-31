@@ -13,6 +13,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
 TARGET_ID = re.compile(r"^TC-[0-9]{3}$")
+REFERENCE = re.compile(r"\b(?:TC|SUITE)-[0-9]{3}\b")
 CRITERION_SOURCES = {
     "acceptance-criterion",
     "nfr-acceptance-criterion",
@@ -147,6 +148,31 @@ def validate_matrix_statuses(path: Path) -> list[str]:
     return errors
 
 
+def validate_verification_references(root: Path = ROOT) -> list[str]:
+    """Validate AC/VC verification cells independently of Quire obligations."""
+    matrix = (root / "spec" / "test-matrix.md").read_text(encoding="utf-8")
+    suites = (root / "spec" / "evidence" / "suites.md").read_text(encoding="utf-8")
+    declared = set(REFERENCE.findall(matrix)) | set(REFERENCE.findall(suites))
+    errors: list[str] = []
+    for path in sorted((root / "spec" / "requirements").glob("*.md")):
+        for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+            if not line.startswith("|") or not re.search(r"-(?:AC|VC)-[0-9]+\s*\|", line):
+                continue
+            cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+            verification = cells[-1] if cells else ""
+            targets = REFERENCE.findall(verification)
+            if verification.startswith("Test") and not any(
+                TARGET_ID.fullmatch(target) for target in targets
+            ):
+                errors.append(f"{path}:{number} Test verification declares no TC target")
+            for target in targets:
+                if target not in declared:
+                    errors.append(
+                        f"{path}:{number} references nonexistent verification target {target}"
+                    )
+    return errors
+
+
 def load_report(path: Path | None) -> tuple[int, dict[str, Any] | None]:
     if path is not None:
         try:
@@ -195,6 +221,7 @@ def main() -> int:
         return status
     errors = validate_report(report)
     errors.extend(validate_matrix_statuses(ROOT / "spec" / "test-matrix.md"))
+    errors.extend(validate_verification_references())
     for error in errors:
         print(error, file=sys.stderr)
     if errors:

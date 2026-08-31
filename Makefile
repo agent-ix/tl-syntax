@@ -8,6 +8,14 @@ QUIRE ?= quire
 SHA256SUM ?= sha256sum
 BASH ?= bash
 
+tl_make_short_flags := $(firstword $(MAKEFLAGS))
+ifneq ($(filter -%,$(tl_make_short_flags)),)
+tl_make_short_flags :=
+endif
+ifneq ($(findstring i,$(tl_make_short_flags)),)
+$(error local CI refuses Make ignore-errors mode)
+endif
+
 .PHONY: help
 help:
 	@echo "Available targets:"
@@ -79,12 +87,8 @@ spec:
 
 .PHONY: evidence-tool
 evidence-tool:
-	$(PYTHON) -m py_compile scripts/build_evidence_envelope.py scripts/check_default_dependencies.py scripts/check_failure_propagation.py scripts/check_traceability_coverage.py scripts/finalize_collection.py scripts/test_corpus_gate.py scripts/test_evidence_tool.py scripts/test_failure_propagation.py scripts/test_json_schema_gate.py scripts/test_traceability_gate.py scripts/validate_corpus.py scripts/validate_json_schema.py scripts/verify_evidence_manifest.py
-	$(PYTHON) scripts/test_corpus_gate.py
-	$(PYTHON) scripts/test_evidence_tool.py
-	$(PYTHON) scripts/test_failure_propagation.py
-	$(PYTHON) scripts/test_json_schema_gate.py
-	$(PYTHON) scripts/test_traceability_gate.py
+	$(PYTHON) -m compileall -q scripts
+	$(PYTHON) scripts/run_policy_tests.py
 
 .PHONY: build
 build:

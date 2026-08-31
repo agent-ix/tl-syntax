@@ -30,9 +30,7 @@ def main() -> int:
         (evidence_dir / "make-ci.status.txt").write_text("0\n", encoding="utf-8")
         (evidence_dir / "make-ci.stdout").write_text("passed\n", encoding="utf-8")
         (evidence_dir / "pgm01-schema.status.txt").write_text("125\n", encoding="utf-8")
-        (evidence_dir / "pgm01-schema.stdout").write_text(
-            "skipped-unavailable\n", encoding="utf-8"
-        )
+        (evidence_dir / "pgm01-schema.stdout").write_text("tool absent\n", encoding="utf-8")
         (evidence_dir / "pgm01-validator.status.txt").write_text("3\n", encoding="utf-8")
         outcomes = {item["name"]: item for item in MODULE.command_outcomes(evidence_dir)}
         assert outcomes["make-ci"] == {

@@ -29,23 +29,20 @@ def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def main() -> int:
-    if len(sys.argv) != 2:
-        print("usage: finalize_collection.py EVIDENCE_DIR", file=sys.stderr)
-        return 2
-    evidence_dir = Path(sys.argv[1])
+def summary(evidence_dir: Path) -> dict[str, object]:
     outcomes = []
-    for name in CHECKS:
+    observed = {
+        path.name[: -len(".status.txt")]
+        for path in evidence_dir.glob("*.status.txt")
+        if path.is_file()
+    }
+    for name in list(CHECKS) + sorted(observed - set(CHECKS)):
         status_path = evidence_dir / f"{name}.status.txt"
-        stdout_path = evidence_dir / f"{name}.stdout"
         if not status_path.exists():
             outcomes.append({"name": name, "status": "inconclusive", "exitCode": None})
             continue
         exit_code = int(status_path.read_text(encoding="utf-8").strip())
-        skipped = (
-            stdout_path.exists()
-            and stdout_path.read_text(encoding="utf-8").strip() == "skipped-unavailable"
-        )
+        skipped = exit_code == 125
         outcomes.append(
             {
                 "name": name,
@@ -71,7 +68,7 @@ def main() -> int:
             post_seal_artifacts.append(
                 {"path": path.name, "sha256": sha256(path), "size": path.stat().st_size}
             )
-    value = {
+    return {
         "schemaVersion": "tl-syntax.collection-summary/v1",
         "overallStatus": overall,
         "finalEnvelopeSha256": sha256(envelope),
@@ -87,7 +84,40 @@ def main() -> int:
         ),
         "outcomes": outcomes,
     }
-    (evidence_dir / "collection-summary.json").write_text(
+
+
+def main() -> int:
+    check = len(sys.argv) == 3 and sys.argv[1] == "--check"
+    if len(sys.argv) != 2 and not check:
+        print("usage: finalize_collection.py [--check] EVIDENCE_DIR", file=sys.stderr)
+        return 2
+    evidence_dir = Path(sys.argv[2] if check else sys.argv[1])
+    value = summary(evidence_dir)
+    summary_path = evidence_dir / "collection-summary.json"
+    if check:
+        if not summary_path.exists():
+            input_path = evidence_dir / "collection-input.json"
+            try:
+                collection_input = json.loads(input_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError) as error:
+                print(f"cannot verify legacy collection input {input_path}: {error}", file=sys.stderr)
+                return 1
+            commands = collection_input.get("commands", [])
+            if any("finalize_collection.py" in command for command in commands):
+                print(f"promised retained summary is missing: {evidence_dir}", file=sys.stderr)
+                return 1
+            return 0
+        try:
+            actual = json.loads(summary_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as error:
+            print(f"cannot read retained summary {summary_path}: {error}", file=sys.stderr)
+            return 1
+        expected_projection = {key: value.get(key) for key in actual}
+        if actual != expected_projection:
+            print(f"retained summary disagrees with status files: {evidence_dir}", file=sys.stderr)
+            return 1
+        return 0
+    summary_path.write_text(
         json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
     return 0

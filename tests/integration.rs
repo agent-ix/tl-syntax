@@ -276,7 +276,10 @@ fn formula_wire_decode_stops_at_the_document_node_limit() {
     }
     formula.push_str("]}");
     let error = serde_json::from_str::<FormulaDocument>(&formula).unwrap_err();
-    assert!(error.to_string().contains("100000-node wire limit"));
+    assert!(error.to_string().contains(&format!(
+        "{}-node wire limit",
+        tl_syntax::MAX_FORMULA_DOCUMENT_NODES
+    )));
 }
 
 // Trace: TC-011, FR-004-AC-3
@@ -290,6 +293,25 @@ fn unknown_node_fields_and_invalid_proposition_maps_are_rejected_on_decode() {
     }"#;
     assert!(serde_json::from_str::<FormulaDocument>(unknown_node_field).is_err());
 
+    let unknown_interval_field = r#"{
+        "schema_version":"tl-syntax.formula/v1",
+        "semantic_profile":"mltl.closed-trace/v1",
+        "root":1,
+        "nodes":[
+          {"kind":"true"},
+          {"kind":"future","interval":{"start":0,"end":1,"unexpected":2},"operand":0}
+        ]
+    }"#;
+    assert!(serde_json::from_str::<FormulaDocument>(unknown_interval_field).is_err());
+
+    let unknown_span_field = r#"{
+        "schema_version":"tl-syntax.formula/v1",
+        "semantic_profile":"mltl.closed-trace/v1",
+        "root":0,
+        "nodes":[{"kind":"true","span":{"start":0,"end":1,"unexpected":2}}]
+    }"#;
+    assert!(serde_json::from_str::<FormulaDocument>(unknown_span_field).is_err());
+
     let duplicate_name = r#"{
         "schema_version":"tl-syntax.proposition-map/v1",
         "propositions":[
@@ -298,6 +320,13 @@ fn unknown_node_fields_and_invalid_proposition_maps_are_rejected_on_decode() {
         ]
     }"#;
     assert!(serde_json::from_str::<PropositionMapDocument>(duplicate_name).is_err());
+}
+
+// Trace: TC-020, FR-004-AC-4
+#[test]
+fn programmatic_formula_documents_obey_the_wire_node_limit() {
+    let nodes = vec![Node::new(NodeKind::True); tl_syntax::MAX_FORMULA_DOCUMENT_NODES + 1];
+    assert!(FormulaDocument::new(SemanticProfile::ClosedTraceV1, NodeId(0), nodes).is_err());
 }
 
 // Trace: TC-009, FR-004-AC-1

@@ -64,17 +64,18 @@ def read_first_line(path: Path) -> str:
 
 def command_outcomes(evidence_dir: Path) -> list[dict[str, object]]:
     outcomes: list[dict[str, object]] = []
-    for name in COMMANDS:
+    observed = {
+        path.name[: -len(".status.txt")]
+        for path in evidence_dir.glob("*.status.txt")
+        if path.is_file()
+    }
+    for name in list(COMMANDS) + sorted(observed - set(COMMANDS)):
         status_path = evidence_dir / f"{name}.status.txt"
-        stdout_path = evidence_dir / f"{name}.stdout"
         if not status_path.exists():
             outcomes.append({"name": name, "status": "inconclusive", "exitCode": None})
             continue
         exit_code = int(status_path.read_text().strip())
-        skipped = (
-            stdout_path.exists()
-            and stdout_path.read_text(encoding="utf-8").strip() == "skipped-unavailable"
-        )
+        skipped = exit_code == 125
         outcomes.append(
             {
                 "name": name,
@@ -103,7 +104,7 @@ def classify_result(
 
 
 def hash_parameter_files() -> str:
-    paths = (
+    fixed_paths = {
         ROOT / "Cargo.toml",
         ROOT / "Cargo.lock",
         ROOT / "Makefile",
@@ -119,9 +120,14 @@ def hash_parameter_files() -> str:
         EVIDENCE_ANCHORS,
         INPUT_SCHEMA,
         MANIFEST_SCHEMA,
-    )
+    }
+    paths = fixed_paths | {
+        path
+        for path in (ROOT / "scripts").iterdir()
+        if path.is_file() and path.suffix in {".py", ".sh"}
+    }
     state = hashlib.sha256()
-    for path in paths:
+    for path in sorted(paths):
         state.update(str(path.relative_to(ROOT)).encode("utf-8"))
         state.update(b"\0")
         state.update(path.read_bytes())

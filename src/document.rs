@@ -5,8 +5,7 @@ use crate::{Formula, FormulaError, Node, NodeId, PropositionId, SemanticProfile}
 
 /// Maximum node count accepted by the v1 JSON wire decoder.
 ///
-/// This bounds temporary allocation before graph validation. The borrowed and
-/// programmatic owned APIs remain governed by their node-identity model.
+/// This bounds allocation for both wire decoding and programmatic construction.
 pub const MAX_FORMULA_DOCUMENT_NODES: usize = 100_000;
 
 /// Version of the serialized formula document.
@@ -82,9 +81,9 @@ where
             );
             while let Some(node) = sequence.next_element()? {
                 if nodes.len() == MAX_FORMULA_DOCUMENT_NODES {
-                    return Err(serde::de::Error::custom(
-                        "formula document exceeds the 100000-node wire limit",
-                    ));
+                    return Err(serde::de::Error::custom(format_args!(
+                        "formula document exceeds the {MAX_FORMULA_DOCUMENT_NODES}-node wire limit"
+                    )));
                 }
                 nodes.push(node);
             }
@@ -118,6 +117,12 @@ impl FormulaDocument {
         root: NodeId,
         nodes: Vec<Node>,
     ) -> Result<Self, FormulaError> {
+        if nodes.len() > MAX_FORMULA_DOCUMENT_NODES {
+            return Err(FormulaError::DocumentNodeLimitExceeded {
+                node_count: nodes.len(),
+                limit: MAX_FORMULA_DOCUMENT_NODES,
+            });
+        }
         let document = Self {
             schema_version: FormulaSchemaVersion::V1,
             semantic_profile,
@@ -153,14 +158,9 @@ impl FormulaDocument {
         &self.nodes
     }
 
-    /// Copies a validated borrowed formula into an owned v1 document.
-    pub fn from_formula(formula: Formula<'_>) -> Self {
-        Self {
-            schema_version: FormulaSchemaVersion::V1,
-            semantic_profile: formula.profile(),
-            root: formula.root(),
-            nodes: formula.nodes().to_vec(),
-        }
+    /// Copies a validated borrowed formula into a bounded owned v1 document.
+    pub fn from_formula(formula: Formula<'_>) -> Result<Self, FormulaError> {
+        Self::new(formula.profile(), formula.root(), formula.nodes().to_vec())
     }
 }
 
@@ -396,7 +396,7 @@ mod tests {
         let formula = document.validate().unwrap();
         assert_eq!(formula.profile(), SemanticProfile::OnlinePrefixV1);
         assert_eq!(formula.nodes(), nodes);
-        let copied = FormulaDocument::from_formula(formula);
+        let copied = FormulaDocument::from_formula(formula).unwrap();
         assert_eq!(copied.schema_version(), FormulaSchemaVersion::V1);
         assert_eq!(copied.semantic_profile(), SemanticProfile::OnlinePrefixV1);
         assert_eq!(copied.root(), NodeId(0));

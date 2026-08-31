@@ -23,7 +23,7 @@ restricted targets to adopt host-only facilities.
 
 | ID | Criteria | Validation |
 |---|---|---|
-| StR-001-VC-1 | The crate compiles with default features for a no-std library target. | Test |
+| StR-001-VC-1 | The crate compiles with default features for a no-std library target. | Test (TC-019) |
 | StR-001-VC-2 | Borrowed validated formulas require no owned collection. | Inspection |
 
 ## Stakeholders

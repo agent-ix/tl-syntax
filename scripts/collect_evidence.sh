@@ -22,9 +22,20 @@ if ! python3 -c 'import jsonschema' >/dev/null 2>&1; then
   echo "jsonschema is required for evidence collection" >&2
   exit 2
 fi
+pgm01_schema_digest="0946e235e9e4b0fa79e9b9ec27ae157b303c17de0a9408d3cc04968fb7152256"
+if [[ -n "${PGM01_SCHEMA:-}" ]]; then
+  observed_schema_digest="$(python3 -c 'import hashlib, pathlib, sys; print(hashlib.sha256(pathlib.Path(sys.argv[1]).read_bytes()).hexdigest())' "$PGM01_SCHEMA")"
+  if [[ "$observed_schema_digest" != "$pgm01_schema_digest" ]]; then
+    echo "PGM-01 envelope schema digest does not match the reviewed policy pin" >&2
+    exit 2
+  fi
+fi
 
 mkdir -p "$evidence_dir"
-touch "$evidence_dir/.collecting"
+collection_token="$(python3 -c 'import secrets; print(secrets.token_hex(32))')"
+export TL_SYNTAX_COLLECTION_TOKEN="$collection_token"
+python3 -c 'import json, os, pathlib, sys; pathlib.Path(sys.argv[1]).write_text(json.dumps({"pid": os.getppid(), "sourceRevision": sys.argv[2], "token": os.environ["TL_SYNTAX_COLLECTION_TOKEN"]}, sort_keys=True) + "\n", encoding="utf-8")' \
+  "$evidence_dir/.collecting" "$(git rev-parse HEAD)"
 collection_failed=0
 
 run_and_retain() {
@@ -59,10 +70,12 @@ cargo --version --verbose >"$evidence_dir/cargo-version.txt"
 python3 --version >"$evidence_dir/python-version.txt"
 python3 -c 'import importlib.metadata; print(importlib.metadata.version("jsonschema"))' \
   >"$evidence_dir/jsonschema-version.txt"
+python3 -c 'from jsonschema import FormatChecker; print("\n".join(sorted(FormatChecker().checkers)))' \
+  >"$evidence_dir/jsonschema-format-checkers.txt"
 quire provenance --pretty >"$evidence_dir/quire-provenance.json"
 cargo metadata --format-version 1 --all-features >"$evidence_dir/metadata.json"
 
-run_and_retain make-ci make ci
+run_and_retain make-ci env -u MAKEFLAGS make ci
 run_and_retain make-spec make spec
 run_and_retain quire-coverage python3 scripts/check_traceability_coverage.py
 run_and_retain rustdoc env RUSTDOCFLAGS=-Dwarnings cargo doc --no-deps --all-features

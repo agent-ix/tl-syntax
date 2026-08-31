@@ -21,5 +21,10 @@ The sibling `.sha256` file uses repository-relative paths and covers every file
 in the record without self-reference. Verify it from the repository root with
 `sha256sum --check evidence/<record>.sha256`.
 
+`STATIC.sha256` covers every retained evidence document outside the immutable
+record directories, including review and run notes. `ANCHORS` exactly covers
+that static manifest and every record manifest, so no evidence entry can be
+added, removed, or changed outside the verified integrity boundary.
+
 Candidate output informs the human decision described by MP-001. It cannot
 approve, publish, validate, accredit, or certify a release or consuming project.

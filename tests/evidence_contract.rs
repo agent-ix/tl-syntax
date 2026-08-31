@@ -33,10 +33,7 @@ fn evidence_suite_registry_is_wired_to_executable_gates() {
         "cargo deny check bans",
         "cargo deny check licenses",
         "cargo deny check sources",
-        "test_evidence_tool.py",
-        "test_failure_propagation.py",
-        "test_json_schema_gate.py",
-        "test_traceability_gate.py",
+        "scripts/run_policy_tests.py",
         "quire validate --scope . 'spec/**/*.md' --strict --summary",
         "check_traceability_coverage.py",
         "verify_evidence.sh",
@@ -70,9 +67,26 @@ fn evidence_suite_registry_is_wired_to_executable_gates() {
         "cargo doc --no-deps --all-features",
         "PGM01_SCHEMA",
         "PGM01_VALIDATOR",
+        "run_and_retain input-schema",
+        "run_and_retain manifest-schema",
+        "run_and_retain pgm01-schema",
+        "run_and_retain pgm01-validator",
+        "run_and_retain sealed-pgm01-schema",
+        "run_and_retain sealed-pgm01-validator",
+        "finalize_collection.py",
     ] {
         assert!(collector.contains(command), "collector omits {command}");
     }
+    assert!(
+        collector.contains("jsonschema-format-checkers.txt"),
+        "collector does not retain the installed JSON format checker set"
+    );
+    assert!(
+        collector.contains("observed_schema_digest")
+            && collector
+                .contains("0946e235e9e4b0fa79e9b9ec27ae157b303c17de0a9408d3cc04968fb7152256"),
+        "collector does not verify the reviewed PGM-01 schema digest before collection"
+    );
     for suite in [
         "SUITE-001",
         "SUITE-002",
