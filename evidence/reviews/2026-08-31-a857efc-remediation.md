@@ -21,3 +21,5 @@ The retained collection
 `evidence/tl-syntax-v01-a857efcc28a1-20260831T193914Z` contains twelve passing
 local outcomes. Its PGM-01 result remains `inconclusive` by design because an
 exact finalized envelope cannot self-attest and independent review is pending.
+> Superseded: this remediation note describes source `a857efc` and does not
+> discharge current-source obligations. See `2026-08-31-current-inspections.md`.
