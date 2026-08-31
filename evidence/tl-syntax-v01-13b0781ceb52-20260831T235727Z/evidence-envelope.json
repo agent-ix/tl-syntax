@@ -1,0 +1,102 @@
+{
+  "backend": {
+    "kind": "none",
+    "reason": "deterministic evidence packaging; invoked tools are identified in the input"
+  },
+  "environment": {
+    "dependenciesDigest": {
+      "algorithm": "sha256",
+      "value": "5c37be54b56a4e84240ff9a9c80f2802201503e68d210e85209524aca814cb85"
+    },
+    "operatingSystem": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+    "targetTriple": "x86_64-unknown-linux-gnu",
+    "toolchain": "rustc 1.94.1 (e408947bf 2026-03-25)"
+  },
+  "extensions": {
+    "dev.agent-ix.tl-syntax": {
+      "componentClass": "linked-runtime",
+      "corpusRevision": "tl-syntax-corpus/v1",
+      "envelopeSchemaDigest": "0946e235e9e4b0fa79e9b9ec27ae157b303c17de0a9408d3cc04968fb7152256",
+      "pgm01CandidateRevision": "7dac9d8c19952412b56a0347387666e2ca81e01d",
+      "reviewState": "pending",
+      "sourceState": "clean"
+    }
+  },
+  "inputs": [
+    {
+      "contentDigest": {
+        "algorithm": "sha256",
+        "value": "8c5a5855e01c1e0083632c531862e9a532af00b9d23931d316b2753ab9827dee"
+      },
+      "mediaType": "application/json",
+      "role": "evidence-collection-input",
+      "schema": {
+        "digest": {
+          "algorithm": "sha256",
+          "value": "786defd49d7c0917cfca76029321e4c73b92a42f0ee4e3fbe6f3e6af89b32f7d"
+        },
+        "id": "tl-syntax.evidence-input",
+        "version": "v1"
+      },
+      "uri": "collection-input.json"
+    }
+  ],
+  "outputs": [
+    {
+      "contentDigest": {
+        "algorithm": "sha256",
+        "value": "2ab67e5a10f088ff2973731046b67ad752de17386a8c39fd90ba7a2332ae2e9a"
+      },
+      "mediaType": "application/json",
+      "role": "tl-syntax-evidence-manifest",
+      "schema": {
+        "digest": {
+          "algorithm": "sha256",
+          "value": "3a3124a5a934272cb4a288909d46da2dccdfe600ab588ca3de89f38cb03059ef"
+        },
+        "id": "tl-syntax.evidence-manifest",
+        "version": "v1"
+      },
+      "uri": "evidence-manifest.json"
+    }
+  ],
+  "parametersDigest": {
+    "algorithm": "sha256",
+    "value": "1b97e43d8f34211de59907236b57eee74e4d649d3ea4844bc0dd0b98961167db"
+  },
+  "producer": {
+    "executableDigest": {
+      "algorithm": "sha256",
+      "value": "0fe5ae0b27b350588154d3b1faf689540dc345a5e6f777eb7a165ececd47d744"
+    },
+    "invocation": [
+      "bash",
+      "scripts/collect_evidence.sh",
+      ".tl-syntax-evidence-stage.8eWcco/tl-syntax-v01-13b0781ceb52-20260831T235727Z"
+    ],
+    "name": "tl-syntax-evidence-collector",
+    "sourceRevision": "13b0781ceb522fe2937b1833442f914ac37f7fa2",
+    "version": "0.1.0"
+  },
+  "provenance": {
+    "candidateRevision": "13b0781ceb522fe2937b1833442f914ac37f7fa2",
+    "contributionMethod": "agent-assisted",
+    "repository": "https://github.com/agent-ix/tl-syntax",
+    "reviewers": [
+      "@kreneskyp"
+    ],
+    "sourceRevision": "13b0781ceb522fe2937b1833442f914ac37f7fa2"
+  },
+  "recordId": "tl-syntax-v01-13b0781ceb52-20260831T235727Z",
+  "recordedAt": "2026-08-31T23:58:04Z",
+  "result": {
+    "requirementRefs": [
+      "PGM-01-R08",
+      "PGM-01-R09",
+      "MP-001"
+    ],
+    "status": "inconclusive",
+    "summary": "exact finalized-envelope validation is external or pending"
+  },
+  "schemaVersion": "quire.derivation-evidence/v1"
+}

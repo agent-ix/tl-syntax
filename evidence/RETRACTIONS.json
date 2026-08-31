@@ -5,6 +5,7 @@
     "tl-syntax-v01-11dedcfc8313-20260831T182730Z": {"reason": "superseded failed collection before qualified-tool controls"},
     "tl-syntax-v01-11dedcfc8313-20260831T183031Z": {"reason": "superseded before qualified-tool and compiled-test-census controls"},
     "tl-syntax-v01-2051d9eddde5-20260830T224139Z": {"reason": "legacy record without the active qualification profile"},
+    "tl-syntax-v01-20987eed0128-20260831T223910Z": {"reason": "superseded by the FND-601/FND-602 behavioral qualification record"},
     "tl-syntax-v01-2423e67d25a6-20260830T224403Z": {"reason": "legacy record without the active qualification profile"},
     "tl-syntax-v01-269d352d1050-20260831T034957Z": {"reason": "legacy record without the active qualification profile"},
     "tl-syntax-v01-49a9301caf5b-20260831T014051Z": {"reason": "legacy record without the active qualification profile"},
