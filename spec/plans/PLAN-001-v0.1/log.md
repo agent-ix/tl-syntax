@@ -7,6 +7,9 @@ description: "Chronological changes to the tl-syntax v0.1 plan bundle."
 
 ## History
 
+- **2026-08-31** - Added complete twelve-variant wire round-trip coverage and behavior gates for
+  exact local CI commands and corpus-schema vocabulary, retained the failed validator-environment
+  attempt honestly, then sealed passing exact candidate `99b3b37d0d84`.
 - **2026-08-31** - Installed the same default Quire modules used by sibling contract workflows
   after manual run `33355130351` exposed the clean-run dependency, then sealed candidate
   `740182f13b84`.
