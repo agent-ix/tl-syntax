@@ -2,7 +2,7 @@
 id: Task-006
 title: "Exact-candidate evidence"
 type: Task
-status: not_started
+status: done
 track: Evidence
 priority: P0
 relationships:
@@ -18,7 +18,8 @@ relationships:
 Retain the exact clean revision's local results, tool and dependency identities, PGM-01 checks, and
 explicit limitations in a checksummed evidence record.
 
-## Guard
+## Completion Evidence
 
-Missing, skipped, failed, or not-yet-sealed validation remains non-conclusive. Collection begins
-only after Task-005 is done and the source revision is clean.
+The retained `592f2140e12a` record has a passing collection summary, two passing sealed PGM-01
+validations, and a checksum manifest that verifies every artifact. Its envelope remains
+non-self-attesting and explicitly inconclusive; the post-seal summary records the external result.

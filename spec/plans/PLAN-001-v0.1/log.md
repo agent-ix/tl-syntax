@@ -7,6 +7,8 @@ description: "Chronological changes to the tl-syntax v0.1 plan bundle."
 
 ## History
 
+- **2026-08-31** - Retained and sealed the exact `592f2140e12a` candidate evidence; Task-006 is
+  complete while the human source-release decision remains open.
 - **2026-08-31** - Converted the prose plan into a typed task bundle and completed review
   remediation. Exact-candidate evidence and the human source-release decision remain open.
 - **2026-08-30** - Established the dependency DAG and six implementation work packages.

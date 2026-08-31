@@ -11,8 +11,11 @@ The collector emits a canonical `quire.derivation-evidence/v1` record plus
 separately versioned collection-input and manifest records. Set `PGM01_SCHEMA`
 to the reviewed PGM-01 Draft 7 schema and `PGM01_VALIDATOR` to its
 `scripts/validate_governance.py`; collection then retains both conformance
-results. Missing PGM-01 gates are recorded as `skipped-unavailable`, never as
-passes.
+results plus sealed validation of the exact final envelope. Because an envelope
+cannot validate and digest itself without changing bytes, its own result stays
+inconclusive; `collection-summary.json` records the post-seal outcome and exact
+envelope digest. Missing PGM-01 gates are recorded as `skipped-unavailable`,
+never as passes.
 
 The sibling `.sha256` file uses repository-relative paths and covers every file
 in the record without self-reference. Verify it from the repository root with
