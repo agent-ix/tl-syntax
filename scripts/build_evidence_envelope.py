@@ -26,6 +26,7 @@ COLLECTION_FINALIZER = ROOT / "scripts" / "finalize_collection.py"
 CORPUS_VALIDATOR = ROOT / "scripts" / "validate_corpus.py"
 TRACEABILITY_VALIDATOR = ROOT / "scripts" / "check_traceability_coverage.py"
 EVIDENCE_VERIFIER = ROOT / "scripts" / "verify_evidence_manifest.py"
+TOOLS_LOCK = ROOT / "tools.lock"
 
 COMMANDS = (
     "make-ci",
@@ -116,6 +117,7 @@ def parameter_paths() -> tuple[Path, ...]:
         CORPUS_VALIDATOR,
         TRACEABILITY_VALIDATOR,
         EVIDENCE_VERIFIER,
+        TOOLS_LOCK,
         INPUT_SCHEMA,
         MANIFEST_SCHEMA,
     }
@@ -190,7 +192,9 @@ def build(evidence_dir: Path, phase: str) -> None:
                     "path": (evidence_dir / f"tool-{name}-path.txt").read_text().strip(),
                     "sha256": (evidence_dir / f"tool-{name}-sha256.txt").read_text().strip(),
                 }
-                for name in ("bash", "cargo", "make", "python3", "quire", "sha256sum")
+                for name in (
+                    "bash", "cargo", "git", "make", "python3", "quire", "rustc", "sha256sum"
+                )
             },
         },
         "pgm01": {

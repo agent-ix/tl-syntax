@@ -27,6 +27,21 @@ VERIFY_MODULE = importlib.util.module_from_spec(VERIFY_SPEC)
 VERIFY_SPEC.loader.exec_module(VERIFY_MODULE)
 
 
+def healthy_test_output(repetitions: int) -> str:
+    markers = ["Running unittests src/lib.rs"] + [
+        f"Running tests/{path.name}" for path in sorted((ROOT / "tests").glob("*.rs"))
+    ] + ["Doc-tests tl_syntax"]
+    counts = (10, 3, 1, 10, 1)
+    assert len(markers) == len(counts)
+    return "".join(
+        "".join(
+            f"{marker}\ntest result: ok. {count} passed; 0 failed; 0 ignored\n"
+            for marker, count in zip(markers, counts, strict=True)
+        )
+        for _ in range(repetitions)
+    )
+
+
 def main() -> int:
     with tempfile.TemporaryDirectory() as directory:
         evidence_dir = Path(directory)
@@ -96,12 +111,21 @@ def main() -> int:
             (evidence_dir / f"{name}.status.txt").write_text("0\n", encoding="utf-8")
             (evidence_dir / f"{name}.stdout").write_text("verified\n", encoding="utf-8")
             (evidence_dir / f"{name}.stderr").write_text("", encoding="utf-8")
-        (evidence_dir / "make-ci.stdout").write_text(
-            "test result: ok. 1 passed; 0 failed; 0 ignored\n" * 5,
-            encoding="utf-8",
+        (evidence_dir / "make-ci.stdout").write_text(healthy_test_output(2), encoding="utf-8")
+        (evidence_dir / "rustdoc.stderr").write_text(
+            "Generated /tmp/doc/tl_syntax/index.html\n", encoding="utf-8"
         )
         (evidence_dir / "collection-input.json").write_text(
-            json.dumps({"qualificationProfile": "tl-syntax.evidence-qualification/v2"}),
+            json.dumps(
+                {
+                    "qualificationProfile": "tl-syntax.evidence-qualification/v2",
+                    "tools": {
+                        "identities": json.loads(
+                            (ROOT / "tools.lock").read_text(encoding="utf-8")
+                        )["tools"]
+                    },
+                }
+            ),
             encoding="utf-8",
         )
         (evidence_dir / "source-revision.txt").write_text(
@@ -127,8 +151,25 @@ def main() -> int:
         assert finalizer_module.summary(evidence_dir)["overallStatus"] == "failed", (
             "an empty successful CI transcript was accepted"
         )
-        (evidence_dir / "make-ci.stdout").write_text(
-            "test result: ok. 1 passed; 0 failed; 0 ignored\n" * 5,
+        (evidence_dir / "make-ci.stdout").write_text(healthy_test_output(2), encoding="utf-8")
+        (evidence_dir / "collection-input.json").write_text("{}\n", encoding="utf-8")
+        try:
+            finalizer_module.summary(evidence_dir)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("evidence without a qualification profile stayed active")
+        (evidence_dir / "collection-input.json").write_text(
+            json.dumps(
+                {
+                    "qualificationProfile": "tl-syntax.evidence-qualification/v2",
+                    "tools": {
+                        "identities": json.loads(
+                            (ROOT / "tools.lock").read_text(encoding="utf-8")
+                        )["tools"]
+                    },
+                }
+            ),
             encoding="utf-8",
         )
         (evidence_dir / "collection-summary.json").write_text(

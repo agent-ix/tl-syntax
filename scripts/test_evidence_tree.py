@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import hashlib
 import importlib.util
+import os
 import shutil
 import subprocess
 import sys
@@ -58,6 +59,20 @@ def main() -> int:
             f"{digest(record_manifest)}  evidence/{record_name}.sha256\n",
             encoding="utf-8",
         )
+        subprocess.run(["/usr/bin/git", "init", "-q"], cwd=root, check=True)
+        subprocess.run(["/usr/bin/git", "config", "user.name", "Policy Test"], cwd=root, check=True)
+        subprocess.run(
+            ["/usr/bin/git", "config", "user.email", "policy-test@example.invalid"],
+            cwd=root, check=True,
+        )
+        subprocess.run(
+            ["/usr/bin/git", "add", "."], cwd=root, check=True,
+            env={**os.environ, "GIT_AUTHOR_DATE": "2026-08-31T20:00:01Z", "GIT_COMMITTER_DATE": "2026-08-31T20:00:01Z"},
+        )
+        subprocess.run(
+            ["/usr/bin/git", "commit", "-qm", "fixture"], cwd=root, check=True,
+            env={**os.environ, "GIT_AUTHOR_DATE": "2026-08-31T20:00:01Z", "GIT_COMMITTER_DATE": "2026-08-31T20:00:01Z"},
+        )
         assert MODULE.verify_tree(root) == []
         healthy = subprocess.run(
             [sys.executable, str(ROOT / "scripts" / "verify_evidence_tree.py"), "--root", str(root)],
@@ -92,7 +107,14 @@ def main() -> int:
             ["git", "config", "user.email", "policy-test@example.invalid"], cwd=root, check=True
         )
         subprocess.run(["git", "add", "."], cwd=root, check=True)
-        subprocess.run(["git", "commit", "-qm", "introduce record"], cwd=root, check=True)
+        subprocess.run(
+            ["git", "commit", "-qm", "introduce record"], cwd=root, check=True,
+            env={
+                **os.environ,
+                "GIT_AUTHOR_DATE": "2026-08-31T20:00:01Z",
+                "GIT_COMMITTER_DATE": "2026-08-31T20:00:01Z",
+            },
+        )
         assert MODULE.validate_record_history(root, {manifest}) == []
         path.write_text("mutated\n", encoding="utf-8")
         assert MODULE.validate_record_history(root, {manifest}), (
@@ -100,6 +122,11 @@ def main() -> int:
         )
         assert MODULE.validate_record_history(root, set()), (
             "a historically introduced record deletion escaped verification"
+        )
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory)
+        assert MODULE.validate_record_history(root, set()), (
+            "missing Git metadata silently disabled record-history validation"
         )
     print("repository-wide evidence integrity behavior is valid")
     return 0

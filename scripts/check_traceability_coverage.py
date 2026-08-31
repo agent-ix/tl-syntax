@@ -29,6 +29,7 @@ ALLOWED_DIAGNOSTICS = {
     "status-column-matches-nothing",
 }
 MAX_INSPECTION_DISTANCE = 5
+INSPECTED_PATHS = ("Cargo.toml", "Cargo.lock", "src", "corpus")
 
 
 def validate_report(report: dict[str, Any]) -> list[str]:
@@ -154,6 +155,89 @@ def validate_matrix_statuses(path: Path) -> list[str]:
     return errors
 
 
+def matrix_sections(path: Path) -> dict[str, list[list[str]]]:
+    sections: dict[str, list[list[str]]] = {}
+    section = ""
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.startswith("## "):
+            section = line[3:].strip()
+            sections.setdefault(section, [])
+        elif line.startswith("|") and section:
+            cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+            if not all(set(cell) <= {"-", ":"} for cell in cells):
+                sections[section].append(cells)
+    return sections
+
+
+def validate_matrix_mappings(path: Path, requirements: Path) -> list[str]:
+    sections = matrix_sections(path)
+    errors: list[str] = []
+    summary = sections.get("Test Case Summary", [])
+    if len(summary) < 2:
+        return ["test matrix has no Test Case Summary rows"]
+    test_rows = {row[0]: row for row in summary[1:] if row}
+    declared_tests = set(test_rows)
+    requirement_ids = {
+        prefix: {
+            re.match(r"^((?:FR|NFR|StR)-[0-9]+)", item.name).group(1)
+            for item in requirements.glob(f"{prefix}-*.md")
+        }
+        for prefix in ("FR", "NFR", "StR")
+    }
+    configurations = {
+        "Functional Requirement Coverage": ("FR", 1, 2),
+        "Non-Functional Requirement Coverage": ("NFR", None, 2),
+        "Stakeholder Requirement Coverage": ("StR", None, 2),
+    }
+    for section, (prefix, criteria_index, tests_index) in configurations.items():
+        rows = sections.get(section, [])
+        if len(rows) < 2:
+            errors.append(f"test matrix has no rows for {section}")
+            continue
+        authored = {row[0] for row in rows[1:] if row}
+        if authored != requirement_ids[prefix]:
+            errors.append(
+                f"{section} requirement census drift: "
+                f"missing={sorted(requirement_ids[prefix] - authored)}, "
+                f"extra={sorted(authored - requirement_ids[prefix])}"
+            )
+        for row in rows[1:]:
+            if len(row) <= tests_index:
+                continue
+            identity = row[0]
+            listed_tests = set(re.findall(r"\bTC-[0-9]{3}\b", row[tests_index]))
+            unknown = listed_tests - declared_tests
+            if unknown:
+                errors.append(f"{identity} coverage names nonexistent tests: {sorted(unknown)}")
+            if prefix in {"FR", "NFR"}:
+                expected_tests = {
+                    test_id for test_id, test_row in test_rows.items()
+                    if len(test_row) > 4 and re.search(rf"\b{re.escape(identity)}-AC-[0-9]+\b", test_row[4])
+                }
+                if listed_tests != expected_tests:
+                    errors.append(
+                        f"{identity} coverage test mapping drift: "
+                        f"expected={sorted(expected_tests)}, observed={sorted(listed_tests)}"
+                    )
+            if criteria_index is not None:
+                requirement_file = next(requirements.glob(f"{identity}-*.md"), None)
+                expected_criteria = set()
+                if requirement_file is not None:
+                    expected_criteria = set(
+                        re.findall(
+                            rf"\b{re.escape(identity)}-AC-[0-9]+\b",
+                            requirement_file.read_text(encoding="utf-8"),
+                        )
+                    )
+                listed_criteria = set(re.findall(rf"\b{re.escape(identity)}-AC-[0-9]+\b", row[criteria_index]))
+                if listed_criteria != expected_criteria:
+                    errors.append(
+                        f"{identity} acceptance-criteria mapping drift: "
+                        f"expected={sorted(expected_criteria)}, observed={sorted(listed_criteria)}"
+                    )
+    return errors
+
+
 def validate_verification_references(root: Path = ROOT) -> list[str]:
     """Validate AC/VC verification cells independently of Quire obligations."""
     matrix = (root / "spec" / "test-matrix.md").read_text(encoding="utf-8")
@@ -165,6 +249,8 @@ def validate_verification_references(root: Path = ROOT) -> list[str]:
             if not line.startswith("|") or not re.search(r"-(?:AC|VC)-[0-9]+\s*\|", line):
                 continue
             cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+            criterion_match = re.search(r"((?:FR|NFR|StR)-[0-9]+-(?:AC|VC)-[0-9]+)", line)
+            criterion = criterion_match.group(1) if criterion_match is not None else "<unknown>"
             verification = cells[-1] if cells else ""
             targets = REFERENCE.findall(verification)
             inspection = INSPECTION_METHOD.fullmatch(verification)
@@ -178,28 +264,33 @@ def validate_verification_references(root: Path = ROOT) -> list[str]:
                 if re.search(r"^Source subject: `[0-9a-f]{40}`$", review_text, re.MULTILINE) is None:
                     errors.append(f"{path}:{number} names an inspection without an exact source subject")
                     continue
+                if re.search(rf"^\|\s*{re.escape(criterion)}\s*\|", review_text, re.MULTILINE) is None:
+                    errors.append(
+                        f"{path}:{number} names an inspection that does not cover {criterion}"
+                    )
+                    continue
                 subject = re.search(
                     r"^Source subject: `([0-9a-f]{40})`$", review_text, re.MULTILINE
                 ).group(1)
                 ancestor = subprocess.run(
-                    ["git", "merge-base", "--is-ancestor", subject, "HEAD"],
+                    ["/usr/bin/git", "merge-base", "--is-ancestor", subject, "HEAD"],
                     cwd=root,
                     check=False,
                     capture_output=True,
                 )
-                if ancestor.returncode != 0:
-                    errors.append(f"{path}:{number} names a non-ancestor inspection subject")
-                    continue
-                distance = subprocess.run(
-                    ["git", "rev-list", "--count", f"{subject}..HEAD"],
-                    cwd=root,
-                    check=True,
-                    capture_output=True,
-                    text=True,
-                ).stdout.strip()
-                if int(distance) > MAX_INSPECTION_DISTANCE:
+                distance = None
+                if ancestor.returncode == 0:
+                    distance = int(subprocess.run(
+                        ["/usr/bin/git", "rev-list", "--count", f"{subject}..HEAD"],
+                        cwd=root, check=True, capture_output=True, text=True,
+                    ).stdout.strip())
+                content_changed = subprocess.run(
+                    ["/usr/bin/git", "diff", "--quiet", subject, "HEAD", "--", *INSPECTED_PATHS],
+                    cwd=root, check=False,
+                ).returncode != 0
+                if (ancestor.returncode != 0 or distance > MAX_INSPECTION_DISTANCE) and content_changed:
                     errors.append(
-                        f"{path}:{number} names a stale inspection subject {distance} commits behind HEAD"
+                        f"{path}:{number} names a stale or content-divergent inspection subject"
                     )
             elif TEST_METHOD.fullmatch(verification) is None:
                 errors.append(f"{path}:{number} declares an empty or uncatalogued verification method")
@@ -259,6 +350,11 @@ def main() -> int:
         return status
     errors = validate_report(report)
     errors.extend(validate_matrix_statuses(ROOT / "spec" / "test-matrix.md"))
+    errors.extend(
+        validate_matrix_mappings(
+            ROOT / "spec" / "test-matrix.md", ROOT / "spec" / "requirements"
+        )
+    )
     errors.extend(validate_verification_references())
     for error in errors:
         print(error, file=sys.stderr)

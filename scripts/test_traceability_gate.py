@@ -50,6 +50,32 @@ def main() -> int:
     report = complete_report()
     assert MODULE.validate_report(report) == []
 
+    matrix_source = (ROOT / "spec" / "test-matrix.md").read_text(encoding="utf-8")
+    with tempfile.TemporaryDirectory() as directory:
+        matrix = Path(directory) / "matrix.md"
+        for mutated in (
+            matrix_source.replace(
+                "| FR-004 | FR-004-AC-1, FR-004-AC-2, FR-004-AC-3, FR-004-AC-4 | "
+                "TC-009, TC-010, TC-011, TC-017, TC-020 | ✅ covered |\n",
+                "",
+                1,
+            ),
+            matrix_source.replace(
+                "TC-009, TC-010, TC-011, TC-017, TC-020",
+                "TC-001, TC-002, TC-003, TC-004, TC-005",
+                1,
+            ),
+            matrix_source.replace(
+                "TC-009, TC-010, TC-011, TC-017, TC-020",
+                "TC-009, TC-010, TC-011, TC-017, TC-999",
+                1,
+            ),
+        ):
+            matrix.write_text(mutated, encoding="utf-8")
+            assert MODULE.validate_matrix_mappings(
+                matrix, ROOT / "spec" / "requirements"
+            ), "a fabricated matrix mapping escaped validation"
+
     report = complete_report()
     report["totals"] = {"backed": 1, "total": 2}
     assert MODULE.validate_report(report), "an unbacked row was accepted"
@@ -151,7 +177,8 @@ def main() -> int:
             capture_output=True, text=True,
         ).stdout.strip()
         review.write_text(
-            f"Source subject: `{subject}`\n", encoding="utf-8"
+            f"Source subject: `{subject}`\n\n| StR-001-VC-1 | Pass | inspected |\n",
+            encoding="utf-8",
         )
         requirement.write_text(
             "| ID | Criteria | Verification |\n|---|---|---|\n"
@@ -159,12 +186,24 @@ def main() -> int:
             encoding="utf-8",
         )
         assert MODULE.validate_verification_references(root) == []
+        review.write_text(f"Source subject: `{subject}`\n", encoding="utf-8")
+        assert MODULE.validate_verification_references(root), (
+            "an inspection record that omitted its criterion was accepted"
+        )
+        review.write_text(
+            f"Source subject: `{subject}`\n\n| StR-001-VC-1 | Pass | inspected |\n",
+            encoding="utf-8",
+        )
         for index in range(MODULE.MAX_INSPECTION_DISTANCE + 1):
             subprocess.run(
                 ["git", "commit", "--allow-empty", "-qm", f"later {index}"],
                 cwd=root,
                 check=True,
             )
+        (root / "src").mkdir()
+        (root / "src" / "lib.rs").write_text("// changed inspected content\n", encoding="utf-8")
+        subprocess.run(["/usr/bin/git", "add", "."], cwd=root, check=True)
+        subprocess.run(["/usr/bin/git", "commit", "-qm", "change inspected content"], cwd=root, check=True)
         assert MODULE.validate_verification_references(root), (
             "a stale inspection subject escaped the recent-ancestor requirement"
         )

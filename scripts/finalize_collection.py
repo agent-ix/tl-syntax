@@ -11,6 +11,9 @@ import sys
 from pathlib import Path
 
 import build_evidence_envelope as builder
+import evidence_profile
+import rust_test_census
+import tool_identity
 
 
 CHECKS = (
@@ -40,28 +43,73 @@ def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def qualification_profile(evidence_dir: Path) -> str | None:
-    try:
-        value = json.loads((evidence_dir / "collection-input.json").read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return "invalid"
-    profile = value.get("qualificationProfile")
-    return profile if isinstance(profile, str) else None
+def source_revision(evidence_dir: Path) -> str:
+    return (evidence_dir / "source-revision.txt").read_text(encoding="utf-8").strip()
+
+
+def expected_test_markers(evidence_dir: Path) -> tuple[tuple[str, ...], int]:
+    revision = source_revision(evidence_dir)
+    paths = subprocess.run(
+        ["/usr/bin/git", "ls-tree", "-r", "--name-only", revision, "--", "src/lib.rs", "tests"],
+        cwd=builder.ROOT, check=True, capture_output=True, text=True,
+    ).stdout.splitlines()
+    tests = sorted(
+        path for path in paths
+        if Path(path).parent == Path("tests") and Path(path).suffix == ".rs"
+    )
+    if "src/lib.rs" not in paths or not tests:
+        raise ValueError("cannot derive the Rust test-suite census from the source revision")
+    readme = subprocess.run(
+        ["/usr/bin/git", "show", f"{revision}:README.md"], cwd=builder.ROOT,
+        check=True, capture_output=True, text=True,
+    ).stdout
+    doctests = len(re.findall(r"^```rust\s*$", readme, re.MULTILINE))
+    if doctests == 0:
+        raise ValueError("source revision has no runnable Rust documentation examples")
+    markers = (
+        "Running unittests src/lib.rs",
+        *(f"Running {path}" for path in tests),
+        "Doc-tests tl_syntax",
+    )
+    total = len(rust_test_census.git_tagged_test_names(builder.ROOT, revision)) + doctests
+    return markers, total
+
+
+def positive_test_census(evidence_dir: Path, output: str, repetitions: int) -> bool:
+    markers, expected_total = expected_test_markers(evidence_dir)
+    passed = [int(value) for value in TEST_SUCCESS.findall(output)]
+    return (
+        len(passed) == len(markers) * repetitions
+        and sum(passed) == expected_total * repetitions
+        and all(output.count(marker) >= repetitions for marker in markers)
+    )
 
 
 def positive_output(evidence_dir: Path, name: str) -> bool:
     stdout = evidence_dir / f"{name}.stdout"
     stderr = evidence_dir / f"{name}.stderr"
     if name == "make-ci":
-        text = stdout.read_text(encoding="utf-8", errors="replace") if stdout.exists() else ""
-        return len(TEST_SUCCESS.findall(text)) >= 5
+        text = "\n".join(
+            path.read_text(encoding="utf-8", errors="replace")
+            for path in (stdout, stderr)
+            if path.exists()
+        )
+        return positive_test_census(evidence_dir, text, 2)
+    if name == "rustdoc":
+        text = "\n".join(
+            path.read_text(encoding="utf-8", errors="replace")
+            for path in (stdout, stderr)
+            if path.exists()
+        )
+        return "Generated " in text and "/doc/tl_syntax/index.html" in text
     if name in SILENT_SUCCESS:
         return True
     return any(path.exists() and path.stat().st_size > 0 for path in (stdout, stderr))
 
 
 def summary(evidence_dir: Path) -> dict[str, object]:
-    require_positive = qualification_profile(evidence_dir) is not None
+    if evidence_profile.resolve_profile(evidence_dir) != "v2":
+        raise ValueError("retracted evidence cannot produce an active qualification summary")
     outcomes = []
     observed = {
         path.name[: -len(".status.txt")]
@@ -87,7 +135,7 @@ def summary(evidence_dir: Path) -> dict[str, object]:
             and CONTRADICTION.search(path.read_text(encoding="utf-8", errors="replace"))
             for path in (evidence_dir / f"{name}.stdout", stderr_path)
         )
-        positive_missing = exit_code == 0 and require_positive and not positive_output(evidence_dir, name)
+        positive_missing = exit_code == 0 and not positive_output(evidence_dir, name)
         outcomes.append(
             {
                 "name": name,
@@ -137,7 +185,7 @@ def summary(evidence_dir: Path) -> dict[str, object]:
 
 def git_bytes(revision: str, path: Path) -> bytes:
     return subprocess.run(
-        ["git", "show", f"{revision}:{path.relative_to(builder.ROOT)}"],
+        ["/usr/bin/git", "show", f"{revision}:{path.relative_to(builder.ROOT)}"],
         cwd=builder.ROOT,
         check=True,
         capture_output=True,
@@ -147,7 +195,7 @@ def git_bytes(revision: str, path: Path) -> bytes:
 def historical_parameters_digest(revision: str, source_builder: bytes) -> str:
     tree = set(
         subprocess.run(
-            ["git", "ls-tree", "-r", "--name-only", revision], cwd=builder.ROOT,
+            ["/usr/bin/git", "ls-tree", "-r", "--name-only", revision], cwd=builder.ROOT,
             check=True, capture_output=True, text=True,
         ).stdout.splitlines()
     )
@@ -165,6 +213,7 @@ def historical_parameters_digest(revision: str, source_builder: bytes) -> str:
         (b"CORPUS_VALIDATOR", "scripts/validate_corpus.py"),
         (b"TRACEABILITY_VALIDATOR", "scripts/check_traceability_coverage.py"),
         (b"EVIDENCE_VERIFIER", "scripts/verify_evidence_manifest.py"),
+        (b"TOOLS_LOCK", "tools.lock"),
         (b"EVIDENCE_ANCHORS", "evidence/ANCHORS"),
         (b"INPUT_SCHEMA", "schemas/tl-syntax-evidence-input-v1.schema.json"),
         (b"MANIFEST_SCHEMA", "schemas/tl-syntax-evidence-manifest-v1.schema.json"),
@@ -188,6 +237,9 @@ def historical_parameters_digest(revision: str, source_builder: bytes) -> str:
             path for path in tree
             if path.startswith("scripts/") and Path(path).suffix in {".py", ".sh"}
         })
+        if b"TOOLS_LOCK" in source_builder:
+            paths.append("tools.lock")
+            paths.sort()
     missing = set(paths) - tree
     if missing:
         raise OSError(f"source revision lacks parameter paths: {sorted(missing)}")
@@ -213,6 +265,24 @@ def validate_parameter_identity(evidence_dir: Path) -> list[str]:
     return []
 
 
+def validate_tool_identity(evidence_dir: Path) -> list[str]:
+    try:
+        revision = source_revision(evidence_dir)
+        source_lock = json.loads(git_bytes(revision, builder.TOOLS_LOCK))
+        expected = tool_identity.validate_lock(source_lock)
+        collection_input = json.loads(
+            (evidence_dir / "collection-input.json").read_text(encoding="utf-8")
+        )
+        observed = collection_input["tools"]["identities"]
+    except (
+        KeyError, OSError, ValueError, json.JSONDecodeError, subprocess.CalledProcessError
+    ) as error:
+        return [f"cannot rederive retained tool identities: {error}"]
+    if observed != expected:
+        return [f"retained tool identities disagree with source tools.lock: {evidence_dir}"]
+    return []
+
+
 def validate_envelope(evidence_dir: Path, value: dict[str, object]) -> list[str]:
     try:
         envelope = json.loads((evidence_dir / "evidence-envelope.json").read_text(encoding="utf-8"))
@@ -233,6 +303,7 @@ def validate_envelope(evidence_dir: Path, value: dict[str, object]) -> list[str]
     if result.get("status") != expected_status or result.get("summary") != expected_summary:
         errors.append(f"envelope result disagrees with retained outcomes: {evidence_dir}")
     errors.extend(validate_parameter_identity(evidence_dir))
+    errors.extend(validate_tool_identity(evidence_dir))
     return errors
 
 
@@ -242,7 +313,27 @@ def main() -> int:
         print("usage: finalize_collection.py [--check] EVIDENCE_DIR", file=sys.stderr)
         return 2
     evidence_dir = Path(sys.argv[2] if check else sys.argv[1])
-    value = summary(evidence_dir)
+    try:
+        profile = evidence_profile.resolve_profile(evidence_dir)
+    except (OSError, ValueError, json.JSONDecodeError, subprocess.CalledProcessError) as error:
+        print(f"cannot resolve evidence qualification profile: {error}", file=sys.stderr)
+        return 2
+    if profile == "retracted":
+        if not check:
+            print(f"refusing to rewrite explicitly retracted evidence: {evidence_dir}", file=sys.stderr)
+            return 2
+        parameter_errors = validate_parameter_identity(evidence_dir)
+        if parameter_errors:
+            for error in parameter_errors:
+                print(error, file=sys.stderr)
+            return 1
+        print(f"retained evidence is explicitly retracted: {evidence_dir}")
+        return 0
+    try:
+        value = summary(evidence_dir)
+    except (OSError, ValueError, json.JSONDecodeError, subprocess.CalledProcessError) as error:
+        print(f"cannot derive retained collection summary: {error}", file=sys.stderr)
+        return 2
     summary_path = evidence_dir / "collection-summary.json"
     if check:
         parameter_errors = validate_parameter_identity(evidence_dir)

@@ -26,7 +26,9 @@ fn evidence_suite_registry_is_wired_to_executable_gates() {
         "scripts/run_policy_tests.py",
         "quire validate --scope . 'spec/**/*.md' --strict --summary",
         "check_traceability_coverage.py",
-        "verify_evidence.sh",
+        "/usr/bin/bash scripts/verify_evidence.sh",
+        "cargo +1.75.0 test --all-features",
+        "RUSTDOCFLAGS=-Dwarnings cargo doc --no-deps --all-features",
     ] {
         assert!(ci_commands.contains(command), "make ci omits {command}");
     }
@@ -72,11 +74,11 @@ fn evidence_suite_registry_is_wired_to_executable_gates() {
         "collector does not retain the installed JSON format checker set"
     );
     assert!(
-        collector.contains("clean_env=(env -i PATH="),
+        collector.contains("clean_env=(/usr/bin/env -i PATH="),
         "collector does not replace the ambient PATH with its trusted tool path"
     );
     assert!(
-        collector.contains("for tool in bash cargo make python3 quire sha256sum")
+        collector.contains("for tool in bash cargo git make python3 quire rustc sha256sum")
             && collector.contains("tool-${tool}-path.txt")
             && collector.contains("tool-${tool}-sha256.txt"),
         "collector does not retain resolved mandatory-tool identities"

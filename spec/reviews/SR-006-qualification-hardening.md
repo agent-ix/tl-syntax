@@ -11,18 +11,21 @@ review_set: all
 
 ## Summary
 
-The sixth review round identified five high-severity false-green paths and six
-medium-severity evidence or traceability gaps. The remediation fixes the finding
-classes rather than only the named examples: trusted tool resolution is checked
-and retained by path and content digest; every Make control flag is rejected;
-all Rust sources and executable gate entry points are exercised; successful
-records require positive transcripts; historical parameter identities are
-derived from their own source revisions; and inspection records name a recent
-ancestor revision.
+The sixth and seventh review rounds identified false-green paths in tool
+identity, compiled-test enumeration, Make controls, shell-gate wiring, retained
+profiles, and traceability mappings. The remediation fixes the finding classes:
+the qualification environment is source-locked by absolute path and SHA-256;
+the Cargo-compiled, non-ignored test set must equal the requirement-tagged
+source census; every Make control spelling is rejected; successful active
+records require source-derived positive transcripts; and traceability tables
+are cross-checked against requirement files and test-case mappings.
 
 Retained evidence is collected outside the evidence tree, each record name is
 cross-checked against its source revision and collection time, and Git history
 is used to reject removal or post-introduction mutation of record manifests.
+All records predating the complete active profile are preserved immutably but
+explicitly retracted in `evidence/RETRACTIONS.json`; none remains an active
+qualification claim.
 The in-repository anchor remains a review-visible trust root rather than an
 external attestation. Hosted CI remains manual-only and was not dispatched.
 

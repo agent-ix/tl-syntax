@@ -7,24 +7,27 @@ import argparse
 import os
 import re
 import shlex
-import shutil
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
 
+import rust_test_census
+import tool_identity
+
 
 ROOT = Path(__file__).resolve().parent.parent
 PROBES = {
     "fmt-check", "check-features", "check-default-dependencies", "lint", "test",
-    "check-corpus", "deny", "audit-unsafe", "evidence-tool", "spec", "verify-evidence",
+    "check-corpus", "deny", "audit-unsafe", "evidence-tool", "spec", "msrv", "rustdoc",
+    "verify-evidence",
 }
 GUARD_TARGET = "check-failure-propagation"
 TARGET = re.compile(r"^([A-Za-z0-9_.-]+):(?:\s+(.*?))?\s*$")
-SHELL_CONTROL = re.compile(r"&&|\|\||[;|]")
-IGNORE_ATTRIBUTE = re.compile(r"#\s*\[[^\]]*\bignore\b[^\]]*\]")
-CFG_ATTRIBUTE = re.compile(r"#\s*\[\s*cfg\s*\(([^\]]*)\)\s*\]")
-MAKEFLAGS_ASSIGNMENT = re.compile(r"^\s*MAKEFLAGS\s*(?::|\+|\?)?=\s*(.*)$")
+SHELL_CONTROL = re.compile(r"&&|\|\||&(?!&)|[;|]")
+MAKEFLAGS_ASSIGNMENT = re.compile(
+    r"^\s*(?:(?:export|override|unexport)\s+)*MAKEFLAGS\s*(?::|\+|\?)?=\s*(.*)$"
+)
 
 
 def parse_makefile(text: str) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
@@ -65,51 +68,25 @@ def makeflags_ignore_errors(value: str) -> bool:
     return False
 
 
-def inspect_ignored_tests(root: Path) -> list[str]:
-    errors: list[str] = []
-    for source in root.rglob("*.rs"):
-        if ".git" in source.parts or "target" in source.parts:
-            continue
-        text = source.read_text(encoding="utf-8")
-        if IGNORE_ATTRIBUTE.search(text):
-            errors.append(f"{source.relative_to(root)} disables a Rust test with #[ignore]")
-        for match in CFG_ATTRIBUTE.finditer(text):
-            expression = " ".join(match.group(1).split())
-            permitted = source.is_relative_to(root / "src") and expression in {
-                "test", 'feature = "alloc"', 'feature = "serde"'
-            }
-            if not permitted:
-                errors.append(
-                    f"{source.relative_to(root)} conditionally removes Rust code with #[cfg({expression})]"
-                )
-    return errors
-
-
 def inspect_toolchain() -> list[str]:
-    expected = {
-        "bash": "/usr/bin/bash",
-        "cargo": str(Path.home() / ".cargo" / "bin" / "cargo"),
-        "make": "/usr/bin/make",
-        "python3": "/usr/bin/python3",
-        "sha256sum": "/usr/bin/sha256sum",
-    }
-    errors = [
-        f"{name} must resolve to {path}, got {shutil.which(name)}"
-        for name, path in expected.items()
-        if shutil.which(name) != path
-    ]
-    quire = shutil.which("quire")
-    quire_prefixes = (
-        Path.home() / ".npm-global" / "bin",
-        Path("/opt/hostedtoolcache/node"),
+    try:
+        value, tools = tool_identity.load_lock()
+    except (OSError, ValueError) as error:
+        return [f"qualified tool lock is unavailable: {error}"]
+    unavailable, mismatches = tool_identity.verify_live(value, tools)
+    return unavailable + mismatches
+
+
+def inspect_test_census() -> list[str]:
+    try:
+        value, tools = tool_identity.load_lock()
+    except (OSError, ValueError) as error:
+        return [f"qualified tool lock is unavailable: {error}"]
+    return rust_test_census.inspect_live(
+        ROOT,
+        tools["cargo"]["path"],
+        tool_identity.qualified_environment(value, tools),
     )
-    if quire is None or not any(
-        Path(quire).is_relative_to(prefix) for prefix in quire_prefixes
-    ):
-        errors.append(
-            f"quire must resolve under a declared npm tool prefix, got {quire}"
-        )
-    return errors
 
 
 def inspect_makefile(path: Path, root: Path = ROOT) -> list[str]:
@@ -149,7 +126,6 @@ def inspect_makefile(path: Path, root: Path = ROOT) -> list[str]:
                 errors.append(
                     f"mandatory target {target} uses forbidden shell control operators: {command}"
                 )
-    errors.extend(inspect_ignored_tests(root))
     return errors
 
 
@@ -237,6 +213,7 @@ def main() -> int:
         errors.append("ambient MAKE override is not permitted")
     if not args.static_only:
         errors.extend(inspect_toolchain())
+        errors.extend(inspect_test_census())
     if not errors and not args.static_only:
         errors.extend(inspect_expanded_recipes(makefile, ROOT))
     if not errors and not args.inspect_only and not args.static_only:

@@ -50,6 +50,8 @@ help:
 	@echo "  make verify-evidence  - verify every retained evidence SHA-256 manifest"
 	@echo "  make spec             - validate the specification with Quire"
 	@echo "  make evidence-tool    - syntax-check the PGM-01 evidence tooling"
+	@echo "  make msrv             - test all targets and features with Rust 1.75"
+	@echo "  make rustdoc          - build warning-free public documentation"
 	@echo "  make build            - Release build"
 	@echo "  make clean            - cargo clean"
 	@echo "  make deny             - run all declared cargo-deny policy checks"
@@ -93,12 +95,13 @@ check-default-dependencies:
 
 .PHONY: check-corpus
 check-corpus:
-	sha256sum --check corpus/SHA256SUMS
+	/usr/bin/sha256sum --check corpus/SHA256SUMS
 	/usr/bin/python3 scripts/validate_corpus.py
 
 .PHONY: verify-evidence
 verify-evidence:
-	bash scripts/verify_evidence.sh
+	/usr/bin/python3 scripts/check_evidence_shell_contract.py
+	/usr/bin/bash scripts/verify_evidence.sh
 
 .PHONY: spec
 spec:
@@ -135,11 +138,19 @@ cargo-audit:
 
 .PHONY: audit-unsafe
 audit-unsafe:
-	bash scripts/check_unsafe_comments.sh
+	/usr/bin/bash scripts/check_unsafe_comments.sh
+
+.PHONY: msrv
+msrv:
+	cargo +1.75.0 test --all-features
+
+.PHONY: rustdoc
+rustdoc:
+	RUSTDOCFLAGS=-Dwarnings cargo doc --no-deps --all-features
 
 # =============================================================================
 # Composite
 # =============================================================================
 
 .PHONY: ci
-ci: check-failure-propagation fmt-check check-features check-default-dependencies lint test check-corpus deny audit-unsafe evidence-tool spec verify-evidence
+ci: check-failure-propagation fmt-check check-features check-default-dependencies lint test check-corpus deny audit-unsafe evidence-tool spec msrv rustdoc verify-evidence

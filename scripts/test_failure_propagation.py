@@ -42,6 +42,10 @@ def main() -> int:
         ),
         original + "\n.IGNORE: test\n",
         original + "\nMAKEFLAGS += -i\n",
+        original + "\nexport MAKEFLAGS = -i\n",
+        original + "\nexport MAKEFLAGS := -i\n",
+        original + "\noverride MAKEFLAGS = -i\n",
+        original + "\noverride MAKEFLAGS += -i\n",
         original.replace(
             "ci: check-failure-propagation",
             "ci: fabricated-gate check-failure-propagation",
@@ -66,7 +70,7 @@ def main() -> int:
                 text=True,
             )
             assert result.returncode != 0, f"mutation {index} produced a false pass"
-            if index in {3, 4}:
+            if index in {3, 4, 5, 6, 7, 8}:
                 make_result = subprocess.run(
                     ["make", "--no-print-directory", "-f", str(path), "ci"],
                     cwd=ROOT,
@@ -78,13 +82,6 @@ def main() -> int:
                 assert make_result.returncode != 0, (
                     f"Make recipe-control mutation {index} converted CI to success"
                 )
-
-        ignored_root = Path(directory) / "ignored"
-        (ignored_root / "tests").mkdir(parents=True)
-        (ignored_root / "tests" / "disabled.rs").write_text(
-            "#[test]\n#[cfg_attr(all(), ignore)]\nfn disabled() {}\n", encoding="utf-8"
-        )
-        assert MODULE.inspect_ignored_tests(ignored_root), "cfg_attr(ignore) escaped inspection"
 
         hidden = Path(directory) / "hidden.mk"
         hidden.write_text(
@@ -122,18 +119,31 @@ def main() -> int:
     )
     assert ignored_make.returncode != 0, "make -i converted local CI to a false success"
     with tempfile.TemporaryDirectory() as directory:
-        shim = Path(directory) / "cargo"
+        fake_home = Path(directory)
+        shim = fake_home / ".cargo" / "bin" / "cargo"
+        shim.parent.mkdir(parents=True)
         shim.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
         shim.chmod(0o755)
         shadowed_env = dict(os.environ)
         shadowed_env.pop("MAKEFLAGS", None)
-        shadowed_env["PATH"] = f"{directory}:{shadowed_env['PATH']}"
+        shadowed_env["HOME"] = directory
+        shadowed_env["PATH"] = f"{shim.parent}:{shadowed_env['PATH']}"
         shadowed = subprocess.run(
             ["/usr/bin/make", "--no-print-directory", "ci"], cwd=ROOT,
             check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
             env=shadowed_env,
         )
-        assert shadowed.returncode != 0, "PATH-shadowed Cargo bypassed local CI"
+        assert shadowed.returncode != 0, "HOME/PATH-shadowed Cargo bypassed local CI"
+    with tempfile.TemporaryDirectory(dir=ROOT) as directory:
+        probe = Path(directory) / "orphan.rs"
+        probe.write_text(
+            "// Trace: TC-020, FR-004-AC-4\n#[test]\nfn orphaned_requirement_test() {}\n",
+            encoding="utf-8",
+        )
+        try:
+            assert MODULE.inspect_test_census(), "an uncompiled traced test escaped the census"
+        finally:
+            probe.unlink(missing_ok=True)
     print("failure-propagation policy behavior is valid")
     return 0
 

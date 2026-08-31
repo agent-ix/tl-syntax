@@ -7,22 +7,13 @@
   "additionalProperties": false,
   "required": [
     "schemaVersion",
+    "qualificationProfile",
     "sourceRevision",
     "sourceState",
     "commands",
     "tools",
     "pgm01",
     "corpus"
-  ],
-  "allOf": [
-    {
-      "if": {"required": ["qualificationProfile"]},
-      "then": {
-        "properties": {
-          "tools": {"required": ["identities"]}
-        }
-      }
-    }
   ],
   "properties": {
     "schemaVersion": {"const": "tl-syntax.evidence-input/v1"},
@@ -37,7 +28,7 @@
     "tools": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["cargo", "jsonschema", "python", "quire", "rustc"],
+      "required": ["cargo", "jsonschema", "python", "quire", "rustc", "identities"],
       "properties": {
         "cargo": {"type": "string", "minLength": 1},
         "jsonschema": {"type": "string", "minLength": 1},
@@ -47,7 +38,7 @@
         "identities": {
           "type": "object",
           "additionalProperties": {"$ref": "#/definitions/toolIdentity"},
-          "required": ["bash", "cargo", "make", "python3", "quire", "sha256sum"]
+          "required": ["bash", "cargo", "git", "make", "python3", "quire", "rustc", "sha256sum"]
         }
       }
     },

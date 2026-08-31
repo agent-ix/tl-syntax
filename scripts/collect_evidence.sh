@@ -4,8 +4,8 @@ set -euo pipefail
 if [[ $# -gt 0 ]]; then
   final_evidence_dir="$1"
 else
-  evidence_revision="$(git rev-parse --short=12 HEAD)"
-  evidence_timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
+  evidence_revision="$(/usr/bin/git rev-parse --short=12 HEAD)"
+  evidence_timestamp="$(/usr/bin/date -u +%Y%m%dT%H%M%SZ)"
   final_evidence_dir="evidence/tl-syntax-v01-${evidence_revision}-${evidence_timestamp}"
 fi
 checksum_path="${final_evidence_dir}.sha256"
@@ -14,30 +14,37 @@ if [[ -e "$final_evidence_dir" || -e "$checksum_path" ]]; then
   echo "refusing to overwrite retained evidence: $final_evidence_dir" >&2
   exit 2
 fi
-if [[ -n "$(git status --porcelain --untracked-files=all)" ]]; then
+if [[ -n "$(/usr/bin/git -c core.excludesFile=/dev/null status --porcelain --untracked-files=all)" ]]; then
   echo "refusing to collect evidence from a modified or untracked source tree" >&2
   exit 2
 fi
-if ! python3 -c 'import jsonschema' >/dev/null 2>&1; then
+if ! /usr/bin/python3 -c 'import jsonschema' >/dev/null 2>&1; then
   echo "jsonschema is required for evidence collection" >&2
   exit 2
 fi
 pgm01_schema_digest="0946e235e9e4b0fa79e9b9ec27ae157b303c17de0a9408d3cc04968fb7152256"
 if [[ -n "${PGM01_SCHEMA:-}" ]]; then
-  observed_schema_digest="$(python3 -c 'import hashlib, pathlib, sys; print(hashlib.sha256(pathlib.Path(sys.argv[1]).read_bytes()).hexdigest())' "$PGM01_SCHEMA")"
+  observed_schema_digest="$(/usr/bin/python3 -c 'import hashlib, pathlib, sys; print(hashlib.sha256(pathlib.Path(sys.argv[1]).read_bytes()).hexdigest())' "$PGM01_SCHEMA")"
   if [[ "$observed_schema_digest" != "$pgm01_schema_digest" ]]; then
     echo "PGM-01 envelope schema digest does not match the reviewed policy pin" >&2
     exit 2
   fi
 fi
 
-staging_root="$(mktemp -d -p . .tl-syntax-evidence-stage.XXXXXX)"
-evidence_dir="$staging_root/$(basename "$final_evidence_dir")"
-mkdir -p "$evidence_dir"
+staging_root="$(/usr/bin/mktemp -d -p . .tl-syntax-evidence-stage.XXXXXX)"
+cleanup() {
+  if [[ -n "${staging_root:-}" && -d "$staging_root" ]]; then
+    /usr/bin/rm -rf -- "$staging_root"
+  fi
+}
+trap cleanup EXIT
+evidence_dir="$staging_root/$(/usr/bin/basename "$final_evidence_dir")"
+/usr/bin/mkdir -p "$evidence_dir"
 collection_failed=0
-quire_path="$(command -v quire)"
-trusted_path="$HOME/.cargo/bin:$(/usr/bin/dirname "$quire_path"):/usr/local/bin:/usr/bin:/bin"
-clean_env=(env -i PATH="$trusted_path" HOME="$HOME" USER="${USER:-}" LANG="${LANG:-C}" PGM01_SCHEMA="${PGM01_SCHEMA:-}" PGM01_VALIDATOR="${PGM01_VALIDATOR:-}")
+/usr/bin/python3 scripts/tool_identity.py --verify-live
+trusted_path="$(/usr/bin/python3 scripts/tool_identity.py --trusted-path)"
+qualified_home="$(/usr/bin/python3 scripts/tool_identity.py --home)"
+clean_env=(/usr/bin/env -i PATH="$trusted_path" HOME="$qualified_home" USER="${USER:-}" LANG="${LANG:-C}" PGM01_SCHEMA="${PGM01_SCHEMA:-}" PGM01_VALIDATOR="${PGM01_VALIDATOR:-}")
 
 run_and_retain() {
   local name="$1"
@@ -48,7 +55,7 @@ run_and_retain() {
   set -e
   local output_file
   for output_file in "$evidence_dir/$name.stdout" "$evidence_dir/$name.stderr"; do
-    python3 -c 'from pathlib import Path; import sys; p = Path(sys.argv[1]); data = p.read_bytes(); p.write_bytes(data.rstrip(b"\n") + b"\n" if data else data)' "$output_file"
+    "${clean_env[@]}" python3 -c 'from pathlib import Path; import sys; p = Path(sys.argv[1]); data = p.read_bytes(); p.write_bytes(data.rstrip(b"\n") + b"\n" if data else data)' "$output_file"
   done
   echo "$status" >"$evidence_dir/$name.status.txt"
   if [[ $status -ne 0 ]]; then
@@ -64,7 +71,8 @@ retain_skipped() {
   collection_failed=1
 }
 
-"${clean_env[@]}" git rev-parse HEAD >"$evidence_dir/source-revision.txt"
+source_revision="$("${clean_env[@]}" git rev-parse HEAD)"
+printf '%s\n' "$source_revision" >"$evidence_dir/source-revision.txt"
 echo clean >"$evidence_dir/source-state.txt"
 "${clean_env[@]}" rustc --version --verbose >"$evidence_dir/rustc-version.txt"
 "${clean_env[@]}" cargo --version --verbose >"$evidence_dir/cargo-version.txt"
@@ -75,7 +83,7 @@ echo clean >"$evidence_dir/source-state.txt"
   >"$evidence_dir/jsonschema-format-checkers.txt"
 "${clean_env[@]}" quire provenance --pretty >"$evidence_dir/quire-provenance.json"
 "${clean_env[@]}" cargo metadata --format-version 1 --all-features >"$evidence_dir/metadata.json"
-for tool in bash cargo make python3 quire sha256sum; do
+for tool in bash cargo git make python3 quire rustc sha256sum; do
   resolved="$(PATH="$trusted_path" command -v "$tool")"
   printf '%s\n' "$resolved" >"$evidence_dir/tool-${tool}-path.txt"
   /usr/bin/sha256sum "$resolved" | /usr/bin/cut -d' ' -f1 >"$evidence_dir/tool-${tool}-sha256.txt"
@@ -86,7 +94,7 @@ run_and_retain make-spec "${clean_env[@]}" make spec
 run_and_retain quire-coverage "${clean_env[@]}" python3 scripts/check_traceability_coverage.py
 run_and_retain rustdoc "${clean_env[@]}" env RUSTDOCFLAGS=-Dwarnings cargo doc --no-deps --all-features
 run_and_retain default-dependencies "${clean_env[@]}" cargo tree --no-default-features --edges normal
-run_and_retain diff-integrity "${clean_env[@]}" git diff --check "origin/main...$(git rev-parse HEAD)"
+run_and_retain diff-integrity "${clean_env[@]}" git diff --check "origin/main...$source_revision"
 
 "${clean_env[@]}" python3 scripts/build_evidence_envelope.py "$evidence_dir" provisional
 run_and_retain input-schema \
@@ -135,17 +143,18 @@ fi
 
 "${clean_env[@]}" python3 scripts/finalize_collection.py "$evidence_dir"
 
-mkdir -p "$(dirname "$final_evidence_dir")"
-mv "$evidence_dir" "$final_evidence_dir"
-rmdir "$staging_root"
+/usr/bin/mkdir -p "$(/usr/bin/dirname "$final_evidence_dir")"
+/usr/bin/mv "$evidence_dir" "$final_evidence_dir"
+/usr/bin/rmdir "$staging_root"
+staging_root=""
 evidence_dir="$final_evidence_dir"
 
-find "$evidence_dir" -type f -print0 \
-  | sort -z \
-  | xargs -0 sha256sum >"$checksum_path"
+/usr/bin/find "$evidence_dir" -type f -print0 \
+  | /usr/bin/sort -z \
+  | /usr/bin/xargs -0 /usr/bin/sha256sum >"$checksum_path"
 
-anchor="$(sha256sum "$checksum_path")"
-if ! grep -Fqx "$anchor" evidence/ANCHORS; then
+anchor="$(/usr/bin/sha256sum "$checksum_path")"
+if ! /usr/bin/grep -Fqx "$anchor" evidence/ANCHORS; then
   printf '%s\n' "$anchor" >>evidence/ANCHORS
 fi
 

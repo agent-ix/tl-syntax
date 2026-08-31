@@ -7,12 +7,24 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+import importlib.util
 
 
 ROOT = Path(__file__).resolve().parent.parent
+SPEC = importlib.util.spec_from_file_location(
+    "check_evidence_shell_contract", ROOT / "scripts" / "check_evidence_shell_contract.py"
+)
+assert SPEC is not None and SPEC.loader is not None
+CONTRACT = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(CONTRACT)
 
 
 def main() -> int:
+    shell_text = (ROOT / "scripts" / "verify_evidence.sh").read_text(encoding="utf-8")
+    for command in CONTRACT.REQUIRED:
+        assert CONTRACT.inspect(shell_text.replace(command, "true", 1)), (
+            f"evidence shell contract accepted removal of {command}"
+        )
     planted_evidence = ROOT / "evidence" / ".POLICY-SHELL-PROBE"
     planted_evidence.write_text("fabricated\n", encoding="utf-8")
     try:

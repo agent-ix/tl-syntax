@@ -19,6 +19,10 @@ STATIC_MANIFEST = Path("evidence/STATIC.sha256")
 RECORD_NAME = re.compile(
     r"^tl-syntax-v01-([0-9a-f]{12})-([0-9]{8}T[0-9]{6}Z)\.sha256$"
 )
+LEGACY_INTRODUCTION_DATE_EXCEPTIONS = {
+    Path("evidence/tl-syntax-v01-99b3b37d0d84-20260831T063017Z.sha256"):
+        "5dc830b6111d4e7699f1afb34a7302c0c329cacd",
+}
 
 
 def sha256(path: Path) -> str:
@@ -52,7 +56,7 @@ def parse_manifest(path: Path, root: Path) -> tuple[dict[Path, str], list[str]]:
 
 def git_output(root: Path, *args: str) -> str:
     return subprocess.run(
-        ["git", *args], cwd=root, check=True, capture_output=True, text=True
+        ["/usr/bin/git", *args], cwd=root, check=True, capture_output=True, text=True
     ).stdout
 
 
@@ -94,7 +98,7 @@ def validate_record_identity(root: Path, manifest: Path) -> list[str]:
 
 def validate_record_history(root: Path, manifests: set[Path]) -> list[str]:
     if not (root / ".git").exists():
-        return []
+        return ["record history unavailable: repository metadata is missing"]
     errors: list[str] = []
     try:
         historical = historical_record_manifests(root)
@@ -116,13 +120,25 @@ def validate_record_history(root: Path, manifests: set[Path]) -> list[str]:
                 )
                 continue
             introduced = subprocess.run(
-                ["git", "show", f"{commits[0]}:{manifest}"],
+                ["/usr/bin/git", "show", f"{commits[0]}:{manifest}"],
                 cwd=root,
                 check=True,
                 capture_output=True,
             ).stdout
             if hashlib.sha256(introduced).hexdigest() != sha256(root / manifest):
                 errors.append(f"record manifest changed after its introduction: {manifest}")
+            match = RECORD_NAME.fullmatch(manifest.name)
+            introduced_at = datetime.fromisoformat(
+                git_output(root, "show", "-s", "--format=%aI", commits[0]).strip()
+            )
+            named_at = datetime.strptime(match.group(2), "%Y%m%dT%H%M%SZ").replace(
+                tzinfo=timezone.utc
+            )
+            exempt_commit = LEGACY_INTRODUCTION_DATE_EXCEPTIONS.get(manifest)
+            if abs((introduced_at - named_at).total_seconds()) > 900 and commits[0] != exempt_commit:
+                errors.append(
+                    f"record timestamp disagrees with its introduction commit: {manifest}"
+                )
         except (OSError, subprocess.CalledProcessError) as error:
             errors.append(f"cannot verify record introduction for {manifest}: {error}")
     return errors
@@ -214,6 +230,8 @@ def main() -> int:
     errors = verify_tree(root)
     for error in errors:
         print(error, file=sys.stderr)
+    if any(error.startswith("record history unavailable:") for error in errors):
+        return 2
     return 1 if errors else 0
 
 
