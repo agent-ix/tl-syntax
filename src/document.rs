@@ -1,4 +1,4 @@
-use alloc::{string::String, vec::Vec};
+use alloc::{collections::BTreeMap, string::String, vec::Vec};
 use core::fmt;
 
 use crate::{Formula, FormulaError, Node, NodeId, PropositionId, SemanticProfile};
@@ -190,6 +190,7 @@ impl PropositionMapDocument {
 
     /// Checks identity ordering, uniqueness, and non-empty unique names.
     pub fn validate(&self) -> Result<(), PropositionMapError> {
+        let mut names = BTreeMap::new();
         for (index, entry) in self.propositions.iter().enumerate() {
             if entry.name.is_empty() {
                 return Err(PropositionMapError::EmptyName { id: entry.id });
@@ -205,12 +206,9 @@ impl PropositionMapDocument {
                     });
                 }
             }
-            if let Some(duplicate) = self.propositions[..index]
-                .iter()
-                .find(|candidate| candidate.name == entry.name)
-            {
+            if let Some(first) = names.insert(entry.name.as_str(), entry.id) {
                 return Err(PropositionMapError::DuplicateName {
-                    first: duplicate.id,
+                    first,
                     second: entry.id,
                 });
             }

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import importlib.util
+import hashlib
 import tempfile
 from pathlib import Path
 
@@ -15,6 +16,12 @@ SPEC = importlib.util.spec_from_file_location(
 assert SPEC is not None and SPEC.loader is not None
 MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
+VERIFY_SPEC = importlib.util.spec_from_file_location(
+    "verify_evidence_manifest", ROOT / "scripts" / "verify_evidence_manifest.py"
+)
+assert VERIFY_SPEC is not None and VERIFY_SPEC.loader is not None
+VERIFY_MODULE = importlib.util.module_from_spec(VERIFY_SPEC)
+VERIFY_SPEC.loader.exec_module(VERIFY_MODULE)
 
 
 def main() -> int:
@@ -53,6 +60,24 @@ def main() -> int:
         assert MODULE.classify_result("sealed-failed", [outcomes["make-ci"]])[0] == "error"
         assert MODULE.classify_result("final", [outcomes["pgm01-schema"]])[0] == "inconclusive"
         assert MODULE.classify_result("final", [outcomes["pgm01-validator"]])[0] == "error"
+
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory)
+        evidence_dir = root / "record"
+        evidence_dir.mkdir()
+        retained = evidence_dir / "retained.txt"
+        retained.write_text("sealed\n", encoding="utf-8")
+        checksum = root / "record.sha256"
+        checksum.write_text(
+            f"{hashlib.sha256(retained.read_bytes()).hexdigest()}  {retained}\n",
+            encoding="utf-8",
+        )
+        assert VERIFY_MODULE.verify(checksum) == []
+        (evidence_dir / "unlisted.txt").write_text("not sealed\n", encoding="utf-8")
+        assert any(
+            "unlisted retained artifact" in error
+            for error in VERIFY_MODULE.verify(checksum)
+        ), "an added file escaped exact-membership verification"
     print("evidence outcome behavior is valid")
     return 0
 

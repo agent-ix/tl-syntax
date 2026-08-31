@@ -9,7 +9,7 @@ fn evidence_suite_registry_is_wired_to_executable_gates() {
     let suites = fs::read_to_string(root.join("spec/evidence/suites.md")).unwrap();
 
     let dry_run = Command::new("make")
-        .args(["--no-print-directory", "-n", "ci"])
+        .args(["--no-print-directory", "-n", "ci", "DRY_RUN_INSPECTION=1"])
         .current_dir(&root)
         .output()
         .unwrap();
@@ -29,15 +29,22 @@ fn evidence_suite_registry_is_wired_to_executable_gates() {
         "cargo clippy --all-targets --all-features -- -D warnings",
         "cargo test --all-features",
         "validate_corpus.py",
+        "cargo deny check advisories",
+        "cargo deny check bans",
         "cargo deny check licenses",
         "cargo deny check sources",
         "test_evidence_tool.py",
-        "quire validate",
-        "quire coverage",
+        "test_traceability_gate.py",
+        "quire validate --scope . 'spec/**/*.md' --strict --summary",
+        "check_traceability_coverage.py",
         "verify_evidence.sh",
     ] {
         assert!(ci_commands.contains(command), "make ci omits {command}");
     }
+    assert!(
+        makefile.contains("test target swallowed a deliberately failing cargo command"),
+        "failure-propagation sentinel is missing"
+    );
     let exact_cargo_test = ci_commands.lines().any(|line| {
         let fields = line.split_whitespace().collect::<Vec<_>>();
         fields.len() == 3
@@ -54,13 +61,13 @@ fn evidence_suite_registry_is_wired_to_executable_gates() {
     assert!(
         ci_commands
             .lines()
-            .any(|line| line.trim() == "quire coverage --scope . --strict"),
-        "make ci changes or weakens required strict coverage command"
+            .any(|line| { line.trim() == "python3 scripts/check_traceability_coverage.py" }),
+        "make ci changes or weakens the strict traceability policy gate"
     );
     for command in [
         "make ci",
         "make spec",
-        "quire coverage --scope . --strict",
+        "python3 scripts/check_traceability_coverage.py",
         "cargo doc --no-deps --all-features",
         "PGM01_SCHEMA",
         "PGM01_VALIDATOR",
@@ -104,4 +111,29 @@ fn evidence_producer_rejects_false_success_classifications() {
         "evidence behavior test failed: {}",
         String::from_utf8_lossy(&output.stderr)
     );
+}
+
+// Trace: TC-018, NFR-002-AC-4
+#[test]
+fn mandatory_policy_gates_observe_failure_states() {
+    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    for (program, args) in [
+        (
+            "make",
+            vec!["--no-print-directory", "check-failure-propagation"],
+        ),
+        ("python3", vec!["scripts/test_traceability_gate.py"]),
+    ] {
+        let output = Command::new(program)
+            .args(args)
+            .current_dir(&root)
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "policy behavior gate failed: {}{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
 }

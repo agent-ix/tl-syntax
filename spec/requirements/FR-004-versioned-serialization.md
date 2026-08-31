@@ -38,7 +38,7 @@ explicit and versioned.
 
 | ID | Criteria | Verification |
 |---|---|---|
-| FR-004-AC-1 | Supported formula and proposition-map documents round-trip without loss. | Test (TC-009) |
+| FR-004-AC-1 | Supported formula and proposition-map documents round-trip without loss, and `FormulaDocument::from_formula` preserves the borrowed formula's profile, root, and nodes. | Test (TC-009, TC-017) |
 | FR-004-AC-2 | Unknown schema and profile versions fail to deserialize. | Test (TC-010) |
 | FR-004-AC-3 | Malformed formula graphs and proposition maps fail validation. | Test (TC-011) |
 

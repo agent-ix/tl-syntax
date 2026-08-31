@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Validate corpus schemas, exact expected outcomes, and semantic rejection reasons."""
+"""Validate corpus schemas, derive horizons, and check reviewed result oracles."""
 
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -12,12 +13,12 @@ from jsonschema import Draft7Validator
 
 ROOT = Path(__file__).resolve().parent.parent
 CORPUS = ROOT / "corpus"
-EXPECTED_VALID = {
-    "primitive-true-v1": (0, True),
-    "nested-not-future-v1": (1, True),
-    "boundary-singleton-globally-v1": (0, True),
-    "short-trace-future-v1": (2, False),
-    "large-bound-future-v1": (4294967295, False),
+EXPECTED_CLOSED_TRACE = {
+    "primitive-true-v1": True,
+    "nested-not-future-v1": True,
+    "boundary-singleton-globally-v1": True,
+    "short-trace-future-v1": False,
+    "large-bound-future-v1": False,
 }
 OPERATOR_FIELDS = {
     "false": (),
@@ -45,6 +46,37 @@ def operand_ids(node: dict[str, Any]) -> list[int]:
     if kind not in OPERATOR_FIELDS:
         raise AssertionError(f"validator does not recognize formula operator {kind!r}")
     return [node.get(field) for field in OPERATOR_FIELDS[kind]]
+
+
+def formula_horizon(document: dict[str, Any]) -> int:
+    """Derive the standard bounded-MLTL worst-case lookahead at the root."""
+    values: list[int] = []
+    for index, node in enumerate(document["nodes"]):
+        kind = node["kind"]
+        operands = operand_ids(node)
+        try:
+            children = [values[operand] for operand in operands]
+        except (IndexError, TypeError) as error:
+            raise AssertionError(
+                f"node {index} has an invalid operand while deriving its horizon"
+            ) from error
+        if kind in {"false", "true", "proposition"}:
+            value = 0
+        elif kind == "not":
+            value = children[0]
+        elif kind in {"and", "or", "implies", "equivalent"}:
+            value = max(children)
+        elif kind in TEMPORAL_KINDS:
+            value = node["interval"]["end"] + max(children)
+        else:  # operand_ids rejects this first; retain a defensive diagnostic.
+            raise AssertionError(f"cannot derive a horizon for operator {kind!r}")
+        if value > (1 << 64) - 1:
+            raise AssertionError(f"node {index} horizon exceeds the shared u64 model")
+        values.append(value)
+    try:
+        return values[document["root"]]
+    except (IndexError, TypeError) as error:
+        raise AssertionError("formula root is invalid while deriving its horizon") from error
 
 
 def schema_operator_kinds(schema: dict[str, Any]) -> set[str]:
@@ -176,7 +208,7 @@ def validate_proposition_map(value: Any, schema: Draft7Validator) -> None:
         raise AssertionError("proposition names are not unique")
 
 
-def main() -> int:
+def validate() -> None:
     formula_schema_value = load_json(CORPUS / "schema" / "formula-v1.schema.json")
     proposition_schema_value = load_json(
         CORPUS / "schema" / "proposition-map-v1.schema.json"
@@ -197,11 +229,19 @@ def main() -> int:
         if fixture["expected_validation"] == "valid":
             if observed_error is not None:
                 raise AssertionError(f"{identity} unexpectedly failed: {observed_error}")
-            expected = EXPECTED_VALID.get(identity)
-            actual = (fixture.get("expected_horizon"), fixture.get("expected_closed_trace"))
-            if expected != actual:
+            derived_horizon = formula_horizon(document)
+            declared_horizon = fixture.get("expected_horizon")
+            if declared_horizon != derived_horizon:
                 raise AssertionError(
-                    f"{identity} expected-result drift: expected {expected}, observed {actual}"
+                    f"{identity} horizon drift: derived {derived_horizon}, "
+                    f"declared {declared_horizon}"
+                )
+            expected_closed = EXPECTED_CLOSED_TRACE.get(identity)
+            declared_closed = fixture.get("expected_closed_trace")
+            if expected_closed is None or declared_closed != expected_closed:
+                raise AssertionError(
+                    f"{identity} closed-trace oracle drift: reviewed {expected_closed}, "
+                    f"declared {declared_closed}"
                 )
             observed_valid.add(identity)
         elif fixture["expected_validation"] == "invalid":
@@ -212,10 +252,18 @@ def main() -> int:
                 )
         else:
             raise AssertionError(f"{identity} has unknown expected_validation")
-    if observed_valid != set(EXPECTED_VALID):
+    if observed_valid != set(EXPECTED_CLOSED_TRACE):
         raise AssertionError("valid fixture population differs from the reviewed expectation set")
 
-    print("corpus schemas, rejection reasons, and reviewed expectations are valid")
+    print("corpus schemas, derived horizons, rejection reasons, and reviewed oracles are valid")
+
+
+def main() -> int:
+    try:
+        validate()
+    except (AssertionError, KeyError, TypeError, ValueError, OSError, json.JSONDecodeError) as error:
+        print(f"corpus validation failed: {error}", file=sys.stderr)
+        return 1
     return 0
 
 

@@ -24,6 +24,9 @@ BUILDER = Path(__file__).resolve()
 SCHEMA_VALIDATOR = ROOT / "scripts" / "validate_json_schema.py"
 COLLECTION_FINALIZER = ROOT / "scripts" / "finalize_collection.py"
 CORPUS_VALIDATOR = ROOT / "scripts" / "validate_corpus.py"
+TRACEABILITY_VALIDATOR = ROOT / "scripts" / "check_traceability_coverage.py"
+EVIDENCE_VERIFIER = ROOT / "scripts" / "verify_evidence_manifest.py"
+EVIDENCE_ANCHORS = ROOT / "evidence" / "ANCHORS"
 
 COMMANDS = (
     "make-ci",
@@ -96,7 +99,7 @@ def classify_result(
         return "inconclusive", "exact finalized-envelope validation is external or pending"
     if "inconclusive" in statuses or "skipped-unavailable" in statuses:
         return "inconclusive", "schema or governance validation is unavailable or pending"
-    return "conclusive", "all retained tl-syntax checks passed"
+    return "inconclusive", "unrecognized collection phase cannot be conclusive"
 
 
 def hash_parameter_files() -> str:
@@ -111,6 +114,9 @@ def hash_parameter_files() -> str:
         SCHEMA_VALIDATOR,
         COLLECTION_FINALIZER,
         CORPUS_VALIDATOR,
+        TRACEABILITY_VALIDATOR,
+        EVIDENCE_VERIFIER,
+        EVIDENCE_ANCHORS,
         INPUT_SCHEMA,
         MANIFEST_SCHEMA,
     )
@@ -148,7 +154,7 @@ def build(evidence_dir: Path, phase: str) -> None:
         "commands": [
             "make ci",
             "make spec",
-            "quire coverage --scope . --strict",
+            "python3 scripts/check_traceability_coverage.py",
             "RUSTDOCFLAGS=-Dwarnings cargo doc --no-deps --all-features",
             "cargo tree --no-default-features --edges normal",
             f"git diff --check origin/main...{revision}",
@@ -224,6 +230,10 @@ def build(evidence_dir: Path, phase: str) -> None:
     if phase == "final":
         limitations.append(
             "the exact finalized envelope is validated externally and does not self-attest"
+        )
+        limitations.append(
+            "this pre-seal artifact list is completed by collection-summary.json and the "
+            "sibling exact-membership SHA-256 manifest"
         )
     if phase == "sealed-failed":
         limitations.append("validation of the finalized envelope failed; see sealed validation artifacts")

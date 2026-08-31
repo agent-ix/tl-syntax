@@ -45,6 +45,7 @@ validation outcomes using fixed checked-in inputs.
 | NFR-002-AC-1 | Repeated comparisons over identical values produce one stable order. | Test (TC-005) |
 | NFR-002-AC-2 | Every checked-in serialized document names a v1 schema and supported profile where applicable. | Test (TC-014) |
 | NFR-002-AC-3 | Missing, skipped, failed, or not-yet-sealed checks cannot be classified as conclusive passing evidence. | Test (TC-016) |
+| NFR-002-AC-4 | Mandatory local CI commands propagate non-zero exits, and the traceability policy rejects any report whose totals, document groups, bindings, or finding lists are incomplete. | Test (TC-018) |
 
 ## Dependencies
 

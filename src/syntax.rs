@@ -193,7 +193,7 @@ impl Node {
 
 /// The complete bounded MLTL operator vocabulary.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 #[cfg_attr(
     feature = "serde",
     serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)
@@ -626,8 +626,12 @@ mod tests {
             let interval = Interval::new(start, end);
             assert_eq!(interval.is_ok(), start <= end);
             if let Ok(interval) = interval {
+                assert_eq!(interval.start(), start);
+                assert_eq!(interval.end(), end);
                 let cardinality = u64::from(end) - u64::from(start) + 1;
                 assert_eq!(interval.cardinality().map(u64::from), u32::try_from(cardinality).ok().map(u64::from));
+                assert!(interval.contains(start));
+                assert!(interval.contains(end));
             }
         }
 
@@ -637,6 +641,8 @@ mod tests {
             let span = SourceSpan::new(start, end);
             assert_eq!(span.is_ok(), start <= end);
             if let Ok(span) = span {
+                assert_eq!(span.start(), start);
+                assert_eq!(span.end(), end);
                 assert_eq!(span.len(), end - start);
                 assert_eq!(span.is_empty(), start == end);
             }
@@ -647,8 +653,12 @@ mod tests {
     #[test]
     fn intervals_are_inclusive_and_checked() {
         let singleton = Interval::new(4, 4).unwrap();
+        assert_eq!(singleton.start(), 4);
+        assert_eq!(singleton.end(), 4);
         assert_eq!(singleton.cardinality(), Some(1));
         assert!(singleton.contains(4));
+        assert!(!singleton.contains(3));
+        assert!(!singleton.contains(5));
         assert_eq!(Interval::new(0, u32::MAX).unwrap().cardinality(), None);
         assert_eq!(Interval::new(3, 2), Err(IntervalError { start: 3, end: 2 }));
     }
@@ -657,6 +667,8 @@ mod tests {
     #[test]
     fn spans_are_half_open_and_checked() {
         let span = SourceSpan::new(2, 7).unwrap();
+        assert_eq!(span.start(), 2);
+        assert_eq!(span.end(), 7);
         assert_eq!(span.len(), 5);
         assert!(!span.is_empty());
         assert_eq!(

@@ -24,14 +24,15 @@ lower discrete bound is less than or equal to its upper bound.
 
 ## Behavior
 
-- The interval constructor shall preserve both inclusive bounds exactly.
+- The interval constructor shall preserve both inclusive bounds exactly, expose
+  them through `start()` and `end()`, and report membership through `contains()`.
 - The interval constructor shall reject inverted bounds.
 
 ## Acceptance Criteria
 
 | ID | Criteria | Verification |
 |---|---|---|
-| FR-001-AC-1 | Equal and increasing bounds construct successfully and preserve endpoints. | Test (TC-001) |
+| FR-001-AC-1 | Equal and increasing bounds construct successfully, preserve both endpoints, and include exactly the instants between them. | Test (TC-001) |
 | FR-001-AC-2 | Every lower bound greater than its upper bound is rejected. | Test (TC-002) |
 
 ## Dependencies

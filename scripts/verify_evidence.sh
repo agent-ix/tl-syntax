@@ -2,9 +2,18 @@
 set -euo pipefail
 
 found=0
+if [[ ! -f evidence/ANCHORS ]]; then
+  echo "retained evidence anchor manifest is missing" >&2
+  exit 1
+fi
+sha256sum --check evidence/ANCHORS
 while IFS= read -r -d '' checksum; do
   found=1
-  sha256sum --check "$checksum"
+  if ! grep -Fqx "$(sha256sum "$checksum")" evidence/ANCHORS; then
+    echo "retained evidence manifest lacks a committed anchor: $checksum" >&2
+    exit 1
+  fi
+  python3 scripts/verify_evidence_manifest.py "$checksum"
 done < <(find evidence -maxdepth 1 -type f -name '*.sha256' -print0 | sort -z)
 
 if [[ $found -eq 0 ]]; then

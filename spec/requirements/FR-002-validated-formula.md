@@ -36,7 +36,7 @@ Globally, Until, and Release nodes.
 
 | ID | Criteria | Verification |
 |---|---|---|
-| FR-002-AC-1 | Valid primitive, Boolean, nested, and temporal formulas expose their root and nodes unchanged. | Test (TC-003) |
+| FR-002-AC-1 | Valid primitive, Boolean, nested, and temporal formulas expose their root and nodes unchanged, including lookup of the root through `Formula::node`. | Test (TC-003) |
 | FR-002-AC-2 | Missing roots, forward references, self references, and out-of-range references are rejected. | Test (TC-004) |
 | FR-002-AC-3 | Formula values sort identically for repeated runs over the same inputs. | Test (TC-005) |
 

@@ -65,6 +65,12 @@ def main() -> int:
     else:
         overall = "passed"
     envelope = evidence_dir / "evidence-envelope.json"
+    post_seal_artifacts = []
+    for path in sorted(evidence_dir.glob("sealed-*")):
+        if path.is_file() and not path.is_symlink():
+            post_seal_artifacts.append(
+                {"path": path.name, "sha256": sha256(path), "size": path.stat().st_size}
+            )
     value = {
         "schemaVersion": "tl-syntax.collection-summary/v1",
         "overallStatus": overall,
@@ -73,6 +79,11 @@ def main() -> int:
             item["status"] == "passed"
             for item in outcomes
             if item["name"].startswith("sealed-")
+        ),
+        "postSealArtifacts": post_seal_artifacts,
+        "integrityBoundary": (
+            "the sibling .sha256 manifest exactly enumerates every retained file, "
+            "including this summary"
         ),
         "outcomes": outcomes,
     }

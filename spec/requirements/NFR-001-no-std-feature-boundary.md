@@ -42,8 +42,8 @@ feature combination used by downstream consumers.
 
 | ID | Criteria | Verification |
 |---|---|---|
-| NFR-001-AC-1 | The default feature graph has no normal dependency and exposes the borrowed formula API. | Test (TC-015) |
-| NFR-001-AC-2 | The crate compiles with no default feature, alloc only, serde, and all features. | Test (TC-015) |
+| NFR-001-AC-1 | The default feature graph has no normal dependency and exposes the borrowed formula API. | Test (TC-015) and Suite (SUITE-001) |
+| NFR-001-AC-2 | The crate compiles with no default feature, alloc only, serde, and all features. | Suite (SUITE-001) |
 
 ## Dependencies
 

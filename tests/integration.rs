@@ -26,9 +26,45 @@ struct CorpusFixture {
     #[serde(default)]
     trace: Option<Vec<Vec<u32>>>,
     #[serde(default)]
-    expected_horizon: Option<u32>,
+    expected_horizon: Option<u64>,
     #[serde(default)]
     expected_closed_trace: Option<bool>,
+}
+
+fn derived_horizon(document: &FormulaDocument) -> u64 {
+    let mut horizons = Vec::with_capacity(document.nodes().len());
+    let prior = |values: &[u64], id: NodeId| values[id.0 as usize];
+    for node in document.nodes() {
+        let value = match node.kind {
+            NodeKind::False | NodeKind::True | NodeKind::Proposition { .. } => 0,
+            NodeKind::Not { operand } => prior(&horizons, operand),
+            NodeKind::And { left, right }
+            | NodeKind::Or { left, right }
+            | NodeKind::Implies { left, right }
+            | NodeKind::Equivalent { left, right } => {
+                prior(&horizons, left).max(prior(&horizons, right))
+            }
+            NodeKind::Future { interval, operand } | NodeKind::Globally { interval, operand } => {
+                u64::from(interval.end())
+                    .checked_add(prior(&horizons, operand))
+                    .unwrap()
+            }
+            NodeKind::Until {
+                interval,
+                left,
+                right,
+            }
+            | NodeKind::Release {
+                interval,
+                left,
+                right,
+            } => u64::from(interval.end())
+                .checked_add(prior(&horizons, left).max(prior(&horizons, right)))
+                .unwrap(),
+        };
+        horizons.push(value);
+    }
+    horizons[document.root().0 as usize]
 }
 
 proptest! {
@@ -309,11 +345,13 @@ fn shared_corpus_is_complete_stable_and_self_consistent() {
         match fixture.expected_validation.as_str() {
             "valid" => {
                 assert!(observed_valid, "{} should be valid", fixture.id);
+                let document = document.unwrap();
                 assert!(fixture.trace.is_some(), "{} has no trace", fixture.id);
-                assert!(
-                    fixture.expected_horizon.is_some(),
-                    "{} has no expected horizon",
-                    fixture.id
+                assert_eq!(
+                    fixture.expected_horizon,
+                    Some(derived_horizon(&document)),
+                    "{} has a non-derived expected horizon",
+                    fixture.id,
                 );
                 assert!(
                     fixture.expected_closed_trace.is_some(),
