@@ -7,6 +7,11 @@ description: "Chronological changes to the tl-syntax v0.1 plan bundle."
 
 ## History
 
+- **2026-08-31** - Closed the exact-head gate review: added behavioral failure propagation and
+  complete-JSON traceability policy gates, derived corpus horizons, exact evidence membership,
+  complete cargo-deny policy checks, public-API ownership tests, and logarithmic proposition-name
+  validation. Retained the missing-plugin attempt honestly, then sealed passing exact candidate
+  `835833fb2338` without dispatching hosted CI.
 - **2026-08-31** - Added complete twelve-variant wire round-trip coverage and behavior gates for
   exact local CI commands and corpus-schema vocabulary, retained the failed validator-environment
   attempt honestly, then sealed passing exact candidate `99b3b37d0d84`.
