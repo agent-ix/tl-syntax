@@ -1,0 +1,101 @@
+{
+  "finalEnvelopeSha256": "64b00990e9970d5201f55d163534055315614337b168ce21bf95ee1efbd1b096",
+  "finalEnvelopeValidated": true,
+  "integrityBoundary": "the sibling .sha256 manifest exactly enumerates every retained file, including this summary",
+  "outcomes": [
+    {
+      "exitCode": 2,
+      "name": "make-ci",
+      "status": "failed"
+    },
+    {
+      "exitCode": 0,
+      "name": "make-spec",
+      "status": "passed"
+    },
+    {
+      "exitCode": 0,
+      "name": "quire-coverage",
+      "status": "passed"
+    },
+    {
+      "exitCode": 0,
+      "name": "rustdoc",
+      "status": "passed"
+    },
+    {
+      "exitCode": 0,
+      "name": "default-dependencies",
+      "status": "passed"
+    },
+    {
+      "exitCode": 0,
+      "name": "diff-integrity",
+      "status": "passed"
+    },
+    {
+      "exitCode": 0,
+      "name": "input-schema",
+      "status": "passed"
+    },
+    {
+      "exitCode": 0,
+      "name": "manifest-schema",
+      "status": "passed"
+    },
+    {
+      "exitCode": 0,
+      "name": "pgm01-schema",
+      "status": "passed"
+    },
+    {
+      "exitCode": 0,
+      "name": "pgm01-validator",
+      "status": "passed"
+    },
+    {
+      "exitCode": 0,
+      "name": "sealed-pgm01-schema",
+      "status": "passed"
+    },
+    {
+      "exitCode": 0,
+      "name": "sealed-pgm01-validator",
+      "status": "passed"
+    }
+  ],
+  "overallStatus": "failed",
+  "postSealArtifacts": [
+    {
+      "path": "sealed-pgm01-schema.status.txt",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "size": 2
+    },
+    {
+      "path": "sealed-pgm01-schema.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0
+    },
+    {
+      "path": "sealed-pgm01-schema.stdout",
+      "sha256": "aa1a41325f81a324a6e591e718bb614b014b2d2f5d15e34b2beed9515cb77e72",
+      "size": 36
+    },
+    {
+      "path": "sealed-pgm01-validator.status.txt",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "size": 2
+    },
+    {
+      "path": "sealed-pgm01-validator.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "size": 0
+    },
+    {
+      "path": "sealed-pgm01-validator.stdout",
+      "sha256": "880e89f6fba06e110656ee8f493a587d1545807e27938463a3a35c5cb2817fb5",
+      "size": 30
+    }
+  ],
+  "schemaVersion": "tl-syntax.collection-summary/v1"
+}

@@ -24,6 +24,7 @@ if ! python3 -c 'import jsonschema' >/dev/null 2>&1; then
 fi
 
 mkdir -p "$evidence_dir"
+touch "$evidence_dir/.collecting"
 collection_failed=0
 
 run_and_retain() {
@@ -67,6 +68,8 @@ run_and_retain quire-coverage python3 scripts/check_traceability_coverage.py
 run_and_retain rustdoc env RUSTDOCFLAGS=-Dwarnings cargo doc --no-deps --all-features
 run_and_retain default-dependencies cargo tree --no-default-features --edges normal
 run_and_retain diff-integrity git diff --check "origin/main...$(git rev-parse HEAD)"
+
+rm "$evidence_dir/.collecting"
 
 python3 scripts/build_evidence_envelope.py "$evidence_dir" provisional
 run_and_retain input-schema \

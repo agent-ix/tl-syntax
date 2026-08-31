@@ -10,6 +10,10 @@ sha256sum --check evidence/ANCHORS
 while IFS= read -r -d '' record; do
   checksum="${record}.sha256"
   if [[ ! -f "$checksum" ]]; then
+    if [[ -f "$record/.collecting" ]] && \
+       ! git ls-files --error-unmatch "$record/.collecting" >/dev/null 2>&1; then
+      continue
+    fi
     echo "retained evidence directory lacks a checksum manifest: $record" >&2
     exit 1
   fi
