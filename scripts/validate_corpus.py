@@ -113,12 +113,20 @@ def main() -> int:
         raise AssertionError("valid fixture population differs from the reviewed expectation set")
 
     probes = [
-        {"kind": "true", "FABRICATED": "x", "operand": 99},
-        {"kind": "until"},
+        {
+            "schema_version": "tl-syntax.formula/v1",
+            "semantic_profile": "mltl.closed-trace/v1",
+            "root": 0,
+            "nodes": [{"kind": "true", "FABRICATED": "x", "operand": 99}],
+        },
+        {
+            "schema_version": "tl-syntax.formula/v1",
+            "semantic_profile": "mltl.closed-trace/v1",
+            "root": 0,
+            "nodes": [{"kind": "until"}],
+        },
     ]
-    node_schema = formula_schema_value["$defs"]["node"]
-    node_validator = Draft7Validator(node_schema, resolver=formula_schema.resolver)
-    if any(not list(node_validator.iter_errors(probe)) for probe in probes):
+    if any(not list(formula_schema.iter_errors(probe)) for probe in probes):
         raise AssertionError("formula node schema accepted an unknown-field or arity probe")
     print("corpus schemas, rejection reasons, and reviewed expectations are valid")
     return 0

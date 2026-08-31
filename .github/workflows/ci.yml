@@ -45,6 +45,11 @@ jobs:
       - name: Install Quire
         run: npm install --global '@agent-ix/quire-cli@0.31.0'
 
+      - name: Install cargo-deny
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny
+
       - name: Complete local gate
         run: make ci
 
