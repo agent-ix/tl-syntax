@@ -1,7 +1,12 @@
 {
   "schemaVersion": "tl-syntax.qualified-tools/v1",
   "environment": {
-    "home": "/home/peter"
+    "home": "/home/peter",
+    "cargoTargetDir": "/home/peter/dev/tl-syntax/target/qualification-v1"
+  },
+  "toolchain": {
+    "cargoVerboseSha256": "fcfafeedf9e1047337cbc09d4b2279bbf73c68b0230dadfa2551a3122a92fe7c",
+    "rustcVerboseSha256": "a834181975ab3494d51a1a01e4a9d4321fecd674a52e3db3cf93b3b84b6fc2c1"
   },
   "tools": {
     "bash": {
@@ -9,8 +14,8 @@
       "sha256": "59474588a312b6b6e73e5a42a59bf71e62b55416b6c9d5e4a6e1c630c2a9ecd4"
     },
     "cargo": {
-      "path": "/home/peter/.cargo/bin/cargo",
-      "sha256": "4acc9acc76d5079515b46346a485974457b5a79893cfb01112423c89aeb5aa10"
+      "path": "/home/peter/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo",
+      "sha256": "b7561ebe947acf816451536f19871ea4810f6be3f82fd252feab6ca7be8396f5"
     },
     "git": {
       "path": "/usr/bin/git",
@@ -29,8 +34,8 @@
       "sha256": "96ce25fe91ab75ee96505b343b251a3e1db16de430a524aabef1f5590dbc02b3"
     },
     "rustc": {
-      "path": "/home/peter/.cargo/bin/rustc",
-      "sha256": "4acc9acc76d5079515b46346a485974457b5a79893cfb01112423c89aeb5aa10"
+      "path": "/home/peter/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
+      "sha256": "ef6d716e5d1c6c93def277c0afa037c21e7a74f7de3aed4ee0700646c3301b1d"
     },
     "sha256sum": {
       "path": "/usr/bin/sha256sum",

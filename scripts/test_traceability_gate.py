@@ -70,6 +70,26 @@ def main() -> int:
                 "TC-009, TC-010, TC-011, TC-017, TC-999",
                 1,
             ),
+            matrix_source.replace(
+                "NFR-002-AC-1, NFR-002-AC-2, NFR-002-AC-3, NFR-002-AC-4",
+                "NFR-002-AC-1, NFR-002-AC-2, NFR-002-AC-3",
+                1,
+            ),
+            matrix_source.replace(
+                "TC-005, TC-014, TC-016, TC-018",
+                "TC-005, TC-014, TC-016",
+                1,
+            ),
+            matrix_source.replace(
+                "StR-002-VC-1, StR-002-VC-2",
+                "StR-002-VC-1",
+                1,
+            ),
+            matrix_source.replace(
+                "| StR-002 | StR-002-VC-1, StR-002-VC-2 | TC-008 |",
+                "| StR-002 | StR-002-VC-1, StR-002-VC-2 | TC-007 |",
+                1,
+            ),
         ):
             matrix.write_text(mutated, encoding="utf-8")
             assert MODULE.validate_matrix_mappings(

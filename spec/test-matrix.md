@@ -23,15 +23,15 @@ relationships:
 
 | Stakeholder Req | Trace to US/FR | Test/Validation | Coverage Status |
 |---|---|---|---|
-| StR-001 | NFR-001 | TC-015 | ✅ covered |
-| StR-002 | FR-003, FR-004, FR-005 | TC-007, TC-009, TC-012 | ✅ covered |
+| StR-001 | StR-001-VC-1, StR-001-VC-2 | TC-019 | ✅ covered |
+| StR-002 | StR-002-VC-1, StR-002-VC-2 | TC-008 | ✅ covered |
 
 ## Non-Functional Requirement Coverage
 
 | Non-Functional Req | Verification Method | Evidence/Test Cases | Status |
 |---|---|---|---|
-| NFR-001 | Compile and inspection | TC-015, TC-019 | ✅ covered |
-| NFR-002 | Tests and inspection | TC-005, TC-014, TC-016, TC-018 | ✅ covered |
+| NFR-001 | NFR-001-AC-1, NFR-001-AC-2 | TC-019 | ✅ covered |
+| NFR-002 | NFR-002-AC-1, NFR-002-AC-2, NFR-002-AC-3, NFR-002-AC-4 | TC-005, TC-014, TC-016, TC-018 | ✅ covered |
 
 ## Test Case Summary
 
@@ -54,6 +54,6 @@ relationships:
 | TC-015 | Compile the allocation-free API | Compile | P0 | NFR-001-AC-1, NFR-001-AC-2 | ✅ implemented |
 | TC-016 | Reject false-success evidence classifications | Integration | P0 | NFR-002-AC-3 | ✅ implemented |
 | TC-017 | Round-trip every supported node wire variant and tag | Integration | P0 | FR-004-AC-1 | ✅ implemented |
-| TC-018 | Reject swallowed command failures, disabled per-record validators, zero-active evidence censuses, and incomplete traceability reports | Integration | P0 | NFR-002-AC-4 | ✅ implemented |
+| TC-018 | Reject swallowed failures, Make/SHELL execution controls, uncompiled or ignored traced tests, changed tool/parameter identities, disabled per-record validators, zero-active evidence censuses, and incomplete traceability | Integration | P0 | NFR-002-AC-4 | ✅ implemented |
 | TC-019 | Execute the no-std feature matrix and empty-default-dependency gate | Integration | P0 | NFR-001-AC-1, NFR-001-AC-2 | ✅ implemented |
 | TC-020 | Bound formula node allocation during wire decoding and owned construction | Integration | P0 | FR-004-AC-1, FR-004-AC-4 | ✅ implemented |

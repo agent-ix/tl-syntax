@@ -41,10 +41,12 @@ trap cleanup EXIT
 evidence_dir="$staging_root/$(/usr/bin/basename "$final_evidence_dir")"
 /usr/bin/mkdir -p "$evidence_dir"
 collection_failed=0
-/usr/bin/python3 scripts/tool_identity.py --verify-live
 trusted_path="$(/usr/bin/python3 scripts/tool_identity.py --trusted-path)"
 qualified_home="$(/usr/bin/python3 scripts/tool_identity.py --home)"
-clean_env=(/usr/bin/env -i PATH="$trusted_path" HOME="$qualified_home" USER="${USER:-}" LANG="${LANG:-C}" PGM01_SCHEMA="${PGM01_SCHEMA:-}" PGM01_VALIDATOR="${PGM01_VALIDATOR:-}")
+qualified_target="$(/usr/bin/python3 scripts/tool_identity.py --cargo-target-dir)"
+/usr/bin/rm -rf -- "$qualified_target"
+clean_env=(/usr/bin/env -i PATH="$trusted_path" HOME="$qualified_home" CARGO_TARGET_DIR="$qualified_target" USER=qualified LANG=C.UTF-8 LC_ALL=C.UTF-8 PGM01_SCHEMA="${PGM01_SCHEMA:-}" PGM01_VALIDATOR="${PGM01_VALIDATOR:-}")
+"${clean_env[@]}" python3 scripts/tool_identity.py --verify-live
 
 run_and_retain() {
   local name="$1"
@@ -89,7 +91,7 @@ for tool in bash cargo git make python3 quire rustc sha256sum; do
   /usr/bin/sha256sum "$resolved" | /usr/bin/cut -d' ' -f1 >"$evidence_dir/tool-${tool}-sha256.txt"
 done
 
-run_and_retain make-ci "${clean_env[@]}" make ci
+run_and_retain make-ci "${clean_env[@]}" make ci-for-evidence
 run_and_retain make-spec "${clean_env[@]}" make spec
 run_and_retain quire-coverage "${clean_env[@]}" python3 scripts/check_traceability_coverage.py
 run_and_retain rustdoc "${clean_env[@]}" env RUSTDOCFLAGS=-Dwarnings cargo doc --no-deps --all-features

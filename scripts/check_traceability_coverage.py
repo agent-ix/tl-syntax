@@ -29,7 +29,10 @@ ALLOWED_DIAGNOSTICS = {
     "status-column-matches-nothing",
 }
 MAX_INSPECTION_DISTANCE = 5
-INSPECTED_PATHS = ("Cargo.toml", "Cargo.lock", "src", "corpus")
+INSPECTED_PATHS = (
+    "Cargo.toml", "Cargo.lock", "Makefile", "deny.toml", "rust-toolchain.toml",
+    "tools.lock", "src", "tests", "scripts", "spec", "schemas", "corpus",
+)
 
 
 def validate_report(report: dict[str, Any]) -> list[str]:
@@ -185,11 +188,11 @@ def validate_matrix_mappings(path: Path, requirements: Path) -> list[str]:
         for prefix in ("FR", "NFR", "StR")
     }
     configurations = {
-        "Functional Requirement Coverage": ("FR", 1, 2),
-        "Non-Functional Requirement Coverage": ("NFR", None, 2),
-        "Stakeholder Requirement Coverage": ("StR", None, 2),
+        "Functional Requirement Coverage": ("FR", "AC", 1, 2),
+        "Non-Functional Requirement Coverage": ("NFR", "AC", 1, 2),
+        "Stakeholder Requirement Coverage": ("StR", "VC", 1, 2),
     }
-    for section, (prefix, criteria_index, tests_index) in configurations.items():
+    for section, (prefix, criterion_kind, criteria_index, tests_index) in configurations.items():
         rows = sections.get(section, [])
         if len(rows) < 2:
             errors.append(f"test matrix has no rows for {section}")
@@ -209,32 +212,30 @@ def validate_matrix_mappings(path: Path, requirements: Path) -> list[str]:
             unknown = listed_tests - declared_tests
             if unknown:
                 errors.append(f"{identity} coverage names nonexistent tests: {sorted(unknown)}")
-            if prefix in {"FR", "NFR"}:
-                expected_tests = {
-                    test_id for test_id, test_row in test_rows.items()
-                    if len(test_row) > 4 and re.search(rf"\b{re.escape(identity)}-AC-[0-9]+\b", test_row[4])
-                }
-                if listed_tests != expected_tests:
-                    errors.append(
-                        f"{identity} coverage test mapping drift: "
-                        f"expected={sorted(expected_tests)}, observed={sorted(listed_tests)}"
-                    )
-            if criteria_index is not None:
-                requirement_file = next(requirements.glob(f"{identity}-*.md"), None)
-                expected_criteria = set()
-                if requirement_file is not None:
-                    expected_criteria = set(
-                        re.findall(
-                            rf"\b{re.escape(identity)}-AC-[0-9]+\b",
-                            requirement_file.read_text(encoding="utf-8"),
-                        )
-                    )
-                listed_criteria = set(re.findall(rf"\b{re.escape(identity)}-AC-[0-9]+\b", row[criteria_index]))
-                if listed_criteria != expected_criteria:
-                    errors.append(
-                        f"{identity} acceptance-criteria mapping drift: "
-                        f"expected={sorted(expected_criteria)}, observed={sorted(listed_criteria)}"
-                    )
+            requirement_file = next(requirements.glob(f"{identity}-*.md"), None)
+            requirement_text = (
+                requirement_file.read_text(encoding="utf-8")
+                if requirement_file is not None else ""
+            )
+            criterion_pattern = rf"\b{re.escape(identity)}-{criterion_kind}-[0-9]+\b"
+            expected_criteria = set(re.findall(criterion_pattern, requirement_text))
+            listed_criteria = set(re.findall(criterion_pattern, row[criteria_index]))
+            if listed_criteria != expected_criteria:
+                errors.append(
+                    f"{identity} criteria mapping drift: "
+                    f"expected={sorted(expected_criteria)}, observed={sorted(listed_criteria)}"
+                )
+            expected_tests = {
+                target
+                for line in requirement_text.splitlines()
+                if re.search(criterion_pattern, line)
+                for target in re.findall(r"\bTC-[0-9]{3}\b", line)
+            }
+            if listed_tests != expected_tests:
+                errors.append(
+                    f"{identity} coverage test mapping drift: "
+                    f"expected={sorted(expected_tests)}, observed={sorted(listed_tests)}"
+                )
     return errors
 
 

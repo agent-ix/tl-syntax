@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -12,6 +13,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 PROFILE = "tl-syntax.evidence-qualification/v2"
 RETRACTIONS = Path("evidence/RETRACTIONS.json")
+
+
+class EvidenceUnavailable(RuntimeError):
+    """The repository lacks Git state needed to evaluate qualification."""
 
 
 def retracted_records(root: Path = ROOT) -> set[str]:
@@ -37,6 +42,20 @@ def resolve_profile(evidence_dir: Path, root: Path = ROOT) -> str:
     if value.get("qualificationProfile") != PROFILE:
         raise ValueError("active evidence has an absent or unrecognized qualificationProfile")
     revision = (evidence_dir / "source-revision.txt").read_text(encoding="utf-8").strip()
+    if re.fullmatch(r"[0-9a-f]{40}", revision) is None:
+        raise ValueError("active evidence source revision is malformed")
+    if not (root / ".git").exists():
+        raise EvidenceUnavailable("repository metadata is missing")
+    revision_result = subprocess.run(
+        ["/usr/bin/git", "cat-file", "-e", f"{revision}^{{commit}}"],
+        cwd=root,
+        check=False,
+        capture_output=True,
+    )
+    if revision_result.returncode != 0:
+        raise EvidenceUnavailable(
+            f"active evidence source revision is unavailable: {revision}"
+        )
     result = subprocess.run(
         ["/usr/bin/git", "cat-file", "-e", f"{revision}:tools.lock"], cwd=root,
         check=False, capture_output=True,
@@ -46,7 +65,7 @@ def resolve_profile(evidence_dir: Path, root: Path = ROOT) -> str:
     return "v2"
 
 
-def qualification_census(root: Path = ROOT) -> tuple[int, int]:
+def qualification_census(root: Path = ROOT, head: str = "HEAD") -> tuple[int, int]:
     evidence = root / "evidence"
     manifests = sorted(
         path for path in evidence.glob("tl-syntax-v01-*.sha256") if path.is_file()
@@ -61,6 +80,7 @@ def qualification_census(root: Path = ROOT) -> tuple[int, int]:
 
     active = 0
     retracted_count = 0
+    active_revision = ""
     for manifest in manifests:
         record = manifest.with_suffix("")
         if not record.is_dir():
@@ -68,17 +88,39 @@ def qualification_census(root: Path = ROOT) -> tuple[int, int]:
         profile = resolve_profile(record, root)
         if profile == "v2":
             active += 1
+            active_revision = (
+                record / "source-revision.txt"
+            ).read_text(encoding="utf-8").strip()
         elif profile == "retracted":
             retracted_count += 1
-        else:
-            raise ValueError(f"unrecognized evidence disposition: {record.name}: {profile}")
 
-    if active == 0:
+    if active != 1:
         raise ValueError(
-            "no active tl-syntax.evidence-qualification/v2 record remains"
+            "evidence qualification requires exactly one active "
+            f"tl-syntax.evidence-qualification/v2 record, found {active}"
         )
     if active + retracted_count != len(manifests):
         raise ValueError("evidence qualification census is incomplete")
+    current = subprocess.run(
+        [
+            "/usr/bin/git",
+            "diff",
+            "--quiet",
+            f"{active_revision}..{head}",
+            "--",
+            ".",
+            ":(exclude)evidence",
+        ],
+        cwd=root,
+        check=False,
+        capture_output=True,
+    )
+    if current.returncode == 1:
+        raise ValueError(
+            "active evidence source revision differs from the current source head"
+        )
+    if current.returncode != 0:
+        raise EvidenceUnavailable("cannot compare active evidence with the current source head")
     return active, retracted_count
 
 
@@ -88,6 +130,9 @@ def main() -> int:
         return 2
     try:
         active, retracted = qualification_census()
+    except EvidenceUnavailable as error:
+        print(f"evidence qualification census unavailable: {error}", file=sys.stderr)
+        return 2
     except (OSError, ValueError, json.JSONDecodeError) as error:
         print(f"evidence qualification census failed: {error}", file=sys.stderr)
         return 1

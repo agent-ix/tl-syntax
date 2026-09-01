@@ -115,38 +115,82 @@ def main() -> int:
         (evidence_dir / "rustdoc.stderr").write_text(
             "Generated /tmp/doc/tl_syntax/index.html\n", encoding="utf-8"
         )
+        revision = subprocess.run(
+            ["/usr/bin/git", "rev-parse", "HEAD"], cwd=ROOT, check=True,
+            capture_output=True, text=True,
+        ).stdout.strip()
+        source_lock = json.loads(
+            subprocess.run(
+                ["/usr/bin/git", "show", f"{revision}:tools.lock"], cwd=ROOT,
+                check=True, capture_output=True, text=True,
+            ).stdout
+        )
         (evidence_dir / "collection-input.json").write_text(
             json.dumps(
                 {
                     "qualificationProfile": "tl-syntax.evidence-qualification/v2",
-                    "tools": {
-                        "identities": json.loads(
-                            (ROOT / "tools.lock").read_text(encoding="utf-8")
-                        )["tools"]
-                    },
+                    "tools": {"identities": source_lock["tools"]},
                 }
             ),
             encoding="utf-8",
         )
-        (evidence_dir / "source-revision.txt").write_text(
-            subprocess.run(
-                ["git", "rev-parse", "HEAD"], cwd=ROOT, check=True,
-                capture_output=True, text=True,
-            ).stdout,
-            encoding="utf-8",
-        )
-        (evidence_dir / "evidence-envelope.json").write_text(
-            json.dumps({"result": {"status": "conclusive", "summary": "fabricated"}}) + "\n",
-            encoding="utf-8",
-        )
+        (evidence_dir / "source-revision.txt").write_text(revision + "\n", encoding="utf-8")
+        for name in ("cargo", "rustc"):
+            output = subprocess.run(
+                [source_lock["tools"][name]["path"], "--version", "--verbose"],
+                cwd=ROOT, check=True, capture_output=True,
+            ).stdout
+            (evidence_dir / f"{name}-version.txt").write_bytes(output)
         finalizer = importlib.util.spec_from_file_location(
             "finalize_collection", ROOT / "scripts" / "finalize_collection.py"
         )
         assert finalizer is not None and finalizer.loader is not None
         finalizer_module = importlib.util.module_from_spec(finalizer)
         finalizer.loader.exec_module(finalizer_module)
+        source_builder = finalizer_module.git_bytes(revision, finalizer_module.builder.BUILDER)
+        parameters = finalizer_module.historical_parameters_digest(revision, source_builder)
+        (evidence_dir / "evidence-envelope.json").write_text(
+            json.dumps(
+                {
+                    "parametersDigest": {"value": parameters},
+                    "result": {"status": "conclusive", "summary": "fabricated"},
+                }
+            )
+            + "\n",
+            encoding="utf-8",
+        )
         healthy_summary = finalizer_module.summary(evidence_dir)
         assert healthy_summary["overallStatus"] == "passed"
+        assert not finalizer_module.validate_parameter_identity(evidence_dir)
+        assert not finalizer_module.validate_tool_identity(evidence_dir)
+        collection_input = json.loads(
+            (evidence_dir / "collection-input.json").read_text(encoding="utf-8")
+        )
+        collection_input["tools"]["identities"]["cargo"]["sha256"] = "0" * 64
+        (evidence_dir / "collection-input.json").write_text(
+            json.dumps(collection_input) + "\n", encoding="utf-8"
+        )
+        assert finalizer_module.validate_tool_identity(evidence_dir), (
+            "mutated retained tool identity was accepted"
+        )
+        collection_input["tools"]["identities"] = source_lock["tools"]
+        (evidence_dir / "collection-input.json").write_text(
+            json.dumps(collection_input) + "\n", encoding="utf-8"
+        )
+        envelope = json.loads(
+            (evidence_dir / "evidence-envelope.json").read_text(encoding="utf-8")
+        )
+        envelope["parametersDigest"]["value"] = "0" * 64
+        (evidence_dir / "evidence-envelope.json").write_text(
+            json.dumps(envelope) + "\n", encoding="utf-8"
+        )
+        assert finalizer_module.validate_parameter_identity(evidence_dir), (
+            "mutated parametersDigest was accepted"
+        )
+        envelope["parametersDigest"]["value"] = parameters
+        (evidence_dir / "evidence-envelope.json").write_text(
+            json.dumps(envelope) + "\n", encoding="utf-8"
+        )
         (evidence_dir / "make-ci.stdout").write_text("", encoding="utf-8")
         assert finalizer_module.summary(evidence_dir)["overallStatus"] == "failed", (
             "an empty successful CI transcript was accepted"
@@ -163,14 +207,41 @@ def main() -> int:
             json.dumps(
                 {
                     "qualificationProfile": "tl-syntax.evidence-qualification/v2",
-                    "tools": {
-                        "identities": json.loads(
-                            (ROOT / "tools.lock").read_text(encoding="utf-8")
-                        )["tools"]
-                    },
+                    "tools": {"identities": source_lock["tools"]},
                 }
             ),
             encoding="utf-8",
+        )
+        envelope = json.loads(
+            (evidence_dir / "evidence-envelope.json").read_text(encoding="utf-8")
+        )
+        expected_status, expected_result_summary = MODULE.classify_result(
+            "final", healthy_summary["outcomes"]
+        )
+        envelope["result"] = {
+            "status": expected_status,
+            "summary": expected_result_summary,
+        }
+        (evidence_dir / "evidence-envelope.json").write_text(
+            json.dumps(envelope) + "\n", encoding="utf-8"
+        )
+        missing_summary = subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "scripts" / "finalize_collection.py"),
+                "--check",
+                str(evidence_dir),
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        assert missing_summary.returncode == 1 and (
+            "active qualification summary is missing" in missing_summary.stderr
+        ), "finalizer did not specifically reject an active record with no summary"
+        envelope["result"] = {"status": "conclusive", "summary": "fabricated"}
+        (evidence_dir / "evidence-envelope.json").write_text(
+            json.dumps(envelope) + "\n", encoding="utf-8"
         )
         (evidence_dir / "collection-summary.json").write_text(
             json.dumps(finalizer_module.summary(evidence_dir), indent=2, sort_keys=True) + "\n",

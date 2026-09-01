@@ -164,7 +164,7 @@ def build(evidence_dir: Path, phase: str) -> None:
         "sourceRevision": revision,
         "sourceState": source_state,
         "commands": [
-            "make ci",
+            "make ci-for-evidence (candidate gates; final make ci adds evidence self-binding)",
             "make spec",
             "python3 scripts/check_traceability_coverage.py",
             "RUSTDOCFLAGS=-Dwarnings cargo doc --no-deps --all-features",

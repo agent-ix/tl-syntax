@@ -33,9 +33,9 @@ external attestation. Hosted CI remains manual-only and was not dispatched.
 
 | ID | Severity | Summary | Refs |
 |---|---|---|---|
-| FND-601 | high | PATH shadowing, shell-gate gutting, excluded tests, Make execution controls, empty passing transcripts, disabled per-record validators, and a zero-active evidence census could produce false-green evidence; fixed-path checks, an exact active/retracted census, and behavioral shell-gate probes now reject each route. | NFR-002, TC-018 |
-| FND-602 | medium | Gate entry points, historical parameter derivation, record-set identity, current inspections, and verification-method provenance were incomplete; source-revision and Git-history checks now bind them. | NFR-002, StR-001, StR-002, AA-001 |
-| FND-603 | low | Collection staging, non-test assertions, finding identifiers, review artifacts, validator environments, and matrix cell completeness required hardening or clarification. | FR-005, NFR-002, AA-001 |
+| FND-6001 | high | PATH shadowing, shell-gate gutting, excluded tests, Make execution controls, empty passing transcripts, disabled per-record validators, and a zero-active evidence census could produce false-green evidence; fixed-path checks, an exact active/retracted census, and behavioral shell-gate probes now reject each route. | NFR-002, TC-018 |
+| FND-6002 | medium | Gate entry points, historical parameter derivation, record-set identity, current inspections, and verification-method provenance were incomplete; source-revision and Git-history checks now bind them. | NFR-002, StR-001, StR-002, AA-001 |
+| FND-6003 | low | Collection staging, non-test assertions, finding identifiers, review artifacts, validator environments, and matrix cell completeness required hardening or clarification. | FR-005, NFR-002, AA-001 |
 
 ## Residual boundary
 

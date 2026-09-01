@@ -278,9 +278,21 @@ def validate_tool_identity(evidence_dir: Path) -> list[str]:
         KeyError, OSError, ValueError, json.JSONDecodeError, subprocess.CalledProcessError
     ) as error:
         return [f"cannot rederive retained tool identities: {error}"]
-    if observed != expected:
-        return [f"retained tool identities disagree with source tools.lock: {evidence_dir}"]
-    return []
+    errors = [] if observed == expected else [
+        f"retained tool identities disagree with source tools.lock: {evidence_dir}"
+    ]
+    toolchain = source_lock.get("toolchain")
+    if isinstance(toolchain, dict):
+        for name in ("cargo", "rustc"):
+            path = evidence_dir / f"{name}-version.txt"
+            try:
+                observed_digest = hashlib.sha256(path.read_bytes()).hexdigest()
+            except OSError as error:
+                errors.append(f"cannot read retained {name} toolchain identity: {error}")
+                continue
+            if observed_digest != toolchain.get(f"{name}VerboseSha256"):
+                errors.append(f"retained dispatched {name} toolchain identity disagrees")
+    return errors
 
 
 def validate_envelope(evidence_dir: Path, value: dict[str, object]) -> list[str]:
@@ -342,17 +354,8 @@ def main() -> int:
                 print(error, file=sys.stderr)
             return 1
         if not summary_path.exists():
-            input_path = evidence_dir / "collection-input.json"
-            try:
-                collection_input = json.loads(input_path.read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError) as error:
-                print(f"cannot verify legacy collection input {input_path}: {error}", file=sys.stderr)
-                return 1
-            commands = collection_input.get("commands", [])
-            if any("finalize_collection.py" in command for command in commands):
-                print(f"promised retained summary is missing: {evidence_dir}", file=sys.stderr)
-                return 1
-            return 0
+            print(f"active qualification summary is missing: {evidence_dir}", file=sys.stderr)
+            return 1
         envelope_errors = validate_envelope(evidence_dir, value)
         if envelope_errors:
             for error in envelope_errors:

@@ -7,6 +7,7 @@ import argparse
 import os
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -22,12 +23,21 @@ PROBES = {
     "check-corpus", "deny", "audit-unsafe", "evidence-tool", "spec", "msrv", "rustdoc",
     "verify-evidence",
 }
+COLLECTION_PROBES = PROBES - {"verify-evidence"}
+QUALIFICATION_TARGET = "check-tool-identities"
 GUARD_TARGET = "check-failure-propagation"
 TARGET = re.compile(r"^([A-Za-z0-9_.-]+):(?:\s+(.*?))?\s*$")
 SHELL_CONTROL = re.compile(r"&&|\|\||&(?!&)|[;|]")
-MAKEFLAGS_ASSIGNMENT = re.compile(
-    r"^\s*(?:(?:export|override|unexport)\s+)*MAKEFLAGS\s*(?::|\+|\?)?=\s*(.*)$"
+CONTROL_ASSIGNMENT = re.compile(
+    r"^\s*(?:(?:export|override|unexport)\s+)*"
+    r"(MAKEFLAGS|SHELL|\.SHELLFLAGS|MAKE)\s*(?:::?=|:::=|\+=|\?=|!=|=)\s*(.*)$"
 )
+CONTROL_DIRECTIVE = re.compile(r"^\s*\.(IGNORE|SILENT|ONESHELL|DEFAULT)\s*(?::|$)")
+CONTROL_DEFINE = re.compile(
+    r"^\s*(?:(?:override|export)\s+)*define\s+"
+    r"(MAKEFLAGS|SHELL|\.SHELLFLAGS|MAKE)\b"
+)
+CONTROL_EVAL = re.compile(r"\$\s*[({]\s*eval\b")
 
 
 def parse_makefile(text: str) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
@@ -51,41 +61,41 @@ def parse_makefile(text: str) -> tuple[dict[str, list[str]], dict[str, list[str]
 
 
 def makeflags_ignore_errors(value: str) -> bool:
-    """Return whether GNU Make flags can change CI recipe execution."""
-    if value.strip():
-        return True
+    """Return whether GNU Make flags can change what CI executes."""
     try:
         tokens = shlex.split(value)
     except ValueError:
         return True
     for token in tokens:
-        if token == "--ignore-errors":
-            return True
-        if token.startswith("-") and not token.startswith("--") and "i" in token[1:]:
-            return True
-        if token and not token.startswith("-") and "=" not in token and "i" in token:
+        if token.startswith(("--jobs", "--jobserver-", "--load-average", "--output-sync")):
+            continue
+        if token in {"--print-directory", "--no-print-directory"}:
+            continue
+        if re.fullmatch(r"-(?:j|l|O)(?:[0-9.]+|[A-Za-z]+)?", token):
+            continue
+        if token == "-w":
+            continue
+        if token:
             return True
     return False
 
 
-def inspect_toolchain() -> list[str]:
-    try:
-        value, tools = tool_identity.load_lock()
-    except (OSError, ValueError) as error:
-        return [f"qualified tool lock is unavailable: {error}"]
-    unavailable, mismatches = tool_identity.verify_live(value, tools)
-    return unavailable + mismatches
+def portable_census_environment() -> dict[str, str]:
+    """Return the complete ambient allowlist for the portable Rust test census."""
+    allowed = (
+        "HOME", "PATH", "USER", "LANG", "LC_ALL", "TMPDIR",
+    )
+    environment = {name: os.environ[name] for name in allowed if name in os.environ}
+    environment.setdefault("PATH", os.defpath)
+    return environment
 
 
 def inspect_test_census() -> list[str]:
-    try:
-        value, tools = tool_identity.load_lock()
-    except (OSError, ValueError) as error:
-        return [f"qualified tool lock is unavailable: {error}"]
+    cargo = shutil.which("cargo")
+    if cargo is None:
+        return ["Cargo is unavailable for the compiled Rust test census"]
     return rust_test_census.inspect_live(
-        ROOT,
-        tools["cargo"]["path"],
-        tool_identity.qualified_environment(value, tools),
+        ROOT, cargo, portable_census_environment(),
     )
 
 
@@ -97,11 +107,21 @@ def inspect_makefile(path: Path, root: Path = ROOT) -> list[str]:
         return [f"cannot read Makefile {path}: {error}"]
     errors: list[str] = []
     for number, line in enumerate(text.splitlines(), start=1):
-        if re.match(r"^\s*\.IGNORE\s*(?::|$)", line):
-            errors.append(f"Makefile:{number} declares .IGNORE")
-        assignment = MAKEFLAGS_ASSIGNMENT.match(line)
-        if assignment is not None and makeflags_ignore_errors(assignment.group(1)):
-            errors.append(f"Makefile:{number} enables MAKEFLAGS ignore-errors")
+        directive = CONTROL_DIRECTIVE.match(line)
+        if directive is not None:
+            errors.append(f"Makefile:{number} declares .{directive.group(1)}")
+        assignment = CONTROL_ASSIGNMENT.match(line)
+        if assignment is not None:
+            name, value = assignment.groups()
+            if name != "MAKEFLAGS" or makeflags_ignore_errors(value):
+                errors.append(f"Makefile:{number} assigns execution control {name}")
+        define = CONTROL_DEFINE.match(line)
+        if define is not None:
+            errors.append(f"Makefile:{number} defines execution control {define.group(1)}")
+        if CONTROL_EVAL.search(line):
+            errors.append(f"Makefile:{number} uses eval, which can hide execution controls")
+        if re.match(r"^\s*-?include\b", line):
+            errors.append(f"Makefile:{number} includes an uninspected Make fragment")
     expected = set(PROBES) | {GUARD_TARGET}
     observed = set(dependencies.get("ci", []))
     if observed != expected:
@@ -109,7 +129,15 @@ def inspect_makefile(path: Path, root: Path = ROOT) -> list[str]:
             "ci prerequisite set does not match the failure probes: "
             f"missing={sorted(expected - observed)}, extra={sorted(observed - expected)}"
         )
-    for target in sorted(expected):
+    candidate_expected = COLLECTION_PROBES | {GUARD_TARGET, QUALIFICATION_TARGET}
+    candidate_observed = set(dependencies.get("ci-for-evidence", []))
+    if candidate_observed != candidate_expected:
+        errors.append(
+            "candidate CI prerequisite set does not match the failure probes: "
+            f"missing={sorted(candidate_expected - candidate_observed)}, "
+            f"extra={sorted(candidate_observed - candidate_expected)}"
+        )
+    for target in sorted(expected | {QUALIFICATION_TARGET}):
         commands = recipes.get(target, [])
         if not commands:
             errors.append(f"mandatory target {target} has no recipe")
@@ -135,7 +163,7 @@ def inspect_expanded_recipes(makefile: Path, root: Path) -> list[str]:
     clean_env = dict(os.environ)
     clean_env.pop("MAKEFLAGS", None)
     clean_env.pop("PYTHONOPTIMIZE", None)
-    for target in sorted(PROBES):
+    for target in sorted(PROBES | {QUALIFICATION_TARGET}):
         try:
             result = subprocess.run(
                 [*make, "--no-print-directory", "-n", "-f", str(makefile), target],
@@ -167,7 +195,7 @@ def probe_command_positions(makefile: Path) -> list[str]:
         probe = Path(directory) / "Makefile"
         clean_env = dict(os.environ)
         clean_env.pop("MAKEFLAGS", None)
-        for target in sorted(PROBES):
+        for target in sorted(PROBES | {QUALIFICATION_TARGET}):
             commands = recipes.get(target, [])
             for selected in range(len(commands)):
                 lines = [f".PHONY: {target}", f"{target}:"]
@@ -212,7 +240,6 @@ def main() -> int:
     if os.environ.get("MAKE"):
         errors.append("ambient MAKE override is not permitted")
     if not args.static_only:
-        errors.extend(inspect_toolchain())
         errors.extend(inspect_test_census())
     if not errors and not args.static_only:
         errors.extend(inspect_expanded_recipes(makefile, ROOT))

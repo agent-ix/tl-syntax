@@ -7,6 +7,18 @@ source identities, outcomes, limitations, and SHA-256 digests. Captured text
 normalizes repeated terminal newlines to one newline so the retained PR range
 remains whitespace-clean; no other output bytes are changed.
 
+The executable lock is deliberately scoped to the qualification host. The
+collector runs `make ci-for-evidence` in a closed environment and checks both
+launcher bytes and the dispatched Cargo/rustc version identities. Ordinary
+`make ci` remains portable: it verifies retained identities against their bound
+source revision but does not require another operator to possess this host's
+absolute paths. The collector clears the dedicated, repository-local ignored
+qualification target before running, so shared ambient Cargo artifacts are not
+inputs to the claim. This qualification PR must land with a true merge commit so its
+bound source revisions remain ancestors of `main`; squash and rebase merges do
+not satisfy the retained-history contract. The source branch remains retained
+until all downstream pins and records have moved to reachable main revisions.
+
 The collector emits a canonical `quire.derivation-evidence/v1` record plus
 separately versioned collection-input and manifest records. Set `PGM01_SCHEMA`
 to the reviewed PGM-01 Draft 7 schema and `PGM01_VALIDATOR` to its

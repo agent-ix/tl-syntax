@@ -24,6 +24,8 @@ fn evidence_suite_registry_is_wired_to_executable_gates() {
         "cargo deny check licenses",
         "cargo deny check sources",
         "scripts/run_policy_tests.py",
+        "scripts/check_evidence_shell_contract.py",
+        "/usr/bin/python3 scripts/tool_identity.py --verify-live",
         "quire validate --scope . 'spec/**/*.md' --strict --summary",
         "check_traceability_coverage.py",
         "/usr/bin/bash scripts/verify_evidence.sh",
@@ -53,7 +55,7 @@ fn evidence_suite_registry_is_wired_to_executable_gates() {
         "make ci changes or weakens the strict traceability policy gate"
     );
     for command in [
-        "make ci",
+        "make ci-for-evidence",
         "make spec",
         "python3 scripts/check_traceability_coverage.py",
         "cargo doc --no-deps --all-features",

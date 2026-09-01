@@ -8,12 +8,26 @@ QUIRE ?= quire
 SHA256SUM ?= sha256sum
 BASH ?= bash
 
-ifneq ($(filter ci,$(MAKECMDGOALS)),)
-ifneq ($(strip $(MAKEFLAGS)),)
-$(error local CI refuses non-empty MAKEFLAGS)
+ifneq ($(filter ci ci-for-evidence,$(MAKECMDGOALS)),)
+tl_ci_unsafe_makeflags := $(filter-out j% -j% l% -l% O% -O% w -w --jobs% --jobserver-auth=% --jobserver-fds=% --load-average% --output-sync% --print-directory --no-print-directory,$(MAKEFLAGS))
+ifneq ($(strip $(tl_ci_unsafe_makeflags)),)
+$(error local CI refuses MAKEFLAGS that alter command execution)
 endif
 ifneq ($(strip $(PYTHONOPTIMIZE)),)
 $(error local CI refuses optimized Python policy execution)
+endif
+ifneq ($(strip $(RUSTUP_TOOLCHAIN)$(RUSTUP_HOME)$(CARGO_HOME)$(RUSTC)$(RUSTDOC)$(RUSTC_WRAPPER)$(RUSTC_WORKSPACE_WRAPPER)$(RUSTFLAGS)$(CARGO_ENCODED_RUSTFLAGS)$(RUSTDOCFLAGS)$(LD_PRELOAD)$(LD_LIBRARY_PATH)$(PYTHONPATH)),)
+$(error local CI refuses ambient compiler, loader, or Python-path overrides)
+endif
+ifneq ($(filter ci-for-evidence,$(MAKECMDGOALS)),)
+tl_ci_qualified_target := $(shell /usr/bin/python3 scripts/tool_identity.py --cargo-target-dir)
+ifneq ($(strip $(CARGO_TARGET_DIR)),)
+ifneq ($(CARGO_TARGET_DIR),$(tl_ci_qualified_target))
+$(error candidate CI refuses an unqualified CARGO_TARGET_DIR)
+endif
+else
+export CARGO_TARGET_DIR := $(tl_ci_qualified_target)
+endif
 endif
 ifneq ($(notdir $(CARGO)),cargo)
 $(error local CI refuses a CARGO override)
@@ -30,7 +44,7 @@ endif
 ifneq ($(notdir $(BASH)),bash)
 $(error local CI refuses a BASH override)
 endif
-tl_ci_static_status := $(shell env -u PYTHONOPTIMIZE MAKEFLAGS= /usr/bin/python3 scripts/check_failure_propagation.py --makefile '$(firstword $(MAKEFILE_LIST))' --static-only >/dev/null 2>&1; echo $$?)
+tl_ci_static_status := $(shell /usr/bin/env -u PYTHONOPTIMIZE MAKEFLAGS= /usr/bin/python3 scripts/check_failure_propagation.py --makefile '$(firstword $(MAKEFILE_LIST))' --static-only >/dev/null; echo $$?)
 ifneq ($(tl_ci_static_status),0)
 $(error local CI refuses unsafe Make recipe controls)
 endif
@@ -57,6 +71,7 @@ help:
 	@echo "  make deny             - run all declared cargo-deny policy checks"
 	@echo "  make audit-unsafe     - Enforce // SAFETY: comments on unsafe blocks"
 	@echo "  make ci               - All CI gates locally (fmt-check + lint + test + deny + audit-unsafe)"
+	@echo "  make ci-for-evidence  - Host-qualified candidate gates before self-binding"
 
 # =============================================================================
 # Format / Lint / Test
@@ -81,6 +96,10 @@ test:
 .PHONY: check-failure-propagation
 check-failure-propagation:
 	/usr/bin/python3 scripts/check_failure_propagation.py
+
+.PHONY: check-tool-identities
+check-tool-identities:
+	/usr/bin/env PATH="$$(/usr/bin/python3 scripts/tool_identity.py --trusted-path)" /usr/bin/python3 scripts/tool_identity.py --verify-live
 
 .PHONY: check-features
 check-features:
@@ -152,5 +171,7 @@ rustdoc:
 # Composite
 # =============================================================================
 
-.PHONY: ci
+.PHONY: ci ci-for-evidence
+ci-for-evidence: check-failure-propagation check-tool-identities fmt-check check-features check-default-dependencies lint test check-corpus deny audit-unsafe evidence-tool spec msrv rustdoc
+
 ci: check-failure-propagation fmt-check check-features check-default-dependencies lint test check-corpus deny audit-unsafe evidence-tool spec msrv rustdoc verify-evidence
