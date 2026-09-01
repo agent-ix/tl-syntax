@@ -1,6 +1,6 @@
 # tl-syntax v0.1 current inspection record
 
-Source subject: `13bc48a9100c1c01cadc2cb994b08f10db7884a3`
+Source subject: `d61d7b4ec92625e4fcc2ea4a591b4fdc918bc726`
 
 Provenance: performed by Codex on 2026-08-31 while remediating the exact-head
 pull-request review. This agent-produced inspection does not replace the
