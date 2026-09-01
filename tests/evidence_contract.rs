@@ -29,7 +29,7 @@ fn evidence_suite_registry_is_wired_to_executable_gates() {
         "quire validate --scope . 'spec/**/*.md' --strict --summary",
         "check_traceability_coverage.py",
         "/usr/bin/bash scripts/verify_evidence.sh",
-        "cargo +1.75.0 test --all-features",
+        "rustup run 1.75.0 cargo test --all-features",
         "RUSTDOCFLAGS=-Dwarnings cargo doc --no-deps --all-features",
     ] {
         assert!(ci_commands.contains(command), "make ci omits {command}");
@@ -80,7 +80,7 @@ fn evidence_suite_registry_is_wired_to_executable_gates() {
         "collector does not replace the ambient PATH with its trusted tool path"
     );
     assert!(
-        collector.contains("for tool in bash cargo git make python3 quire rustc sha256sum")
+        collector.contains("for tool in bash cargo git make python3 quire rustc rustup sha256sum")
             && collector.contains("tool-${tool}-path.txt")
             && collector.contains("tool-${tool}-sha256.txt"),
         "collector does not retain resolved mandatory-tool identities"

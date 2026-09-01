@@ -16,6 +16,7 @@
     "tl-syntax-v01-760cabac236f-20260831T062813Z": {"reason": "legacy record without the active qualification profile"},
     "tl-syntax-v01-7feddfecacec-20260831T014327Z": {"reason": "legacy record without the active qualification profile"},
     "tl-syntax-v01-835833fb2338-20260831T155851Z": {"reason": "legacy record without the active qualification profile"},
+    "tl-syntax-v01-892a42936e88-20260901T010251Z": {"reason": "failed candidate collection: exact Cargo cannot dispatch the MSRV selector; superseded by an explicit pinned rustup gate"},
     "tl-syntax-v01-99b3b37d0d84-20260831T063017Z": {"reason": "legacy record without the active qualification profile"},
     "tl-syntax-v01-a857efcc28a1-20260831T193914Z": {"reason": "superseded before qualified-tool and compiled-test-census controls"},
     "tl-syntax-v01-f30d927c7285-20260831T155659Z": {"reason": "legacy record without the active qualification profile"}

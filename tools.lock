@@ -37,6 +37,10 @@
       "path": "/home/peter/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc",
       "sha256": "ef6d716e5d1c6c93def277c0afa037c21e7a74f7de3aed4ee0700646c3301b1d"
     },
+    "rustup": {
+      "path": "/home/peter/.cargo/bin/rustup",
+      "sha256": "4acc9acc76d5079515b46346a485974457b5a79893cfb01112423c89aeb5aa10"
+    },
     "sha256sum": {
       "path": "/usr/bin/sha256sum",
       "sha256": "7645c8e76d75515ccb75c9086bdcf0d4071f2985f380f249253ead7d7c6810b3"

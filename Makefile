@@ -161,7 +161,7 @@ audit-unsafe:
 
 .PHONY: msrv
 msrv:
-	cargo +1.75.0 test --all-features
+	rustup run 1.75.0 cargo test --all-features
 
 .PHONY: rustdoc
 rustdoc:

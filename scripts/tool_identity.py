@@ -16,7 +16,10 @@ ROOT = Path(__file__).resolve().parent.parent
 LOCK = ROOT / "tools.lock"
 EXPECTED_HOME = "/home/peter"
 EXPECTED_TARGET = str(ROOT / "target" / "qualification-v1")
-REQUIRED = ("bash", "cargo", "git", "make", "python3", "quire", "rustc", "sha256sum")
+REQUIRED = (
+    "bash", "cargo", "git", "make", "python3", "quire", "rustc", "rustup",
+    "sha256sum",
+)
 
 
 def sha256(path: Path) -> str:

@@ -94,7 +94,7 @@ echo clean >"$evidence_dir/source-state.txt"
   >"$evidence_dir/jsonschema-format-checkers.txt"
 "${clean_env[@]}" quire provenance --pretty >"$evidence_dir/quire-provenance.json"
 "${clean_env[@]}" cargo metadata --format-version 1 --all-features >"$evidence_dir/metadata.json"
-for tool in bash cargo git make python3 quire rustc sha256sum; do
+for tool in bash cargo git make python3 quire rustc rustup sha256sum; do
   resolved="$(PATH="$trusted_path" command -v "$tool")"
   printf '%s\n' "$resolved" >"$evidence_dir/tool-${tool}-path.txt"
   /usr/bin/sha256sum "$resolved" | /usr/bin/cut -d' ' -f1 >"$evidence_dir/tool-${tool}-sha256.txt"
