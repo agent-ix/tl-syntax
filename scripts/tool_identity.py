@@ -50,8 +50,10 @@ def validate_lock(value: Any) -> dict[str, dict[str, str]]:
     if (
         not isinstance(environment, dict)
         or set(environment) != {"home", "cargoTargetDir"}
-        or environment.get("home") != EXPECTED_HOME
-        or environment.get("cargoTargetDir") != EXPECTED_TARGET
+        or not isinstance(environment.get("home"), str)
+        or not Path(environment["home"]).is_absolute()
+        or not isinstance(environment.get("cargoTargetDir"), str)
+        or not Path(environment["cargoTargetDir"]).is_absolute()
     ):
         raise ValueError("tools.lock has a malformed qualification environment")
     toolchain = value.get("toolchain")
@@ -101,6 +103,10 @@ def verify_live(
 ) -> tuple[list[str], list[str]]:
     unavailable: list[str] = []
     mismatches: list[str] = []
+    if value["environment"]["home"] != EXPECTED_HOME:
+        mismatches.append("qualified HOME does not match this host profile")
+    if value["environment"]["cargoTargetDir"] != EXPECTED_TARGET:
+        mismatches.append("qualified Cargo target does not match this checkout profile")
     for name in REQUIRED:
         expected = tools[name]
         observed = shutil.which(name, path=search_path)

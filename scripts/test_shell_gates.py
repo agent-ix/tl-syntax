@@ -32,6 +32,7 @@ PROFILE_SPEC.loader.exec_module(PROFILE)
 LIVE_GATE_PATHS = (
     Path("scripts/evidence_profile.py"),
     Path("scripts/test_shell_gates.py"),
+    Path("scripts/tool_identity.py"),
     Path("scripts/verify_evidence.sh"),
 )
 
