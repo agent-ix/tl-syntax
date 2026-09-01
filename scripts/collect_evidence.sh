@@ -22,14 +22,23 @@ if ! /usr/bin/python3 -c 'import jsonschema' >/dev/null 2>&1; then
   echo "jsonschema is required for evidence collection" >&2
   exit 2
 fi
-pgm01_schema_digest="0946e235e9e4b0fa79e9b9ec27ae157b303c17de0a9408d3cc04968fb7152256"
-if [[ -n "${PGM01_SCHEMA:-}" ]]; then
-  observed_schema_digest="$(/usr/bin/python3 -c 'import hashlib, pathlib, sys; print(hashlib.sha256(pathlib.Path(sys.argv[1]).read_bytes()).hexdigest())' "$PGM01_SCHEMA")"
-  if [[ "$observed_schema_digest" != "$pgm01_schema_digest" ]]; then
-    echo "PGM-01 envelope schema digest does not match the reviewed policy pin" >&2
-    exit 2
+verify_pinned_external() {
+  local path="$1"
+  local expected="$2"
+  local label="$3"
+  if [[ -n "$path" ]]; then
+    local observed
+    observed="$(/usr/bin/python3 -c 'import hashlib, pathlib, sys; print(hashlib.sha256(pathlib.Path(sys.argv[1]).read_bytes()).hexdigest())' "$path")"
+    if [[ "$observed" != "$expected" ]]; then
+      echo "$label digest does not match the reviewed policy pin" >&2
+      return 2
+    fi
   fi
-fi
+}
+pgm01_schema_digest="0946e235e9e4b0fa79e9b9ec27ae157b303c17de0a9408d3cc04968fb7152256"
+pgm01_validator_digest="1c2881d5f8800dab031f6afa26d5ad11f88a5ab42a942bc9fe0c2853b58df2f1"
+verify_pinned_external "${PGM01_SCHEMA:-}" "$pgm01_schema_digest" "PGM-01 envelope schema"
+verify_pinned_external "${PGM01_VALIDATOR:-}" "$pgm01_validator_digest" "PGM-01 validator"
 
 staging_root="$(/usr/bin/mktemp -d -p . .tl-syntax-evidence-stage.XXXXXX)"
 cleanup() {
@@ -107,6 +116,7 @@ run_and_retain manifest-schema \
   schemas/tl-syntax-evidence-manifest-v1.schema.json "$evidence_dir/evidence-manifest.json"
 
 if [[ -n "${PGM01_SCHEMA:-}" ]]; then
+  verify_pinned_external "$PGM01_SCHEMA" "$pgm01_schema_digest" "PGM-01 envelope schema"
   run_and_retain pgm01-schema \
     "${clean_env[@]}" python3 scripts/validate_json_schema.py \
     "$PGM01_SCHEMA" "$evidence_dir/evidence-envelope.json"
@@ -115,6 +125,7 @@ else
 fi
 
 if [[ -n "${PGM01_VALIDATOR:-}" ]]; then
+  verify_pinned_external "$PGM01_VALIDATOR" "$pgm01_validator_digest" "PGM-01 validator"
   run_and_retain pgm01-validator \
     "${clean_env[@]}" python3 "$PGM01_VALIDATOR" --fixture "$evidence_dir/evidence-envelope.json"
 else
@@ -124,6 +135,7 @@ fi
 "${clean_env[@]}" python3 scripts/build_evidence_envelope.py "$evidence_dir" final
 
 if [[ -n "${PGM01_SCHEMA:-}" ]]; then
+  verify_pinned_external "$PGM01_SCHEMA" "$pgm01_schema_digest" "PGM-01 envelope schema"
   run_and_retain sealed-pgm01-schema \
     "${clean_env[@]}" python3 scripts/validate_json_schema.py \
     "$PGM01_SCHEMA" "$evidence_dir/evidence-envelope.json"
@@ -132,6 +144,7 @@ else
 fi
 
 if [[ -n "${PGM01_VALIDATOR:-}" ]]; then
+  verify_pinned_external "$PGM01_VALIDATOR" "$pgm01_validator_digest" "PGM-01 validator"
   run_and_retain sealed-pgm01-validator \
     "${clean_env[@]}" python3 "$PGM01_VALIDATOR" --fixture "$evidence_dir/evidence-envelope.json"
 else

@@ -86,10 +86,12 @@ fn evidence_suite_registry_is_wired_to_executable_gates() {
         "collector does not retain resolved mandatory-tool identities"
     );
     assert!(
-        collector.contains("observed_schema_digest")
+        collector.contains("verify_pinned_external")
             && collector
-                .contains("0946e235e9e4b0fa79e9b9ec27ae157b303c17de0a9408d3cc04968fb7152256"),
-        "collector does not verify the reviewed PGM-01 schema digest before collection"
+                .contains("0946e235e9e4b0fa79e9b9ec27ae157b303c17de0a9408d3cc04968fb7152256")
+            && collector
+                .contains("1c2881d5f8800dab031f6afa26d5ad11f88a5ab42a942bc9fe0c2853b58df2f1"),
+        "collector does not recheck the reviewed PGM-01 artifact digests"
     );
     for suite in [
         "SUITE-001",
