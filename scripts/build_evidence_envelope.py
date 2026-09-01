@@ -193,7 +193,8 @@ def build(evidence_dir: Path, phase: str) -> None:
                     "sha256": (evidence_dir / f"tool-{name}-sha256.txt").read_text().strip(),
                 }
                 for name in (
-                    "bash", "cargo", "git", "make", "python3", "quire", "rustc", "sha256sum"
+                    "bash", "cargo", "git", "make", "python3", "quire", "rustc", "rustup",
+                    "sha256sum",
                 )
             },
         },
