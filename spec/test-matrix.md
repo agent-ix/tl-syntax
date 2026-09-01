@@ -30,7 +30,7 @@ relationships:
 
 | Non-Functional Req | Verification Method | Evidence/Test Cases | Status |
 |---|---|---|---|
-| NFR-001 | NFR-001-AC-1, NFR-001-AC-2 | TC-019 | ✅ covered |
+| NFR-001 | NFR-001-AC-1, NFR-001-AC-2 | TC-015, TC-019 | ✅ covered |
 | NFR-002 | NFR-002-AC-1, NFR-002-AC-2, NFR-002-AC-3, NFR-002-AC-4 | TC-005, TC-014, TC-016, TC-018 | ✅ covered |
 
 ## Test Case Summary
@@ -44,7 +44,7 @@ relationships:
 | TC-005 | Preserve deterministic ordering | Unit | P1 | FR-002-AC-3, NFR-002-AC-1 | ✅ implemented |
 | TC-006 | Validate and order identities and spans | Unit | P1 | FR-003-AC-1 | ✅ implemented |
 | TC-007 | Preserve stable profile wire names | Unit | P0 | FR-003-AC-2 | ✅ implemented |
-| TC-008 | Require formula profile field | Integration | P0 | FR-003-AC-3 | ✅ implemented |
+| TC-008 | Require formula profile field | Integration | P0 | FR-003-AC-3, StR-002-VC-1 | ✅ implemented |
 | TC-009 | Round-trip owned documents | Integration | P0 | FR-004-AC-1 | ✅ implemented |
 | TC-010 | Reject unknown wire versions | Integration | P0 | FR-004-AC-2 | ✅ implemented |
 | TC-011 | Reject malformed owned documents | Integration | P0 | FR-004-AC-3 | ✅ implemented |
@@ -55,5 +55,5 @@ relationships:
 | TC-016 | Reject false-success evidence classifications | Integration | P0 | NFR-002-AC-3 | ✅ implemented |
 | TC-017 | Round-trip every supported node wire variant and tag | Integration | P0 | FR-004-AC-1 | ✅ implemented |
 | TC-018 | Reject swallowed failures, Make/SHELL execution controls, uncompiled or ignored traced tests, changed tool/parameter identities, disabled per-record validators, zero-active evidence censuses, and incomplete traceability | Integration | P0 | NFR-002-AC-4 | ✅ implemented |
-| TC-019 | Execute the no-std feature matrix and empty-default-dependency gate | Integration | P0 | NFR-001-AC-1, NFR-001-AC-2 | ✅ implemented |
+| TC-019 | Execute the no-std feature matrix and empty-default-dependency gate | Integration | P0 | NFR-001-AC-1, NFR-001-AC-2, StR-001-VC-1 | ✅ implemented |
 | TC-020 | Bound formula node allocation during wire decoding and owned construction | Integration | P0 | FR-004-AC-1, FR-004-AC-4 | ✅ implemented |

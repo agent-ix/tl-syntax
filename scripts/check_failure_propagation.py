@@ -38,6 +38,14 @@ CONTROL_DEFINE = re.compile(
     r"(MAKEFLAGS|SHELL|\.SHELLFLAGS|MAKE)\b"
 )
 CONTROL_EVAL = re.compile(r"\$\s*[({]\s*eval\b")
+TARGET_SCOPED_CONTROL = re.compile(
+    r"^\s*[^:#=]+:\s*(?:(?:export|override|unexport)\s+)*"
+    r"(MAKEFLAGS|SHELL|\.SHELLFLAGS|MAKE)\s*(?:::?=|:::=|\+=|\?=|!=|=)"
+)
+
+
+class CensusUnavailable(RuntimeError):
+    """The portable compiled-test census cannot execute on this host."""
 
 
 def parse_makefile(text: str) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
@@ -56,6 +64,8 @@ def parse_makefile(text: str) -> tuple[dict[str, list[str]], dict[str, list[str]
         if match is None or match.group(1).startswith("."):
             continue
         current = match.group(1)
+        if current in dependencies:
+            raise ValueError(f"duplicate target rule can overwrite policy state: {current}")
         dependencies[current] = (match.group(2) or "").split()
     return dependencies, recipes
 
@@ -93,20 +103,22 @@ def portable_census_environment() -> dict[str, str]:
 def inspect_test_census() -> list[str]:
     cargo = shutil.which("cargo")
     if cargo is None:
-        return ["Cargo is unavailable for the compiled Rust test census"]
+        raise CensusUnavailable("Cargo is unavailable for the compiled Rust test census")
     return rust_test_census.inspect_live(
         ROOT, cargo, portable_census_environment(),
     )
 
 
-def inspect_makefile(path: Path, root: Path = ROOT) -> list[str]:
-    try:
-        text = path.read_text(encoding="utf-8")
-        dependencies, recipes = parse_makefile(text)
-    except OSError as error:
-        return [f"cannot read Makefile {path}: {error}"]
+def inspect_execution_controls(text: str) -> list[str]:
+    """Reject file-wide and target-scoped state that can change recipe execution."""
     errors: list[str] = []
     for number, line in enumerate(text.splitlines(), start=1):
+        target_scoped = TARGET_SCOPED_CONTROL.match(line)
+        if target_scoped is not None:
+            errors.append(
+                f"Makefile:{number} assigns target-scoped execution control "
+                f"{target_scoped.group(1)}"
+            )
         directive = CONTROL_DIRECTIVE.match(line)
         if directive is not None:
             errors.append(f"Makefile:{number} declares .{directive.group(1)}")
@@ -122,6 +134,20 @@ def inspect_makefile(path: Path, root: Path = ROOT) -> list[str]:
             errors.append(f"Makefile:{number} uses eval, which can hide execution controls")
         if re.match(r"^\s*-?include\b", line):
             errors.append(f"Makefile:{number} includes an uninspected Make fragment")
+    return errors
+
+
+def inspect_makefile(path: Path, root: Path = ROOT) -> list[str]:
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError as error:
+        return [f"cannot read Makefile {path}: {error}"]
+    errors = inspect_execution_controls(text)
+    try:
+        dependencies, recipes = parse_makefile(text)
+    except ValueError as error:
+        errors.append(f"Makefile structure is ambiguous: {error}")
+        return errors
     expected = set(PROBES) | {GUARD_TARGET}
     observed = set(dependencies.get("ci", []))
     if observed != expected:
@@ -188,7 +214,14 @@ def inspect_expanded_recipes(makefile: Path, root: Path) -> list[str]:
 
 def probe_command_positions(makefile: Path) -> list[str]:
     """Substitute false at every recipe position and require Make to fail."""
-    _, recipes = parse_makefile(makefile.read_text(encoding="utf-8"))
+    text = makefile.read_text(encoding="utf-8")
+    control_errors = inspect_execution_controls(text)
+    if control_errors:
+        return [
+            "command-position probe refuses a Makefile with execution controls: " + error
+            for error in control_errors
+        ]
+    _, recipes = parse_makefile(text)
     errors: list[str] = []
     make = ["/usr/bin/make"]
     with tempfile.TemporaryDirectory() as directory:
@@ -240,7 +273,11 @@ def main() -> int:
     if os.environ.get("MAKE"):
         errors.append("ambient MAKE override is not permitted")
     if not args.static_only:
-        errors.extend(inspect_test_census())
+        try:
+            errors.extend(inspect_test_census())
+        except CensusUnavailable as error:
+            print(error, file=sys.stderr)
+            return 2
     if not errors and not args.static_only:
         errors.extend(inspect_expanded_recipes(makefile, ROOT))
     if not errors and not args.inspect_only and not args.static_only:

@@ -31,9 +31,12 @@ PROFILE_SPEC.loader.exec_module(PROFILE)
 
 LIVE_GATE_PATHS = (
     Path("scripts/evidence_profile.py"),
+    Path("scripts/finalize_collection.py"),
     Path("scripts/test_shell_gates.py"),
     Path("scripts/tool_identity.py"),
     Path("scripts/verify_evidence.sh"),
+    Path("scripts/verify_evidence_manifest.py"),
+    Path("scripts/verify_evidence_tree.py"),
 )
 
 
@@ -90,9 +93,8 @@ def live_gate_worktree():
     )
     assert added.returncode == 0, f"cannot create shell-gate worktree: {added.stderr}"
     try:
-        # The evidence records and independent validators intentionally come from
-        # the committed fixture. Only the live shell/profile sources owned by this
-        # suite are overlaid, and a deletion is overlaid as a deletion.
+        # Evidence records come from the committed fixture. Every live verifier
+        # that consumes them is overlaid, and a deletion is overlaid as a deletion.
         sync_live_gate_sources(tree)
         yield tree
     finally:
@@ -301,7 +303,17 @@ def activate_second_record(tree: Path, _record: Path) -> None:
 def main() -> int:
     shell_text = (ROOT / "scripts" / "verify_evidence.sh").read_text(encoding="utf-8")
     for command in CONTRACT.REQUIRED:
-        assert CONTRACT.inspect(shell_text.replace(command, "true", 1)), (
+        lines = shell_text.splitlines()
+        matches = [
+            index
+            for index, line in enumerate(lines)
+            if command in line and not line.lstrip().startswith("#")
+        ]
+        assert len(matches) == 1
+        index = matches[0]
+        indentation = lines[index][: len(lines[index]) - len(lines[index].lstrip())]
+        lines[index] = indentation + "# " + lines[index].lstrip()
+        assert CONTRACT.inspect("\n".join(lines) + "\n"), (
             f"evidence shell contract accepted removal of {command}"
         )
     with live_gate_worktree() as tree:
@@ -384,16 +396,22 @@ def main() -> int:
             else:
                 raise AssertionError("stale active evidence was accepted for a divergent head")
 
-    planted_rust = ROOT / "src" / ".policy_unsafe_probe.rs"
-    planted_rust.write_text("fn probe() { unsafe { core::hint::unreachable_unchecked() } }\n", encoding="utf-8")
-    try:
+    with tempfile.TemporaryDirectory(prefix="tl-syntax-unsafe-gate-") as directory:
+        tree = Path(directory)
+        shutil.copytree(ROOT / "src", tree / "src")
+        (tree / "scripts").mkdir()
+        for name in ("check_unsafe_comments.sh", "unsafe_comment_baseline.txt"):
+            shutil.copy2(ROOT / "scripts" / name, tree / "scripts" / name)
+        planted_rust = tree / "src" / ".policy_unsafe_probe.rs"
+        planted_rust.write_text(
+            "fn probe() { unsafe { core::hint::unreachable_unchecked() } }\n",
+            encoding="utf-8",
+        )
         result = subprocess.run(
-            ["/usr/bin/bash", "scripts/check_unsafe_comments.sh"], cwd=ROOT,
+            ["/usr/bin/bash", "scripts/check_unsafe_comments.sh"], cwd=tree,
             check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         )
         assert result.returncode != 0, "unsafe-comment shell gate accepted an unreviewed block"
-    finally:
-        planted_rust.unlink(missing_ok=True)
 
     with tempfile.TemporaryDirectory() as directory:
         tree = Path(directory) / "tree.txt"

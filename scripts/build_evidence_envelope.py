@@ -29,7 +29,7 @@ EVIDENCE_VERIFIER = ROOT / "scripts" / "verify_evidence_manifest.py"
 TOOLS_LOCK = ROOT / "tools.lock"
 
 COMMANDS = (
-    "make-ci",
+    "candidate-gates",
     "make-spec",
     "quire-coverage",
     "rustdoc",

@@ -45,14 +45,14 @@ def healthy_test_output(repetitions: int) -> str:
 def main() -> int:
     with tempfile.TemporaryDirectory() as directory:
         evidence_dir = Path(directory)
-        (evidence_dir / "make-ci.status.txt").write_text("0\n", encoding="utf-8")
-        (evidence_dir / "make-ci.stdout").write_text("passed\n", encoding="utf-8")
+        (evidence_dir / "candidate-gates.status.txt").write_text("0\n", encoding="utf-8")
+        (evidence_dir / "candidate-gates.stdout").write_text("passed\n", encoding="utf-8")
         (evidence_dir / "pgm01-schema.status.txt").write_text("125\n", encoding="utf-8")
         (evidence_dir / "pgm01-schema.stdout").write_text("tool absent\n", encoding="utf-8")
         (evidence_dir / "pgm01-validator.status.txt").write_text("3\n", encoding="utf-8")
         outcomes = {item["name"]: item for item in MODULE.command_outcomes(evidence_dir)}
-        assert outcomes["make-ci"] == {
-            "name": "make-ci",
+        assert outcomes["candidate-gates"] == {
+            "name": "candidate-gates",
             "status": "passed",
             "exitCode": 0,
         }
@@ -71,9 +71,9 @@ def main() -> int:
             "status": "inconclusive",
             "exitCode": None,
         }
-        assert MODULE.classify_result("final", [outcomes["make-ci"]])[0] == "inconclusive"
-        assert MODULE.classify_result("provisional", [outcomes["make-ci"]])[0] == "inconclusive"
-        assert MODULE.classify_result("sealed-failed", [outcomes["make-ci"]])[0] == "error"
+        assert MODULE.classify_result("final", [outcomes["candidate-gates"]])[0] == "inconclusive"
+        assert MODULE.classify_result("provisional", [outcomes["candidate-gates"]])[0] == "inconclusive"
+        assert MODULE.classify_result("sealed-failed", [outcomes["candidate-gates"]])[0] == "error"
         assert MODULE.classify_result("final", [outcomes["pgm01-schema"]])[0] == "inconclusive"
         assert MODULE.classify_result("final", [outcomes["pgm01-validator"]])[0] == "error"
 
@@ -103,7 +103,7 @@ def main() -> int:
     with tempfile.TemporaryDirectory() as directory:
         evidence_dir = Path(directory)
         for name in (
-            "make-ci", "make-spec", "quire-coverage", "rustdoc",
+            "candidate-gates", "make-spec", "quire-coverage", "rustdoc",
             "default-dependencies", "diff-integrity", "input-schema",
             "manifest-schema", "pgm01-schema", "pgm01-validator",
             "sealed-pgm01-schema", "sealed-pgm01-validator",
@@ -111,7 +111,9 @@ def main() -> int:
             (evidence_dir / f"{name}.status.txt").write_text("0\n", encoding="utf-8")
             (evidence_dir / f"{name}.stdout").write_text("verified\n", encoding="utf-8")
             (evidence_dir / f"{name}.stderr").write_text("", encoding="utf-8")
-        (evidence_dir / "make-ci.stdout").write_text(healthy_test_output(2), encoding="utf-8")
+        (evidence_dir / "candidate-gates.stdout").write_text(
+            healthy_test_output(2), encoding="utf-8"
+        )
         (evidence_dir / "rustdoc.stderr").write_text(
             "Generated /tmp/doc/tl_syntax/index.html\n", encoding="utf-8"
         )
@@ -191,11 +193,13 @@ def main() -> int:
         (evidence_dir / "evidence-envelope.json").write_text(
             json.dumps(envelope) + "\n", encoding="utf-8"
         )
-        (evidence_dir / "make-ci.stdout").write_text("", encoding="utf-8")
+        (evidence_dir / "candidate-gates.stdout").write_text("", encoding="utf-8")
         assert finalizer_module.summary(evidence_dir)["overallStatus"] == "failed", (
             "an empty successful CI transcript was accepted"
         )
-        (evidence_dir / "make-ci.stdout").write_text(healthy_test_output(2), encoding="utf-8")
+        (evidence_dir / "candidate-gates.stdout").write_text(
+            healthy_test_output(2), encoding="utf-8"
+        )
         (evidence_dir / "collection-input.json").write_text("{}\n", encoding="utf-8")
         try:
             finalizer_module.summary(evidence_dir)

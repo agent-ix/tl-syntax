@@ -18,9 +18,16 @@ REQUIRED = (
 
 
 def inspect(text: str) -> list[str]:
-    errors = [f"evidence shell gate omits required command: {command}" for command in REQUIRED if command not in text]
+    active_text = "\n".join(
+        line for line in text.splitlines() if not line.lstrip().startswith("#")
+    )
+    errors = [
+        f"evidence shell gate omits required command: {command}"
+        for command in REQUIRED
+        if command not in active_text
+    ]
     loop = "while IFS= read -r -d '' checksum; do"
-    if loop not in text or "done < <(" not in text:
+    if loop not in active_text or "done < <(" not in active_text:
         errors.append("evidence shell gate omits the retained-record census loop")
     return errors
 

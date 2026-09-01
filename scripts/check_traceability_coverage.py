@@ -236,6 +236,37 @@ def validate_matrix_mappings(path: Path, requirements: Path) -> list[str]:
                     f"{identity} coverage test mapping drift: "
                     f"expected={sorted(expected_tests)}, observed={sorted(listed_tests)}"
                 )
+            summary_tests = {
+                test_id
+                for test_id, test_row in test_rows.items()
+                if len(test_row) > 4 and re.search(criterion_pattern, test_row[4])
+            }
+            if listed_tests != summary_tests:
+                errors.append(
+                    f"{identity} summary-derived test mapping drift: "
+                    f"expected={sorted(summary_tests)}, observed={sorted(listed_tests)}"
+                )
+    criterion_reference = re.compile(
+        r"\b((?:FR|NFR|StR)-[0-9]+-(?:AC|VC)-[0-9]+)\b"
+    )
+    for test_id, row in test_rows.items():
+        if len(row) <= 4:
+            errors.append(f"{test_id} has no parseable Traces To cell")
+            continue
+        for criterion in criterion_reference.findall(row[4]):
+            requirement_id = criterion.rsplit("-", 2)[0]
+            requirement_file = next(requirements.glob(f"{requirement_id}-*.md"), None)
+            requirement_lines = (
+                requirement_file.read_text(encoding="utf-8").splitlines()
+                if requirement_file is not None else []
+            )
+            matching = [line for line in requirement_lines if criterion in line]
+            if not matching or not any(
+                test_id in re.findall(r"\bTC-[0-9]{3}\b", line) for line in matching
+            ):
+                errors.append(
+                    f"{test_id} summary trace {criterion} is not acknowledged by its requirement"
+                )
     return errors
 
 

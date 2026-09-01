@@ -100,7 +100,7 @@ for tool in bash cargo git make python3 quire rustc rustup sha256sum; do
   /usr/bin/sha256sum "$resolved" | /usr/bin/cut -d' ' -f1 >"$evidence_dir/tool-${tool}-sha256.txt"
 done
 
-run_and_retain make-ci "${clean_env[@]}" make ci-for-evidence
+run_and_retain candidate-gates "${clean_env[@]}" make ci-for-evidence
 run_and_retain make-spec "${clean_env[@]}" make spec
 run_and_retain quire-coverage "${clean_env[@]}" python3 scripts/check_traceability_coverage.py
 run_and_retain rustdoc "${clean_env[@]}" env RUSTDOCFLAGS=-Dwarnings cargo doc --no-deps --all-features

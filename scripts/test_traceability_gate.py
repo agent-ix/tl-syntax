@@ -90,6 +90,13 @@ def main() -> int:
                 "| StR-002 | StR-002-VC-1, StR-002-VC-2 | TC-007 |",
                 1,
             ),
+            matrix_source.replace(
+                "| TC-015 | Compile the allocation-free API | Compile | P0 | "
+                "NFR-001-AC-1, NFR-001-AC-2 | ✅ implemented |",
+                "| TC-015 | Compile the allocation-free API | Compile | P0 | "
+                "FR-001-AC-1 | ✅ implemented |",
+                1,
+            ),
         ):
             matrix.write_text(mutated, encoding="utf-8")
             assert MODULE.validate_matrix_mappings(

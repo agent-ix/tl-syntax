@@ -14,7 +14,6 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
 LOCK = ROOT / "tools.lock"
-EXPECTED_HOME = "/home/peter"
 EXPECTED_TARGET = str(ROOT / "target" / "qualification-v1")
 REQUIRED = (
     "bash", "cargo", "git", "make", "python3", "quire", "rustc", "rustup",
@@ -103,8 +102,6 @@ def verify_live(
 ) -> tuple[list[str], list[str]]:
     unavailable: list[str] = []
     mismatches: list[str] = []
-    if value["environment"]["home"] != EXPECTED_HOME:
-        mismatches.append("qualified HOME does not match this host profile")
     if value["environment"]["cargoTargetDir"] != EXPECTED_TARGET:
         mismatches.append("qualified Cargo target does not match this checkout profile")
     for name in REQUIRED:

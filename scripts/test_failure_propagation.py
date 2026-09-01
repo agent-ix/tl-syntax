@@ -67,6 +67,16 @@ def main() -> int:
             1,
         ),
     ]
+    target_scoped_start = len(mutations)
+    mutations.extend(
+        (
+            "ci: SHELL := /usr/bin/true\n" + original,
+            original + "\ntest: SHELL := /usr/bin/true\n",
+            "ci: .SHELLFLAGS := -c true\n" + original,
+            original + "\ntest: .SHELLFLAGS := -c true\n",
+        )
+    )
+    target_scoped_end = len(mutations)
     for operator in ("=", ":=", "::=", ":::=", "+=", "?=", "!="):
         mutations.append(original + f"\nexport override MAKEFLAGS {operator} -i\n")
     for assignment in (
@@ -93,7 +103,12 @@ def main() -> int:
         for index, mutated in enumerate(mutations):
             path = Path(directory) / f"Makefile.{index}"
             path.write_text(mutated, encoding="utf-8")
-            assert MODULE.inspect_makefile(path), f"mutation {index} escaped inspection"
+            inspection = MODULE.inspect_makefile(path)
+            assert inspection, f"mutation {index} escaped inspection"
+            if target_scoped_start <= index < target_scoped_end:
+                assert any("target-scoped execution control" in error for error in inspection), (
+                    f"target-scoped mutation {index} was rejected for the wrong reason"
+                )
             result = subprocess.run(
                 [
                     sys.executable,
@@ -109,7 +124,7 @@ def main() -> int:
             assert result.returncode != 0, f"mutation {index} produced a false pass"
             if index >= 3:
                 make_result = subprocess.run(
-                    ["make", "--no-print-directory", "-f", str(path), "ci"],
+                    ["/usr/bin/make", "--no-print-directory", "-f", str(path), "ci"],
                     cwd=ROOT,
                     check=False,
                     stdout=subprocess.DEVNULL,
@@ -245,6 +260,56 @@ def main() -> int:
                 "isolated end-to-end census control is not baseline-green:\n"
                 f"stdout:\n{baseline.stdout}\nstderr:\n{baseline.stderr}"
             )
+            stubbed_makefile = (tree / "Makefile").read_text(encoding="utf-8")
+            assert "fmt-check:\n\t@true" in stubbed_makefile
+            (tree / "Makefile").write_text(
+                stubbed_makefile.replace(
+                    "fmt-check:\n\t@true", "fmt-check:\n\t$(POLICY_FMT_CHECK)", 1
+                )
+                + "\nPOLICY_FMT_CHECK = true || true\n",
+                encoding="utf-8",
+            )
+            expanded_wiring = subprocess.run(
+                ["/usr/bin/make", "--no-print-directory", "ci"],
+                cwd=tree,
+                check=False,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                env=probe_environment,
+            )
+            assert expanded_wiring.returncode != 0, (
+                "main() did not wire expanded-recipe inspection into local CI"
+            )
+            (tree / "Makefile").write_text(stubbed_makefile, encoding="utf-8")
+
+            propagation = tree / "scripts" / "check_failure_propagation.py"
+            propagation_text = propagation.read_text(encoding="utf-8")
+            probe_definition = (
+                "def probe_command_positions(makefile: Path) -> list[str]:\n"
+                "    \"\"\"Substitute false at every recipe position and require Make to fail.\"\"\"\n"
+            )
+            assert probe_definition in propagation_text
+            propagation.write_text(
+                propagation_text.replace(
+                    probe_definition,
+                    probe_definition + "    return ['command-position wiring fixture']\n",
+                    1,
+                ),
+                encoding="utf-8",
+            )
+            position_wiring = subprocess.run(
+                ["/usr/bin/make", "--no-print-directory", "ci"],
+                cwd=tree,
+                check=False,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                env=probe_environment,
+            )
+            assert position_wiring.returncode != 0, (
+                "main() did not wire command-position probing into local CI"
+            )
+            propagation.write_text(propagation_text, encoding="utf-8")
+
             probe = tree / "src" / ".policy_orphan_probe.rs"
             probe.write_text(
                 "// Trace: TC-020, FR-004-AC-4\n#[test]\n"
@@ -292,11 +357,42 @@ def main() -> int:
                 stderr=subprocess.DEVNULL,
             )
 
+    with tempfile.TemporaryDirectory(prefix="tl-syntax-no-cargo-") as directory:
+        unavailable_environment = {
+            key: value
+            for key, value in os.environ.items()
+            if key not in {"MAKEFLAGS", "PYTHONOPTIMIZE", "MAKE"}
+        }
+        unavailable_environment["PATH"] = directory
+        unavailable = subprocess.run(
+            [
+                "/usr/bin/python3",
+                str(ROOT / "scripts" / "check_failure_propagation.py"),
+                "--inspect-only",
+            ],
+            cwd=ROOT,
+            check=False,
+            capture_output=True,
+            text=True,
+            env=unavailable_environment,
+        )
+        assert unavailable.returncode == 2 and "Cargo is unavailable" in unavailable.stderr, (
+            "missing Cargo was not classified distinctly from a failed compiled-test census"
+        )
+
     lock_value, locked_tools = MODULE.tool_identity.load_lock()
     qualified = MODULE.tool_identity.qualified_environment(lock_value, locked_tools)
     assert set(qualified) == {
         "HOME", "PATH", "CARGO_TARGET_DIR", "USER", "LANG", "LC_ALL"
     }, "qualified environment is not a closed allowlist"
+    alternate_host = json.loads(json.dumps(lock_value))
+    alternate_host["environment"]["home"] = "/second/reviewed/home"
+    alternate_environment = MODULE.tool_identity.qualified_environment(
+        alternate_host, locked_tools
+    )
+    assert alternate_environment["HOME"] == "/second/reviewed/home", (
+        "a review-visible second-host HOME was replaced by a hidden local constant"
+    )
     changed = dict(lock_value)
     changed["toolchain"] = dict(lock_value["toolchain"])
     changed["toolchain"]["rustcVerboseSha256"] = "0" * 64

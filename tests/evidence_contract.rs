@@ -1,5 +1,30 @@
 use std::{fs, path::PathBuf, process::Command};
 
+fn make_prerequisites(makefile: &str, target: &str) -> Vec<String> {
+    let prefix = format!("{target}:");
+    let definition = makefile
+        .lines()
+        .find(|line| line.starts_with(&prefix))
+        .unwrap_or_else(|| panic!("missing Make target {target}"));
+    definition[prefix.len()..]
+        .split_whitespace()
+        .map(str::to_owned)
+        .collect()
+}
+
+fn make_recipe(makefile: &str, target: &str) -> String {
+    let prefix = format!("{target}:");
+    let mut lines = makefile
+        .lines()
+        .skip_while(|line| !line.starts_with(&prefix));
+    assert!(lines.next().is_some(), "missing Make target {target}");
+    lines
+        .take_while(|line| line.starts_with('\t') || line.trim().is_empty())
+        .filter(|line| line.starts_with('\t'))
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
 // Trace: SUITE-001, SUITE-002, SUITE-003, SUITE-004, SUITE-005, SUITE-006, SUITE-007
 #[test]
 fn evidence_suite_registry_is_wired_to_executable_gates() {
@@ -8,34 +33,82 @@ fn evidence_suite_registry_is_wired_to_executable_gates() {
     let collector = fs::read_to_string(root.join("scripts/collect_evidence.sh")).unwrap();
     let suites = fs::read_to_string(root.join("spec/evidence/suites.md")).unwrap();
 
-    let ci_commands = makefile.clone();
+    let ci_targets = make_prerequisites(&makefile, "ci");
+    let candidate_targets = make_prerequisites(&makefile, "ci-for-evidence");
 
     for target in ["ci:", "spec:", "check-corpus:", "evidence-tool:"] {
         assert!(makefile.contains(target), "missing Make target {target}");
     }
-    for command in [
-        "cargo fmt --all -- --check",
-        "check_default_dependencies.py",
-        "cargo clippy --all-targets --all-features -- -D warnings",
-        "cargo test --all-features",
-        "validate_corpus.py",
-        "cargo deny check advisories",
-        "cargo deny check bans",
-        "cargo deny check licenses",
-        "cargo deny check sources",
-        "scripts/run_policy_tests.py",
-        "scripts/check_evidence_shell_contract.py",
-        "/usr/bin/python3 scripts/tool_identity.py --verify-live",
-        "quire validate --scope . 'spec/**/*.md' --strict --summary",
-        "check_traceability_coverage.py",
-        "/usr/bin/bash scripts/verify_evidence.sh",
-        "rustup run 1.75.0 cargo test --all-features",
-        "RUSTDOCFLAGS=-Dwarnings cargo doc --no-deps --all-features",
+    for (target, command) in [
+        (
+            "check-failure-propagation",
+            "scripts/check_failure_propagation.py",
+        ),
+        ("fmt-check", "cargo fmt --all -- --check"),
+        ("check-features", "cargo check --lib --no-default-features"),
+        (
+            "check-default-dependencies",
+            "check_default_dependencies.py",
+        ),
+        (
+            "lint",
+            "cargo clippy --all-targets --all-features -- -D warnings",
+        ),
+        ("test", "cargo test --all-features"),
+        ("check-corpus", "validate_corpus.py"),
+        ("deny", "cargo deny check advisories"),
+        ("deny", "cargo deny check bans"),
+        ("deny", "cargo deny check licenses"),
+        ("deny", "cargo deny check sources"),
+        ("audit-unsafe", "scripts/check_unsafe_comments.sh"),
+        ("evidence-tool", "scripts/run_policy_tests.py"),
+        (
+            "spec",
+            "quire validate --scope . 'spec/**/*.md' --strict --summary",
+        ),
+        ("spec", "check_traceability_coverage.py"),
+        (
+            "verify-evidence",
+            "scripts/check_evidence_shell_contract.py",
+        ),
+        (
+            "verify-evidence",
+            "/usr/bin/bash scripts/verify_evidence.sh",
+        ),
+        ("msrv", "rustup run 1.75.0 cargo test --all-features"),
+        (
+            "rustdoc",
+            "RUSTDOCFLAGS=-Dwarnings cargo doc --no-deps --all-features",
+        ),
     ] {
-        assert!(ci_commands.contains(command), "make ci omits {command}");
+        assert!(
+            ci_targets.iter().any(|item| item == target),
+            "make ci omits {target}"
+        );
+        assert!(
+            make_recipe(&makefile, target).contains(command),
+            "Make target {target} omits {command}"
+        );
     }
-    assert!(ci_commands.contains("scripts/check_failure_propagation.py"));
-    let exact_cargo_test = ci_commands.lines().any(|line| {
+    assert!(
+        candidate_targets
+            .iter()
+            .any(|item| item == "check-tool-identities")
+            && make_recipe(&makefile, "check-tool-identities")
+                .contains("/usr/bin/python3 scripts/tool_identity.py --verify-live"),
+        "candidate CI omits live tool-identity verification"
+    );
+    assert!(
+        !ci_targets
+            .iter()
+            .any(|item| item == "check-tool-identities")
+            && !candidate_targets
+                .iter()
+                .any(|item| item == "verify-evidence"),
+        "portable and host-qualified Make graphs are not separated"
+    );
+    let test_recipe = make_recipe(&makefile, "test");
+    let exact_cargo_test = test_recipe.lines().any(|line| {
         let fields = line.split_whitespace().collect::<Vec<_>>();
         fields.len() == 3
             && PathBuf::from(fields[0])
@@ -49,7 +122,7 @@ fn evidence_suite_registry_is_wired_to_executable_gates() {
         "make ci changes or weakens required command cargo test --all-features"
     );
     assert!(
-        ci_commands.lines().any(|line| line
+        make_recipe(&makefile, "spec").lines().any(|line| line
             .trim()
             .ends_with("python3 scripts/check_traceability_coverage.py")),
         "make ci changes or weakens the strict traceability policy gate"

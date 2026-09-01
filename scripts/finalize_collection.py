@@ -16,8 +16,7 @@ import rust_test_census
 import tool_identity
 
 
-CHECKS = (
-    "make-ci",
+REMAINING_CHECKS = (
     "make-spec",
     "quire-coverage",
     "rustdoc",
@@ -88,7 +87,7 @@ def positive_test_census(evidence_dir: Path, output: str, repetitions: int) -> b
 def positive_output(evidence_dir: Path, name: str) -> bool:
     stdout = evidence_dir / f"{name}.stdout"
     stderr = evidence_dir / f"{name}.stderr"
-    if name == "make-ci":
+    if name in {"candidate-gates", "make-ci"}:
         text = "\n".join(
             path.read_text(encoding="utf-8", errors="replace")
             for path in (stdout, stderr)
@@ -116,7 +115,16 @@ def summary(evidence_dir: Path) -> dict[str, object]:
         for path in evidence_dir.glob("*.status.txt")
         if path.is_file()
     }
-    for name in list(CHECKS) + sorted(observed - set(CHECKS)):
+    # Records predating the artifact correction retain `make-ci`; new records
+    # truthfully name the command that ran. Verification remains historical.
+    candidate_name = (
+        "candidate-gates"
+        if (evidence_dir / "candidate-gates.status.txt").exists()
+        or not (evidence_dir / "make-ci.status.txt").exists()
+        else "make-ci"
+    )
+    checks = (candidate_name, *REMAINING_CHECKS)
+    for name in list(checks) + sorted(observed - set(checks)):
         status_path = evidence_dir / f"{name}.status.txt"
         if not status_path.exists():
             outcomes.append({"name": name, "status": "inconclusive", "exitCode": None})

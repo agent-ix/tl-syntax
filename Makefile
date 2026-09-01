@@ -9,6 +9,8 @@ SHA256SUM ?= sha256sum
 BASH ?= bash
 
 ifneq ($(filter ci ci-for-evidence,$(MAKECMDGOALS)),)
+# Parallelism/output flags are harmless; dry-run, touch, eval, and other
+# command-changing MAKEFLAGS are refused because this target is an execution gate.
 tl_ci_unsafe_makeflags := $(filter-out j% -j% l% -l% O% -O% w -w --jobs% --jobserver-auth=% --jobserver-fds=% --load-average% --output-sync% --print-directory --no-print-directory,$(MAKEFLAGS))
 ifneq ($(strip $(tl_ci_unsafe_makeflags)),)
 $(error local CI refuses MAKEFLAGS that alter command execution)

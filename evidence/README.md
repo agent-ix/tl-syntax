@@ -19,6 +19,13 @@ bound source revisions remain ancestors of `main`; squash and rebase merges do
 not satisfy the retained-history contract. The source branch remains retained
 until all downstream pins and records have moved to reachable main revisions.
 
+To qualify on a second host, update the review-visible `tools.lock` in the
+candidate revision: set `environment.home` to that host's absolute home, set
+`environment.cargoTargetDir` to that checkout's `target/qualification-v1`, and
+replace every tool path, executable SHA-256, and dispatched Cargo/rustc verbose-output
+SHA-256 with observations from that host. Review that source diff before
+running `make ci-for-evidence`; no hidden or ambient host profile is accepted.
+
 The collector emits a canonical `quire.derivation-evidence/v1` record plus
 separately versioned collection-input and manifest records. Set `PGM01_SCHEMA`
 to the reviewed PGM-01 Draft 7 schema and `PGM01_VALIDATOR` to its
