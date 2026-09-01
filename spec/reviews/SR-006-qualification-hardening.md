@@ -16,7 +16,8 @@ identity, compiled-test enumeration, Make controls, shell-gate wiring, retained
 profiles, and traceability mappings. The remediation fixes the finding classes:
 the qualification environment is source-locked by absolute path and SHA-256;
 the Cargo-compiled, non-ignored test set must equal the requirement-tagged
-source census; every Make control spelling is rejected; successful active
+source census; known Make execution-control assignments and modifiers,
+including `private`, are rejected; successful active
 records require source-derived positive transcripts; and traceability tables
 are cross-checked against requirement files and test-case mappings.
 
@@ -36,6 +37,7 @@ external attestation. Hosted CI remains manual-only and was not dispatched.
 | FND-6001 | high | PATH shadowing, shell-gate gutting, excluded tests, Make execution controls, empty passing transcripts, disabled per-record validators, and a zero-active evidence census could produce false-green evidence; fixed-path checks, an exact active/retracted census, and behavioral shell-gate probes now reject each route. | NFR-002, TC-018 |
 | FND-6002 | medium | Gate entry points, historical parameter derivation, record-set identity, current inspections, and verification-method provenance were incomplete; source-revision and Git-history checks now bind them. | NFR-002, StR-001, StR-002, AA-001 |
 | FND-6003 | low | Collection staging, non-test assertions, finding identifiers, review artifacts, validator environments, and matrix cell completeness required hardening or clarification. | FR-005, NFR-002, AA-001 |
+| FND-6004 | high | GNU Make's `private` assignment modifier bypassed the control scanner and allowed `MAKEFLAGS=-n`, `-t`, or `-i` to false-green the full gate; global, target-scoped, and define scanners plus real-Make mutations now reject it. | NFR-002, TC-018 |
 
 ## Residual boundary
 

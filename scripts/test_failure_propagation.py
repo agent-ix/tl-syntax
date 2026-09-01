@@ -43,6 +43,20 @@ def stub_unrelated_recipes(path: Path) -> None:
 def main() -> int:
     original = (ROOT / "Makefile").read_text(encoding="utf-8")
     assert MODULE.inspect_makefile(ROOT / "Makefile") == []
+    for spelling, diagnostic in (
+        ("private MAKEFLAGS := -n\n", "assigns execution control MAKEFLAGS"),
+        (
+            "test: private SHELL := /usr/bin/true\n",
+            "assigns target-scoped execution control SHELL",
+        ),
+        (
+            "private define MAKEFLAGS\n-n\nendef\n",
+            "defines execution control MAKEFLAGS",
+        ),
+    ):
+        assert any(
+            diagnostic in error for error in MODULE.inspect_execution_controls(spelling)
+        ), f"private modifier escaped its {diagnostic} scanner"
 
     mutations = [
         original.replace(
@@ -77,6 +91,10 @@ def main() -> int:
         )
     )
     target_scoped_end = len(mutations)
+    private_makeflags_start = len(mutations)
+    for flag in ("-n", "-t", "-i"):
+        mutations.append(original + f"\nprivate MAKEFLAGS := {flag}\n")
+    private_makeflags_end = len(mutations)
     for operator in ("=", ":=", "::=", ":::=", "+=", "?=", "!="):
         mutations.append(original + f"\nexport override MAKEFLAGS {operator} -i\n")
     for assignment in (
@@ -92,6 +110,10 @@ def main() -> int:
         "MAKE := /usr/bin/true",
         "define MAKEFLAGS\n-i\nendef",
         "override define SHELL\n/usr/bin/true\nendef",
+        "private define MAKEFLAGS\n-n\nendef",
+        "private SHELL := /usr/bin/true",
+        "test: private SHELL := /usr/bin/true",
+        "ci: export private override .SHELLFLAGS := -c true",
         "$(eval MAKEFLAGS := -i)",
         "${eval SHELL := /usr/bin/true}",
         "include hidden-execution-controls.mk",
@@ -109,6 +131,10 @@ def main() -> int:
                 assert any("target-scoped execution control" in error for error in inspection), (
                     f"target-scoped mutation {index} was rejected for the wrong reason"
                 )
+            if private_makeflags_start <= index < private_makeflags_end:
+                assert any(
+                    "assigns execution control MAKEFLAGS" in error for error in inspection
+                ), f"private MAKEFLAGS mutation {index} was rejected for the wrong reason"
             result = subprocess.run(
                 [
                     sys.executable,

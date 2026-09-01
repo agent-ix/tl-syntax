@@ -29,17 +29,17 @@ GUARD_TARGET = "check-failure-propagation"
 TARGET = re.compile(r"^([A-Za-z0-9_.-]+):(?:\s+(.*?))?\s*$")
 SHELL_CONTROL = re.compile(r"&&|\|\||&(?!&)|[;|]")
 CONTROL_ASSIGNMENT = re.compile(
-    r"^\s*(?:(?:export|override|unexport)\s+)*"
+    r"^\s*(?:(?:export|override|unexport|private)\s+)*"
     r"(MAKEFLAGS|SHELL|\.SHELLFLAGS|MAKE)\s*(?:::?=|:::=|\+=|\?=|!=|=)\s*(.*)$"
 )
 CONTROL_DIRECTIVE = re.compile(r"^\s*\.(IGNORE|SILENT|ONESHELL|DEFAULT)\s*(?::|$)")
 CONTROL_DEFINE = re.compile(
-    r"^\s*(?:(?:override|export)\s+)*define\s+"
+    r"^\s*(?:(?:override|export|private)\s+)*define\s+"
     r"(MAKEFLAGS|SHELL|\.SHELLFLAGS|MAKE)\b"
 )
 CONTROL_EVAL = re.compile(r"\$\s*[({]\s*eval\b")
 TARGET_SCOPED_CONTROL = re.compile(
-    r"^\s*[^:#=]+:\s*(?:(?:export|override|unexport)\s+)*"
+    r"^\s*[^:#=]+:\s*(?:(?:export|override|unexport|private)\s+)*"
     r"(MAKEFLAGS|SHELL|\.SHELLFLAGS|MAKE)\s*(?:::?=|:::=|\+=|\?=|!=|=)"
 )
 
