@@ -1,1 +1,0 @@
-/home/peter/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/rustc

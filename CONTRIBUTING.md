@@ -12,9 +12,9 @@ Do not push directly to `main`. Generated artifacts must retain their declared
 derivation metadata and licensing. Do not copy material from repositories or
 documents whose license does not permit reuse.
 
-Retained evidence is sealed by a per-record `.sha256` manifest. Collection
-automatically appends that manifest's digest to `evidence/ANCHORS`. These
-in-repository anchors are protected by Git history and pull-request review;
-they are an integrity/audit boundary, not an external timestamp or independent
-attestation. Regenerating a record, manifest, or anchor requires a reviewed
-diff, and the human maintainer remains the release authority.
+This repository retains no evidence of its own. `make assurance` hands each
+producer's already-written result to Quoin, which seals it, retains it, and
+computes its digests; the record, the attestations, the retained bytes, and the
+receipt live in Quoin's store under `target/`. Neither that store nor any
+in-repository anchor is an external timestamp or an independent attestation, and
+the human maintainer remains the release authority.

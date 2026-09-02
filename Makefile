@@ -9,8 +9,22 @@
 #
 # This file is not a trust root and no longer tries to be one. The gates that
 # used to police Make's own execution controls went with the collector they were
-# protecting; Quoin's retained inputs are bound by digest, so a Makefile that
-# lies about what it ran cannot make a sealed attestation say otherwise.
+# protecting, and nothing replaced them.
+#
+# What the structural replacement does cover: the targets that feed the
+# assurance chain. Quoin binds its retained inputs by digest and the chain
+# derives every attested result from the producer's own bytes, so a recipe that
+# lies about running `assurance-inputs` yields an absent or empty input, which
+# the chain reports as an error naming the missing target rather than as a pass.
+#
+# What it does not cover: the targets that feed nothing. `fmt-check`, `lint`,
+# `deny`, `audit-unsafe` and `rustdoc` are among the `ci` prerequisites whose
+# output no attestation reads -- the charted producers are exactly the five
+# files `scripts/assurance_chain.py` lists in `INPUTS`. For everything else
+# there is no record to contradict, so a `-` prefix, a `.IGNORE:` line or a
+# `SHELL := /usr/bin/true` assignment neuters the check and it stays green.
+# That gap is recorded, not closed, in agent-ix/tl-syntax#11 by owner decision,
+# and #11 also owns measuring it here; do not re-add the guard.
 
 CARGO ?= cargo
 PYTHON ?= python3
@@ -28,7 +42,6 @@ CONFORMANCE_RESULT := $(ASSURANCE_DIR)/corpus-conformance.jsonl
 ORACLE_RESULT := $(ASSURANCE_DIR)/corpus-oracle.json
 FEATURE_RESULT := $(ASSURANCE_DIR)/feature-boundary.json
 QUIRE_EXPORT := $(ASSURANCE_DIR)/quire-static-export.json
-COMPAT_RESULT := $(ASSURANCE_DIR)/legacy-compatibility.json
 MSRV_RESULT := $(ASSURANCE_DIR)/msrv.jsonl
 REVISION ?= $(shell git rev-parse HEAD)
 
@@ -52,9 +65,9 @@ help:
 	@echo "  make assurance-env    - create the pinned shared-assurance interpreter"
 	@echo "  make assurance-inputs - run the producers and write their structured results"
 	@echo "  make pins             - classify the toolchain through the shared matrix"
-	@echo "  make compat-view      - read retained evidence through the shared mapping"
+	@echo "  make mutation-probes  - weaken each adapter refusal and require its check to go red"
 	@echo "  make assurance-chain  - seal, retain, and verify through Quoin"
-	@echo "  make assurance        - pins + compat-view + assurance-chain"
+	@echo "  make assurance        - pins + mutation-probes + assurance-chain"
 	@echo "  make ci               - All CI gates locally (hosted CI is manual-only)"
 
 # =============================================================================
@@ -161,7 +174,6 @@ assurance-inputs: assurance-env
 	$(PYTHON) scripts/validate_corpus.py --json > $(ORACLE_RESULT)
 	$(PYTHON) scripts/check_default_dependencies.py --json > $(FEATURE_RESULT)
 	$(QUIRE) coverage --scope . --json > $(QUIRE_EXPORT)
-	$(ASSURANCE_PYTHON) scripts/legacy_evidence_view.py --json > $(COMPAT_RESULT)
 	rustup run 1.75.0 $(CARGO) check --locked --all-targets --all-features \
 		--message-format=json > $(MSRV_RESULT)
 
@@ -169,17 +181,20 @@ assurance-inputs: assurance-env
 pins: assurance-env
 	$(ASSURANCE_PYTHON) scripts/check_shared_pins.py
 
-.PHONY: compat-view
-compat-view: assurance-env
-	$(ASSURANCE_PYTHON) scripts/legacy_evidence_view.py
-	$(ASSURANCE_PYTHON) scripts/legacy_evidence_view.py --mutation-probes
+# The adapter now carries the whole twelve-state claim, so its refusals are
+# probed by weakening them one at a time and requiring the check that guards
+# each to go red. A check that cannot be made to fail is a check that was never
+# checking.
+.PHONY: mutation-probes
+mutation-probes: assurance-inputs
+	$(PYTHON) scripts/assurance_chain.py --mutation-probes
 
 .PHONY: assurance-chain
 assurance-chain: assurance-inputs
 	$(PYTHON) scripts/assurance_chain.py --candidate-revision $(REVISION)
 
 .PHONY: assurance
-assurance: pins compat-view assurance-chain
+assurance: pins mutation-probes assurance-chain
 
 # An operator target, not a CI gate. It writes into this repository's own Quoin
 # evidence store, which is a reviewed change to spec/evidence/ rather than

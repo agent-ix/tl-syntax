@@ -26,7 +26,16 @@ its expected result was produced.
 | ID | Criteria | Validation |
 |---|---|---|
 | StR-002-VC-1 | A serialized formula names a supported schema and semantic profile. | Test (TC-008) |
-| StR-002-VC-2 | The corpus manifest names a stable revision and fixture identities. | Inspection (evidence/reviews/2026-08-31-current-inspections.md) |
+| StR-002-VC-2 | The corpus manifest names a stable revision and fixture identities. | Test (TC-014) |
+
+`StR-002-VC-2` previously named an agent-produced inspection record retained
+under `evidence/`, which was deleted under `agent-ix/tl-syntax#12`. That pointer
+was stale rather than load-bearing: the criterion is and was discharged by a
+test. `tests/integration.rs::shared_corpus_is_complete_stable_and_self_consistent`
+carries `// Trace: TC-012, TC-013, TC-014, …, StR-002-VC-2` and asserts the
+manifest's `corpus_revision` against the crate's `CORPUS_REVISION` and every
+declared fixture identity. The validation method is corrected to name it;
+nothing is restated more weakly.
 
 ## Stakeholders
 

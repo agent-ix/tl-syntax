@@ -25,15 +25,13 @@ framework.
 - Structured results produced by this repository's own tools: the corpus
   conformance runner, the corpus semantic oracle, and the feature-boundary gate.
 - The Quire static export of specification, obligation, and coverage facts.
-- The immutable evidence bytes retained under `evidence/`.
 
 ## Outputs
 
 - A Quoin change-assurance record sealed from `assurance/change-assurance.json`.
 - One Quoin proof attestation per declared proof obligation, over bytes a
   producer already wrote.
-- A Quoin verification receipt, and the read-only compatibility view of retained
-  evidence.
+- A Quoin verification receipt.
 
 ## Behavior
 
@@ -55,11 +53,7 @@ framework.
   not-computed, malformed, partial, stale, suspect, vacuous, and tampered
   distinguishable from one another.
 - tl-syntax shall report no non-success outcome as a success.
-- `scripts/legacy_evidence_view.py` shall read every retained evidence byte
-  through the pinned Engineering Assurance mapping.
-- `scripts/legacy_evidence_view.py` shall leave every retained evidence byte
-  unmodified.
-- While the pinned mapping refuses a retained schema family, tl-syntax shall report that refusal.
+- tl-syntax shall retain no evidence of its own.
 - tl-syntax shall implement no compatibility mapping of its own.
 - tl-syntax shall retain no generic runner, evidence envelope, manifest,
   tool-identity framework, retention store, audit store, anchor file, or
@@ -73,9 +67,30 @@ framework.
 | FR-006-AC-1 | Every pinned component is classified by the packaged compatibility matrix, no consumed artifact digest differs from its pin, and no internal mirror registry is named anywhere in the repository. | Test (TC-021) |
 | FR-006-AC-2 | The corpus conformance, corpus oracle, and feature-boundary results are structured, are produced by this repository's tools, and reach Quoin through the declared adapter without Quoin or Quire executing a producer. | Test (TC-022) |
 | FR-006-AC-3 | Static specification, obligation, and coverage facts for a candidate revision come from the Quire export named by the sealed record's impact snapshot. | Test (TC-023) |
-| FR-006-AC-4 | Every retained evidence byte is unchanged by a compatibility run, every retained envelope is read through the pinned mapping, and the mapping's answer is reported without being converted into a pass or a failure. | Test (TC-024) |
 | FR-006-AC-5 | Each of the twelve verification outcomes is demonstrated by a case that produced it, and each negative case is paired with a positive control that was observed to be accepted. | Test (TC-025) |
-| FR-006-AC-6 | No script, Make target, or test in the repository implements a generic evidence envelope, manifest, retention store, tool-identity lock, anchor file, or aggregate verdict, and the frozen evidence schemas are referenced by nothing. | Test (TC-026) |
+| FR-006-AC-6 | No script, Make target, or test in the repository implements a generic evidence envelope, manifest, retention store, tool-identity lock, anchor file, or aggregate verdict, and no live source, gate, workflow, or specification row still names the deleted retained-evidence machinery. | Test (TC-026) |
+
+### Retired criteria
+
+**FR-006-AC-4** is retired. It required this repository to read every retained
+evidence byte through the pinned Engineering Assurance mapping, leave those
+bytes unmodified, and report the mapping's answer without collapsing it. There
+is no longer anything to read: the 23 retained `quire.derivation-evidence/v1`
+envelopes were deleted under `agent-ix/tl-syntax#12`, on the preservation
+constraint that `agent-ix/engineering-assurance#7` released for the pre-stable
+phase on 2026-09-02. The criterion is not restated more weakly and its
+obligation is not moved elsewhere; it went with its subject.
+
+The identifier is **not reused**, on the same terms as NFR-002-AC-4. `SR-008`
+adjudicates coverage against `FR-006-AC-4` and `TC-024` by name, and an
+identifier that means one thing in a closed review and another in the current
+specification makes both unreadable. Test case **TC-024** and suite
+**SUITE-007** are retired with it.
+
+The mapping refusal this criterion reported is filed upstream as
+`agent-ix/engineering-assurance#21`, which becomes moot for this repository
+rather than fixed. The constraint re-applies unchanged at the move toward stable
+releases; evidence retained from that point is immutable.
 
 ## Dependencies
 

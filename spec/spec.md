@@ -50,7 +50,7 @@ identity.
 
 Embedded Rust consumers use the allocation-free borrowed model. Temporal tools
 use the optional owned and serialization features. Reviewers use the corpus and
-retained evidence to check compatibility and determinism.
+the sealed assurance chain to check compatibility and determinism.
 
 ## Requirements Architecture
 
