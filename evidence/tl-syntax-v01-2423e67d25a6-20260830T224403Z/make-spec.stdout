@@ -1,0 +1,1 @@
+quire validate --scope . 'spec/**/*.md'

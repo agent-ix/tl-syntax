@@ -1,0 +1,76 @@
+Warning: can't set `imports_granularity = Crate`, unstable features are only available in nightly channel.
+Warning: can't set `group_imports = StdExternalCrate`, unstable features are only available in nightly channel.
+Warning: can't set `imports_granularity = Crate`, unstable features are only available in nightly channel.
+Warning: can't set `group_imports = StdExternalCrate`, unstable features are only available in nightly channel.
+Warning: can't set `imports_granularity = Crate`, unstable features are only available in nightly channel.
+Warning: can't set `group_imports = StdExternalCrate`, unstable features are only available in nightly channel.
+    Checking tl-syntax v0.1.0 (/home/peter/dev/tl-syntax)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.12s
+    Checking tl-syntax v0.1.0 (/home/peter/dev/tl-syntax)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.11s
+   Compiling proc-macro2 v1.0.107
+   Compiling unicode-ident v1.0.24
+   Compiling quote v1.0.47
+   Compiling serde_core v1.0.229
+   Compiling serde v1.0.229
+   Compiling syn v3.0.4
+   Compiling serde_derive v1.0.229
+    Checking tl-syntax v0.1.0 (/home/peter/dev/tl-syntax)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3.88s
+    Checking tl-syntax v0.1.0 (/home/peter/dev/tl-syntax)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.32s
+   Compiling serde_core v1.0.229
+   Compiling zmij v1.0.23
+   Compiling serde_json v1.0.151
+    Checking memchr v2.8.3
+    Checking itoa v1.0.18
+    Checking serde v1.0.229
+    Checking tl-syntax v0.1.0 (/home/peter/dev/tl-syntax)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.57s
+   Compiling itoa v1.0.18
+   Compiling memchr v2.8.3
+   Compiling serde_core v1.0.229
+   Compiling zmij v1.0.23
+   Compiling serde v1.0.229
+   Compiling serde_json v1.0.151
+   Compiling tl-syntax v0.1.0 (/home/peter/dev/tl-syntax)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 3.00s
+     Running unittests src/lib.rs (/tmp/tl-syntax-agent-c-final-evidence-target/debug/deps/tl_syntax-e85d0b7c974875e8)
+     Running tests/evidence_contract.rs (/tmp/tl-syntax-agent-c-final-evidence-target/debug/deps/evidence_contract-d2927e7a41eb4ad7)
+     Running tests/integration.rs (/tmp/tl-syntax-agent-c-final-evidence-target/debug/deps/integration-a17efb8bc6b2eb6a)
+   Doc-tests tl_syntax
+warning[license-not-encountered]: license was not encountered
+  ┌─ /home/peter/dev/tl-syntax/deny.toml:6:6
+  │
+6 │     "BSD-2-Clause",
+  │      ━━━━━━━━━━━━ unmatched license allowance
+
+warning[license-not-encountered]: license was not encountered
+  ┌─ /home/peter/dev/tl-syntax/deny.toml:7:6
+  │
+7 │     "BSD-3-Clause",
+  │      ━━━━━━━━━━━━ unmatched license allowance
+
+warning[license-not-encountered]: license was not encountered
+  ┌─ /home/peter/dev/tl-syntax/deny.toml:8:6
+  │
+8 │     "CDLA-Permissive-2.0",
+  │      ━━━━━━━━━━━━━━━━━━━ unmatched license allowance
+
+warning[license-not-encountered]: license was not encountered
+  ┌─ /home/peter/dev/tl-syntax/deny.toml:9:6
+  │
+9 │     "ISC",
+  │      ━━━ unmatched license allowance
+
+warning[license-not-encountered]: license was not encountered
+   ┌─ /home/peter/dev/tl-syntax/deny.toml:10:6
+   │
+10 │     "Unicode-3.0",
+   │      ━━━━━━━━━━━ unmatched license allowance
+
+warning[license-not-encountered]: license was not encountered
+   ┌─ /home/peter/dev/tl-syntax/deny.toml:11:6
+   │
+11 │     "Zlib",
+   │      ━━━━ unmatched license allowance

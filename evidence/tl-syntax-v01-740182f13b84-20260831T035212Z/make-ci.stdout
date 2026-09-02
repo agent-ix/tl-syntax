@@ -1,0 +1,353 @@
+cargo fmt --all -- --check
+cargo check --lib --no-default-features
+cargo check --lib --no-default-features --features alloc
+cargo check --lib --no-default-features --features serde
+cargo check --lib --all-features
+python3 scripts/check_default_dependencies.py
+default normal dependency graph contains no dependencies
+cargo clippy --all-targets --all-features -- -D warnings
+cargo test --all-features
+
+running 10 tests
+test document::tests::owned_document_preserves_borrowed_formula ... ok
+test document::tests::proposition_maps_are_unambiguous ... ok
+test syntax::tests::allocation_free_core_api_constructs_formula ... ok
+test syntax::tests::formula_rejects_invalid_references ... ok
+test syntax::tests::formula_accepts_complete_operator_vocabulary ... ok
+test syntax::tests::identities_profiles_and_nodes_have_stable_order ... ok
+test syntax::tests::intervals_are_inclusive_and_checked ... ok
+test syntax::tests::spans_are_half_open_and_checked ... ok
+test syntax::tests::source_span_construction_and_length_hold_for_all_offsets ... ok
+test syntax::tests::interval_construction_and_cardinality_hold_for_all_bounds ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 2 tests
+test evidence_suite_registry_is_wired_to_executable_gates ... ok
+test evidence_producer_rejects_false_success_classifications ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+
+running 7 tests
+test checked_values_and_graphs_reject_malformed_wire_data ... ok
+test proposition_map_round_trips_in_stable_order ... ok
+test formula_document_round_trips_with_required_profile ... ok
+test unknown_node_fields_and_invalid_proposition_maps_are_rejected_on_decode ... ok
+test unknown_schema_and_profile_versions_are_rejected ... ok
+test shared_corpus_is_complete_stable_and_self_consistent ... ok
+test generated_owned_formulas_round_trip ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+
+running 1 test
+test src/lib.rs - (line 24) ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+
+sha256sum --check corpus/SHA256SUMS
+corpus/formulas/boundary-singleton-globally.json: OK
+corpus/formulas/large-bound-future.json: OK
+corpus/formulas/nested-not-future.json: OK
+corpus/formulas/primitive-true.json: OK
+corpus/formulas/short-trace-future.json: OK
+corpus/malformed/forward-reference.json: OK
+corpus/malformed/inverted-interval.json: OK
+corpus/malformed/unknown-profile.json: OK
+corpus/manifest.json: OK
+corpus/propositions.json: OK
+corpus/schema/formula-v1.schema.json: OK
+corpus/schema/proposition-map-v1.schema.json: OK
+python3 scripts/validate_corpus.py
+corpus schemas, rejection reasons, and reviewed expectations are valid
+cargo deny check licenses
+licenses ok
+cargo deny check sources
+sources ok
+bash scripts/check_unsafe_comments.sh
+python3 -m py_compile scripts/build_evidence_envelope.py scripts/check_default_dependencies.py scripts/finalize_collection.py scripts/test_evidence_tool.py scripts/validate_corpus.py scripts/validate_json_schema.py
+python3 scripts/test_evidence_tool.py
+evidence outcome behavior is valid
+quire validate --scope . 'spec/**/*.md'
+quire coverage --scope . --strict
+Coverage: 46/46 rows backed (100%)
+rust: 19/19/19 bound/tagged/candidates (100% read; 100% authored; forms: rust-trace-attribute, rust-trace-line, rust-comment-id, rust-test-name-id, rust-doc-comment-id)
+spec/evidence/suites.md: 7/7 (100%)
+spec/requirements/FR-001-inclusive-intervals.md: 2/2 (100%)
+spec/requirements/FR-002-validated-formula.md: 3/3 (100%)
+spec/requirements/FR-003-identities-and-profiles.md: 3/3 (100%)
+spec/requirements/FR-004-versioned-serialization.md: 3/3 (100%)
+spec/requirements/FR-005-conformance-corpus.md: 3/3 (100%)
+spec/requirements/NFR-001-no-std-feature-boundary.md: 2/2 (100%)
+spec/requirements/NFR-002-determinism-and-integrity.md: 3/3 (100%)
+spec/requirements/StR-001-embedded-consumers.md: 2/2 (100%)
+spec/requirements/StR-002-temporal-interoperability.md: 2/2 (100%)
+spec/test-matrix.md: 16/16 (100%)
+coverage.backed: over 46 matrix row(s), examined 19, matched 19
+authoring.tag_rate: over 19 evidence symbol(s), examined 19, matched 19
+coverage.property_shaped: over 23 acceptance criterion(s), examined 23, matched 23
+coverage.specific_shaped: over 23 acceptance criterion(s), examined 23, matched 23
+minting.section_hit_rate: over 11 declared minting document(s), examined 11, matched 11
+bash scripts/verify_evidence.sh
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/cargo-version.txt: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/collection-input.json: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/default-dependencies.status.txt: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/default-dependencies.stderr: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/default-dependencies.stdout: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/diff-integrity.status.txt: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/diff-integrity.stderr: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/diff-integrity.stdout: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/evidence-envelope.json: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/evidence-manifest.json: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/input-schema.status.txt: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/input-schema.stderr: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/input-schema.stdout: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/jsonschema-version.txt: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/make-ci.status.txt: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/make-ci.stderr: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/make-ci.stdout: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/make-spec.status.txt: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/make-spec.stderr: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/make-spec.stdout: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/manifest-schema.status.txt: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/manifest-schema.stderr: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/manifest-schema.stdout: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/metadata.json: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/pgm01-schema.status.txt: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/pgm01-schema.stderr: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/pgm01-schema.stdout: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/pgm01-validator.status.txt: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/pgm01-validator.stderr: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/pgm01-validator.stdout: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/python-version.txt: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/quire-coverage.status.txt: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/quire-coverage.stderr: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/quire-coverage.stdout: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/quire-provenance.json: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/rustc-version.txt: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/rustdoc.status.txt: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/rustdoc.stderr: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/rustdoc.stdout: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/source-revision.txt: OK
+evidence/tl-syntax-v01-2051d9eddde5-20260830T224139Z/source-state.txt: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/cargo-version.txt: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/collection-input.json: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/default-dependencies.status.txt: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/default-dependencies.stderr: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/default-dependencies.stdout: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/diff-integrity.status.txt: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/diff-integrity.stderr: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/diff-integrity.stdout: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/evidence-envelope.json: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/evidence-manifest.json: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/input-schema.status.txt: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/input-schema.stderr: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/input-schema.stdout: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/jsonschema-version.txt: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/make-ci.status.txt: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/make-ci.stderr: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/make-ci.stdout: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/make-spec.status.txt: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/make-spec.stderr: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/make-spec.stdout: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/manifest-schema.status.txt: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/manifest-schema.stderr: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/manifest-schema.stdout: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/metadata.json: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/pgm01-schema.status.txt: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/pgm01-schema.stderr: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/pgm01-schema.stdout: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/pgm01-validator.status.txt: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/pgm01-validator.stderr: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/pgm01-validator.stdout: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/python-version.txt: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/quire-coverage.status.txt: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/quire-coverage.stderr: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/quire-coverage.stdout: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/quire-provenance.json: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/rustc-version.txt: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/rustdoc.status.txt: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/rustdoc.stderr: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/rustdoc.stdout: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/source-revision.txt: OK
+evidence/tl-syntax-v01-2423e67d25a6-20260830T224403Z/source-state.txt: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/cargo-version.txt: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/collection-input.json: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/collection-summary.json: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/default-dependencies.status.txt: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/default-dependencies.stderr: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/default-dependencies.stdout: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/diff-integrity.status.txt: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/diff-integrity.stderr: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/diff-integrity.stdout: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/evidence-envelope.json: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/evidence-manifest.json: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/input-schema.status.txt: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/input-schema.stderr: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/input-schema.stdout: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/jsonschema-version.txt: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/make-ci.status.txt: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/make-ci.stderr: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/make-ci.stdout: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/make-spec.status.txt: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/make-spec.stderr: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/make-spec.stdout: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/manifest-schema.status.txt: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/manifest-schema.stderr: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/manifest-schema.stdout: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/metadata.json: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/pgm01-schema.status.txt: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/pgm01-schema.stderr: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/pgm01-schema.stdout: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/pgm01-validator.status.txt: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/pgm01-validator.stderr: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/pgm01-validator.stdout: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/python-version.txt: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/quire-coverage.status.txt: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/quire-coverage.stderr: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/quire-coverage.stdout: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/quire-provenance.json: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/rustc-version.txt: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/rustdoc.status.txt: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/rustdoc.stderr: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/rustdoc.stdout: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/sealed-pgm01-schema.status.txt: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/sealed-pgm01-schema.stderr: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/sealed-pgm01-schema.stdout: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/sealed-pgm01-validator.status.txt: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/sealed-pgm01-validator.stderr: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/sealed-pgm01-validator.stdout: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/source-revision.txt: OK
+evidence/tl-syntax-v01-269d352d1050-20260831T034957Z/source-state.txt: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/cargo-version.txt: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/collection-input.json: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/default-dependencies.status.txt: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/default-dependencies.stderr: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/default-dependencies.stdout: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/diff-integrity.status.txt: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/diff-integrity.stderr: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/diff-integrity.stdout: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/evidence-envelope.json: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/evidence-manifest.json: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/input-schema.status.txt: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/input-schema.stderr: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/input-schema.stdout: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/jsonschema-version.txt: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/make-ci.status.txt: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/make-ci.stderr: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/make-ci.stdout: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/make-spec.status.txt: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/make-spec.stderr: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/make-spec.stdout: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/manifest-schema.status.txt: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/manifest-schema.stderr: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/manifest-schema.stdout: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/metadata.json: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/pgm01-schema.status.txt: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/pgm01-schema.stderr: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/pgm01-schema.stdout: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/pgm01-validator.status.txt: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/pgm01-validator.stderr: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/pgm01-validator.stdout: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/python-version.txt: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/quire-coverage.status.txt: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/quire-coverage.stderr: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/quire-coverage.stdout: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/quire-provenance.json: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/rustc-version.txt: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/rustdoc.status.txt: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/rustdoc.stderr: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/rustdoc.stdout: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/source-revision.txt: OK
+evidence/tl-syntax-v01-49a9301caf5b-20260831T014051Z/source-state.txt: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/cargo-version.txt: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/collection-input.json: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/collection-summary.json: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/default-dependencies.status.txt: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/default-dependencies.stderr: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/default-dependencies.stdout: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/diff-integrity.status.txt: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/diff-integrity.stderr: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/diff-integrity.stdout: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/evidence-envelope.json: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/evidence-manifest.json: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/input-schema.status.txt: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/input-schema.stderr: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/input-schema.stdout: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/jsonschema-version.txt: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/make-ci.status.txt: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/make-ci.stderr: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/make-ci.stdout: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/make-spec.status.txt: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/make-spec.stderr: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/make-spec.stdout: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/manifest-schema.status.txt: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/manifest-schema.stderr: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/manifest-schema.stdout: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/metadata.json: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/pgm01-schema.status.txt: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/pgm01-schema.stderr: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/pgm01-schema.stdout: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/pgm01-validator.status.txt: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/pgm01-validator.stderr: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/pgm01-validator.stdout: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/python-version.txt: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/quire-coverage.status.txt: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/quire-coverage.stderr: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/quire-coverage.stdout: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/quire-provenance.json: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/rustc-version.txt: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/rustdoc.status.txt: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/rustdoc.stderr: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/rustdoc.stdout: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/sealed-pgm01-schema.status.txt: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/sealed-pgm01-schema.stderr: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/sealed-pgm01-schema.stdout: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/sealed-pgm01-validator.status.txt: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/sealed-pgm01-validator.stderr: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/sealed-pgm01-validator.stdout: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/source-revision.txt: OK
+evidence/tl-syntax-v01-592f2140e12a-20260831T034628Z/source-state.txt: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/cargo-version.txt: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/collection-input.json: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/default-dependencies.status.txt: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/default-dependencies.stderr: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/default-dependencies.stdout: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/diff-integrity.status.txt: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/diff-integrity.stderr: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/diff-integrity.stdout: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/evidence-envelope.json: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/evidence-manifest.json: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/input-schema.status.txt: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/input-schema.stderr: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/input-schema.stdout: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/jsonschema-version.txt: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/make-ci.status.txt: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/make-ci.stderr: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/make-ci.stdout: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/make-spec.status.txt: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/make-spec.stderr: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/make-spec.stdout: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/manifest-schema.status.txt: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/manifest-schema.stderr: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/manifest-schema.stdout: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/metadata.json: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/pgm01-schema.status.txt: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/pgm01-schema.stderr: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/pgm01-schema.stdout: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/pgm01-validator.status.txt: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/pgm01-validator.stderr: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/pgm01-validator.stdout: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/python-version.txt: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/quire-coverage.status.txt: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/quire-coverage.stderr: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/quire-coverage.stdout: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/quire-provenance.json: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/rustc-version.txt: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/rustdoc.status.txt: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/rustdoc.stderr: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/rustdoc.stdout: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/source-revision.txt: OK
+evidence/tl-syntax-v01-7feddfecacec-20260831T014327Z/source-state.txt: OK

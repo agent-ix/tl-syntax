@@ -1,0 +1,156 @@
+    Checking tl-syntax v0.1.0 (/home/peter/dev/tl-syntax)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.11s
+    Checking tl-syntax v0.1.0 (/home/peter/dev/tl-syntax)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.10s
+   Compiling proc-macro2 v1.0.107
+   Compiling unicode-ident v1.0.24
+   Compiling quote v1.0.47
+   Compiling serde_core v1.0.229
+   Compiling serde v1.0.229
+   Compiling syn v3.0.4
+   Compiling serde_derive v1.0.229
+    Checking tl-syntax v0.1.0 (/home/peter/dev/tl-syntax)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 3.55s
+    Checking tl-syntax v0.1.0 (/home/peter/dev/tl-syntax)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.32s
+   Compiling libc v0.2.189
+    Checking cfg-if v1.0.4
+   Compiling zerocopy v0.8.56
+   Compiling serde_core v1.0.229
+   Compiling autocfg v1.5.1
+   Compiling libm v0.2.16
+   Compiling zmij v1.0.23
+   Compiling serde_json v1.0.151
+    Checking lazy_static v1.5.0
+    Checking itoa v1.0.18
+    Checking memchr v2.8.3
+    Checking bitflags v2.13.1
+    Checking regex-syntax v0.8.11
+    Checking unarray v0.1.4
+   Compiling num-traits v0.2.19
+    Checking getrandom v0.2.17
+    Checking rand_core v0.6.4
+    Checking rand_xorshift v0.3.0
+    Checking serde v1.0.229
+    Checking tl-syntax v0.1.0 (/home/peter/dev/tl-syntax)
+    Checking ppv-lite86 v0.2.21
+    Checking rand_chacha v0.3.1
+    Checking rand v0.8.8
+    Checking proptest v1.5.0
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 5.19s
+   Compiling libc v0.2.189
+   Compiling cfg-if v1.0.4
+   Compiling lazy_static v1.5.0
+   Compiling memchr v2.8.3
+   Compiling unarray v0.1.4
+   Compiling regex-syntax v0.8.11
+   Compiling itoa v1.0.18
+   Compiling bitflags v2.13.1
+   Compiling zerocopy v0.8.56
+   Compiling serde_core v1.0.229
+   Compiling libm v0.2.16
+   Compiling zmij v1.0.23
+   Compiling num-traits v0.2.19
+   Compiling getrandom v0.2.17
+   Compiling rand_core v0.6.4
+   Compiling rand_xorshift v0.3.0
+   Compiling serde v1.0.229
+   Compiling serde_json v1.0.151
+   Compiling tl-syntax v0.1.0 (/home/peter/dev/tl-syntax)
+   Compiling ppv-lite86 v0.2.21
+   Compiling rand_chacha v0.3.1
+   Compiling rand v0.8.8
+   Compiling proptest v1.5.0
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 8.58s
+     Running unittests src/lib.rs (target/qualification-v1/debug/deps/tl_syntax-96d765e6b18cbd83)
+     Running tests/evidence_contract.rs (target/qualification-v1/debug/deps/evidence_contract-e7c924d96f9e6729)
+     Running tests/feature_boundary.rs (target/qualification-v1/debug/deps/feature_boundary-f06de97f8b5276bf)
+     Running tests/integration.rs (target/qualification-v1/debug/deps/integration-ed77a95598a1769c)
+   Doc-tests tl_syntax
+warning[license-not-encountered]: license was not encountered
+  ┌─ /home/peter/dev/tl-syntax/deny.toml:6:6
+  │
+6 │     "BSD-2-Clause",
+  │      ━━━━━━━━━━━━ unmatched license allowance
+
+warning[license-not-encountered]: license was not encountered
+  ┌─ /home/peter/dev/tl-syntax/deny.toml:7:6
+  │
+7 │     "BSD-3-Clause",
+  │      ━━━━━━━━━━━━ unmatched license allowance
+
+warning[license-not-encountered]: license was not encountered
+  ┌─ /home/peter/dev/tl-syntax/deny.toml:8:6
+  │
+8 │     "CDLA-Permissive-2.0",
+  │      ━━━━━━━━━━━━━━━━━━━ unmatched license allowance
+
+warning[license-not-encountered]: license was not encountered
+  ┌─ /home/peter/dev/tl-syntax/deny.toml:9:6
+  │
+9 │     "ISC",
+  │      ━━━ unmatched license allowance
+
+warning[license-not-encountered]: license was not encountered
+   ┌─ /home/peter/dev/tl-syntax/deny.toml:10:6
+   │
+10 │     "Unicode-3.0",
+   │      ━━━━━━━━━━━ unmatched license allowance
+
+warning[license-not-encountered]: license was not encountered
+   ┌─ /home/peter/dev/tl-syntax/deny.toml:11:6
+   │
+11 │     "Zlib",
+   │      ━━━━ unmatched license allowance
+
+coverage report unavailable: [Errno 2] No such file or directory: '/tmp/tmpldrdp90c/missing.json'
+DuplicateArchetype: 'ADR' contributed by modules ["spec-artifacts-process", "spec-artifacts-process"]; first-wins
+DuplicateArchetype: 'Plan' contributed by modules ["spec-artifacts-process", "spec-artifacts-process"]; first-wins
+DuplicateArchetype: 'Review' contributed by modules ["spec-artifacts-process", "spec-artifacts-process"]; first-wins
+DuplicateArchetype: 'SpecReview' contributed by modules ["spec-artifacts-process", "spec-artifacts-process"]; first-wins
+DuplicateArchetype: 'Standard' contributed by modules ["spec-artifacts-process", "spec-artifacts-process"]; first-wins
+DuplicateInverseEdge: inverse label 'part_of' declared by verbs ["aggregates", "contains"]; first-wins
+DuplicateArchetype: 'ADR' contributed by modules ["spec-artifacts-process", "spec-artifacts-process"]; first-wins
+DuplicateArchetype: 'Plan' contributed by modules ["spec-artifacts-process", "spec-artifacts-process"]; first-wins
+DuplicateArchetype: 'Review' contributed by modules ["spec-artifacts-process", "spec-artifacts-process"]; first-wins
+DuplicateArchetype: 'SpecReview' contributed by modules ["spec-artifacts-process", "spec-artifacts-process"]; first-wins
+DuplicateArchetype: 'Standard' contributed by modules ["spec-artifacts-process", "spec-artifacts-process"]; first-wins
+DuplicateInverseEdge: inverse label 'part_of' declared by verbs ["aggregates", "contains"]; first-wins
+   Compiling libc v0.2.189
+   Compiling proc-macro2 v1.0.107
+   Compiling zerocopy v0.8.56
+   Compiling quote v1.0.47
+   Compiling unicode-ident v1.0.24
+   Compiling cfg-if v1.0.4
+   Compiling serde_core v1.0.229
+   Compiling autocfg v1.5.1
+   Compiling libm v0.2.16
+   Compiling zmij v1.0.23
+   Compiling serde v1.0.229
+   Compiling serde_json v1.0.151
+   Compiling regex-syntax v0.8.11
+   Compiling lazy_static v1.5.0
+   Compiling unarray v0.1.4
+   Compiling bitflags v2.13.1
+   Compiling memchr v2.8.3
+   Compiling itoa v1.0.18
+   Compiling num-traits v0.2.19
+   Compiling syn v3.0.4
+   Compiling getrandom v0.2.17
+   Compiling rand_core v0.6.4
+   Compiling rand_xorshift v0.3.0
+   Compiling serde_derive v1.0.229
+   Compiling ppv-lite86 v0.2.21
+   Compiling rand_chacha v0.3.1
+   Compiling rand v0.8.8
+   Compiling proptest v1.5.0
+   Compiling tl-syntax v0.1.0 (/home/peter/dev/tl-syntax)
+    Finished test [unoptimized + debuginfo] target(s) in 6.36s
+     Running unittests src/lib.rs (target/qualification-v1/debug/deps/tl_syntax-c38cb8c727898684)
+     Running tests/evidence_contract.rs (target/qualification-v1/debug/deps/evidence_contract-f4d92931f021961d)
+     Running tests/feature_boundary.rs (target/qualification-v1/debug/deps/feature_boundary-b25e1f6373a7ef5a)
+     Running tests/integration.rs (target/qualification-v1/debug/deps/integration-885921f7992fd04e)
+   Doc-tests tl_syntax
+ Documenting tl-syntax v0.1.0 (/home/peter/dev/tl-syntax)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.33s
+   Generated /home/peter/dev/tl-syntax/target/qualification-v1/doc/tl_syntax/index.html

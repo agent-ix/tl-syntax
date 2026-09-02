@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "tl-syntax.evidence-retractions/v1",
+  "records": {
+    "tl-syntax-v01-0de03f619725-20260831T170517Z": {"reason": "superseded before qualified-tool and compiled-test-census controls"},
+    "tl-syntax-v01-11dedcfc8313-20260831T182730Z": {"reason": "superseded failed collection before qualified-tool controls"},
+    "tl-syntax-v01-11dedcfc8313-20260831T183031Z": {"reason": "superseded before qualified-tool and compiled-test-census controls"},
+    "tl-syntax-v01-13b0781ceb52-20260831T235727Z": {"reason": "superseded by passing qualification-v2 record tl-syntax-v01-91f693425858-20260901T010923Z"},
+    "tl-syntax-v01-2051d9eddde5-20260830T224139Z": {"reason": "legacy record without the active qualification profile"},
+    "tl-syntax-v01-20987eed0128-20260831T223910Z": {"reason": "superseded by the behavioral qualification for PR review comment 5486398920 round-7 FND-601/FND-602"},
+    "tl-syntax-v01-2423e67d25a6-20260830T224403Z": {"reason": "legacy record without the active qualification profile"},
+    "tl-syntax-v01-269d352d1050-20260831T034957Z": {"reason": "legacy record without the active qualification profile"},
+    "tl-syntax-v01-49a9301caf5b-20260831T014051Z": {"reason": "legacy record without the active qualification profile"},
+    "tl-syntax-v01-50e309dbb253-20260831T170328Z": {"reason": "superseded before qualified-tool and compiled-test-census controls"},
+    "tl-syntax-v01-57a1720296c6-20260831T210914Z": {"reason": "superseded because retained tool digests were not verified against a source lock"},
+    "tl-syntax-v01-592f2140e12a-20260831T034628Z": {"reason": "legacy record without the active qualification profile"},
+    "tl-syntax-v01-740182f13b84-20260831T035212Z": {"reason": "explicitly retracted: positive transcripts were not required by its qualification profile"},
+    "tl-syntax-v01-760cabac236f-20260831T062813Z": {"reason": "legacy record without the active qualification profile"},
+    "tl-syntax-v01-7feddfecacec-20260831T014327Z": {"reason": "legacy record without the active qualification profile"},
+    "tl-syntax-v01-835833fb2338-20260831T155851Z": {"reason": "legacy record without the active qualification profile"},
+    "tl-syntax-v01-892a42936e88-20260901T010251Z": {"reason": "failed candidate collection: exact Cargo cannot dispatch the MSRV selector; superseded by an explicit pinned rustup gate"},
+    "tl-syntax-v01-91f693425858-20260901T010923Z": {"reason": "superseded by passing qualification-v2 record tl-syntax-v01-913b1a1d79b6-20260901T011501Z with portable historical tool-lock validation"},
+    "tl-syntax-v01-913b1a1d79b6-20260901T011501Z": {"reason": "superseded by passing qualification-v2 record tl-syntax-v01-4b7d3318324c-20260901T015713Z with target-scoped execution-control and live-validator coverage"},
+    "tl-syntax-v01-99b3b37d0d84-20260831T063017Z": {"reason": "legacy record without the active qualification profile"},
+    "tl-syntax-v01-a857efcc28a1-20260831T193914Z": {"reason": "superseded before qualified-tool and compiled-test-census controls"},
+    "tl-syntax-v01-f30d927c7285-20260831T155659Z": {"reason": "legacy record without the active qualification profile"}
+  }
+}

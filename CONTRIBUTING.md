@@ -11,3 +11,10 @@ agent-assisted workflows. The standard is the same for every contribution:
 Do not push directly to `main`. Generated artifacts must retain their declared
 derivation metadata and licensing. Do not copy material from repositories or
 documents whose license does not permit reuse.
+
+Retained evidence is sealed by a per-record `.sha256` manifest. Collection
+automatically appends that manifest's digest to `evidence/ANCHORS`. These
+in-repository anchors are protected by Git history and pull-request review;
+they are an integrity/audit boundary, not an external timestamp or independent
+attestation. Regenerating a record, manifest, or anchor requires a reviewed
+diff, and the human maintainer remains the release authority.

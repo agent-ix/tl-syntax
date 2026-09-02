@@ -1,0 +1,103 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/agent-ix/tl-syntax/schemas/tl-syntax-evidence-input-v1.schema.json",
+  "title": "tl-syntax evidence collection input v1",
+  "description": "SPDX-License-Identifier: MIT OR Apache-2.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "qualificationProfile",
+    "sourceRevision",
+    "sourceState",
+    "commands",
+    "tools",
+    "pgm01",
+    "corpus"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "tl-syntax.evidence-input/v1"},
+    "qualificationProfile": {"const": "tl-syntax.evidence-qualification/v2"},
+    "sourceRevision": {"type": "string", "pattern": "^[0-9a-f]{40,64}$"},
+    "sourceState": {"enum": ["clean", "modified"]},
+    "commands": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "tools": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cargo", "jsonschema", "python", "quire", "rustc", "identities"],
+      "properties": {
+        "cargo": {"type": "string", "minLength": 1},
+        "jsonschema": {"type": "string", "minLength": 1},
+        "python": {"type": "string", "minLength": 1},
+        "quire": {"type": "string", "minLength": 1},
+        "rustc": {"type": "string", "minLength": 1},
+        "identities": {
+          "type": "object",
+          "additionalProperties": {"$ref": "#/definitions/toolIdentity"},
+          "required": ["bash", "cargo", "git", "make", "python3", "quire", "rustc", "rustup", "sha256sum"]
+        }
+      }
+    },
+    "pgm01": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policy", "candidateRevision", "envelopeSchema", "envelopeSchemaDigest"],
+      "properties": {
+        "policy": {"const": "ix://agent-ix/quire-contract-ir/PGM-01"},
+        "candidateRevision": {"type": "string", "pattern": "^[0-9a-f]{40,64}$"},
+        "envelopeSchema": {"const": "quire.derivation-evidence/v1"},
+        "envelopeSchemaDigest": {"$ref": "#/definitions/digest"}
+      }
+    },
+    "corpus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "revision",
+        "manifestDigest",
+        "formulaSchema",
+        "propositionMapSchema"
+      ],
+      "properties": {
+        "revision": {"const": "tl-syntax-corpus/v1"},
+        "manifestDigest": {"$ref": "#/definitions/digest"},
+        "formulaSchema": {"$ref": "#/definitions/schemaIdentity"},
+        "propositionMapSchema": {"$ref": "#/definitions/schemaIdentity"}
+      }
+    }
+  },
+  "definitions": {
+    "digest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "value"],
+      "properties": {
+        "algorithm": {"const": "sha256"},
+        "value": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "schemaIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "digest"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "version": {"type": "string", "pattern": "^v[1-9][0-9]*$"},
+        "digest": {"$ref": "#/definitions/digest"}
+      }
+    },
+    "toolIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^/"},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    }
+  }
+}

@@ -1,0 +1,18 @@
+Coverage: 44/44 rows backed (100%)
+rust: 14/14/14 bound/tagged/candidates (100% read; 100% authored; forms: rust-trace-attribute, rust-trace-line, rust-comment-id, rust-test-name-id, rust-doc-comment-id)
+spec/evidence/suites.md: 7/7 (100%)
+spec/requirements/FR-001-inclusive-intervals.md: 2/2 (100%)
+spec/requirements/FR-002-validated-formula.md: 3/3 (100%)
+spec/requirements/FR-003-identities-and-profiles.md: 3/3 (100%)
+spec/requirements/FR-004-versioned-serialization.md: 3/3 (100%)
+spec/requirements/FR-005-conformance-corpus.md: 3/3 (100%)
+spec/requirements/NFR-001-no-std-feature-boundary.md: 2/2 (100%)
+spec/requirements/NFR-002-determinism-and-integrity.md: 2/2 (100%)
+spec/requirements/StR-001-embedded-consumers.md: 2/2 (100%)
+spec/requirements/StR-002-temporal-interoperability.md: 2/2 (100%)
+spec/test-matrix.md: 15/15 (100%)
+coverage.backed: over 44 matrix row(s), examined 14, matched 14
+authoring.tag_rate: over 14 evidence symbol(s), examined 14, matched 14
+coverage.property_shaped: over 22 acceptance criterion(s), examined 22, matched 22
+coverage.specific_shaped: over 22 acceptance criterion(s), examined 22, matched 22
+minting.section_hit_rate: over 11 declared minting document(s), examined 11, matched 11

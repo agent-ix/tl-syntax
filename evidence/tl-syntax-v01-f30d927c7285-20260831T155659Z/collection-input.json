@@ -1,0 +1,60 @@
+{
+  "commands": [
+    "make ci",
+    "make spec",
+    "python3 scripts/check_traceability_coverage.py",
+    "RUSTDOCFLAGS=-Dwarnings cargo doc --no-deps --all-features",
+    "cargo tree --no-default-features --edges normal",
+    "git diff --check origin/main...f30d927c72854a4bad183200a63a910ab7785ca1",
+    "python3 scripts/validate_json_schema.py INPUT_SCHEMA collection-input.json",
+    "python3 scripts/validate_json_schema.py MANIFEST_SCHEMA evidence-manifest.json",
+    "python3 scripts/validate_json_schema.py PGM01_SCHEMA evidence-envelope.json",
+    "python3 PGM01_VALIDATOR --fixture evidence-envelope.json",
+    "python3 scripts/build_evidence_envelope.py EVIDENCE_DIR final",
+    "python3 scripts/validate_json_schema.py PGM01_SCHEMA finalized-evidence-envelope.json",
+    "python3 PGM01_VALIDATOR --fixture finalized-evidence-envelope.json",
+    "python3 scripts/finalize_collection.py EVIDENCE_DIR"
+  ],
+  "corpus": {
+    "formulaSchema": {
+      "digest": {
+        "algorithm": "sha256",
+        "value": "1a170fb1a687873f4329499292b76c893ffc5b80bb88352b1168d499e05166d0"
+      },
+      "id": "tl-syntax.formula",
+      "version": "v1"
+    },
+    "manifestDigest": {
+      "algorithm": "sha256",
+      "value": "3749850e9fbd5b69fc6d2df3385f1dd38e6235c056fecfc915f1a56f7c7b618e"
+    },
+    "propositionMapSchema": {
+      "digest": {
+        "algorithm": "sha256",
+        "value": "ed5be5c2747db16f7936a94b6203bb2747a1abb5a0c5521c2efa38beb8dfdc80"
+      },
+      "id": "tl-syntax.proposition-map",
+      "version": "v1"
+    },
+    "revision": "tl-syntax-corpus/v1"
+  },
+  "pgm01": {
+    "candidateRevision": "7dac9d8c19952412b56a0347387666e2ca81e01d",
+    "envelopeSchema": "quire.derivation-evidence/v1",
+    "envelopeSchemaDigest": {
+      "algorithm": "sha256",
+      "value": "0946e235e9e4b0fa79e9b9ec27ae157b303c17de0a9408d3cc04968fb7152256"
+    },
+    "policy": "ix://agent-ix/quire-contract-ir/PGM-01"
+  },
+  "schemaVersion": "tl-syntax.evidence-input/v1",
+  "sourceRevision": "f30d927c72854a4bad183200a63a910ab7785ca1",
+  "sourceState": "clean",
+  "tools": {
+    "cargo": "cargo 1.94.1 (29ea6fb6a 2026-03-24)",
+    "jsonschema": "3.2.0",
+    "python": "Python 3.10.12",
+    "quire": "0.31.0",
+    "rustc": "rustc 1.94.1 (e408947bf 2026-03-25)"
+  }
+}

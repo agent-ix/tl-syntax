@@ -4,11 +4,31 @@ on:
   workflow_dispatch:
 
 jobs:
+  msrv:
+    name: Rust 1.75 Feature Boundary
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install MSRV
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.75.0
+      - name: Cache cargo artifacts
+        uses: Swatinem/rust-cache@v2
+      - name: Check complete target and feature boundary
+        run: |
+          cargo check --lib --no-default-features
+          cargo check --all-targets --all-features
+
   rust:
     name: Rust Checks
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -18,23 +38,40 @@ jobs:
       - name: Cache cargo artifacts
         uses: Swatinem/rust-cache@v2
 
-      - name: Format
-        run: cargo fmt --all -- --check
+      # The Draft 7 lane, for the corpus gate. The shared-assurance lane is a
+      # separate interpreter built by `make assurance-env` from
+      # requirements-assurance.txt, because engineering-assurance declares
+      # jsonschema>=4.23 and the two pins cannot share an environment.
+      - name: Install the Draft 7 corpus lane
+        run: pip install 'jsonschema==3.2.0' 'rfc3339-validator==0.1.4' 'rfc3986-validator==0.1.1'
 
-      - name: Lint
-        run: cargo clippy --all-targets -- -D warnings
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
 
-      - name: Test
-        run: cargo test
+      # The accepted pins from agent-ix/engineering-assurance#8, from the public
+      # registry. quoin 0.22.5 is named incompatible by the compatibility matrix.
+      - name: Install specification tools and modules
+        run: |
+          npm install --global '@agent-ix/quire-cli@0.31.0' '@agent-ix/quoin@0.23.1' 'ix-flow@0.0.4'
+          quoin module ensure-defaults
 
-      - name: Unsafe audit
-        run: bash scripts/check_unsafe_comments.sh
+      - name: Install cargo-deny
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny
+
+      - name: Complete local gate
+        run: make ci
 
   licenses:
     name: License Check
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
       - name: Cache cargo artifacts
@@ -43,5 +80,5 @@ jobs:
         uses: taiki-e/install-action@v2
         with:
           tool: cargo-deny
-      - name: cargo deny check licenses
-        run: cargo deny check licenses
+      - name: cargo deny policy
+        run: cargo deny check licenses sources

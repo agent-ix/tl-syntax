@@ -1,6 +1,10 @@
 /target
+.venv-assurance/
+proptest-regressions/
 Cargo.lock.bak
 *.swp
 .DS_Store
 .idea/
 .vscode/
+__pycache__/
+*.pyc
