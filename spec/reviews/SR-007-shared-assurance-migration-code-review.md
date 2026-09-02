@@ -56,7 +56,7 @@ remainder are dispositioned in SR-009.
 | compatibility census | 15/15 cases, 23 retained envelopes, 1232 evidence files read, 0 bytes moved |
 | compatibility mutation probes | 5/5 detected |
 | assurance chain | 13 scenarios, 6 controls, 6 adapter probes, all matched |
-| `git diff cb7bedb -- evidence/ schemas/ corpus/ src/` | empty |
+| `git diff cb7bedb -- evidence/ corpus/ src/ schemas/tl-syntax-evidence-*.json` | empty. `schemas/` as a whole is not empty: `schemas/README.md` is added by this change |
 | hosted CI | not dispatched |
 
 ## Domain behaviour inherited from PR #6, re-checked

@@ -171,7 +171,7 @@
           "obligation_ids": ["FR-006-AC-4"],
           "evidence_kind": "Static",
           "command": {
-            "argv": ["python3", "scripts/legacy_evidence_view.py", "--json"],
+            "argv": [".venv-assurance/bin/python", "scripts/legacy_evidence_view.py", "--json"],
             "working_directory": "."
           },
           "tool_identity": "tl-syntax/legacy_evidence_view",
@@ -179,11 +179,11 @@
         },
         {
           "proof_id": "PROOF-msrv",
-          "statement": "The declared MSRV builds and tests every target and feature of this crate at this candidate revision.",
+          "statement": "The declared MSRV compiles every target and feature of this crate at this candidate revision, against the locked dependency graph, and reports it in cargo's own JSON message stream.",
           "obligation_ids": ["FR-006-AC-2"],
           "evidence_kind": "Static",
           "command": {
-            "argv": ["rustup", "run", "1.75.0", "cargo", "test", "--all-features"],
+            "argv": ["rustup", "run", "1.75.0", "cargo", "check", "--locked", "--all-targets", "--all-features", "--message-format=json"],
             "working_directory": "."
           },
           "tool_identity": "cargo",

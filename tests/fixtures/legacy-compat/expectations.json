@@ -120,7 +120,8 @@
       "expected_outcome": "unreadable",
       "requires_states": [],
       "expected_reason_contains": "/checks/0/status is unknown",
-      "why": "PGM-01 v1 has no not-computed status. The mapping refuses the record rather than inventing a translation for a state the schema never had, and that refusal is the expected result, not a defect."
+      "why": "PGM-01 v1 has no not-computed status. The mapping refuses the record rather than inventing a translation for a state the schema never had, and that refusal is the expected result, not a defect.",
+      "expected_record_id": "pgm-01-abcdef0"
     },
     {
       "id": "derived-unsupported-schema",
@@ -136,7 +137,9 @@
       "expected_outcome": "incompatible",
       "requires_states": [],
       "expected_reason_contains": "unknown PGM-01 schema version",
-      "why": "A future schema version is refused rather than read with the nearest mapping it happens to resemble. This is the same refusal every retained envelope in this repository receives, shown here against a record that is otherwise well formed so the schema is the only variable."
+      "why": "A future schema version is refused rather than read with the nearest mapping it happens to resemble. This is the same refusal every retained envelope in this repository receives, shown here against a record that is otherwise well formed so the schema is the only variable.",
+      "expected_record_id": "pgm-01-abcdef0",
+      "expected_schema_version": "quire.pgm01-evidence/v3"
     },
     {
       "id": "derived-malformed-collector",
@@ -152,7 +155,8 @@
       "expected_outcome": "unreadable",
       "requires_states": [],
       "expected_reason_contains": "/collector must be an object",
-      "why": "Structurally valid JSON whose legacy field has the wrong type. The record parses and is still refused, which is the difference between malformed JSON and a malformed record."
+      "why": "Structurally valid JSON whose legacy field has the wrong type. The record parses and is still refused, which is the difference between malformed JSON and a malformed record.",
+      "expected_record_id": "pgm-01-abcdef0"
     },
     {
       "id": "derived-unreadable-truncated",
@@ -166,7 +170,9 @@
       "expected_outcome": "unreadable",
       "requires_states": [],
       "expected_reason_contains": "invalid JSON",
-      "why": "Bytes that stop mid-record. An unreadable record is its own state; it is neither an empty record nor a failing one."
+      "why": "Bytes that stop mid-record. An unreadable record is its own state; it is neither an empty record nor a failing one.",
+      "expected_record_id": "unreadable-source",
+      "expected_schema_version": "unknown"
     },
     {
       "id": "derived-tampered",
@@ -183,7 +189,9 @@
       "expected_outcome": "incompatible",
       "requires_states": [],
       "expected_reason_contains": "tampered source digest differs from expected identity",
-      "why": "The classic tamper: a skipped check edited to read as a pass, presented under the digest of the record it was made from. Binding the expected digest is what turns it from a readable record into a refused one, and no field of the altered source is interpreted."
+      "why": "The classic tamper: a skipped check edited to read as a pass, presented under the digest of the record it was made from. Binding the expected digest is what turns it from a readable record into a refused one, and no field of the altered source is interpreted.",
+      "expected_record_id": "tampered-source",
+      "expected_schema_version": "unknown"
     },
     {
       "id": "derived-stale-disposition",
@@ -210,7 +218,9 @@
       "expected_outcome": "incompatible",
       "requires_states": [],
       "expected_reason_contains": "unknown PGM-01 schema version",
-      "why": "A real retained envelope of this repository, read exactly as it sits on disk. It is quire.derivation-evidence/v1, which the pinned mapping does not cover, so it is refused. This is the honest legacy-compatibility result for tl-syntax and it is reported rather than converted."
+      "why": "A real retained envelope of this repository, read exactly as it sits on disk. It is quire.derivation-evidence/v1, which the pinned mapping does not cover, so it is refused. This is the honest legacy-compatibility result for tl-syntax and it is reported rather than converted.",
+      "expected_record_id": "tl-syntax-v01-4b7d3318324c-20260901T015713Z",
+      "expected_schema_version": "quire.derivation-evidence/v1"
     },
     {
       "id": "retained-envelope-bound-to-its-own-identity",
@@ -221,7 +231,9 @@
       "expected_outcome": "incompatible",
       "requires_states": [],
       "expected_reason_contains": "unknown PGM-01 schema version",
-      "why": "The same bytes, presented under their own true digest. The integrity binding accepts them and the refusal is still about the schema. This is what proves the previous case is a schema answer and not an integrity answer."
+      "why": "The same bytes, presented under their own true digest. The integrity binding accepts them and the refusal is still about the schema. This is what proves the previous case is a schema answer and not an integrity answer.",
+      "expected_record_id": "tl-syntax-v01-4b7d3318324c-20260901T015713Z",
+      "expected_schema_version": "quire.derivation-evidence/v1"
     },
     {
       "id": "retained-envelope-bound-to-a-foreign-identity",
@@ -232,7 +244,10 @@
       "expected_outcome": "incompatible",
       "requires_states": [],
       "expected_reason_contains": "tampered source digest differs from expected identity",
-      "why": "The same bytes again, presented under an identity that is not theirs. The refusal reason changes from schema to tamper. Two different refusals with two different reasons is the evidence that these states are not collapsed into one."
+      "why": "The same bytes again, presented under an identity that is not theirs. The refusal reason changes from schema to tamper. Two different refusals with two different reasons is the evidence that these states are not collapsed into one.",
+      "expected_record_id": "tampered-source",
+      "expected_schema_version": "unknown"
     }
-  ]
+  ],
+  "discrimination": "Where the mapping distinguishes a case by a structured field it sets, that field is what the gate asserts: `source_record_id` is `tampered-source` for a digest mismatch and `unreadable-source` for undecodable bytes, and `source_schema_version` carries the declared version. Two cases remain separable only by the wording of an upstream reason -- a malformed field type and an unknown status both return `unreadable` under the real record id -- and that is the mapping's only discriminator for them, stated here rather than papered over."
 }

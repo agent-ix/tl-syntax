@@ -54,6 +54,13 @@ enum Rejection {
     RootOutOfRange,
     DocumentNodeLimitExceeded,
     TooManyNodes,
+    /// A `FormulaError` variant this runner has never been taught to name.
+    ///
+    /// `FormulaError` is `#[non_exhaustive]`, so a variant added upstream lands
+    /// here. It has its own identifier, which appears in no corpus manifest, so
+    /// a fixture that starts failing this way reports an unknown reason instead
+    /// of silently satisfying a reason it was never checked against.
+    UnknownFormulaError,
 }
 
 impl Rejection {
@@ -66,6 +73,7 @@ impl Rejection {
             Self::RootOutOfRange => "root_out_of_range",
             Self::DocumentNodeLimitExceeded => "document_node_limit_exceeded",
             Self::TooManyNodes => "too_many_nodes",
+            Self::UnknownFormulaError => "unknown_formula_error",
         }
     }
 
@@ -75,10 +83,10 @@ impl Rejection {
             FormulaError::RootOutOfRange { .. } => Self::RootOutOfRange,
             FormulaError::DocumentNodeLimitExceeded { .. } => Self::DocumentNodeLimitExceeded,
             FormulaError::TooManyNodes { .. } => Self::TooManyNodes,
-            // FormulaError is #[non_exhaustive]: a variant added upstream must
-            // land here as an explicit unknown rather than be folded into one of
+            // FormulaError is #[non_exhaustive]: a variant added upstream lands
+            // here as an explicit unknown rather than being folded into one of
             // the classes above, which would silently widen a declared reason.
-            _ => Self::NodeDecodeRejected,
+            _ => Self::UnknownFormulaError,
         }
     }
 }

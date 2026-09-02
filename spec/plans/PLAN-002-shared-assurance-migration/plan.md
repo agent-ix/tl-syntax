@@ -78,7 +78,7 @@ accepted shared release pins (engineering-assurance#8, #10)
 | `scripts/rust_test_census.py` | Nothing. It had no caller at the base revision |
 | `scripts/check_failure_propagation.py`, `test_failure_propagation.py`, `test_shell_gates.py`, `run_policy_tests.py` | Nothing. Make is not a trust root, so a gate policing Make's own execution controls has no object |
 | `scripts/validate_json_schema.py`, `test_json_schema_gate.py` | Quoin's packaged FR-063/FR-064/FR-065 schemas, applied by Quoin |
-| `tests/evidence_contract.rs` | `tests/no_local_evidence_framework.rs`, which asserts the machinery is gone rather than asserting it is wired up |
+| `tests/evidence_contract.rs` | `tests/shared_assurance.rs`, which asserts the machinery is gone rather than asserting it is wired up |
 | `evidence/ANCHORS` as a live integrity boundary | Quoin's retention. The file itself is retained, unchanged, as a historical record |
 
 ### DELETE — after the dual run, in its own commit

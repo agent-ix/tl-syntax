@@ -31,6 +31,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -55,8 +56,24 @@ INPUTS = {
     "PROOF-feature-boundary": ("feature-boundary.json", "application/json"),
     "PROOF-quire-static-export": ("quire-static-export.json", "application/json"),
     "PROOF-legacy-compatibility": ("legacy-compatibility.json", "application/json"),
-    "PROOF-msrv": ("msrv.txt", "text/plain"),
+    "PROOF-msrv": ("msrv.jsonl", "application/x-ndjson"),
 }
+
+# The outcome vocabulary a producer's rows may use, and the attestation result
+# each maps to. Every value is listed; an unlisted one is refused.
+ROW_RESULTS = {
+    "pass": "passed",
+    "fail": "failed",
+    "malformed": "failed",
+    "unavailable": "unavailable",
+    "not-computed": "not_computed",
+    "vacuous": "not_computed",
+}
+
+# Precedence when a stream carries more than one outcome. A single failure
+# outranks any number of passes, and an unavailable outranks a not-computed,
+# because the strongest thing observed is what the run has to be reported as.
+RESULT_PRECEDENCE = ("failed", "unavailable", "not_computed", "passed")
 
 
 class ChainError(RuntimeError):
@@ -76,27 +93,52 @@ def quoin(*arguments: str, stdin: str | None = None) -> subprocess.CompletedProc
     )
 
 
-def tool_version(argv: list[str]) -> str:
+def tool_version(argv: list[str]) -> str | None:
+    """Observe a tool's version, or report that it could not be observed.
+
+    `None` is the answer when the probe failed, and it is recorded as `null`
+    rather than replaced with a plausible-looking default. A fabricated version
+    in a sealed attestation's environment is worse than an absent one, because a
+    reader cannot tell it apart from a real observation.
+    """
     try:
         result = subprocess.run(argv, capture_output=True, text=True, check=False)
     except OSError:
-        return "0.0.0"
-    return result.stdout.strip() or "0.0.0"
+        return None
+    if result.returncode != 0:
+        return None
+    return result.stdout.strip() or None
+
+
+SEMVER = re.compile(r"\b(\d+\.\d+\.\d+)\b")
+
+
+def semantic_version(text: str | None) -> str | None:
+    """Extract the version the attestation schema's `immutable_version` accepts."""
+    if text is None:
+        return None
+    found = SEMVER.search(text)
+    return found.group(1) if found else None
 
 
 def observe_environment() -> dict[str, Any]:
-    quire_version = "unknown"
-    raw = subprocess.run(
-        ["quire", "provenance"], capture_output=True, text=True, check=False
-    )
-    if raw.returncode == 0:
+    quire_version: str | None = None
+    try:
+        raw = subprocess.run(
+            ["quire", "provenance"], capture_output=True, text=True, check=False
+        )
+    except OSError:
+        # An absent tool is an unobserved tool, recorded as null. It is not a
+        # crash, and it is certainly not a version.
+        raw = None
+    if raw is not None and raw.returncode == 0:
         try:
             provenance = json.loads(raw.stdout)
             quire_version = (
                 f"{provenance['cli']['version']} engine {provenance['engine']['version']}"
             )
         except (json.JSONDecodeError, KeyError, TypeError):
-            quire_version = "unreadable"
+            quire_version = None
     return {
         "quoin": tool_version(["quoin", "--version"]),
         "quire": quire_version,
@@ -170,12 +212,50 @@ def adapt_conformance(raw: str) -> dict[str, Any]:
 class Chain:
     """Seal, retain and verify, entirely through the pinned Quoin CLI."""
 
+    # The crate's own version, for the tools this repository ships. Read from
+    # Cargo.toml rather than written twice.
+    @staticmethod
+    def crate_version() -> str:
+        for line in (ROOT / "Cargo.toml").read_text(encoding="utf-8").splitlines():
+            if line.startswith("version = "):
+                return line.split('"')[1]
+        raise ChainError("Cargo.toml declares no package version")
+
+    def observe_tool_versions(self) -> dict[str, str]:
+        """One observed version per declared tool identity.
+
+        A tool whose version cannot be observed raises. The alternative is a
+        sealed attestation naming a version nobody measured, and an attestation
+        is only worth its weakest field.
+        """
+        crate = self.crate_version()
+        probes = {
+            "cargo": lambda: semantic_version(tool_version(["cargo", "--version"])),
+            "quire": lambda: semantic_version(
+                (self.environment.get("quire") or "").split(" ")[0] or None
+            ),
+        }
+        versions: dict[str, str] = {}
+        for proof in self.declaration["record"]["definition"]["proof_obligations"]:
+            identity = proof["tool_identity"]
+            if identity in versions:
+                continue
+            observed = probes[identity]() if identity in probes else crate
+            if observed is None:
+                raise ChainError(
+                    f"the version of {identity} could not be observed; an attestation "
+                    "will not be sealed naming a version nobody measured"
+                )
+            versions[identity] = observed
+        return versions
+
     def __init__(self, candidate_revision: str, store: Path) -> None:
         self.revision = candidate_revision
         self.store = store
         self.environment = observe_environment()
         self.declaration = json.loads(DECLARATION.read_text(encoding="utf-8"))
         self.observed_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        self.tool_versions = self.observe_tool_versions()
 
     # -- record ------------------------------------------------------------
 
@@ -259,7 +339,7 @@ class Chain:
             "command": proof["command"],
             "tool": {
                 "identity": proof["tool_identity"],
-                "version": "0.1.0",
+                "version": self.tool_versions[proof["tool_identity"]],
                 "configuration_digest": proof["configuration_digest"],
             },
             "environment": self.environment,
@@ -355,6 +435,82 @@ def require_inputs() -> dict[str, Path]:
     return paths
 
 
+def _worst(results: list[str]) -> str:
+    for candidate in RESULT_PRECEDENCE:
+        if candidate in results:
+            return candidate
+    raise ChainError("a producer result stream carried no outcome at all")
+
+
+def _rows_result(rows: list[dict[str, Any]], where: str) -> str:
+    if not rows:
+        raise ChainError(
+            f"{where} carries no rows. A producer that reported nothing is vacuous, "
+            "and vacuous is not passed."
+        )
+    results = []
+    for index, row in enumerate(rows):
+        outcome = row.get("outcome")
+        if outcome not in ROW_RESULTS:
+            raise ChainError(f"{where} row {index} declares outcome {outcome!r}, which is not named")
+        results.append(ROW_RESULTS[outcome])
+    return _worst(results)
+
+
+def derive_result(proof_id: str, path: Path) -> str:
+    """Read the producer's own structured verdict out of the bytes it wrote.
+
+    This is the difference between an attestation that states what happened and
+    one that states what the caller hoped. Nothing here parses a transcript for
+    words: every producer this repository owns emits a declared structured
+    result, and `cargo` emits its own JSON message stream, so the verdict is read
+    from a field in every case.
+
+    A producer whose output cannot be read at all raises rather than defaulting.
+    An attestation that says `passed` because its input was unreadable is the
+    single worst failure this file could have.
+    """
+    raw = path.read_text(encoding="utf-8")
+    if proof_id == "PROOF-corpus-conformance":
+        rows = [json.loads(line) for line in raw.splitlines() if line.strip()]
+        return _rows_result(rows, path.name)
+    if proof_id in ("PROOF-corpus-oracle", "PROOF-feature-boundary"):
+        return _rows_result(json.loads(raw)["entries"], path.name)
+    if proof_id == "PROOF-legacy-compatibility":
+        census = json.loads(raw)
+        return "passed" if census["matched"] else "failed"
+    if proof_id == "PROOF-quire-static-export":
+        export = json.loads(raw)
+        # Quire's export is a static fact set, not a run, so it has no outcome
+        # field. What it can be held to is that it actually contains the facts
+        # the impact snapshot claims: an empty document is `not_computed`, which
+        # is a different answer from a clean export and must not read as one.
+        if not isinstance(export, dict) or not export:
+            return "not_computed"
+        populated = any(
+            isinstance(export.get(key), (list, dict)) and export.get(key)
+            for key in export
+        )
+        return "passed" if populated else "not_computed"
+    if proof_id == "PROOF-msrv":
+        # `cargo --message-format=json` emits one JSON object per line and ends
+        # with `build-finished`. The verdict is that object's `success` field.
+        messages = [json.loads(line) for line in raw.splitlines() if line.strip()]
+        finished = [item for item in messages if item.get("reason") == "build-finished"]
+        if not finished:
+            # The build did not report finishing. That is not a failure and it is
+            # certainly not a pass; it is a run whose result was not computed.
+            return "not_computed"
+        if any(
+            item.get("reason") == "compiler-message"
+            and item.get("message", {}).get("level") == "error"
+            for item in messages
+        ):
+            return "failed"
+        return "passed" if finished[-1].get("success") is True else "failed"
+    raise ChainError(f"no result rule is declared for {proof_id}")
+
+
 def derive_failed_stream(raw: str) -> str:
     """One named edit to the real conformance stream: the first pass becomes a fail.
 
@@ -435,7 +591,12 @@ def run_chain(candidate_revision: str, workspace: Path) -> dict[str, Any]:
     scenarios: list[dict[str, Any]] = []
     controls: list[dict[str, Any]] = []
 
-    def scenario(name: str, state: str, matched: bool, detail: Any) -> None:
+    def scenario(name: str, state: str | None, matched: bool, detail: Any) -> None:
+        """Record a scenario. `state` is None when it demonstrates no outcome.
+
+        A scenario that is not about one of the twelve outcomes must say so,
+        rather than borrow a label and inflate the census.
+        """
         scenarios.append(
             {"scenario": name, "state": state, "matched": bool(matched), "detail": detail}
         )
@@ -451,10 +612,18 @@ def run_chain(candidate_revision: str, workspace: Path) -> dict[str, Any]:
         )
 
     # -- 1. the honest path: seal, retain, and get the bytes back unchanged ---
+    #
+    # The attested result is read out of the bytes the producer wrote, never
+    # assumed. A loop that sealed `passed` for everything would report a green
+    # chain over a red repository, which is the failure this whole migration is
+    # supposed to make impossible.
     selections: dict[str, str] = {}
+    observed_results: dict[str, str] = {}
     for proof_id, path in inputs.items():
         media_type = INPUTS[proof_id][1]
-        body = chain.attestation_body(record_digest, proof_id, "passed")
+        observed = derive_result(proof_id, path)
+        observed_results[proof_id] = observed
+        body = chain.attestation_body(record_digest, proof_id, observed)
         sealed = chain.seal_attestation(body, path, media_type)
         taken = chain.intake(sealed, path)
         if taken.returncode != 0:
@@ -479,17 +648,37 @@ def run_chain(candidate_revision: str, workspace: Path) -> dict[str, Any]:
                 {"proof": proof_id},
             )
 
+    # Every producer at this candidate revision reported success, and the
+    # attestations say so because the bytes did, not because the loop assumed it.
+    # If a producer had failed, this scenario is where the chain says so.
+    scenario(
+        "attested-results-are-read-from-producer-output",
+        None,
+        all(result == "passed" for result in observed_results.values()),
+        observed_results,
+    )
+
     # -- 2. the receipt, and re-verifying it ---------------------------------
     status, receipt = chain.receipt(record_digest, selections, decisions)
     verified_status, _ = chain.verify_receipt(receipt)
     # No ix-flow decision exists, so an `incomplete` receipt is the correct
-    # answer and its status of 1 is the correct exit code. A `valid` receipt here
-    # would mean a human decision had been synthesized.
+    # answer, and the reason it gives must be the missing decision specifically.
+    # Asserting only "not valid" would be satisfied by a receipt that was invalid
+    # because every proof failed.
     scenario(
         "receipt-reports-the-absent-human-decision",
         "partial",
-        receipt["outcome"] != "valid" and status == 1,
-        {"outcome": receipt["outcome"], "exit": status},
+        status == 1
+        and receipt["outcome"] == "incomplete"
+        and "decision_missing" in receipt["reasons"]
+        and receipt["checks"]["review"]["outcome"] == "incomplete"
+        and receipt["decision_event"] is None,
+        {
+            "outcome": receipt["outcome"],
+            "exit": status,
+            "reasons": receipt["reasons"],
+            "review": receipt["checks"]["review"],
+        },
     )
     scenario(
         "re-verify-the-sealed-receipt",
@@ -554,7 +743,7 @@ def run_chain(candidate_revision: str, workspace: Path) -> dict[str, Any]:
     passing_row = proof_rows(audited)["PROOF-corpus-conformance"]
     control(
         "an-audited-passing-proof-is-valid-and-reasonless",
-        "attested-failure",
+        "attested-failed",
         passing_row["outcome"] == "valid" and not passing_row["reasons"],
         {"row": passing_row["outcome"], "reasons": passing_row["reasons"]},
     )
@@ -605,7 +794,7 @@ def run_chain(candidate_revision: str, workspace: Path) -> dict[str, Any]:
         if state == "failed":
             control(
                 "passing-proof-is-not-reported-as-failing",
-                "attested-failure",
+                "attested-failed",
                 not set(rows["PROOF-corpus-oracle"]["reasons"]) & set(expected_reason.values()),
                 {"corpus_oracle_reasons": rows["PROOF-corpus-oracle"]["reasons"]},
             )
@@ -615,7 +804,9 @@ def run_chain(candidate_revision: str, workspace: Path) -> dict[str, Any]:
     distinct = len({frozenset(value) for value in observed_reasons.values()}) == 3
     scenario(
         "non-success-states-stay-distinguishable",
-        "unsupported",
+        # Not a state demonstration: this is the assertion that the three states
+        # demonstrated above are not the same answer wearing three names.
+        None,
         distinct,
         {state: sorted(value) for state, value in observed_reasons.items()},
     )
@@ -669,6 +860,19 @@ def run_chain(candidate_revision: str, workspace: Path) -> dict[str, Any]:
         {"declared": sorted(declared_unknowns), "carried": sorted(carried)},
     )
 
+    # Every control must name a scenario that actually ran. A `pairs_with` naming
+    # nothing is a control that pairs with nothing, and a test asserting the
+    # dangling name would be satisfied by the typo rather than by the pairing.
+    names = {item["scenario"] for item in scenarios}
+    dangling = sorted(
+        item["control"] for item in controls if item["pairs_with"] not in names
+    )
+    if dangling:
+        raise ChainError(
+            f"these controls name a scenario that does not exist: {dangling}. "
+            f"Scenarios present: {sorted(names)}"
+        )
+
     return {
         "record_digest": record_digest,
         "candidate_revision": candidate_revision,
@@ -676,6 +880,7 @@ def run_chain(candidate_revision: str, workspace: Path) -> dict[str, Any]:
         "quire_export": str(
             (ASSURANCE_DIR / INPUTS["PROOF-quire-static-export"][0]).relative_to(ROOT)
         ),
+        "attested_results": observed_results,
         "receipt_outcome": receipt["outcome"],
         "audited_receipt_outcome": audited["outcome"],
         "audited_receipt_reasons": audited["reasons"],
@@ -912,9 +1117,16 @@ def main(argv: list[str]) -> int:
         "schemaVersion": "tl-syntax.assurance-chain-report/v1",
         **chain,
         "adapter_probes": probes,
+        # Only a case that ran and matched counts. A scenario that failed did not
+        # demonstrate its state, and one that demonstrates no state says so with
+        # a null rather than borrowing a label.
         "states_demonstrated": sorted(
-            {item["state"] for item in chain["scenarios"]}
-            | {item["state"] for item in probes}
+            {
+                item["state"]
+                for group in (chain["scenarios"], probes)
+                for item in group
+                if item["matched"] and item.get("state") is not None
+            }
         ),
         "matched": all(
             item["matched"]

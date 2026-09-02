@@ -34,6 +34,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any, Callable
@@ -136,6 +137,33 @@ def evidence_census() -> dict[str, str]:
     }
 
 
+def uncommitted_evidence_changes() -> list[str]:
+    """Ask Git whether any retained byte differs from what was committed.
+
+    The before/after census in this file proves only that *this process* did not
+    write, which is a narrower claim than it sounds. Git history and pull-request
+    review are the integrity boundary for retained bytes — that is what
+    CONTRIBUTING.md has always said — so the boundary is consulted here rather
+    than a second local manifest being invented to replace it.
+
+    A tree where Git is unavailable reports that fact instead of an empty list,
+    because "nothing changed" and "nobody looked" must not be the same answer.
+    """
+    try:
+        result = subprocess.run(
+            ["git", "status", "--porcelain", "--", "evidence"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except OSError as error:
+        raise ViewError(f"git could not be run to check retained bytes: {error}") from error
+    if result.returncode != 0:
+        raise ViewError(f"git refused to report on retained bytes: {result.stderr.strip()}")
+    return [line for line in result.stdout.splitlines() if line.strip()]
+
+
 def retained_envelopes() -> list[Path]:
     paths = sorted(EVIDENCE.glob("tl-syntax-v01-*/evidence-envelope.json"))
     if not paths:
@@ -189,6 +217,19 @@ def run_case(
     # which bytes it read can attribute any answer to any record.
     identity_ok = view["source_digest"] == sha256(raw)
     matched = identity_ok and view["outcome"] == case["expected_outcome"]
+    # Where the mapping distinguishes cases by a structured field, that field is
+    # what is asserted. `map_pgm01_bytes` sets `source_record_id` to
+    # `tampered-source` for a digest mismatch and `unreadable-source` for
+    # undecodable bytes, so tampered and unreadable are told apart structurally
+    # rather than by the wording of a reason.
+    if matched and "expected_record_id" in case:
+        matched = view["source_record_id"] == case["expected_record_id"]
+    if matched and "expected_schema_version" in case:
+        matched = view["source_schema_version"] == case["expected_schema_version"]
+    # Two cases remain separable only by the upstream reason text: a malformed
+    # field type and an unknown status both return `unreadable` under the real
+    # record id. That is the mapping's only discriminator for them, and the
+    # limitation is stated rather than papered over.
     if matched and "expected_reason_contains" in case:
         matched = any(case["expected_reason_contains"] in reason for reason in reasons)
     if matched:
@@ -243,6 +284,7 @@ def retained_report(mapper: Callable[..., dict[str, Any]]) -> dict[str, Any]:
 
 
 def census(mapper: Callable[..., dict[str, Any]]) -> dict[str, Any]:
+    uncommitted = uncommitted_evidence_changes()
     before = evidence_census()
     declaration = json.loads(EXPECTATIONS.read_text(encoding="utf-8"))
     cases = [run_case(mapper, case) for case in declaration["cases"]]
@@ -268,7 +310,13 @@ def census(mapper: Callable[..., dict[str, Any]]) -> dict[str, Any]:
             "release. This repository implements no mapping of its own."
         ),
         "evidence_files_read": len(before),
-        "evidence_bytes_moved": moved,
+        # Named for exactly what it measures. This process reads; the array is
+        # what changed between its own before and after census, so an empty array
+        # means this run wrote nothing. It is not, and does not claim to be, a
+        # statement that the retained bytes match what was committed — that is
+        # `uncommitted_evidence_changes` below, which asks Git.
+        "evidence_bytes_moved_during_this_run": moved,
+        "uncommitted_evidence_changes": uncommitted,
         "cases": cases,
         "retained": retained,
         "required_states": list(REQUIRED_STATES),
@@ -282,6 +330,7 @@ def census(mapper: Callable[..., dict[str, Any]]) -> dict[str, Any]:
         "matched": (
             not unmatched
             and not moved
+            and not uncommitted
             and not missing_states
             and not missing_outcomes
             and not misattributed
@@ -339,10 +388,11 @@ def run_mutation_probes(mapper: Callable[..., dict[str, Any]]) -> dict[str, Any]
     }
     results = []
     for name, degraded in probes.items():
-        try:
-            detected = not census(degraded)["matched"]
-        except (ViewError, AssertionError, KeyError, TypeError):
-            detected = True
+        # No exception handling. A probe that crashes has not demonstrated that
+        # the census noticed anything — it has demonstrated that the probe is
+        # broken — and counting a traceback as a detection is how "5/5 detected"
+        # stops meaning anything.
+        detected = not census(degraded)["matched"]
         results.append({"probe": name, "detected": detected})
     detected_count = sum(1 for item in results if item["detected"])
     return {
@@ -385,7 +435,8 @@ def main(argv: list[str]) -> int:
         )
         print(
             f"evidence files read: {report['evidence_files_read']}, "
-            f"bytes moved: {len(report['evidence_bytes_moved'])}"
+            f"bytes moved this run: {len(report['evidence_bytes_moved_during_this_run'])}, "
+            f"uncommitted: {len(report['uncommitted_evidence_changes'])}"
         )
         print(f"states demonstrated: {report['demonstrated_states']}")
     if not report["matched"]:

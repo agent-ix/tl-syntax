@@ -171,20 +171,34 @@ fn the_chain_reaches_quoin_without_quoin_or_quire_executing_a_producer() {
     }
 }
 
-// Trace: TC-022, FR-006-AC-2
-#[test]
-fn the_chain_completes_with_every_producer_removed_from_the_path() {
-    // The strongest available statement of "this driver never runs a producer" is
-    // to take the producers away and watch the driver finish anyway. `cargo` and
-    // `rustup` are replaced with stubs that fail on any invocation; `quire` and
-    // `quoin` are left real, because the driver is supposed to run those.
-    let shims = root().join("target/producer-shims");
-    fs::create_dir_all(&shims).unwrap();
-    for name in ["cargo", "rustup", "rustc"] {
-        let path = shims.join(name);
+/// Write an executable shim for each name that records every invocation.
+///
+/// The log is the point. A shim that is never consulted and a producer that is
+/// never run look identical from the outside, so the shims write down every call
+/// and the test reads the file rather than assuming.
+///
+/// `--version` is answered rather than refused, and deliberately so. Asking a
+/// tool its version is an observation — it is what the compatibility matrix's
+/// own `observe` column does — and it is not the thing this test forbids. What
+/// is forbidden is asking a tool to build, compile, test, or replay anything.
+/// Every such invocation is logged and the log must be empty.
+fn producer_shims(directory: &Path, names: &[&str]) -> PathBuf {
+    fs::create_dir_all(directory).unwrap();
+    let log = directory.join("invocations.log");
+    let _ = fs::remove_file(&log);
+    for name in names {
+        let path = directory.join(name);
         fs::write(
             &path,
-            "#!/bin/sh\necho \"a producer was executed by the assurance driver: $0 $@\" >&2\nexit 97\n",
+            format!(
+                "#!/bin/sh\n\
+                 case \"$1\" in\n\
+                 --version|-V) echo \"{name} 9.9.9 (shim)\"; exit 0 ;;\n\
+                 esac\n\
+                 echo \"$0 $@\" >> {}\n\
+                 exit 97\n",
+                log.display()
+            ),
         )
         .unwrap();
         #[cfg(unix)]
@@ -193,10 +207,13 @@ fn the_chain_completes_with_every_producer_removed_from_the_path() {
             fs::set_permissions(&path, fs::Permissions::from_mode(0o755)).unwrap();
         }
     }
+    log
+}
 
+fn run_chain_with_path(shims: &Path) -> std::process::Output {
     let inherited = std::env::var("PATH").unwrap_or_default();
     let revision = head_revision();
-    let output = Command::new("python3")
+    Command::new("python3")
         .args([
             "scripts/assurance_chain.py",
             "--candidate-revision",
@@ -205,24 +222,49 @@ fn the_chain_completes_with_every_producer_removed_from_the_path() {
         .current_dir(root())
         .env("PATH", format!("{}:{inherited}", shims.display()))
         .output()
-        .expect("failed to run the assurance chain");
+        .expect("failed to run the assurance chain")
+}
+
+// Trace: TC-022, FR-006-AC-2
+#[test]
+fn the_chain_never_executes_a_producer_and_the_probe_can_prove_it() {
+    // Two runs, because one proves nothing.
+    //
+    // Run A replaces every producer — cargo, rustup, rustc — with a stub that
+    // logs and fails. The chain must finish, and the log must be empty: not one
+    // producer was invoked.
+    //
+    // Run B is the control. It stubs `quoin`, which the chain is supposed to run,
+    // and requires the chain to fail and the log to be non-empty. Without it, an
+    // empty log in run A would be equally consistent with PATH never being
+    // consulted at all, which is exactly how this test read before the fix.
+    let producers = root().join("target/producer-shims");
+    let producer_log = producer_shims(&producers, &["cargo", "rustup", "rustc"]);
+    let output = run_chain_with_path(&producers);
+    let logged = fs::read_to_string(&producer_log).unwrap_or_default();
     assert!(
         output.status.success(),
-        "the assurance chain failed once producers were removed from PATH, \
-         which means it was running one:\n{}\n{}",
+        "the assurance chain failed with producers stubbed, which means it ran one:\n{}\n{}",
         String::from_utf8_lossy(&output.stdout),
         String::from_utf8_lossy(&output.stderr)
     );
-    // And the stubs must actually have been reachable, or the test proves nothing.
-    let (code, _, _) = {
-        let probe = Command::new(shims.join("cargo"))
-            .output()
-            .expect("the shim itself is not executable");
-        (probe.status.code().unwrap_or(-1), (), ())
-    };
-    assert_eq!(
-        code, 97,
-        "the producer shim is not the failing stub it claims to be"
+    assert!(
+        logged.trim().is_empty(),
+        "the assurance driver asked a producer to do work, not just to name its version:\n{logged}"
+    );
+
+    let tools = root().join("target/tool-shims");
+    let tool_log = producer_shims(&tools, &["quoin"]);
+    let control = run_chain_with_path(&tools);
+    let tool_logged = fs::read_to_string(&tool_log).unwrap_or_default();
+    assert!(
+        !tool_logged.trim().is_empty(),
+        "stubbing quoin produced no invocation, so PATH is not being consulted by \
+         the subprocess and the run above proves nothing"
+    );
+    assert!(
+        !control.status.success(),
+        "the chain succeeded with quoin stubbed out, so it is not actually using it"
     );
 }
 
@@ -249,13 +291,31 @@ fn the_sealed_records_impact_snapshot_is_the_quire_export() {
         report["impact_snapshot_digest"], digest,
         "the sealed record's impact snapshot does not name the Quire export it claims"
     );
-    assert!(!bytes.is_empty(), "the Quire export is empty");
-
-    // The export is Quire's, not this repository's restatement of it.
-    let export_value: Value = serde_json::from_slice(&bytes).expect("the Quire export is JSON");
+    // An empty object has a digest too. The snapshot is only worth its content,
+    // so the export is required to actually carry the coverage facts the record
+    // claims it snapshotted, and to name every requirement this repository has.
+    let export: Value = serde_json::from_slice(&bytes).expect("the Quire export is JSON");
+    let text = String::from_utf8_lossy(&bytes);
+    for requirement in [
+        "FR-001", "FR-002", "FR-003", "FR-004", "FR-005", "FR-006", "NFR-001", "NFR-002",
+    ] {
+        assert!(
+            text.contains(requirement),
+            "the Quire export does not mention {requirement}; it is not a coverage \
+             export of this repository"
+        );
+    }
     assert!(
-        export_value.is_object() || export_value.is_array(),
-        "the Quire export is not a structured document"
+        export.is_object() && !export.as_object().unwrap().is_empty(),
+        "the Quire export is not a populated document"
+    );
+
+    // And the chain must have read it as such rather than as a not-computed run.
+    let report = chain_report();
+    assert_eq!(
+        report["attested_results"]["PROOF-quire-static-export"], "passed",
+        "the Quire export was attested as {}",
+        report["attested_results"]["PROOF-quire-static-export"]
     );
 }
 
@@ -265,10 +325,21 @@ fn retained_evidence_is_read_through_the_shared_mapping_without_moving_a_byte() 
     let python = assurance_python();
     let census = json_gate(&python, &["scripts/legacy_evidence_view.py", "--json"]);
 
-    assert!(census["evidence_bytes_moved"]
+    // Two different claims, kept apart. The first is that this run wrote nothing;
+    // the second is that the retained bytes are the bytes that were committed.
+    // Only Git can answer the second, and it is asked rather than assumed.
+    assert!(census["evidence_bytes_moved_during_this_run"]
         .as_array()
         .unwrap()
         .is_empty());
+    assert!(
+        census["uncommitted_evidence_changes"]
+            .as_array()
+            .unwrap()
+            .is_empty(),
+        "retained evidence differs from what was committed: {}",
+        census["uncommitted_evidence_changes"]
+    );
     assert!(census["misattributed_records"]
         .as_array()
         .unwrap()
@@ -314,6 +385,27 @@ fn retained_evidence_is_read_through_the_shared_mapping_without_moving_a_byte() 
         "a load-bearing compatibility check was removed and the census did not \
          notice\n{stdout}\n{stderr}"
     );
+}
+
+/// Collect every readable source file under `directory`, recursively.
+fn collect_sources(directory: &Path, into: &mut Vec<PathBuf>) {
+    let Ok(entries) = fs::read_dir(directory) else {
+        return;
+    };
+    for entry in entries {
+        let path = entry.expect("directory entry").path();
+        if path.is_dir() {
+            collect_sources(&path, into);
+            continue;
+        }
+        let extension = path.extension().and_then(|value| value.to_str());
+        if matches!(
+            extension,
+            Some("py" | "sh" | "rs" | "txt" | "toml" | "yml" | "md" | "json")
+        ) {
+            into.push(path);
+        }
+    }
 }
 
 fn walk(directory: &Path) -> u64 {
@@ -387,7 +479,7 @@ fn all_twelve_verification_outcomes_are_demonstrated_and_paired_with_controls() 
         "retained-bytes-changed-after-sealing",
         "refuse-an-edited-receipt",
         "stale-candidate-binding",
-        "attested-failure",
+        "attested-failed",
     ] {
         assert!(
             negatives.contains(required),
@@ -457,20 +549,28 @@ fn no_local_evidence_framework_remains_and_the_frozen_schemas_are_referenced_by_
         );
     }
 
-    // Nothing validates against them any more, and a census this small would be
-    // vacuous, so the census size is asserted too.
+    // Nothing validates against them any more. The census walks recursively and
+    // covers the build and workflow files too, because a reintroduced validator
+    // one directory down, or a CI step, would otherwise not be caught. A census
+    // this small would be vacuous, so its size is asserted as well.
+    let mut sources = Vec::new();
+    for directory in ["scripts", "tests", "examples", "src", "spec", ".github"] {
+        collect_sources(&root.join(directory), &mut sources);
+    }
+    for file in ["Makefile", "Cargo.toml", "requirements-assurance.txt"] {
+        let path = root.join(file);
+        if path.is_file() {
+            sources.push(path);
+        }
+    }
     let mut inspected = 0;
-    for directory in ["scripts", "tests", "examples"] {
-        for entry in fs::read_dir(root.join(directory)).unwrap() {
-            let path = entry.unwrap().path();
-            let extension = path.extension().and_then(|value| value.to_str());
-            if !matches!(extension, Some("py" | "sh" | "rs" | "txt")) {
-                continue;
-            }
+    {
+        for path in &sources {
             inspected += 1;
-            let source = fs::read_to_string(&path).unwrap();
+            let source = fs::read_to_string(path).unwrap();
             for (schema, _) in frozen {
                 let name = Path::new(schema).file_name().unwrap().to_str().unwrap();
+                // This file names them in order to pin them; nothing else may.
                 if path.file_name().and_then(|value| value.to_str()) == Some("shared_assurance.rs")
                 {
                     continue;
@@ -484,7 +584,7 @@ fn no_local_evidence_framework_remains_and_the_frozen_schemas_are_referenced_by_
         }
     }
     assert!(
-        inspected > 5,
+        inspected > 30,
         "the source census is unexpectedly small ({inspected}) to make this claim"
     );
 

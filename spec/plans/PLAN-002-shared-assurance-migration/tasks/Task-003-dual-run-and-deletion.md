@@ -28,6 +28,6 @@ Deletion is a separate commit, taken after the dual run, and removes only the
 generic executor, verifier, retention, identity, traceability, and
 failure-propagation machinery. Every byte under `evidence/` is unchanged, and
 both evidence schemas are frozen rather than deleted because retained envelopes
-name them by path and SHA-256. `tests/no_local_evidence_framework.rs` asserts
-both facts, including that no file in the repository references either frozen
+name them by path and SHA-256. `tests/shared_assurance.rs` asserts both
+facts, including that no file in the repository references either frozen
 schema.

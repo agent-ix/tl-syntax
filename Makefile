@@ -29,7 +29,7 @@ ORACLE_RESULT := $(ASSURANCE_DIR)/corpus-oracle.json
 FEATURE_RESULT := $(ASSURANCE_DIR)/feature-boundary.json
 QUIRE_EXPORT := $(ASSURANCE_DIR)/quire-static-export.json
 COMPAT_RESULT := $(ASSURANCE_DIR)/legacy-compatibility.json
-MSRV_RESULT := $(ASSURANCE_DIR)/msrv.txt
+MSRV_RESULT := $(ASSURANCE_DIR)/msrv.jsonl
 REVISION ?= $(shell git rev-parse HEAD)
 
 .PHONY: help
@@ -163,7 +163,7 @@ assurance-inputs: assurance-env
 	$(QUIRE) coverage --scope . --json > $(QUIRE_EXPORT)
 	$(ASSURANCE_PYTHON) scripts/legacy_evidence_view.py --json > $(COMPAT_RESULT)
 	rustup run 1.75.0 $(CARGO) check --locked --all-targets --all-features \
-		> $(MSRV_RESULT) 2>&1
+		--message-format=json > $(MSRV_RESULT)
 
 .PHONY: pins
 pins: assurance-env
