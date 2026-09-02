@@ -17,8 +17,8 @@ It is not a verdict. It runs `quoin` and reports what `quoin` said. Where a
 scenario expects a refusal, the refusal is the expected result and the run is
 green because the tool refused, not because the tool agreed.
 
-It is not a retention store. Nothing is written under `evidence/`, nothing is
-committed, and the Quoin store it uses lives under `target/`, which is ignored.
+It is not a retention store. It writes nothing into this repository, commits
+nothing, and the Quoin store it uses lives under `target/`, which is ignored.
 
 Exit status: 0 when every scenario, control and probe matched, 1 when one did
 not, 2 on a usage or environment error — which is a different fact from a
@@ -55,7 +55,6 @@ INPUTS = {
     "PROOF-corpus-oracle": ("corpus-oracle.json", "application/json"),
     "PROOF-feature-boundary": ("feature-boundary.json", "application/json"),
     "PROOF-quire-static-export": ("quire-static-export.json", "application/json"),
-    "PROOF-legacy-compatibility": ("legacy-compatibility.json", "application/json"),
     "PROOF-msrv": ("msrv.jsonl", "application/x-ndjson"),
 }
 
@@ -476,9 +475,6 @@ def derive_result(proof_id: str, path: Path) -> str:
         return _rows_result(rows, path.name)
     if proof_id in ("PROOF-corpus-oracle", "PROOF-feature-boundary"):
         return _rows_result(json.loads(raw)["entries"], path.name)
-    if proof_id == "PROOF-legacy-compatibility":
-        census = json.loads(raw)
-        return "passed" if census["matched"] else "failed"
     if proof_id == "PROOF-quire-static-export":
         export = json.loads(raw)
         # Quire's export is a static fact set, not a run, so it has no outcome
@@ -1054,6 +1050,38 @@ def adapter_probes(workspace: Path) -> list[dict[str, Any]]:
             "state": "vacuous",
             "matched": empty_refused,
             "detail": {},
+        }
+    )
+
+    # Probe 7: a malformed row is refused as malformed, and the rows around it
+    # are not salvaged into a shorter clean run. The stream is the real one with
+    # one line truncated mid-object, so the difference between this and probe 1
+    # is exactly those bytes.
+    #
+    # Until the retained records were dropped, `malformed` was demonstrated only
+    # by the compatibility census over them, using a PGM-01 fixture whose
+    # collector field had the wrong type. That census is gone. The state is not:
+    # an adapter that reads an undecodable row as anything other than malformed
+    # is how twelve states become eleven, so the demonstrator moves here, to the
+    # surviving intake path, over this repository's own producer stream.
+    lines = [line for line in stream.splitlines() if line.strip()]
+    if len(lines) < 2:
+        raise ChainError("the conformance stream is too short to derive a malformed row from")
+    corrupted = list(lines)
+    corrupted[1] = corrupted[1][: len(corrupted[1]) // 2]
+    malformed_refused = False
+    malformed_detail: dict[str, Any] = {}
+    try:
+        adapt_conformance("\n".join(corrupted))
+    except ChainError as error:
+        malformed_refused = "is malformed" in str(error)
+        malformed_detail = {"reason": str(error)[:160]}
+    results.append(
+        {
+            "probe": "refuses-a-malformed-row",
+            "state": "malformed",
+            "matched": malformed_refused,
+            "detail": {"rows": len(corrupted), **malformed_detail},
         }
     )
 

@@ -1,5 +1,0 @@
-quire validate --scope . 'spec/**/*.md' --strict --summary
-32/32 docs grammar-clean (100%); 0 grammar finding(s): none
-7/25 criteria property-extractable (28%); 0 candidate (metamorphic, needs review)
-python3 scripts/check_traceability_coverage.py
-strict traceability coverage is complete: 52/52

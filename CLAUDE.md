@@ -19,7 +19,7 @@ make spec             # validate the specification with Quire
 make msrv             # test every target and feature at Rust 1.75
 make assurance-env    # build the pinned shared-assurance interpreter
 make assurance-inputs # run the producers and write their structured results
-make assurance        # pins + compatibility view + the Quoin chain
+make assurance        # pins + the Quoin chain
 make ci               # complete local gate set (hosted CI is manual-only)
 ```
 
@@ -41,21 +41,23 @@ Two Python lanes, deliberately:
 Both are right for their own job and neither may be bent to fit the other, so
 they get one environment each.
 
-`evidence/` holds 23 immutable retained records from the pre-migration collector.
-They are read only through
-`engineering_assurance.verification_semantics.map_pgm01_bytes` and are never
-written. `evidence/README.md` describes the collector that produced them; it is
-retained unchanged as part of the record and does not describe how this
-repository works today. The gate proves the read-only claim by digesting the
-whole tree before and after every run.
+This repository retains no evidence. The 23 `quire.derivation-evidence/v1`
+records its pre-migration collector wrote, the two schemas frozen because those
+records named them by digest, and the read-only compatibility view over them
+were all deleted under
+[issue #12](https://github.com/agent-ix/tl-syntax/issues/12), on the
+preservation constraint `agent-ix/engineering-assurance#7` released for the
+pre-stable phase. Deleted, not rewritten — no claim that historical evidence
+still verifies survives them. The constraint re-applies at the move toward
+stable releases.
 
-`schemas/` holds two frozen schemas. Nothing validates against them; they exist
-because retained envelopes name them by digest. See
-[`schemas/README.md`](./schemas/README.md).
-
-The Makefile is orchestration and is not a trust root. Quoin binds its retained
-inputs by digest, so a Makefile that misreports what it ran cannot make a sealed
-attestation say otherwise.
+The Makefile is orchestration and is not a trust root. For the targets that feed
+the assurance chain, Quoin binds its retained inputs by digest, so a Makefile
+that misreports what it ran yields an absent or empty input rather than a pass.
+For the targets that feed nothing — `fmt-check`, `lint`, `deny`, `audit-unsafe`
+and `rustdoc` among them — there is no record to contradict and no guard; that
+gap is recorded, not closed, in
+[issue #11](https://github.com/agent-ix/tl-syntax/issues/11).
 
 ## Safety scaffolding
 
@@ -78,11 +80,8 @@ src/syntax.rs                  # intervals, spans, nodes, profiles, borrowed val
 examples/corpus_conformance.rs # the domain conformance runner over the shared corpus
 tests/integration.rs           # end-to-end domain tests
 tests/shared_assurance.rs      # FR-006 traced tests over the shared intake path
-tests/fixtures/legacy-compat/  # one-named-edit fixtures for the compatibility view
 corpus/                        # pinned formula schemas, fixtures, traces, and oracles
 assurance/                     # the change declaration and the adopted release pins
-evidence/                      # immutable retained records; read-only, never written
-schemas/                       # frozen evidence schemas; referenced by nothing
 spec/                          # requirements, plans, reviews, and the test matrix
 scripts/                       # domain gates and the shared-assurance driver
 ```

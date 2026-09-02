@@ -24,7 +24,13 @@ restricted targets to adopt host-only facilities.
 | ID | Criteria | Validation |
 |---|---|---|
 | StR-001-VC-1 | The crate compiles with default features for a no-std library target. | Test (TC-019) |
-| StR-001-VC-2 | Borrowed validated formulas require no owned collection. | Inspection (evidence/reviews/2026-08-31-current-inspections.md) |
+| StR-001-VC-2 | Borrowed validated formulas require no owned collection. | Inspection |
+
+`StR-001-VC-2` was discharged by an agent-produced inspection record retained under
+`evidence/`. That record was deleted under `agent-ix/tl-syntax#12`, on the
+preservation constraint `agent-ix/engineering-assurance#7` released for the
+pre-stable phase, and the discharge went with it. The criterion is verified by
+inspection at review time; no retained inspection artifact is claimed for it.
 
 ## Stakeholders
 

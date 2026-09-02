@@ -26,7 +26,13 @@ its expected result was produced.
 | ID | Criteria | Validation |
 |---|---|---|
 | StR-002-VC-1 | A serialized formula names a supported schema and semantic profile. | Test (TC-008) |
-| StR-002-VC-2 | The corpus manifest names a stable revision and fixture identities. | Inspection (evidence/reviews/2026-08-31-current-inspections.md) |
+| StR-002-VC-2 | The corpus manifest names a stable revision and fixture identities. | Inspection |
+
+`StR-002-VC-2` was discharged by an agent-produced inspection record retained under
+`evidence/`. That record was deleted under `agent-ix/tl-syntax#12`, on the
+preservation constraint `agent-ix/engineering-assurance#7` released for the
+pre-stable phase, and the discharge went with it. The criterion is verified by
+inspection at review time; no retained inspection artifact is claimed for it.
 
 ## Stakeholders
 

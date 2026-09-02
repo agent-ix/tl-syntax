@@ -20,14 +20,15 @@ on every supported platform.
 
 The requirement covers all public syntax values and checked-in JSON artifacts.
 
-Retained evidence is no longer in scope for this requirement. The bytes under
-`evidence/` remain immutable and are read through the shared compatibility
-mapping under [FR-006](./FR-006-shared-assurance-intake.md); this repository
-holds no retention, integrity, or qualification authority over them.
+Retained evidence is not in scope for this requirement. This repository retains
+no evidence: the records its deleted collector wrote were themselves deleted
+under `agent-ix/tl-syntax#12`, and retention, integrity, and qualification
+authority belong to Quoin under
+[FR-006](./FR-006-shared-assurance-intake.md).
 
 ## Rationale
 
-Downstream differential testing and retained assurance evidence depend on stable
+Downstream differential testing and the sealed assurance chain depend on stable
 identities and reproducible inputs.
 
 ## Measurement and Evaluation
@@ -60,12 +61,10 @@ control that the released Engineering Assurance, Quire, and Quoin contracts now
 own, and a repository that keeps its own copy is the arrangement
 `agent-ix/engineering-assurance#10` was written to end.
 
-The criterion is not reassigned and **the identifier is not reused**. No retained
-record under `evidence/` cites it — the retained records carry no acceptance
-criterion identifiers at all — so the reason is not that reuse would rewrite a
-sealed claim. The reason is that `SR-005` and `SR-006` adjudicate findings
-against `NFR-002-AC-4` by name, and an identifier that means one thing in a
-closed review and another in the current specification makes both unreadable.
+The criterion is not reassigned and **the identifier is not reused**. The reason
+is that `SR-005` and `SR-006` adjudicate findings against `NFR-002-AC-4` by
+name, and an identifier that means one thing in a closed review and another in
+the current specification makes both unreadable.
 Its successor obligations are [FR-006](./FR-006-shared-assurance-intake.md) AC-1
 through AC-6.
 
