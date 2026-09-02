@@ -18,8 +18,12 @@ on every supported platform.
 
 ## Scope
 
-The requirement covers all public syntax values, checked-in JSON artifacts, and
-retained evidence classifications.
+The requirement covers all public syntax values and checked-in JSON artifacts.
+
+Retained evidence is no longer in scope for this requirement. The bytes under
+`evidence/` remain immutable and are read through the shared compatibility
+mapping under [FR-006](./FR-006-shared-assurance-intake.md); this repository
+holds no retention, integrity, or qualification authority over them.
 
 ## Rationale
 
@@ -32,7 +36,6 @@ identities and reproducible inputs.
 |---|---|---|---|
 | Nondeterministic test failures | 0 | 0 | Test |
 | Unversioned serialized document kinds | 0 | 0 | Inspection |
-| Unqualified executable or uncompiled traced tests | 0 | 0 | Test |
 
 ## Verification
 
@@ -45,11 +48,33 @@ validation outcomes using fixed checked-in inputs.
 |---|---|---|
 | NFR-002-AC-1 | Repeated comparisons over identical values produce one stable order. | Test (TC-005) |
 | NFR-002-AC-2 | Every checked-in serialized document names a v1 schema and supported profile where applicable. | Test (TC-014) |
-| NFR-002-AC-3 | Missing, skipped, failed, or not-yet-sealed checks cannot be classified as conclusive passing evidence. | Test (TC-016) |
-| NFR-002-AC-4 | Host-scoped candidate evidence verifies source-locked launcher and dispatched Rust-toolchain identities; portable local CI binds the compiled non-ignored Rust test census to requirement-tagged tests. Both reject in-file execution controls, behaviorally verify every per-record evidence validator, require an exact census containing at least one active v2-qualified record, propagate non-zero exits, and reject incomplete traceability or successful evidence without source-derived positive output. | Test (TC-018) |
+| NFR-002-AC-3 | Missing, skipped, failed, or not-yet-computed checks cannot be classified as passing evidence. | Test (TC-016) |
+
+### Retired criteria
+
+**NFR-002-AC-4** is retired. It required this repository to verify source-locked
+launcher and toolchain identities, bind a compiled test census, reject in-file
+Make execution controls, behaviourally verify per-record evidence validators, and
+require an active qualified record. Every one of those is a generic assurance
+control that the released Engineering Assurance, Quire, and Quoin contracts now
+own, and a repository that keeps its own copy is the arrangement
+`agent-ix/engineering-assurance#10` was written to end.
+
+The criterion is not reassigned and **the identifier is not reused**. No retained
+record under `evidence/` cites it — the retained records carry no acceptance
+criterion identifiers at all — so the reason is not that reuse would rewrite a
+sealed claim. The reason is that `SR-005` and `SR-006` adjudicate findings
+against `NFR-002-AC-4` by name, and an identifier that means one thing in a
+closed review and another in the current specification makes both unreadable.
+Its successor obligations are [FR-006](./FR-006-shared-assurance-intake.md) AC-1
+through AC-6.
+
+Test case **TC-018** is retired with it, for the same reason and on the same
+terms.
 
 ## Dependencies
 
 Constrains [FR-002](./FR-002-validated-formula.md),
 [FR-004](./FR-004-versioned-serialization.md), and
-[FR-005](./FR-005-conformance-corpus.md).
+[FR-005](./FR-005-conformance-corpus.md). Its retired evidence obligations are
+carried by [FR-006](./FR-006-shared-assurance-intake.md).

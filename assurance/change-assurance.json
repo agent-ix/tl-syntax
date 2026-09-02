@@ -1,0 +1,225 @@
+{
+  "schema_version": "tl-syntax.change-assurance-declaration/v1",
+  "purpose": "What this repository states about the change under issue #9, in the shape Quoin's FR-063 record requires. Quoin owns the record schema, its digest, and its retention; this file is the author's statement that gets sealed into one.",
+  "not_an_envelope": "Quoin's packaged change-assurance-record-v1, proof-attestation-v1, and verification-receipt-v1 schemas are the shapes. This file projects into the record body Quoin requires and derives nothing beyond the digests its own derived_fields names. It is not a local evidence envelope, it retains nothing, and it computes no verdict.",
+  "derived_fields": [
+    "subject.base_revision and impact_snapshot.revision come from the candidate revision the caller names.",
+    "source_connections[].revision is that same candidate revision; source_connections[].digest is read from the bytes at the declared path in `sources`.",
+    "proof_obligations[].configuration_digest is read from the bytes at that proof's declared `configuration` path.",
+    "impact_snapshot.digest is read from the bytes of the Quire static export.",
+    "record.digest is computed and written by quoin at seal time; this file never states it.",
+    "Nothing else is filled in, defaulted, or discovered. A field this file does not state is a validation failure at seal time, which is the behaviour that makes the record a statement rather than a guess."
+  ],
+  "sources": {
+    "FR-006": "spec/requirements/FR-006-shared-assurance-intake.md",
+    "NFR-001": "spec/requirements/NFR-001-no-std-feature-boundary.md",
+    "NFR-002": "spec/requirements/NFR-002-determinism-and-integrity.md",
+    "FR-005": "spec/requirements/FR-005-conformance-corpus.md",
+    "TM-001": "spec/test-matrix.md",
+    "SUR-001": "spec/evidence/suites.md",
+    "corpus-manifest": "corpus/manifest.json",
+    "assurance-pins": "assurance/pins.json"
+  },
+  "record": {
+    "schema_version": 1,
+    "record_type": "change_assurance",
+    "record_id": "tl-syntax/issue-9",
+    "revision": 1,
+    "parent_digest": null,
+    "subject": {
+      "repository": "agent-ix/tl-syntax",
+      "scope": [
+        "src",
+        "corpus",
+        "examples",
+        "schemas",
+        "scripts",
+        "spec",
+        "tests",
+        "assurance",
+        "Makefile"
+      ]
+    },
+    "source_connections": [
+      { "source_id": "FR-006", "kind": "requirement" },
+      { "source_id": "NFR-001", "kind": "requirement" },
+      { "source_id": "NFR-002", "kind": "requirement" },
+      { "source_id": "FR-005", "kind": "requirement" },
+      { "source_id": "TM-001", "kind": "test" },
+      { "source_id": "SUR-001", "kind": "test" },
+      { "source_id": "corpus-manifest", "kind": "architecture" },
+      { "source_id": "assurance-pins", "kind": "other" }
+    ],
+    "impact_snapshot": {
+      "identity": "quire-static-export",
+      "completeness": "complete",
+      "truncated": false,
+      "gaps": []
+    },
+    "definition": {
+      "requirements": [
+        {
+          "id": "FR-006-AC-1",
+          "statement": "The adopted component versions are classified by the packaged Engineering Assurance compatibility matrix, not by a local restatement of it.",
+          "source_ids": ["FR-006", "assurance-pins"]
+        },
+        {
+          "id": "FR-006-AC-2",
+          "statement": "Native corpus, feature-boundary, and serialization results are produced by domain tools in a declared structured format and transcribed by Quoin without Quoin executing the producer.",
+          "source_ids": ["FR-006", "FR-005", "NFR-001"]
+        },
+        {
+          "id": "FR-006-AC-3",
+          "statement": "Static specification, obligation, and coverage facts come from a Quire export, and Quire does not execute a producer.",
+          "source_ids": ["FR-006", "TM-001"]
+        },
+        {
+          "id": "FR-006-AC-4",
+          "statement": "Retained evidence bytes are read through the Engineering Assurance compatibility mapping and are not modified, and the mapping's answer is reported without collapsing it into pass or fail.",
+          "source_ids": ["FR-006", "NFR-002"]
+        },
+        {
+          "id": "FR-006-AC-5",
+          "statement": "Pass, fail, unavailable, unsupported, inconclusive, not-computed, malformed, partial, stale, suspect, vacuous, and tampered remain twelve distinguishable states across the intake path.",
+          "source_ids": ["FR-006", "NFR-002"]
+        },
+        {
+          "id": "FR-006-AC-6",
+          "statement": "No repository-local generic runner, evidence envelope, manifest, identity framework, retention store, audit store, anchor file, or aggregate verdict remains in the execution path.",
+          "source_ids": ["FR-006", "NFR-002"]
+        }
+      ],
+      "preservation_constraints": [
+        {
+          "id": "PRESERVE-legacy-bytes",
+          "statement": "Every byte under evidence/ is unchanged by this migration, including ANCHORS, STATIC.sha256, RETRACTIONS.json, and all 23 retained record directories. The verifier is what was removed; the record is not.",
+          "source_ids": ["NFR-002", "FR-006"]
+        },
+        {
+          "id": "PRESERVE-frozen-schemas",
+          "statement": "schemas/tl-syntax-evidence-input-v1.schema.json and schemas/tl-syntax-evidence-manifest-v1.schema.json are frozen, not deleted: retained envelopes name them by path and SHA-256. Nothing validates against them any more and no script may reference them.",
+          "source_ids": ["NFR-002"]
+        },
+        {
+          "id": "PRESERVE-domain-producer",
+          "statement": "The MLTL AST, inclusive intervals, spans, stable identities, semantic-profile model, wire decoder, node bound, and the shared temporal conformance corpus remain owned and executed by this repository.",
+          "source_ids": ["FR-005", "NFR-001"]
+        },
+        {
+          "id": "PRESERVE-no-std-boundary",
+          "statement": "The published crate gains no runtime dependency on Quire or Quoin, and the default feature graph keeps zero normal dependencies and compiles without std or alloc.",
+          "source_ids": ["NFR-001"]
+        },
+        {
+          "id": "PRESERVE-manual-ci",
+          "statement": "Hosted CI remains workflow_dispatch only and is not dispatched by this change.",
+          "source_ids": ["NFR-002"]
+        }
+      ],
+      "proof_obligations": [
+        {
+          "proof_id": "PROOF-corpus-conformance",
+          "statement": "Every fixture in the shared temporal corpus replays through the real crate at this candidate revision with the manifest's declared validation outcome and declared rejection reason.",
+          "obligation_ids": ["FR-006-AC-2"],
+          "evidence_kind": "Integration",
+          "command": {
+            "argv": ["cargo", "run", "--quiet", "--example", "corpus_conformance", "--features", "serde", "--", "--manifest", "corpus/manifest.json"],
+            "working_directory": "."
+          },
+          "tool_identity": "tl-syntax-corpus-conformance",
+          "configuration": "corpus/manifest.json"
+        },
+        {
+          "proof_id": "PROOF-corpus-oracle",
+          "statement": "The corpus semantic oracle derives every declared horizon and closed-trace outcome from the formula and trace rather than comparing two hand-written copies, and agrees with the crate on every fixture's accept/reject identity.",
+          "obligation_ids": ["FR-006-AC-2"],
+          "evidence_kind": "Analysis",
+          "command": {
+            "argv": ["python3", "scripts/validate_corpus.py", "--json"],
+            "working_directory": "."
+          },
+          "tool_identity": "tl-syntax-corpus-oracle",
+          "configuration": "corpus/manifest.json"
+        },
+        {
+          "proof_id": "PROOF-feature-boundary",
+          "statement": "The crate compiles with no default features, alloc only, serde, and all features, and the default dependency graph is empty.",
+          "obligation_ids": ["FR-006-AC-2"],
+          "evidence_kind": "Static",
+          "command": {
+            "argv": ["python3", "scripts/check_default_dependencies.py", "--json"],
+            "working_directory": "."
+          },
+          "tool_identity": "tl-syntax-feature-boundary",
+          "configuration": "Cargo.toml"
+        },
+        {
+          "proof_id": "PROOF-quire-static-export",
+          "statement": "The authoritative static specification, obligation, and coverage facts for this revision are the Quire export, which executes no producer.",
+          "obligation_ids": ["FR-006-AC-3"],
+          "evidence_kind": "Static",
+          "command": {
+            "argv": ["quire", "coverage", "--scope", ".", "--json"],
+            "working_directory": "."
+          },
+          "tool_identity": "quire",
+          "configuration": "spec/test-matrix.md"
+        },
+        {
+          "proof_id": "PROOF-legacy-compatibility",
+          "statement": "All 23 retained evidence envelopes are read through the pinned Engineering Assurance mapping, their bytes are unchanged, and the mapping's answer for each is reported as it stands.",
+          "obligation_ids": ["FR-006-AC-4"],
+          "evidence_kind": "Static",
+          "command": {
+            "argv": ["python3", "scripts/legacy_evidence_view.py", "--json"],
+            "working_directory": "."
+          },
+          "tool_identity": "tl-syntax/legacy_evidence_view",
+          "configuration": "tests/fixtures/legacy-compat/expectations.json"
+        },
+        {
+          "proof_id": "PROOF-msrv",
+          "statement": "The declared MSRV builds and tests every target and feature of this crate at this candidate revision.",
+          "obligation_ids": ["FR-006-AC-2"],
+          "evidence_kind": "Static",
+          "command": {
+            "argv": ["rustup", "run", "1.75.0", "cargo", "test", "--all-features"],
+            "working_directory": "."
+          },
+          "tool_identity": "cargo",
+          "configuration": "rust-toolchain.toml"
+        }
+      ],
+      "unknowns": [
+        {
+          "id": "UNKNOWN-ea-acceptance-not-in-a-release",
+          "statement": "engineering-assurance v0.2.0 records accepted.state = pending_human_acceptance and ships no human_acceptance_recorded predicate; the human acceptance exists only on main. This repository reports the state the release records and does not gate on it. Filed as agent-ix/engineering-assurance#20.",
+          "disposition": "open",
+          "owner": "agent-ix/engineering-assurance"
+        },
+        {
+          "id": "UNKNOWN-derivation-evidence-not-mapped",
+          "statement": "map_pgm01_bytes at the pinned release covers quire.pgm01-evidence v1 and v2. This repository's 23 retained envelopes are quire.derivation-evidence/v1, so the mapping refuses them as an unknown schema version. That refusal is reported as the compatibility result; no local mapper was written to make it read as a pass. Filed as agent-ix/engineering-assurance#21.",
+          "disposition": "open",
+          "owner": "agent-ix/engineering-assurance"
+        },
+        {
+          "id": "UNKNOWN-human-decision-absent",
+          "statement": "No ix-flow decision event exists for this change. Only the repository owner may create one, and none was synthesized, so the receipt is expected to read incomplete with a missing decision rather than complete.",
+          "disposition": "open",
+          "owner": "@kreneskyp"
+        },
+        {
+          "id": "UNKNOWN-downstream-pin-reachability",
+          "statement": "tl-parse, tl-rewrite, and tl-mltl pin tl-syntax at 740182f13b84, a revision reachable only from this branch. The approved landing form is a true merge commit with the source branch retained, which makes it an ancestor of main. Tracked as agent-ix/tl-syntax#8 and not closed by this change.",
+          "disposition": "deferred",
+          "owner": "@kreneskyp"
+        }
+      ]
+    },
+    "review_workflow": {
+      "run_id": "tl-syntax-issue-9",
+      "decision_event_kind": "change_assurance.review_decided"
+    }
+  }
+}

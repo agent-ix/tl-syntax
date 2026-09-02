@@ -18,6 +18,7 @@ relationships:
 | FR-003 | FR-003-AC-1, FR-003-AC-2, FR-003-AC-3 | TC-006, TC-007, TC-008 | ✅ covered |
 | FR-004 | FR-004-AC-1, FR-004-AC-2, FR-004-AC-3, FR-004-AC-4 | TC-009, TC-010, TC-011, TC-017, TC-020 | ✅ covered |
 | FR-005 | FR-005-AC-1, FR-005-AC-2, FR-005-AC-3 | TC-012, TC-013, TC-014 | ✅ covered |
+| FR-006 | FR-006-AC-1, FR-006-AC-2, FR-006-AC-3, FR-006-AC-4, FR-006-AC-5, FR-006-AC-6 | TC-021, TC-022, TC-023, TC-024, TC-025, TC-026 | ✅ covered |
 
 ## Stakeholder Requirement Coverage
 
@@ -31,7 +32,7 @@ relationships:
 | Non-Functional Req | Verification Method | Evidence/Test Cases | Status |
 |---|---|---|---|
 | NFR-001 | NFR-001-AC-1, NFR-001-AC-2 | TC-015, TC-019 | ✅ covered |
-| NFR-002 | NFR-002-AC-1, NFR-002-AC-2, NFR-002-AC-3, NFR-002-AC-4 | TC-005, TC-014, TC-016, TC-018 | ✅ covered |
+| NFR-002 | NFR-002-AC-1, NFR-002-AC-2, NFR-002-AC-3 | TC-005, TC-014, TC-016 | ✅ covered |
 
 ## Test Case Summary
 
@@ -52,8 +53,13 @@ relationships:
 | TC-013 | Enforce declared fixture validity | Integration | P0 | FR-005-AC-2 | ✅ implemented |
 | TC-014 | Verify checked-in corpus determinism | Integration | P1 | FR-005-AC-3, NFR-002-AC-2 | ✅ implemented |
 | TC-015 | Compile the allocation-free API | Compile | P0 | NFR-001-AC-1, NFR-001-AC-2 | ✅ implemented |
-| TC-016 | Reject false-success evidence classifications | Integration | P0 | NFR-002-AC-3 | ✅ implemented |
+| TC-016 | Keep skipped, unavailable, and not-computed checks out of the passing class | Integration | P0 | NFR-002-AC-3 | ✅ implemented |
 | TC-017 | Round-trip every supported node wire variant and tag | Integration | P0 | FR-004-AC-1 | ✅ implemented |
-| TC-018 | Reject swallowed failures, Make/SHELL execution controls, uncompiled or ignored traced tests, changed tool/parameter identities, disabled per-record validators, zero-active evidence censuses, and incomplete traceability | Integration | P0 | NFR-002-AC-4 | ✅ implemented |
 | TC-019 | Execute the no-std feature matrix and empty-default-dependency gate | Integration | P0 | NFR-001-AC-1, NFR-001-AC-2, StR-001-VC-1 | ✅ implemented |
 | TC-020 | Bound formula node allocation during wire decoding and owned construction | Integration | P0 | FR-004-AC-1, FR-004-AC-4 | ✅ implemented |
+| TC-021 | Classify every shared pin through the packaged compatibility matrix and refuse a mirror registry | Integration | P0 | FR-006-AC-1 | ✅ implemented |
+| TC-022 | Reach Quoin through the declared adapter with neither Quire nor Quoin executing a producer | Integration | P0 | FR-006-AC-2 | ✅ implemented |
+| TC-023 | Bind the sealed record's impact snapshot to the Quire static export | Integration | P0 | FR-006-AC-3 | ✅ implemented |
+| TC-024 | Read every retained evidence byte through the pinned mapping without moving one | Integration | P0 | FR-006-AC-4 | ✅ implemented |
+| TC-025 | Demonstrate all twelve outcomes and pair every negative with an accepted positive control | Integration | P0 | FR-006-AC-5 | ✅ implemented |
+| TC-026 | Prove no generic evidence machinery remains and the frozen schemas are referenced by nothing | Integration | P0 | FR-006-AC-6 | ✅ implemented |

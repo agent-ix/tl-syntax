@@ -38,7 +38,11 @@ jobs:
       - name: Cache cargo artifacts
         uses: Swatinem/rust-cache@v2
 
-      - name: Install evidence tools
+      # The Draft 7 lane, for the corpus gate. The shared-assurance lane is a
+      # separate interpreter built by `make assurance-env` from
+      # requirements-assurance.txt, because engineering-assurance declares
+      # jsonschema>=4.23 and the two pins cannot share an environment.
+      - name: Install the Draft 7 corpus lane
         run: pip install 'jsonschema==3.2.0' 'rfc3339-validator==0.1.4' 'rfc3986-validator==0.1.1'
 
       - name: Install Node.js
@@ -46,9 +50,11 @@ jobs:
         with:
           node-version: '22'
 
+      # The accepted pins from agent-ix/engineering-assurance#8, from the public
+      # registry. quoin 0.22.5 is named incompatible by the compatibility matrix.
       - name: Install specification tools and modules
         run: |
-          npm install --global '@agent-ix/quire-cli@0.31.0' '@agent-ix/quoin@0.22.5'
+          npm install --global '@agent-ix/quire-cli@0.31.0' '@agent-ix/quoin@0.23.1' 'ix-flow@0.0.4'
           quoin module ensure-defaults
 
       - name: Install cargo-deny

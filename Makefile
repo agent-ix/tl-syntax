@@ -1,56 +1,36 @@
 # =============================================================================
 # TL Syntax Makefile
 # =============================================================================
+#
+# Native orchestration. Every target calls the toolchain that owns the job:
+# cargo for the crate, the corpus conformance runner for the shared temporal
+# corpus, quire for static export, quoin for evidence. Nothing here computes a
+# verdict, attests to its own correctness, or retains evidence of its own.
+#
+# This file is not a trust root and no longer tries to be one. The gates that
+# used to police Make's own execution controls went with the collector they were
+# protecting; Quoin's retained inputs are bound by digest, so a Makefile that
+# lies about what it ran cannot make a sealed attestation say otherwise.
 
 CARGO ?= cargo
 PYTHON ?= python3
 QUIRE ?= quire
-SHA256SUM ?= sha256sum
-BASH ?= bash
+QUOIN ?= quoin
 
-ifneq ($(filter ci ci-for-evidence,$(MAKECMDGOALS)),)
-# Parallelism/output flags are harmless; dry-run, touch, eval, and other
-# command-changing MAKEFLAGS are refused because this target is an execution gate.
-tl_ci_unsafe_makeflags := $(filter-out j% -j% l% -l% O% -O% w -w --jobs% --jobserver-auth=% --jobserver-fds=% --load-average% --output-sync% --print-directory --no-print-directory,$(MAKEFLAGS))
-ifneq ($(strip $(tl_ci_unsafe_makeflags)),)
-$(error local CI refuses MAKEFLAGS that alter command execution)
-endif
-ifneq ($(strip $(PYTHONOPTIMIZE)),)
-$(error local CI refuses optimized Python policy execution)
-endif
-ifneq ($(strip $(RUSTUP_TOOLCHAIN)$(RUSTUP_HOME)$(CARGO_HOME)$(RUSTC)$(RUSTDOC)$(RUSTC_WRAPPER)$(RUSTC_WORKSPACE_WRAPPER)$(RUSTFLAGS)$(CARGO_ENCODED_RUSTFLAGS)$(RUSTDOCFLAGS)$(LD_PRELOAD)$(LD_LIBRARY_PATH)$(PYTHONPATH)),)
-$(error local CI refuses ambient compiler, loader, or Python-path overrides)
-endif
-ifneq ($(filter ci-for-evidence,$(MAKECMDGOALS)),)
-tl_ci_qualified_target := $(shell /usr/bin/python3 scripts/tool_identity.py --cargo-target-dir)
-ifneq ($(strip $(CARGO_TARGET_DIR)),)
-ifneq ($(CARGO_TARGET_DIR),$(tl_ci_qualified_target))
-$(error candidate CI refuses an unqualified CARGO_TARGET_DIR)
-endif
-else
-export CARGO_TARGET_DIR := $(tl_ci_qualified_target)
-endif
-endif
-ifneq ($(notdir $(CARGO)),cargo)
-$(error local CI refuses a CARGO override)
-endif
-ifneq ($(notdir $(PYTHON)),python3)
-$(error local CI refuses a PYTHON override)
-endif
-ifneq ($(notdir $(QUIRE)),quire)
-$(error local CI refuses a QUIRE override)
-endif
-ifneq ($(notdir $(SHA256SUM)),sha256sum)
-$(error local CI refuses a SHA256SUM override)
-endif
-ifneq ($(notdir $(BASH)),bash)
-$(error local CI refuses a BASH override)
-endif
-tl_ci_static_status := $(shell /usr/bin/env -u PYTHONOPTIMIZE MAKEFLAGS= /usr/bin/python3 scripts/check_failure_propagation.py --makefile '$(firstword $(MAKEFILE_LIST))' --static-only >/dev/null; echo $$?)
-ifneq ($(tl_ci_static_status),0)
-$(error local CI refuses unsafe Make recipe controls)
-endif
-endif
+# The shared-assurance lane runs in its own interpreter. engineering-assurance
+# declares jsonschema>=4.23 and this repository's Draft 7 corpus lane pins
+# 3.2.0; both are right for their own job, so they get one environment each.
+ASSURANCE_VENV ?= .venv-assurance
+ASSURANCE_PYTHON ?= $(ASSURANCE_VENV)/bin/python
+
+ASSURANCE_DIR := target/assurance
+CONFORMANCE_RESULT := $(ASSURANCE_DIR)/corpus-conformance.jsonl
+ORACLE_RESULT := $(ASSURANCE_DIR)/corpus-oracle.json
+FEATURE_RESULT := $(ASSURANCE_DIR)/feature-boundary.json
+QUIRE_EXPORT := $(ASSURANCE_DIR)/quire-static-export.json
+COMPAT_RESULT := $(ASSURANCE_DIR)/legacy-compatibility.json
+MSRV_RESULT := $(ASSURANCE_DIR)/msrv.txt
+REVISION ?= $(shell git rev-parse HEAD)
 
 .PHONY: help
 help:
@@ -58,22 +38,24 @@ help:
 	@echo "  make fmt              - Format with rustfmt"
 	@echo "  make fmt-check        - Verify formatting (CI gate)"
 	@echo "  make lint             - Clippy with -D warnings"
-	@echo "  make test             - cargo test"
-	@echo "  make check-failure-propagation - prove every mandatory gate propagates failures"
+	@echo "  make test             - cargo test plus the shared-assurance tests"
 	@echo "  make check-features   - check no-default, alloc, serde, and all features"
-	@echo "  make check-default-dependencies - require an empty default dependency graph"
-	@echo "  make check-corpus     - verify retained corpus SHA-256 digests"
-	@echo "  make verify-evidence  - verify every retained evidence SHA-256 manifest"
+	@echo "  make check-corpus     - verify corpus digests, schemas, and derived oracles"
+	@echo "  make conformance      - replay the shared temporal corpus through the crate"
 	@echo "  make spec             - validate the specification with Quire"
-	@echo "  make evidence-tool    - syntax-check the PGM-01 evidence tooling"
 	@echo "  make msrv             - test all targets and features with Rust 1.75"
 	@echo "  make rustdoc          - build warning-free public documentation"
 	@echo "  make build            - Release build"
-	@echo "  make clean            - cargo clean"
+	@echo "  make clean            - cargo clean and drop the assurance environment"
 	@echo "  make deny             - run all declared cargo-deny policy checks"
 	@echo "  make audit-unsafe     - Enforce // SAFETY: comments on unsafe blocks"
-	@echo "  make ci               - All CI gates locally (fmt-check + lint + test + deny + audit-unsafe)"
-	@echo "  make ci-for-evidence  - Host-qualified candidate gates before self-binding"
+	@echo "  make assurance-env    - create the pinned shared-assurance interpreter"
+	@echo "  make assurance-inputs - run the producers and write their structured results"
+	@echo "  make pins             - classify the toolchain through the shared matrix"
+	@echo "  make compat-view      - read retained evidence through the shared mapping"
+	@echo "  make assurance-chain  - seal, retain, and verify through Quoin"
+	@echo "  make assurance        - pins + compat-view + assurance-chain"
+	@echo "  make ci               - All CI gates locally (hosted CI is manual-only)"
 
 # =============================================================================
 # Format / Lint / Test
@@ -81,66 +63,58 @@ help:
 
 .PHONY: fmt
 fmt:
-	cargo fmt --all
+	$(CARGO) fmt --all
 
 .PHONY: fmt-check
 fmt-check:
-	cargo fmt --all -- --check
+	$(CARGO) fmt --all -- --check
 
 .PHONY: lint
 lint:
-	cargo clippy --all-targets --all-features -- -D warnings
+	$(CARGO) clippy --all-targets --all-features -- -D warnings
 
+# The traced tests invoke the assurance gates, so the producers must already have
+# run. They are a prerequisite rather than something a test creates for itself: a
+# test that can produce its own inputs can produce a green run out of nothing.
 .PHONY: test
-test:
-	cargo test --all-features
-
-.PHONY: check-failure-propagation
-check-failure-propagation:
-	/usr/bin/python3 scripts/check_failure_propagation.py
-
-.PHONY: check-tool-identities
-check-tool-identities:
-	/usr/bin/env PATH="$$(/usr/bin/python3 scripts/tool_identity.py --trusted-path)" /usr/bin/python3 scripts/tool_identity.py --verify-live
+test: assurance-inputs
+	$(CARGO) test --all-features
 
 .PHONY: check-features
 check-features:
-	cargo check --lib --no-default-features
-	cargo check --lib --no-default-features --features alloc
-	cargo check --lib --no-default-features --features serde
-	cargo check --lib --all-features
+	$(CARGO) check --lib --no-default-features
+	$(CARGO) check --lib --no-default-features --features alloc
+	$(CARGO) check --lib --no-default-features --features serde
+	$(CARGO) check --lib --all-features
 
 .PHONY: check-default-dependencies
 check-default-dependencies:
-	/usr/bin/python3 scripts/check_default_dependencies.py
+	$(PYTHON) scripts/check_default_dependencies.py
+
+.PHONY: conformance
+conformance:
+	$(CARGO) run --quiet --example corpus_conformance --features serde -- \
+		--manifest corpus/manifest.json
 
 .PHONY: check-corpus
 check-corpus:
-	/usr/bin/sha256sum --check corpus/SHA256SUMS
-	/usr/bin/python3 scripts/validate_corpus.py
-
-.PHONY: verify-evidence
-verify-evidence:
-	/usr/bin/python3 scripts/check_evidence_shell_contract.py
-	/usr/bin/bash scripts/verify_evidence.sh
+	sha256sum --check corpus/SHA256SUMS
+	$(PYTHON) scripts/validate_corpus.py
+	$(PYTHON) scripts/test_corpus_gate.py
 
 .PHONY: spec
 spec:
-	quire validate --scope . 'spec/**/*.md' --strict --summary
-	/usr/bin/python3 scripts/check_traceability_coverage.py
-
-.PHONY: evidence-tool
-evidence-tool:
-	/usr/bin/python3 -m compileall -q scripts
-	/usr/bin/python3 scripts/run_policy_tests.py
+	$(QUIRE) validate --scope . 'spec/**/*.md' --strict --summary
+	$(QUIRE) coverage --scope . --strict
 
 .PHONY: build
 build:
-	cargo build --release
+	$(CARGO) build --release
 
 .PHONY: clean
 clean:
-	cargo clean
+	$(CARGO) clean
+	rm -rf $(ASSURANCE_VENV)
 
 # =============================================================================
 # Supply chain & safety
@@ -148,32 +122,85 @@ clean:
 
 .PHONY: deny
 deny:
-	cargo deny check advisories
-	cargo deny check bans
-	cargo deny check licenses
-	cargo deny check sources
-
-.PHONY: cargo-audit
-cargo-audit:
-	cargo audit
+	$(CARGO) deny check advisories
+	$(CARGO) deny check bans
+	$(CARGO) deny check licenses
+	$(CARGO) deny check sources
 
 .PHONY: audit-unsafe
 audit-unsafe:
-	/usr/bin/bash scripts/check_unsafe_comments.sh
+	bash scripts/check_unsafe_comments.sh
 
 .PHONY: msrv
 msrv:
-	rustup run 1.75.0 cargo test --all-features
+	rustup run 1.75.0 $(CARGO) test --all-features
 
 .PHONY: rustdoc
 rustdoc:
-	RUSTDOCFLAGS=-Dwarnings cargo doc --no-deps --all-features
+	RUSTDOCFLAGS=-Dwarnings $(CARGO) doc --no-deps --all-features
+
+# =============================================================================
+# Shared assurance
+# =============================================================================
+
+$(ASSURANCE_PYTHON):
+	$(PYTHON) -m venv $(ASSURANCE_VENV)
+	$(ASSURANCE_VENV)/bin/pip install --quiet --disable-pip-version-check \
+		-r requirements-assurance.txt
+
+.PHONY: assurance-env
+assurance-env: $(ASSURANCE_PYTHON)
+
+# The only target that runs a producer. Everything downstream consumes these
+# files and refuses to create them.
+.PHONY: assurance-inputs
+assurance-inputs: assurance-env
+	mkdir -p $(ASSURANCE_DIR)
+	$(CARGO) run --quiet --example corpus_conformance --features serde -- \
+		--manifest corpus/manifest.json > $(CONFORMANCE_RESULT)
+	$(PYTHON) scripts/validate_corpus.py --json > $(ORACLE_RESULT)
+	$(PYTHON) scripts/check_default_dependencies.py --json > $(FEATURE_RESULT)
+	$(QUIRE) coverage --scope . --json > $(QUIRE_EXPORT)
+	$(ASSURANCE_PYTHON) scripts/legacy_evidence_view.py --json > $(COMPAT_RESULT)
+	rustup run 1.75.0 $(CARGO) check --locked --all-targets --all-features \
+		> $(MSRV_RESULT) 2>&1
+
+.PHONY: pins
+pins: assurance-env
+	$(ASSURANCE_PYTHON) scripts/check_shared_pins.py
+
+.PHONY: compat-view
+compat-view: assurance-env
+	$(ASSURANCE_PYTHON) scripts/legacy_evidence_view.py
+	$(ASSURANCE_PYTHON) scripts/legacy_evidence_view.py --mutation-probes
+
+.PHONY: assurance-chain
+assurance-chain: assurance-inputs
+	$(PYTHON) scripts/assurance_chain.py --candidate-revision $(REVISION)
+
+.PHONY: assurance
+assurance: pins compat-view assurance-chain
+
+# An operator target, not a CI gate. It writes into this repository's own Quoin
+# evidence store, which is a reviewed change to spec/evidence/ rather than
+# something a gate should do on every run.
+.PHONY: assurance-record
+assurance-record: assurance-inputs
+	$(PYTHON) scripts/assurance_chain.py --adapt $(CONFORMANCE_RESULT) \
+		> $(ASSURANCE_DIR)/entries.json
+	$(QUOIN) evidence record \
+		--repo . \
+		--suite SUITE-001 \
+		--commit $(REVISION) \
+		--tool "tl-syntax-corpus-conformance 0.1.0" \
+		--adapter entries \
+		--kind Integration \
+		--results $(ASSURANCE_DIR)/entries.json
 
 # =============================================================================
 # Composite
 # =============================================================================
 
-.PHONY: ci ci-for-evidence
-ci-for-evidence: check-failure-propagation check-tool-identities fmt-check check-features check-default-dependencies lint test check-corpus deny audit-unsafe evidence-tool spec msrv rustdoc
-
-ci: check-failure-propagation fmt-check check-features check-default-dependencies lint test check-corpus deny audit-unsafe evidence-tool spec msrv rustdoc verify-evidence
+.PHONY: ci
+ci: fmt-check check-features check-default-dependencies lint test check-corpus \
+	conformance deny audit-unsafe spec msrv rustdoc assurance
