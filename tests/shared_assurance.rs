@@ -408,6 +408,38 @@ fn all_twelve_verification_outcomes_are_demonstrated_and_paired_with_controls() 
             "the negative {required} has no positive control"
         );
     }
+
+    // Four of the twelve states — malformed, unsupported, vacuous, and the
+    // not-computed the adapter preserves — now rest on the adapter's own
+    // refusals, where before they rested partly on a census the pinned upstream
+    // mapping classified. An in-repository check with no external oracle has to
+    // be shown capable of failing, so each refusal is switched off in turn and
+    // the check that guards it is required to go red.
+    //
+    // This replaces the `--mutation-probes` gate that ran on every CI run
+    // against the deleted compatibility view. Removing that gate and putting
+    // nothing in its place would have left the twelve-state claim resting on
+    // assertions nobody had seen fail.
+    let (code, stdout, stderr) = run(
+        Path::new("python3"),
+        &["scripts/assurance_chain.py", "--mutation-probes"],
+    );
+    assert_eq!(
+        code, 0,
+        "an adapter refusal was switched off and the check that guards it did \
+         not notice\n{stdout}\n{stderr}"
+    );
+    for probe in [
+        "refuses-a-foreign-protocol",
+        "refuses-an-empty-stream",
+        "refuses-a-malformed-row",
+        "refuses-an-unnamed-outcome",
+    ] {
+        assert!(
+            stdout.contains(probe),
+            "the mutation run did not exercise {probe}\n{stdout}"
+        );
+    }
 }
 
 // Trace: TC-026, FR-006-AC-6
@@ -466,9 +498,22 @@ fn no_local_evidence_framework_remains_and_nothing_still_reads_the_dropped_tree(
         "tl-syntax-evidence-input-v1.schema.json",
         "tl-syntax-evidence-manifest-v1.schema.json",
     ];
+    //
+    // `assurance/` is in scope and has to be: `change-assurance.json` held the
+    // deleted proof obligation and `pins.json` held its digest pins, so it is
+    // the likeliest place for a regression, and both are gate inputs --
+    // `check_shared_pins.py` reads one and `assurance_chain.py` seals the other.
     let records = [root.join("spec/reviews"), root.join("spec/plans")];
     let mut sources = Vec::new();
-    for directory in ["scripts", "tests", "examples", "src", "spec", ".github"] {
+    for directory in [
+        "scripts",
+        "tests",
+        "examples",
+        "src",
+        "spec",
+        "assurance",
+        ".github",
+    ] {
         collect_sources(&root.join(directory), &mut sources);
     }
     for file in [
@@ -476,6 +521,9 @@ fn no_local_evidence_framework_remains_and_nothing_still_reads_the_dropped_tree(
         "Cargo.toml",
         "requirements-assurance.txt",
         "README.md",
+        "CLAUDE.md",
+        "CONTRIBUTING.md",
+        "AGENTS.md",
     ] {
         let path = root.join(file);
         if path.is_file() {
@@ -501,9 +549,13 @@ fn no_local_evidence_framework_remains_and_nothing_still_reads_the_dropped_tree(
             );
         }
     }
+    // The floor tracks the population. Excluding the closed records shrank the
+    // census by about a third, and a floor left where it was would have stopped
+    // being the anti-vacuity guard its comment claims to be.
     assert!(
-        inspected > 30,
-        "the source census is unexpectedly small ({inspected}) to make this claim"
+        inspected >= 38,
+        "the source census is unexpectedly small ({inspected}) to make this \
+         claim; either files left the tree or the census stopped reaching them"
     );
 
     // The Makefile is orchestration, not a trust root, and carries no gate that

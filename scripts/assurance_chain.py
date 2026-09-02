@@ -165,34 +165,50 @@ CONFORMANCE_OUTCOMES = {
 }
 
 
-def adapt_conformance(raw: str) -> dict[str, Any]:
-    """Transcribe the declared domain protocol into Quoin's normalized entries.
+def transcribe(
+    raw: str,
+    *,
+    refuse_undecodable: bool = True,
+    refuse_foreign_protocol: bool = True,
+    refuse_unnamed_outcome: bool = True,
+    refuse_empty: bool = True,
+) -> dict[str, Any]:
+    """The adapter, with each of its four refusals named and switchable.
 
-    This is the whole of the adapter. It reads a protocol it names, maps a state
-    vocabulary it enumerates, and refuses anything else. It runs nothing, judges
-    nothing, and never looks at a process's output stream to decide an outcome.
+    Every keyword defaults to the strict behaviour and `adapt_conformance` is the
+    only caller that uses the defaults. The switches exist so `--mutation-probes`
+    can weaken exactly one refusal at a time and show that the check which is
+    supposed to notice actually does. A weakening expressed as a flag on the real
+    code path is a weakening of the real code path; a second hand-written copy of
+    the adapter would only prove that the copy was weaker.
     """
     entries = []
     lines = [line for line in raw.splitlines() if line.strip()]
-    if not lines:
+    if not lines and refuse_empty:
         raise ChainError("the conformance stream is empty; there is nothing to transcribe")
     for number, line in enumerate(lines, start=1):
         try:
             row = json.loads(line)
         except json.JSONDecodeError as error:
-            raise ChainError(f"conformance stream line {number} is malformed: {error}") from error
+            if refuse_undecodable:
+                raise ChainError(
+                    f"conformance stream line {number} is malformed: {error}"
+                ) from error
+            continue
         protocol = row.get("protocol")
-        if protocol != CONFORMANCE_PROTOCOL:
+        if protocol != CONFORMANCE_PROTOCOL and refuse_foreign_protocol:
             raise ChainError(
                 f"conformance stream line {number} declares protocol {protocol!r}; "
                 f"this adapter transcribes {CONFORMANCE_PROTOCOL} and refuses to guess"
             )
         outcome = row.get("outcome")
         if outcome not in CONFORMANCE_OUTCOMES:
-            raise ChainError(
-                f"conformance stream line {number} declares outcome {outcome!r}, "
-                "which this adapter does not name"
-            )
+            if refuse_unnamed_outcome:
+                raise ChainError(
+                    f"conformance stream line {number} declares outcome {outcome!r}, "
+                    "which this adapter does not name"
+                )
+            outcome = "pass"
         entries.append(
             {
                 "symbol": row["symbol"],
@@ -201,6 +217,147 @@ def adapt_conformance(raw: str) -> dict[str, Any]:
             }
         )
     return {"entries": entries}
+
+
+def adapt_conformance(raw: str) -> dict[str, Any]:
+    """Transcribe the declared domain protocol into Quoin's normalized entries.
+
+    This is the whole of the adapter. It reads a protocol it names, maps a state
+    vocabulary it enumerates, and refuses anything else. It runs nothing, judges
+    nothing, and never looks at a process's output stream to decide an outcome.
+    """
+    return transcribe(raw)
+
+
+# ---------------------------------------------------------------------------
+# The adapter's four checks, each as a predicate over a transcriber
+# ---------------------------------------------------------------------------
+#
+# `adapter_probes` runs these against the real adapter and requires True.
+# `mutation_probes` runs each against the adapter with exactly the refusal it
+# tests switched off, and requires False. A check that cannot be made to fail is
+# a check that was never checking, which is what the deleted compatibility gate's
+# own `--mutation-probes` mode existed to rule out; this is its replacement for
+# the adapter that survived.
+
+
+def _rows(stream: str) -> list[str]:
+    return [line for line in stream.splitlines() if line.strip()]
+
+
+def derive_foreign_stream(stream: str) -> str:
+    """Every row relabelled with a protocol this adapter does not transcribe."""
+    return "\n".join(
+        json.dumps({**json.loads(line), "protocol": "some.other.protocol/v1"})
+        for line in _rows(stream)
+    )
+
+
+def derive_not_computed_stream(stream: str) -> str:
+    """Every row's outcome renamed to `not-computed`, nothing else changed."""
+    return "\n".join(
+        json.dumps({**json.loads(line), "outcome": "not-computed"}) for line in _rows(stream)
+    )
+
+
+def derive_malformed_stream(stream: str) -> str:
+    """The real stream with its second row truncated mid-object."""
+    lines = _rows(stream)
+    if len(lines) < 2:
+        raise ChainError("the conformance stream is too short to derive a malformed row from")
+    lines[1] = lines[1][: len(lines[1]) // 2]
+    return "\n".join(lines)
+
+
+def check_refuses_a_foreign_protocol(adapt: Any, stream: str) -> tuple[bool, dict[str, Any]]:
+    try:
+        adapt(derive_foreign_stream(stream))
+    except ChainError as error:
+        return True, {"reason": str(error)[:160]}
+    return False, {"protocol": "some.other.protocol/v1", "reason": "transcribed anyway"}
+
+
+def check_refuses_an_empty_stream(adapt: Any, stream: str) -> tuple[bool, dict[str, Any]]:
+    try:
+        transcribed = adapt("")
+    except ChainError as error:
+        return True, {"reason": str(error)[:160]}
+    return False, {"entries": len(transcribed["entries"]), "reason": "transcribed anyway"}
+
+
+def check_refuses_a_malformed_row(adapt: Any, stream: str) -> tuple[bool, dict[str, Any]]:
+    """A row that cannot be decoded is refused as malformed, not dropped.
+
+    The refusal has to be about the undecodable bytes specifically, so the reason
+    text is required to name it. An adapter that skipped the row would transcribe
+    a shorter clean run, and `malformed` would stop being demonstrated anywhere
+    on the intake path.
+    """
+    corrupted = derive_malformed_stream(stream)
+    try:
+        transcribed = adapt(corrupted)
+    except ChainError as error:
+        return "is malformed" in str(error), {"reason": str(error)[:160]}
+    return False, {
+        "entries": len(transcribed["entries"]),
+        "rows": len(_rows(corrupted)),
+        "reason": "the undecodable row was dropped rather than refused",
+    }
+
+
+def derive_unnamed_outcome_stream(stream: str) -> str:
+    """Every row's outcome replaced with one the adapter's table does not name."""
+    return "\n".join(
+        json.dumps({**json.loads(line), "outcome": "who-knows"}) for line in _rows(stream)
+    )
+
+
+def check_refuses_an_unnamed_outcome(adapt: Any, stream: str) -> tuple[bool, dict[str, Any]]:
+    """An outcome the table does not name is refused, never defaulted.
+
+    A silently defaulted unknown state is how twelve states become two, and it
+    defaults towards `pass` rather than away from it, so the weakened adapter is
+    required to be seen doing exactly that.
+    """
+    try:
+        transcribed = adapt(derive_unnamed_outcome_stream(stream))
+    except ChainError as error:
+        return "does not name" in str(error), {"reason": str(error)[:160]}
+    return False, {
+        "outcomes": sorted({entry["outcome"] for entry in transcribed["entries"]}),
+        "reason": "an unnamed outcome was given a default",
+    }
+
+
+# Each entry: the probe it backs, the check, and the single refusal that check
+# depends on. `weakening` is the keyword `transcribe` accepts, set to False.
+ADAPTER_CHECKS = (
+    ("refuses-a-foreign-protocol", check_refuses_a_foreign_protocol, "refuse_foreign_protocol"),
+    ("refuses-an-empty-stream", check_refuses_an_empty_stream, "refuse_empty"),
+    ("refuses-a-malformed-row", check_refuses_a_malformed_row, "refuse_undecodable"),
+    ("refuses-an-unnamed-outcome", check_refuses_an_unnamed_outcome, "refuse_unnamed_outcome"),
+)
+
+
+def mutation_probes(stream: str) -> list[dict[str, Any]]:
+    """Weaken one adapter refusal at a time and require its check to go red."""
+    probes = []
+    for name, check, weakening in ADAPTER_CHECKS:
+        strict, strict_detail = check(adapt_conformance, stream)
+        weakened, weakened_detail = check(
+            lambda raw, key=weakening: transcribe(raw, **{key: False}), stream
+        )
+        probes.append(
+            {
+                "probe": name,
+                "weakening": f"transcribe({weakening}=False)",
+                "strict": strict,
+                "weakened": weakened,
+                "detected": bool(strict) and not weakened,
+                "detail": {"strict": strict_detail, "weakened": weakened_detail},
+            }
+        )
+    return probes
 
 
 # ---------------------------------------------------------------------------
@@ -964,12 +1121,7 @@ def adapter_probes(workspace: Path) -> list[dict[str, Any]]:
     # every outcome to `not-computed`, and it is transcribed by the adapter
     # rather than hand-built, so an adapter that mapped everything to `pass`
     # would be caught here instead of quietly producing a clean run.
-    not_computed_stream = "\n".join(
-        json.dumps({**json.loads(line), "outcome": "not-computed"})
-        for line in stream.splitlines()
-        if line.strip()
-    )
-    downgraded = adapt_conformance(not_computed_stream)
+    downgraded = adapt_conformance(derive_not_computed_stream(stream))
     preserved = all(entry["outcome"] != "pass" for entry in downgraded["entries"])
     results.append(
         {
@@ -1018,72 +1170,26 @@ def adapter_probes(workspace: Path) -> list[dict[str, Any]]:
         }
     )
 
-    # Probe 5: a foreign protocol is refused by the adapter, not guessed at.
-    foreign = "\n".join(
-        json.dumps({**json.loads(line), "protocol": "some.other.protocol/v1"})
-        for line in stream.splitlines()
-        if line.strip()
-    )
-    refused = False
-    try:
-        adapt_conformance(foreign)
-    except ChainError:
-        refused = True
-    results.append(
-        {
-            "probe": "refuses-a-foreign-protocol",
-            "state": "unsupported",
-            "matched": refused,
-            "detail": {"protocol": "some.other.protocol/v1"},
-        }
-    )
-
-    # Probe 6: an empty stream is refused rather than transcribed into a clean run.
-    empty_refused = False
-    try:
-        adapt_conformance("")
-    except ChainError:
-        empty_refused = True
-    results.append(
-        {
-            "probe": "refuses-an-empty-stream",
-            "state": "vacuous",
-            "matched": empty_refused,
-            "detail": {},
-        }
-    )
-
-    # Probe 7: a malformed row is refused as malformed, and the rows around it
-    # are not salvaged into a shorter clean run. The stream is the real one with
-    # one line truncated mid-object, so the difference between this and probe 1
-    # is exactly those bytes.
-    #
-    # Until the retained records were dropped, `malformed` was demonstrated only
-    # by the compatibility census over them, using a PGM-01 fixture whose
-    # collector field had the wrong type. That census is gone. The state is not:
-    # an adapter that reads an undecodable row as anything other than malformed
-    # is how twelve states become eleven, so the demonstrator moves here, to the
-    # surviving intake path, over this repository's own producer stream.
-    lines = [line for line in stream.splitlines() if line.strip()]
-    if len(lines) < 2:
-        raise ChainError("the conformance stream is too short to derive a malformed row from")
-    corrupted = list(lines)
-    corrupted[1] = corrupted[1][: len(corrupted[1]) // 2]
-    malformed_refused = False
-    malformed_detail: dict[str, Any] = {}
-    try:
-        adapt_conformance("\n".join(corrupted))
-    except ChainError as error:
-        malformed_refused = "is malformed" in str(error)
-        malformed_detail = {"reason": str(error)[:160]}
-    results.append(
-        {
-            "probe": "refuses-a-malformed-row",
-            "state": "malformed",
-            "matched": malformed_refused,
-            "detail": {"rows": len(corrupted), **malformed_detail},
-        }
-    )
+    # Probes 5 to 8: the adapter's four refusals, each run through the same
+    # predicate `--mutation-probes` uses. Sharing the predicate is the point: a
+    # probe that passes here and a weakened adapter that the mutation run
+    # detects are then statements about one piece of code, not two.
+    refusal_states = {
+        "refuses-a-foreign-protocol": "unsupported",
+        "refuses-an-empty-stream": "vacuous",
+        "refuses-a-malformed-row": "malformed",
+        "refuses-an-unnamed-outcome": "unsupported",
+    }
+    for name, check, _ in ADAPTER_CHECKS:
+        matched, detail = check(adapt_conformance, stream)
+        results.append(
+            {
+                "probe": name,
+                "state": refusal_states[name],
+                "matched": matched,
+                "detail": detail,
+            }
+        )
 
     return results
 
@@ -1103,6 +1209,14 @@ def main(argv: list[str]) -> int:
         help="keep this run's Quoin store under target/assurance-store for inspection",
     )
     parser.add_argument(
+        "--mutation-probes",
+        action="store_true",
+        help=(
+            "weaken one adapter refusal at a time and require the check that "
+            "guards it to go red; exits 1 if any weakening goes undetected"
+        ),
+    )
+    parser.add_argument(
         "--adapt",
         metavar="PATH",
         help=(
@@ -1119,6 +1233,34 @@ def main(argv: list[str]) -> int:
             print(str(error), file=sys.stderr)
             return 2
         print(json.dumps(entries, indent=2, sort_keys=True))
+        return 0
+
+    if arguments.mutation_probes:
+        # The producer stream is required. Deriving the mutation cases from a
+        # hand-written stream would probe the adapter against bytes no producer
+        # ever emitted, which is a different and weaker claim.
+        try:
+            stream = require_inputs()["PROOF-corpus-conformance"].read_text(encoding="utf-8")
+            probes = mutation_probes(stream)
+        except (ChainError, OSError) as error:
+            print(str(error), file=sys.stderr)
+            return 2
+        for probe in probes:
+            print(
+                f"mutation {probe['probe']} [{probe['weakening']}]: "
+                f"{'detected' if probe['detected'] else 'UNDETECTED'}"
+            )
+        if arguments.json:
+            print(json.dumps({"mutation_probes": probes}, indent=2, sort_keys=True))
+        undetected = [probe["probe"] for probe in probes if not probe["detected"]]
+        if undetected:
+            print(
+                f"these adapter checks did not go red when the refusal they guard was "
+                f"switched off: {undetected}. A check that cannot be made to fail is a "
+                "check that was never checking.",
+                file=sys.stderr,
+            )
+            return 1
         return 0
 
     if arguments.candidate_revision is None:

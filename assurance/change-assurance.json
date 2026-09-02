@@ -79,7 +79,7 @@
         },
         {
           "id": "FR-006-AC-6",
-          "statement": "No repository-local generic runner, evidence envelope, manifest, identity framework, retention store, audit store, anchor file, or aggregate verdict remains in the execution path.",
+          "statement": "No repository-local generic runner, evidence envelope, manifest, identity framework, retention store, audit store, anchor file, or aggregate verdict remains in the execution path, and no live source, gate, workflow, or specification row still names the deleted retained-evidence machinery.",
           "source_ids": ["FR-006", "NFR-002"]
         }
       ],

@@ -65,8 +65,9 @@ help:
 	@echo "  make assurance-env    - create the pinned shared-assurance interpreter"
 	@echo "  make assurance-inputs - run the producers and write their structured results"
 	@echo "  make pins             - classify the toolchain through the shared matrix"
+	@echo "  make mutation-probes  - weaken each adapter refusal and require its check to go red"
 	@echo "  make assurance-chain  - seal, retain, and verify through Quoin"
-	@echo "  make assurance        - pins + assurance-chain"
+	@echo "  make assurance        - pins + mutation-probes + assurance-chain"
 	@echo "  make ci               - All CI gates locally (hosted CI is manual-only)"
 
 # =============================================================================
@@ -180,12 +181,20 @@ assurance-inputs: assurance-env
 pins: assurance-env
 	$(ASSURANCE_PYTHON) scripts/check_shared_pins.py
 
+# The adapter now carries the whole twelve-state claim, so its refusals are
+# probed by weakening them one at a time and requiring the check that guards
+# each to go red. A check that cannot be made to fail is a check that was never
+# checking.
+.PHONY: mutation-probes
+mutation-probes: assurance-inputs
+	$(PYTHON) scripts/assurance_chain.py --mutation-probes
+
 .PHONY: assurance-chain
 assurance-chain: assurance-inputs
 	$(PYTHON) scripts/assurance_chain.py --candidate-revision $(REVISION)
 
 .PHONY: assurance
-assurance: pins assurance-chain
+assurance: pins mutation-probes assurance-chain
 
 # An operator target, not a CI gate. It writes into this repository's own Quoin
 # evidence store, which is a reviewed change to spec/evidence/ rather than
