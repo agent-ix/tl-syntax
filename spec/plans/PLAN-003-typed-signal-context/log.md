@@ -30,3 +30,7 @@ description: "Chronological changes to the typed signal and caller context plan 
   invalid numeric domain to exist before catalog validation. Replaced them with
   checked integer/fixed-Decimal domain wrappers and custom strict wire
   conversion, matching the crate's Interval/SourceSpan invariant style.
+- **2026-09-03** - The full existing local gate passed at `7e6bc05` after
+  repairing the partial virtualenv left by the first sandboxed download failure.
+  Added closing code review SR-015 and gap analysis SR-016; no high or medium
+  finding remains open. Hosted CI was not dispatched.

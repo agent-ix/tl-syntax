@@ -2,7 +2,7 @@
 id: Task-004
 title: "Formula binding and verification"
 type: Task
-status: in_progress
+status: done
 track: Verification
 priority: P0
 relationships:
@@ -26,3 +26,7 @@ Every new matrix row has a native trace symbol, every refusal has an accepted
 neighboring control, `corpus/SHA256SUMS` still passes unchanged, strict coverage
 has no new unbacked implementation row, and the existing full local gate passes
 without dispatching hosted CI.
+
+The complete local gate passed at implementation head `7e6bc05`, including
+Rust 1.75 and the existing shared-assurance scenario/control/probe chain. A
+final rerun is required after the closing review documents are committed.
