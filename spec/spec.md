@@ -26,6 +26,8 @@ without redefining or weakening it.
 
 - Discrete bounded MLTL syntax with inclusive intervals.
 - Stable proposition identities, source spans, and semantic-profile identities.
+- Versioned named signal catalogs with closed bounded value domains.
+- Optional, validated requirement/clause source context for downstream evidence.
 - A validated borrowed representation usable without allocation.
 - Optional owned and serde representations.
 - Versioned wire documents and a shared conformance corpus.
@@ -43,8 +45,8 @@ without redefining or weakening it.
 
 tl-syntax is a Rust library whose trusted boundary is construction and
 validation of syntax values. Downstream parsers, rewriters, evaluators, and
-monitor adapters consume those values while retaining profile and source
-identity.
+monitor adapters consume those values while retaining profile, signal, and
+caller-supplied source identity.
 
 ### Intended Users
 
@@ -56,7 +58,8 @@ the sealed assurance chain to check compatibility and determinism.
 
 The stakeholder requirements define portability and interoperability needs.
 Functional requirements own interval validation, graph validation, identity,
-versioning, and corpus publication. Non-functional requirements constrain the
+versioning, corpus publication, bounded signal declarations, proposition
+binding, and caller-source context. Non-functional requirements constrain the
 feature boundary and deterministic behavior. The test matrix maps every
 acceptance criterion to executable or inspection evidence.
 
@@ -64,6 +67,8 @@ acceptance criterion to executable or inspection evidence.
 
 - [tl-syntax epic](https://github.com/agent-ix/tl-syntax/issues/5).
 - [Contract-derived verification program](https://github.com/agent-ix/quire-contract-ir/issues/1).
+- [FRETish temporal frontend](https://github.com/agent-ix/quire-contract-ir/issues/57).
+- [Typed signal and source-context child](https://github.com/agent-ix/tl-syntax/issues/15).
 - [PGM-01 governance gate](https://github.com/agent-ix/quire-contract-ir/issues/3),
   identified as `ix://agent-ix/quire-contract-ir/PGM-01`.
 - Cargo package manifest and repository contribution policy.

@@ -18,8 +18,9 @@ when default features are disabled or left unchanged.
 ## Scope
 
 The requirement covers the public interval, identity, node, profile, borrowed
-formula, and validation APIs. Owned documents are isolated behind `alloc`; serde
-support is isolated behind `serde` and implies `alloc`.
+formula, borrowed signal-catalog, borrowed requirement-context, and validation
+APIs. Owned documents and strings are isolated behind `alloc`; serde support is
+isolated behind `serde` and implies `alloc`.
 
 ## Rationale
 
@@ -42,8 +43,8 @@ feature combination used by downstream consumers.
 
 | ID | Criteria | Verification |
 |---|---|---|
-| NFR-001-AC-1 | The default feature graph has no normal dependency and exposes the borrowed formula API. | Test (TC-015, TC-019) |
-| NFR-001-AC-2 | The crate compiles with no default feature, alloc only, serde, and all features. | Test (TC-015, TC-019) |
+| NFR-001-AC-1 | The default feature graph has no normal dependency and exposes the borrowed formula, signal-catalog, and requirement-context APIs. | Test (TC-015, TC-019, TC-033) |
+| NFR-001-AC-2 | The crate compiles with no default feature, alloc only, serde, and all features. | Test (TC-015, TC-019, TC-033) |
 
 ## Dependencies
 
