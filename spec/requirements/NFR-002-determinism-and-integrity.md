@@ -26,6 +26,20 @@ under `agent-ix/tl-syntax#12`, and retention, integrity, and qualification
 authority belong to Quoin under
 [FR-006](./FR-006-shared-assurance-intake.md).
 
+Make execution control is also outside the evidence-integrity claim. The local
+guard that rejected Make failure-suppression features was removed with the
+collector it protected. At base `4cb5787`, an intentionally invalid Rust item
+made ordinary `make ci` stop at `fmt-check` and exit 2. A `make -k ci`
+diagnostic left five of thirteen prerequisites clean and eight failed or
+unmade. Adding a global `.IGNORE:` made those same eight paths emit ignored
+failures while Make treated all thirteen prerequisites as successful and
+returned 0. [SR-013](../reviews/SR-013-make-execution-control-measurement.md)
+records the exact matrix. Quoin still refuses absent, empty, or failing charted
+producer bytes; it cannot make an uncharted pure gate produce evidence. The
+residual is accepted for pre-stable development under `agent-ix/tl-syntax#11`
+and remains open for use-specific qualification under
+`agent-ix/engineering-assurance#11`.
+
 ## Rationale
 
 Downstream differential testing and the sealed assurance chain depend on stable

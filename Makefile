@@ -23,8 +23,14 @@
 # files `scripts/assurance_chain.py` lists in `INPUTS`. For everything else
 # there is no record to contradict, so a `-` prefix, a `.IGNORE:` line or a
 # `SHELL := /usr/bin/true` assignment neuters the check and it stays green.
-# That gap is recorded, not closed, in agent-ix/tl-syntax#11 by owner decision,
-# and #11 also owns measuring it here; do not re-add the guard.
+# Measured at 4cb5787 with an invalid Rust item: the no-`.IGNORE:` control
+# stopped at `fmt-check` and exited 2; `make -k ci` left 5 of 13 prerequisites
+# clean and 8 failed or unmade. With global `.IGNORE:`, those 8 paths emitted
+# ignored failures, all 13 prerequisites were treated as successful, and `ci`
+# exited 0. SR-013 records the per-prerequisite results. The gap is accepted for
+# pre-stable development under agent-ix/tl-syntax#11 and remains open for
+# qualification under agent-ix/engineering-assurance#11; do not re-add a local
+# guard.
 
 CARGO ?= cargo
 PYTHON ?= python3

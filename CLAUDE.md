@@ -56,7 +56,12 @@ the assurance chain, Quoin binds its retained inputs by digest, so a Makefile
 that misreports what it ran yields an absent or empty input rather than a pass.
 For the targets that feed nothing — `fmt-check`, `lint`, `deny`, `audit-unsafe`
 and `rustdoc` among them — there is no record to contradict and no guard; that
-gap is recorded, not closed, in
+gap is measured and recorded, not closed. At base `4cb5787`, an invalid Rust
+item made the no-`.IGNORE:` control exit 2; with global `.IGNORE:`, eight of the
+thirteen `ci` prerequisite paths emitted ignored failures while Make treated all
+thirteen as successful and exited 0. The per-prerequisite result is in
+[`SR-013`](./spec/reviews/SR-013-make-execution-control-measurement.md) and the
+owner decision is tracked in
 [issue #11](https://github.com/agent-ix/tl-syntax/issues/11).
 
 ## Safety scaffolding
