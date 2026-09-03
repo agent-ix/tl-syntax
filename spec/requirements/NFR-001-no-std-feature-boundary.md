@@ -21,6 +21,8 @@ The requirement covers the public interval, identity, node, profile, borrowed
 formula, borrowed signal-catalog, borrowed requirement-context, and validation
 APIs. Owned documents and strings are isolated behind `alloc`; serde support is
 isolated behind `serde` and implies `alloc`.
+Borrowed signal-catalog validation may mutate caller-owned `u32` scratch but
+shall neither allocate nor retain that scratch in the validated result.
 
 ## Rationale
 

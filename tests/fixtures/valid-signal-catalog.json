@@ -1,0 +1,26 @@
+{
+  "schema_version": "tl-syntax.signal-catalog/v1",
+  "signals": [
+    {
+      "id": 1,
+      "name": "request_ready",
+      "domain": { "kind": "boolean" }
+    },
+    {
+      "id": 2,
+      "name": "retry_count",
+      "domain": { "kind": "integer", "minimum": 0, "maximum": 8 }
+    },
+    {
+      "id": 3,
+      "name": "temperature",
+      "domain": {
+        "kind": "fixed_decimal",
+        "minimum_coefficient": -400,
+        "maximum_coefficient": 1250,
+        "scale": 1
+      }
+    }
+  ],
+  "bindings": [{ "proposition": 7, "signal": 1 }]
+}

@@ -4,17 +4,19 @@ A parser-independent, `no_std` syntax tree and semantic-profile model for
 discrete bounded Mission-time Linear Temporal Logic (MLTL).
 
 The crate models propositions, Boolean operators, and bounded Future, Globally,
-Until, and Release over checked inclusive intervals. Formulas are borrowed,
-topologically indexed node tables, so the default API needs neither `std` nor a
-heap allocator. Optional owned and serde layers provide strict versioned
-exchange documents.
+Until, and Release over checked inclusive intervals. It also validates named
+Boolean/Integer/fixed-Decimal signal catalogs, direct Boolean proposition
+bindings, and optional caller-supplied requirement context. Formulas and
+catalogs are borrowed views, so the default API needs neither `std` nor a heap
+allocator. Optional owned and serde layers provide strict versioned exchange
+documents.
 
 ## Features
 
 | Feature | Default | Adds |
 |---|---:|---|
-| core | yes | Checked values and allocation-free borrowed formulas |
-| `alloc` | no | Owned formula and proposition-map documents |
+| core | yes | Checked values plus allocation-free borrowed formulas, signal catalogs, formula bindings, and requirement contexts |
+| `alloc` | no | Owned formula, proposition-map, signal-catalog, and requirement-context documents |
 | `serde` | no | Serialization for versioned owned documents; implies `alloc` |
 
 ## Example
@@ -33,13 +35,21 @@ let formula = Formula::new(SemanticProfile::ClosedTraceV1, NodeId(1), &nodes).un
 assert_eq!(formula.root(), NodeId(1));
 ```
 
+Signals use identities distinct from proposition identities. A direct binding
+is valid only when its target signal is Boolean; numeric signals remain typed
+inputs for an explicit predicate-lowering layer outside this crate.
+
 ## Wire formats and corpus
 
 The `serde` feature exposes formula schema `tl-syntax.formula/v1`, proposition-
-map schema `tl-syntax.proposition-map/v1`, and the closed set of supported
-semantic-profile identifiers. Unknown versions are rejected. JSON Schemas,
-fixtures, and expected horizon/closed-trace results live in [`corpus/`](corpus/README.md).
-Downstream temporal crates must pin and report `tl-syntax-corpus/v1`.
+map schema `tl-syntax.proposition-map/v1`, signal-catalog schema
+`tl-syntax.signal-catalog/v1`, requirement-context schema
+`tl-syntax.requirement-context/v1`, and the closed set of supported semantic-
+profile identifiers. Unknown versions and fields are rejected. The existing
+formula/proposition JSON Schemas, fixtures, and expected horizon/closed-trace
+results live in [`corpus/`](corpus/README.md); that v1 corpus is unchanged by
+the new separate documents. Downstream temporal crates must pin and report
+`tl-syntax-corpus/v1`.
 
 ## Build
 

@@ -41,6 +41,7 @@ contract-IR Rational type is not silently equated with fixed Decimal.
 | FND-1404 | low | “Accepted bytes” could have been misread as requiring deserialization and reserialization to reproduce fixture whitespace. Compatibility now means checked-in legacy bytes are unchanged, still accepted with prior outcomes, and their closed v1 documents accept no new fields. | FR-007-AC-5, TC-032 |
 | FND-1405 | low | Strict Quire coverage cannot currently classify planned rows because the installed traceability declaration expects `Status` while the validated TestMatrix archetype requires `Coverage Status`. | `agent-ix/quire-contract-ir#21`, `spec/test-matrix.md` |
 | FND-1406 | medium | The reviewed draft asked formula binding to reject a non-Boolean binding that a validated catalog already makes unrepresentable. Catalog validation now owns that refusal; formula binding owns deterministic first-missing resolution. | FR-007-AC-2, FR-007-AC-3, TC-029, TC-030 |
+| FND-1407 | high | Exact duplicate-name validation was initially quadratic while the declared catalog bound was 100,000 signals, making the accepted boundary impractical and creating a denial-of-service surface. Borrowed validation now requires caller-owned `u32` name-order scratch and sorts indices in O(n log n); owned validation allocates that scratch behind `alloc`. | FR-007-AC-1, FR-007-AC-2, NFR-001, TC-027, TC-029 |
 
 ## Dispositions
 
@@ -52,6 +53,7 @@ contract-IR Rational type is not silently equated with fixed Decimal.
 | FND-1404 | **FIXED** | FR-007-AC-5 and TC-032 distinguish immutable fixture bytes from semantic decode compatibility. |
 | FND-1405 | **DEFERRED** | The shared module contradiction is already tracked by `agent-ix/quire-contract-ir#21`; this repository shall not fork or locally patch Quire's traceability model. Planned rows remain visibly marked and become backed during implementation. |
 | FND-1406 | **FIXED** | FR-007-AC-2 retains the non-Boolean catalog refusal; FR-007-AC-3 and TC-030 now test only states reachable from a validated catalog. |
+| FND-1407 | **FIXED** | The core API consumes temporary caller scratch proportional to the signal population, performs deterministic index sorting, and returns a view independent of that scratch. TC-029 exercises both the accepted maximum population and the insufficient-scratch refusal. |
 
 ## Boundary and implementation obligations
 
@@ -62,7 +64,8 @@ contract-IR Rational type is not silently equated with fixed Decimal.
 - Fixed Decimal means an `i64` coefficient range at scale 0 through 18, not an
   arbitrary rational or floating-point representation.
 - The no-allocation surface owns borrowed validation and lookup. Owned vectors,
-  strings, and strict serde documents remain feature-gated.
+  strings, and strict serde documents remain feature-gated. Exact name
+  uniqueness uses transient caller-owned index scratch, not quadratic scanning.
 - The two new wire identities are separate from formula-v1 and
   proposition-map-v1. Existing bytes and APIs are not extended in place.
 - Every refusal named by FR-007-AC-2 and FR-007-AC-4 requires a positive control

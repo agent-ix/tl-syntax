@@ -18,3 +18,11 @@ description: "Chronological changes to the typed signal and caller context plan 
 - **2026-09-03** - During plan-to-code analysis, fixed FND-1406: catalog
   validation owns the non-Boolean direct-binding refusal, while formula binding
   checks only the missing-binding state reachable from a validated catalog.
+- **2026-09-03** - During resource-bound review, fixed FND-1407: replaced
+  quadratic duplicate-name scanning at the 100,000-signal bound with transient
+  caller-owned `u32` name-order scratch and O(n log n) validation.
+- **2026-09-03** - Implemented the allocation-free catalog/context core, owned
+  strict wire documents, exact deterministic wire snapshots, formula binding,
+  maximum-population tests, single-fault fixtures, and TC-027 through TC-033
+  trace symbols. The focused tests, feature checks, Clippy, rustdoc, corpus gate,
+  and strict specification gate pass; the exact-head full local gate remains.

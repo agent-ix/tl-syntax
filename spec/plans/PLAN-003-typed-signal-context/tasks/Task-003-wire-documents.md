@@ -2,7 +2,7 @@
 id: Task-003
 title: "Owned strict wire documents"
 type: Task
-status: not_started
+status: done
 track: Interchange
 priority: P0
 relationships:

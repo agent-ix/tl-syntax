@@ -59,6 +59,8 @@ FR-007 + StR-003 + SR-014
 
 - `src/signal.rs` owns no-allocation `SignalId`, `SignalDomain`, borrowed
   declarations/bindings, `SignalCatalog`, `BoundFormula`, lookup, and errors.
+  Catalog construction uses caller-owned `u32` scratch for O(n log n) exact
+  name uniqueness and does not retain it.
 - `src/context.rs` owns borrowed `RequirementContext` validation and errors.
 - Alloc-only modules own `String`/`Vec` forms and the
   `tl-syntax.signal-catalog/v1` and `tl-syntax.requirement-context/v1` documents.

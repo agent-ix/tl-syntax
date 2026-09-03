@@ -2,7 +2,7 @@
 id: Task-004
 title: "Formula binding and verification"
 type: Task
-status: not_started
+status: in_progress
 track: Verification
 priority: P0
 relationships:
