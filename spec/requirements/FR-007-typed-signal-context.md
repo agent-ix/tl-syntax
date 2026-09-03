@@ -91,7 +91,7 @@ interpreting either one.
 |---|---|---|
 | FR-007-AC-1 | Boolean, bounded integer, and scale-0-through-18 fixed-decimal declarations within the count/name limits validate and expose their identities, names, domains, and bounds unchanged through borrowed and owned forms. | Test (TC-027, TC-028) |
 | FR-007-AC-2 | Duplicate or non-increasing signal/binding identities, duplicate or empty/oversized names, inverted numeric bounds, scale above 18, missing signal targets, non-Boolean direct bindings, and over-limit populations are rejected with distinct typed errors. | Test (TC-029) |
-| FR-007-AC-3 | Formula binding checks proposition occurrences in formula-node order, accepts complete Boolean bindings as a borrowed bound-formula view, and rejects the first missing or non-Boolean binding without fabricating a mapping. | Test (TC-030) |
+| FR-007-AC-3 | Formula binding checks proposition occurrences in formula-node order, accepts a catalog's already-validated Boolean bindings as a borrowed bound-formula view, and rejects the first missing binding without fabricating a mapping. | Test (TC-030) |
 | FR-007-AC-4 | Complete caller context round-trips exactly, consumer APIs accept explicit absence without fabricating context, and every missing, empty, oversized, inverted-span, or unknown-field present form is rejected. | Test (TC-031) |
 | FR-007-AC-5 | Existing checked-in formula-v1 and proposition-map-v1 fixture bytes remain unchanged and decode with their prior schema identities and validation outcomes; no new field is accepted in either closed v1 document. | Test (TC-032) |
 

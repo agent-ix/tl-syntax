@@ -67,7 +67,7 @@ relationships:
 | TC-027 | Validate and deterministically order every supported bounded signal domain | Property | P0 | FR-007-AC-1, NFR-002-AC-5 | 🚧 planned |
 | TC-028 | Round-trip borrowed and owned signal catalogs with distinct signal/proposition identities | Integration | P0 | FR-007-AC-1, StR-003-VC-1 | 🚧 planned |
 | TC-029 | Reject every malformed catalog, bound, direct binding, and resource-limit boundary | Property | P0 | FR-007-AC-2 | 🚧 planned |
-| TC-030 | Bind every formula proposition occurrence in node order through Boolean signals and reject the first unresolved occurrence | Integration | P0 | FR-007-AC-3, StR-003-VC-1 | 🚧 planned |
+| TC-030 | Bind every formula proposition occurrence in node order through already-validated Boolean signals and reject the first missing occurrence | Integration | P0 | FR-007-AC-3, StR-003-VC-1 | 🚧 planned |
 | TC-031 | Preserve complete requirement context, explicit consumer absence, and reject partial or malformed present wire forms | Integration | P0 | FR-007-AC-4, StR-003-VC-2, NFR-002-AC-5 | 🚧 planned |
 | TC-032 | Preserve the exact closed formula-v1 and proposition-map-v1 wire contracts | Snapshot | P0 | FR-007-AC-5 | 🚧 planned |
 | TC-033 | Compile borrowed signal and source-context APIs across the no-default/alloc/serde matrix | Compile | P0 | NFR-001-AC-1, NFR-001-AC-2 | 🚧 planned |

@@ -40,6 +40,7 @@ contract-IR Rational type is not silently equated with fixed Decimal.
 | FND-1403 | low | NFR-002 originally implied that tl-syntax owns a digest contract. That exceeded this crate's identity/serialization boundary and was removed; downstream evidence systems may digest the preserved deterministic bytes. | NFR-002-AC-5 |
 | FND-1404 | low | “Accepted bytes” could have been misread as requiring deserialization and reserialization to reproduce fixture whitespace. Compatibility now means checked-in legacy bytes are unchanged, still accepted with prior outcomes, and their closed v1 documents accept no new fields. | FR-007-AC-5, TC-032 |
 | FND-1405 | low | Strict Quire coverage cannot currently classify planned rows because the installed traceability declaration expects `Status` while the validated TestMatrix archetype requires `Coverage Status`. | `agent-ix/quire-contract-ir#21`, `spec/test-matrix.md` |
+| FND-1406 | medium | The reviewed draft asked formula binding to reject a non-Boolean binding that a validated catalog already makes unrepresentable. Catalog validation now owns that refusal; formula binding owns deterministic first-missing resolution. | FR-007-AC-2, FR-007-AC-3, TC-029, TC-030 |
 
 ## Dispositions
 
@@ -50,6 +51,7 @@ contract-IR Rational type is not silently equated with fixed Decimal.
 | FND-1403 | **FIXED** | NFR-002 promises deterministic order and serialized bytes only. |
 | FND-1404 | **FIXED** | FR-007-AC-5 and TC-032 distinguish immutable fixture bytes from semantic decode compatibility. |
 | FND-1405 | **DEFERRED** | The shared module contradiction is already tracked by `agent-ix/quire-contract-ir#21`; this repository shall not fork or locally patch Quire's traceability model. Planned rows remain visibly marked and become backed during implementation. |
+| FND-1406 | **FIXED** | FR-007-AC-2 retains the non-Boolean catalog refusal; FR-007-AC-3 and TC-030 now test only states reachable from a validated catalog. |
 
 ## Boundary and implementation obligations
 

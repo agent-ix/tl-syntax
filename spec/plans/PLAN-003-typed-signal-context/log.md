@@ -15,3 +15,6 @@ description: "Chronological changes to the typed signal and caller context plan 
 - **2026-09-03** - Opened the implementation plan on the current PR #14 head.
   The plan adds only TL domain code and native tests, reuses the existing shared
   assurance intake, and leaves hosted CI manual-only.
+- **2026-09-03** - During plan-to-code analysis, fixed FND-1406: catalog
+  validation owns the non-Boolean direct-binding refusal, while formula binding
+  checks only the missing-binding state reachable from a validated catalog.
