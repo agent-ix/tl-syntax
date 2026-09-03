@@ -2,12 +2,13 @@
 
 use proptest::prelude::*;
 use tl_syntax::{
-    Formula, FormulaBindingError, Node, NodeId, NodeKind, PropositionBinding, PropositionId,
-    RequirementContext, RequirementContextDocument, RequirementContextError,
-    RequirementContextField, RequirementContextSchemaVersion, SemanticProfile, SignalCatalog,
-    SignalCatalogDocument, SignalCatalogError, SignalCatalogSchemaVersion, SignalDeclaration,
-    SignalDomain, SignalId, SourceSpan, MAX_REQUIREMENT_CONTEXT_FIELD_BYTES,
-    MAX_SIGNAL_CATALOG_BINDINGS, MAX_SIGNAL_CATALOG_SIGNALS, MAX_SIGNAL_NAME_BYTES,
+    FixedDecimalSignalDomain, Formula, FormulaBindingError, IntegerSignalDomain, Node, NodeId,
+    NodeKind, PropositionBinding, PropositionId, RequirementContext, RequirementContextDocument,
+    RequirementContextError, RequirementContextField, RequirementContextSchemaVersion,
+    SemanticProfile, SignalCatalog, SignalCatalogDocument, SignalCatalogError,
+    SignalCatalogSchemaVersion, SignalDeclaration, SignalDomain, SignalDomainError, SignalId,
+    SourceSpan, MAX_REQUIREMENT_CONTEXT_FIELD_BYTES, MAX_SIGNAL_CATALOG_BINDINGS,
+    MAX_SIGNAL_CATALOG_SIGNALS, MAX_SIGNAL_NAME_BYTES,
 };
 
 fn boolean_signal(id: u32, name: &str) -> SignalDeclaration<'_> {
@@ -37,16 +38,14 @@ proptest! {
             SignalDeclaration::new(
                 SignalId(2),
                 "count",
-                SignalDomain::Integer { minimum, maximum },
+                SignalDomain::Integer(IntegerSignalDomain::new(minimum, maximum).unwrap()),
             ),
             SignalDeclaration::new(
                 SignalId(3),
                 "decimal",
-                SignalDomain::FixedDecimal {
-                    minimum_coefficient: minimum,
-                    maximum_coefficient: maximum,
-                    scale,
-                },
+                SignalDomain::FixedDecimal(
+                    FixedDecimalSignalDomain::new(minimum, maximum, scale).unwrap(),
+                ),
             ),
         ];
         let catalog = catalog(&signals, &[]).unwrap();
@@ -110,10 +109,7 @@ fn every_catalog_refusal_has_a_neighboring_positive_control() {
         SignalDeclaration::new(
             SignalId(2),
             "count",
-            SignalDomain::Integer {
-                minimum: 0,
-                maximum: 8,
-            },
+            SignalDomain::Integer(IntegerSignalDomain::new(0, 8).unwrap()),
         ),
     ];
     let valid_bindings = [PropositionBinding::new(PropositionId(7), SignalId(1))];
@@ -157,44 +153,24 @@ fn every_catalog_refusal_has_a_neighboring_positive_control() {
         Err(SignalCatalogError::DuplicateSignalName { .. })
     ));
 
-    let inverted_integer = [SignalDeclaration::new(
-        SignalId(1),
-        "count",
-        SignalDomain::Integer {
+    assert_eq!(
+        IntegerSignalDomain::new(9, 8).unwrap_err(),
+        SignalDomainError::IntegerBoundsInverted {
             minimum: 9,
-            maximum: 8,
-        },
-    )];
-    assert!(matches!(
-        catalog(&inverted_integer, &[]),
-        Err(SignalCatalogError::IntegerBoundsInverted { .. })
-    ));
-    let inverted_decimal = [SignalDeclaration::new(
-        SignalId(1),
-        "amount",
-        SignalDomain::FixedDecimal {
+            maximum: 8
+        }
+    );
+    assert_eq!(
+        FixedDecimalSignalDomain::new(2, 1, 2).unwrap_err(),
+        SignalDomainError::DecimalBoundsInverted {
             minimum_coefficient: 2,
-            maximum_coefficient: 1,
-            scale: 2,
-        },
-    )];
-    assert!(matches!(
-        catalog(&inverted_decimal, &[]),
-        Err(SignalCatalogError::DecimalBoundsInverted { .. })
-    ));
-    let invalid_scale = [SignalDeclaration::new(
-        SignalId(1),
-        "amount",
-        SignalDomain::FixedDecimal {
-            minimum_coefficient: 1,
-            maximum_coefficient: 2,
-            scale: 19,
-        },
-    )];
-    assert!(matches!(
-        catalog(&invalid_scale, &[]),
-        Err(SignalCatalogError::DecimalScaleOutOfRange { .. })
-    ));
+            maximum_coefficient: 1
+        }
+    );
+    assert_eq!(
+        FixedDecimalSignalDomain::new(1, 2, 19).unwrap_err(),
+        SignalDomainError::DecimalScaleOutOfRange { scale: 19 }
+    );
 
     let repeated_bindings = [
         PropositionBinding::new(PropositionId(7), SignalId(1)),
@@ -264,6 +240,9 @@ fn catalog_wire_refuses_unknown_and_over_limit_forms() {
     for mutation in [
         "version",
         "domain",
+        "integer-bounds",
+        "decimal-bounds",
+        "decimal-scale",
         "document-field",
         "signal-field",
         "binding-field",
@@ -272,6 +251,11 @@ fn catalog_wire_refuses_unknown_and_over_limit_forms() {
         match mutation {
             "version" => candidate["schema_version"] = "tl-syntax.signal-catalog/v2".into(),
             "domain" => candidate["signals"][0]["domain"]["kind"] = "opaque".into(),
+            "integer-bounds" => candidate["signals"][1]["domain"]["minimum"] = 9.into(),
+            "decimal-bounds" => {
+                candidate["signals"][2]["domain"]["minimum_coefficient"] = 1_251.into()
+            }
+            "decimal-scale" => candidate["signals"][2]["domain"]["scale"] = 19.into(),
             "document-field" => candidate["unexpected"] = true.into(),
             "signal-field" => candidate["signals"][0]["unexpected"] = true.into(),
             "binding-field" => candidate["bindings"][0]["unexpected"] = true.into(),

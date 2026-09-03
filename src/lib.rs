@@ -28,8 +28,9 @@ pub use document::{
     PropositionMapError, PropositionMapSchemaVersion, MAX_FORMULA_DOCUMENT_NODES,
 };
 pub use signal::{
-    BoundFormula, FormulaBindingError, PropositionBinding, SignalCatalog, SignalCatalogError,
-    SignalDeclaration, SignalDomain, SignalId, SignalIter, MAX_SIGNAL_CATALOG_BINDINGS,
+    BoundFormula, FixedDecimalSignalDomain, FormulaBindingError, IntegerSignalDomain,
+    PropositionBinding, SignalCatalog, SignalCatalogError, SignalDeclaration, SignalDomain,
+    SignalDomainError, SignalId, SignalIter, MAX_SIGNAL_CATALOG_BINDINGS,
     MAX_SIGNAL_CATALOG_SIGNALS, MAX_SIGNAL_NAME_BYTES,
 };
 #[cfg(feature = "alloc")]

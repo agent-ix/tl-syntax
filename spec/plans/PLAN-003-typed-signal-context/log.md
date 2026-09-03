@@ -26,3 +26,7 @@ description: "Chronological changes to the typed signal and caller context plan 
   maximum-population tests, single-fault fixtures, and TC-027 through TC-033
   trace symbols. The focused tests, feature checks, Clippy, rustdoc, corpus gate,
   and strict specification gate pass; the exact-head full local gate remains.
+- **2026-09-03** - Closing code review found that raw enum fields allowed an
+  invalid numeric domain to exist before catalog validation. Replaced them with
+  checked integer/fixed-Decimal domain wrappers and custom strict wire
+  conversion, matching the crate's Interval/SourceSpan invariant style.
