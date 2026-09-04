@@ -26,6 +26,25 @@ under `agent-ix/tl-syntax#12`, and retention, integrity, and qualification
 authority belong to Quoin under
 [FR-006](./FR-006-shared-assurance-intake.md).
 
+Make execution control is also outside the evidence-integrity claim. The local
+guard that rejected Make failure-suppression features was removed with the
+collector it protected. At base `4cb5787`, an intentionally invalid Rust item
+made ordinary `make ci` stop at `fmt-check` and exit 2. A `make -k ci`
+diagnostic classified eight paths as failed or unmade. The other five were
+unaffected by the selected compile fault, so their behaviour under their own
+faults and `.IGNORE:` remains unmeasured. Adding a global `.IGNORE:` made the
+eight affected paths emit ignored failures while Make treated all thirteen
+prerequisites as successful and returned 0.
+[SR-013](../reviews/SR-013-make-execution-control-measurement.md) records the
+exact matrix and reproduction procedure. Quoin constrains charted producer
+bytes only when a record is actually produced. The chain retains nothing
+locally; under `.IGNORE:` its refusal was suppressed and no record was produced.
+The `tl-syntax-release-owner` accepts only this measured spelling for pre-stable
+development under `agent-ix/tl-syntax#11`. Seventeen other spellings remain
+unmeasured, and the deviation must be re-evaluated before the first stable
+release candidate. Use-specific qualification remains open under
+`agent-ix/engineering-assurance#11`.
+
 ## Rationale
 
 Downstream differential testing and the sealed assurance chain depend on stable
@@ -65,8 +84,10 @@ The criterion is not reassigned and **the identifier is not reused**. The reason
 is that `SR-005` and `SR-006` adjudicate findings against `NFR-002-AC-4` by
 name, and an identifier that means one thing in a closed review and another in
 the current specification makes both unreadable.
-Its successor obligations are [FR-006](./FR-006-shared-assurance-intake.md) AC-1
-through AC-6.
+[FR-006](./FR-006-shared-assurance-intake.md) AC-1 through AC-6 succeed every
+clause except the Make execution-control clause. That clause remains unowned by
+an acceptance criterion and is tracked as `challenge-make-execution-control`
+and `agent-ix/tl-syntax#11`.
 
 Test case **TC-018** is retired with it, for the same reason and on the same
 terms.

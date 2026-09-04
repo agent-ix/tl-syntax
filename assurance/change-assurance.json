@@ -1,6 +1,6 @@
 {
   "schema_version": "tl-syntax.change-assurance-declaration/v1",
-  "purpose": "What this repository states about the change under issue #12, in the shape Quoin's FR-063 record requires. Quoin owns the record schema, its digest, and its retention; this file is the author's statement that gets sealed into one.",
+  "purpose": "What this repository states about the Make execution-control measurement and disclosure under issue #11, in the shape Quoin's FR-063 record requires. Quoin owns the record schema, its digest, and its retention; this file is the author's statement that gets sealed into one.",
   "not_an_envelope": "Quoin's packaged change-assurance-record-v1, proof-attestation-v1, and verification-receipt-v1 schemas are the shapes. This file projects into the record body Quoin requires and derives nothing beyond the digests its own derived_fields names. It is not a local evidence envelope, it retains nothing, and it computes no verdict.",
   "derived_fields": [
     "subject.base_revision and impact_snapshot.revision come from the candidate revision the caller names.",
@@ -23,7 +23,7 @@
   "record": {
     "schema_version": 1,
     "record_type": "change_assurance",
-    "record_id": "tl-syntax/issue-12",
+    "record_id": "tl-syntax/issue-11",
     "revision": 1,
     "parent_digest": null,
     "subject": {
@@ -36,6 +36,7 @@
         "spec",
         "tests",
         "assurance",
+        "CLAUDE.md",
         "Makefile"
       ]
     },
@@ -181,15 +182,15 @@
           "owner": "@kreneskyp"
         },
         {
-          "id": "UNKNOWN-downstream-pin-reachability",
-          "statement": "tl-parse, tl-rewrite, and tl-mltl pin tl-syntax at 740182f13b84, a revision reachable only from this branch. The approved landing form is a true merge commit with the source branch retained, which makes it an ancestor of main. Tracked as agent-ix/tl-syntax#8 and not closed by this change.",
-          "disposition": "deferred",
-          "owner": "@kreneskyp"
+          "id": "UNKNOWN-make-execution-control-guard-removed",
+          "statement": "At base 4cb5787 an invalid Rust item made ordinary make ci stop at fmt-check and exit 2; make -k ci classified eight paths as failed or unmade, while the other five were unaffected by that compile fault and were not measured under their own faults. With global .IGNORE:, the same eight paths emitted ignored failures, Make treated all thirteen prerequisites as successful, and make ci exited 0. Quoin constrains producer bytes only when a record is actually produced; this chain retains nothing locally, and under .IGNORE: its own refusal was suppressed and no record was produced. The owner accepts only this measured spelling for pre-stable development and must re-evaluate the deviation before the first stable release candidate; seventeen other spellings and use-specific qualification remain open under agent-ix/engineering-assurance#11.",
+          "disposition": "accepted",
+          "owner": "tl-syntax-release-owner"
         }
       ]
     },
     "review_workflow": {
-      "run_id": "tl-syntax-issue-12",
+      "run_id": "tl-syntax-issue-11",
       "decision_event_kind": "change_assurance.review_decided"
     }
   }

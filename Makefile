@@ -11,11 +11,12 @@
 # used to police Make's own execution controls went with the collector they were
 # protecting, and nothing replaced them.
 #
-# What the structural replacement does cover: the targets that feed the
-# assurance chain. Quoin binds its retained inputs by digest and the chain
-# derives every attested result from the producer's own bytes, so a recipe that
-# lies about running `assurance-inputs` yields an absent or empty input, which
-# the chain reports as an error naming the missing target rather than as a pass.
+# When a chain run reaches Quoin and produces a record, Quoin binds its inputs by
+# digest and constrains the content of the producer bytes actually recorded.
+# The chain retains nothing locally and reports its result only through its exit
+# status, so this is not a backstop against Make suppressing that status. Under
+# the measured global `.IGNORE:`, the chain's refusal was ignored and no record
+# was produced while `make ci` still exited 0.
 #
 # What it does not cover: the targets that feed nothing. `fmt-check`, `lint`,
 # `deny`, `audit-unsafe` and `rustdoc` are among the `ci` prerequisites whose
@@ -23,8 +24,16 @@
 # files `scripts/assurance_chain.py` lists in `INPUTS`. For everything else
 # there is no record to contradict, so a `-` prefix, a `.IGNORE:` line or a
 # `SHELL := /usr/bin/true` assignment neuters the check and it stays green.
-# That gap is recorded, not closed, in agent-ix/tl-syntax#11 by owner decision,
-# and #11 also owns measuring it here; do not re-add the guard.
+# Measured at 4cb5787 with an invalid Rust item: the no-`.IGNORE:` control
+# stopped at `fmt-check` and exited 2; `make -k ci` classified 8 of 13 paths as
+# failed or unmade. The other 5 were unaffected by that compile fault and were
+# not measured under their own faults. With global `.IGNORE:`, the 8 affected
+# paths emitted ignored failures, all 13 prerequisites were treated as
+# successful, and `ci` exited 0. SR-013 records the exact reproduction. Only
+# that one of the program's 18 spellings is accepted for pre-stable development
+# under agent-ix/tl-syntax#11; re-evaluate before the first stable release
+# candidate. Qualification remains open under agent-ix/engineering-assurance#11;
+# do not re-add a local guard.
 
 CARGO ?= cargo
 PYTHON ?= python3
@@ -66,7 +75,7 @@ help:
 	@echo "  make assurance-inputs - run the producers and write their structured results"
 	@echo "  make pins             - classify the toolchain through the shared matrix"
 	@echo "  make mutation-probes  - weaken each adapter refusal and require its check to go red"
-	@echo "  make assurance-chain  - seal, retain, and verify through Quoin"
+	@echo "  make assurance-chain  - seal and verify through Quoin without local retention"
 	@echo "  make assurance        - pins + mutation-probes + assurance-chain"
 	@echo "  make ci               - All CI gates locally (hosted CI is manual-only)"
 

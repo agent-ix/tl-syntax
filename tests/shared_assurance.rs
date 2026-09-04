@@ -321,9 +321,8 @@ fn the_sealed_records_impact_snapshot_is_the_quire_export() {
 
 /// Collect every readable source file under `directory`, recursively.
 fn collect_sources(directory: &Path, into: &mut Vec<PathBuf>) {
-    let Ok(entries) = fs::read_dir(directory) else {
-        return;
-    };
+    let entries = fs::read_dir(directory)
+        .unwrap_or_else(|error| panic!("cannot enumerate {}: {error}", directory.display()));
     for entry in entries {
         let path = entry.expect("directory entry").path();
         if path.is_dir() {
@@ -549,13 +548,16 @@ fn no_local_evidence_framework_remains_and_nothing_still_reads_the_dropped_tree(
             );
         }
     }
-    // The floor tracks the population. Excluding the closed records shrank the
-    // census by about a third, and a floor left where it was would have stopped
-    // being the anti-vacuity guard its comment claims to be.
-    assert!(
-        inspected >= 38,
-        "the source census is unexpectedly small ({inspected}) to make this \
-         claim; either files left the tree or the census stopped reaching them"
+    // Population at this review head: 42 inspected files — 35 under the seven
+    // walked directories after the two record trees and this test are excluded,
+    // plus the seven named root files. Exact equality makes either growth or
+    // shrinkage require a deliberate census review instead of silently consuming
+    // the margin of a hand-maintained lower bound. `collect_sources` also fails
+    // closed above if any declared directory cannot be enumerated.
+    assert_eq!(
+        inspected, 42,
+        "the source census population changed from the reviewed 42 files \
+         ({inspected} observed); review the census scope and update this control deliberately"
     );
 
     // The Makefile is orchestration, not a trust root, and carries no gate that

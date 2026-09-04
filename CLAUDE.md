@@ -51,12 +51,22 @@ pre-stable phase. Deleted, not rewritten — no claim that historical evidence
 still verifies survives them. The constraint re-applies at the move toward
 stable releases.
 
-The Makefile is orchestration and is not a trust root. For the targets that feed
-the assurance chain, Quoin binds its retained inputs by digest, so a Makefile
-that misreports what it ran yields an absent or empty input rather than a pass.
-For the targets that feed nothing — `fmt-check`, `lint`, `deny`, `audit-unsafe`
-and `rustdoc` among them — there is no record to contradict and no guard; that
-gap is recorded, not closed, in
+The Makefile is orchestration and is not a trust root. When a chain run reaches
+Quoin and produces a record, Quoin binds the producer inputs by digest and
+constrains the content of that record. The chain retains nothing locally, so
+this does not survive Make suppressing the chain's own exit status: under the
+measured global `.IGNORE:`, no record was produced and `make ci` still exited 0.
+Pure gates likewise have no record to contradict and no guard; the gap is
+measured and recorded, not closed. At base `4cb5787`, an invalid Rust item made
+the no-`.IGNORE:` control exit 2; the `make -k` diagnostic classified eight of
+thirteen prerequisite paths as failed or unmade. The other five were unaffected
+by that compile fault and were not measured under their own faults. With global
+`.IGNORE:`, the eight affected paths emitted ignored failures while Make treated
+all thirteen as successful and exited 0. Seventeen other execution-control
+spellings remain unmeasured. The per-prerequisite result and reproduction are in
+[`SR-013`](./spec/reviews/SR-013-make-execution-control-measurement.md) and the
+owner decision—limited to the measured spelling and requiring re-evaluation
+before the first stable release candidate—is tracked in
 [issue #11](https://github.com/agent-ix/tl-syntax/issues/11).
 
 ## Safety scaffolding
