@@ -548,15 +548,15 @@ fn no_local_evidence_framework_remains_and_nothing_still_reads_the_dropped_tree(
             );
         }
     }
-    // Population at this review head: 42 inspected files — 35 under the seven
+    // Population at this review head: 53 inspected files — 46 under the seven
     // walked directories after the two record trees and this test are excluded,
     // plus the seven named root files. Exact equality makes either growth or
     // shrinkage require a deliberate census review instead of silently consuming
     // the margin of a hand-maintained lower bound. `collect_sources` also fails
     // closed above if any declared directory cannot be enumerated.
     assert_eq!(
-        inspected, 42,
-        "the source census population changed from the reviewed 42 files \
+        inspected, 53,
+        "the source census population changed from the reviewed 53 files \
          ({inspected} observed); review the census scope and update this control deliberately"
     );
 
