@@ -3,7 +3,7 @@ id: SR-015
 title: Typed signal and caller context code review
 type: SpecReview
 analysis: code-review
-scope: "agent-ix/tl-syntax#15 candidate bda0909; changes from base 73a5d69; FR-007; StR-003; TC-027 through TC-033"
+scope: "agent-ix/tl-syntax#15 proposed revision e3a2a921; changes from proposed base 6c252717; FR-007; StR-003; TC-027 through TC-033"
 review_set: all
 relationships:
   - target: ix://agent-ix/tl-syntax/FR-007
@@ -16,10 +16,10 @@ relationships:
 
 ## Summary
 
-The exact `bda0909` candidate implements the reviewed boundary without adding a
-parser, expression language, evaluator, runner, evidence collector, Python
-helper, Make target, or runtime Quire/Quoin/contract-IR dependency. One high
-invariant defect found in the preceding implementation candidate was fixed
+The exact proposed revision `e3a2a921` implements the reviewed boundary without
+adding a parser, expression language, evaluator, runner, evidence collector,
+Python helper, Make target, or runtime Quire/Quoin/contract-IR dependency. One
+high invariant defect found in the preceding implementation candidate was fixed
 before this review head. No high or medium finding remains open.
 
 ## Review coverage
@@ -51,12 +51,13 @@ before this review head. No high or medium finding remains open.
 
 Focused no-default tests, all-feature domain tests, Clippy with warnings denied,
 rustdoc with warnings denied, corpus SHA-256 validation, and strict Quire
-validation/coverage pass at or after the reviewed changes. The full existing
-local gate passed at precursor head `7e6bc05`; it must run again at the final
-documentation head before a pull request is requested. The first attempt failed
-only because sandboxed dependency download left a partial virtualenv; reinstall
-of the pinned distribution repaired it, after which the gate passed. Hosted CI
-was not dispatched.
+validation/coverage pass at or after the reviewed changes. The full local gate
+passed at exact proposed revision `e3a2a921` after integrating proposed base
+`6c252717`; its exact source-state and revision checks, 53-file census, 60/60
+grammar result, 68/74 coverage result, 36/36 Rust trace result, and complete
+assurance chain all passed. The earlier sandboxed dependency-download failure
+was environmental: reinstall of the pinned distribution repaired the partial
+virtualenv. Hosted CI was not dispatched.
 
 ## Conclusion
 

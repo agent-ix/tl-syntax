@@ -3,7 +3,7 @@ id: SR-016
 title: Typed signal and caller context closing gap analysis
 type: SpecReview
 analysis: gap-analysis
-scope: "agent-ix/tl-syntax#15 candidate bda0909; FR-007; StR-003; NFR-001; NFR-002; PLAN-003; downstream temporal handoff"
+scope: "agent-ix/tl-syntax#15 proposed revision e3a2a921; FR-007; StR-003; NFR-001; NFR-002; PLAN-003; downstream temporal handoff"
 review_set: all
 relationships:
   - target: ix://agent-ix/tl-syntax/FR-007
@@ -71,6 +71,7 @@ owned by the future IR/FRETish adapter, or an existing shared-tool limitation.
 
 ## Conclusion
 
-The candidate has no unresolved high or medium gap. After exact-final-head local
-verification and reviewer clearance, tl-syntax#15 can land and unblock the
-downstream dependency chain. Hosted CI remains manual-only.
+The proposed revision has no unresolved high or medium gap. Exact-head local
+verification passed at `e3a2a921`; after PR #14 lands, the final pull-request
+head is reverified, and reviewer clearance is explicit, tl-syntax#15 can land
+and unblock the downstream dependency chain. Hosted CI remains manual-only.

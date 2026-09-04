@@ -34,3 +34,9 @@ description: "Chronological changes to the typed signal and caller context plan 
   repairing the partial virtualenv left by the first sandboxed download failure.
   Added closing code review SR-015 and gap analysis SR-016; no high or medium
   finding remains open. Hosted CI was not dispatched.
+- **2026-09-04** - Integrated proposed PR #14 revision `6c252717`, refreshed
+  the exact repository census from 42 to 53 for the expanded feature tree, and
+  passed the full local gate at exact proposed revision `e3a2a921`. Updated the
+  closing reviews to name that proposed downstream contract. PR creation and
+  landing remain gated on PR #14 landing and explicit reviewer clearance;
+  hosted CI was not dispatched.
