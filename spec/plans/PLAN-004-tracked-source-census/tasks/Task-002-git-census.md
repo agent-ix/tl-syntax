@@ -2,7 +2,7 @@
 id: Task-002
 title: "Git-derived source census"
 type: Task
-status: not_started
+status: done
 track: Verification
 priority: P0
 relationships:
@@ -24,3 +24,7 @@ untracked, ignored, and unable-to-enumerate states.
 
 TC-026 proves the tracked population and broader scan sets are distinct and
 that ignored generated files cannot perturb either one.
+
+The scratch repository admits one tracked source and one non-ignored untracked
+source into the declared sets while excluding a proptest regression seed. A
+real non-repository directory exercises the unable-to-enumerate refusal.

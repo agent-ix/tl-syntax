@@ -2,7 +2,7 @@
 id: Task-004
 title: "Verification and closing review"
 type: Task
-status: not_started
+status: in_progress
 track: Review
 priority: P0
 relationships:
