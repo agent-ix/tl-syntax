@@ -549,9 +549,12 @@ fn no_local_evidence_framework_remains_and_nothing_still_reads_the_dropped_tree(
             );
         }
     }
-    // The floor tracks the population. Excluding the closed records shrank the
-    // census by about a third, and a floor left where it was would have stopped
-    // being the anti-vacuity guard its comment claims to be.
+    // Population at this review head: 46 inspected files — 39 under the seven
+    // walked directories after the two record trees and this test are excluded,
+    // plus the seven named root files. `scripts` is the largest non-record area
+    // a routine change could plausibly lose at once, with 9 files. Losing it
+    // leaves 37, so the derived coarse floor is 38. This does not replace a
+    // per-area equality control; it only bounds total census shrinkage.
     assert!(
         inspected >= 38,
         "the source census is unexpectedly small ({inspected}) to make this \

@@ -30,14 +30,19 @@ Make execution control is also outside the evidence-integrity claim. The local
 guard that rejected Make failure-suppression features was removed with the
 collector it protected. At base `4cb5787`, an intentionally invalid Rust item
 made ordinary `make ci` stop at `fmt-check` and exit 2. A `make -k ci`
-diagnostic left five of thirteen prerequisites clean and eight failed or
-unmade. Adding a global `.IGNORE:` made those same eight paths emit ignored
-failures while Make treated all thirteen prerequisites as successful and
-returned 0. [SR-013](../reviews/SR-013-make-execution-control-measurement.md)
-records the exact matrix. Quoin still refuses absent, empty, or failing charted
-producer bytes; it cannot make an uncharted pure gate produce evidence. The
-residual is accepted for pre-stable development under `agent-ix/tl-syntax#11`
-and remains open for use-specific qualification under
+diagnostic classified eight paths as failed or unmade. The other five were
+unaffected by the selected compile fault, so their behaviour under their own
+faults and `.IGNORE:` remains unmeasured. Adding a global `.IGNORE:` made the
+eight affected paths emit ignored failures while Make treated all thirteen
+prerequisites as successful and returned 0.
+[SR-013](../reviews/SR-013-make-execution-control-measurement.md) records the
+exact matrix and reproduction procedure. Quoin constrains charted producer
+bytes only when a record is actually produced. The chain retains nothing
+locally; under `.IGNORE:` its refusal was suppressed and no record was produced.
+The `tl-syntax-release-owner` accepts only this measured spelling for pre-stable
+development under `agent-ix/tl-syntax#11`. Seventeen other spellings remain
+unmeasured, and the deviation must be re-evaluated before the first stable
+release candidate. Use-specific qualification remains open under
 `agent-ix/engineering-assurance#11`.
 
 ## Rationale
