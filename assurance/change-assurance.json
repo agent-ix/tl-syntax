@@ -183,9 +183,9 @@
         },
         {
           "id": "UNKNOWN-make-execution-control-guard-removed",
-          "statement": "At base 4cb5787 an invalid Rust item made ordinary make ci stop at fmt-check and exit 2; make -k ci classified five of thirteen prerequisites clean and eight failed or unmade. With global .IGNORE:, the same eight paths emitted ignored failures, Make treated all thirteen prerequisites as successful, and make ci exited 0. Quoin's digest-bound producer inputs cover charted producer bytes but cannot detect a pure gate whose failure Make suppresses. The owner accepts this residual for pre-stable development under agent-ix/tl-syntax#11; use-specific qualification remains open under agent-ix/engineering-assurance#11.",
+          "statement": "At base 4cb5787 an invalid Rust item made ordinary make ci stop at fmt-check and exit 2; make -k ci classified eight paths as failed or unmade, while the other five were unaffected by that compile fault and were not measured under their own faults. With global .IGNORE:, the same eight paths emitted ignored failures, Make treated all thirteen prerequisites as successful, and make ci exited 0. Quoin constrains producer bytes only when a record is actually produced; this chain retains nothing locally, and under .IGNORE: its own refusal was suppressed and no record was produced. The owner accepts only this measured spelling for pre-stable development and must re-evaluate the deviation before the first stable release candidate; seventeen other spellings and use-specific qualification remain open under agent-ix/engineering-assurance#11.",
           "disposition": "accepted",
-          "owner": "@kreneskyp"
+          "owner": "tl-syntax-release-owner"
         }
       ]
     },
