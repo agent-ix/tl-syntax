@@ -13,10 +13,11 @@ relationships:
 ## Objective
 
 Close `agent-ix/tl-syntax#17` before the next census-changing feature lands by
-making TC-026 enumerate the reviewed tracked source set through Git, scan
-non-ignored untracked paths separately, require declared roots, and bind exact
-total and per-area populations. Correct the two retained statements identified
-by the same review without changing the shared assurance architecture.
+making TC-034 enumerate every non-archival tracked path through Git, report
+non-ignored untracked paths separately, and bind the exact live path set plus
+per-area populations. Keep TC-026 focused on absence of deleted local machinery.
+Correct the retained statements identified by the same review without changing
+the shared assurance architecture.
 
 ## Base and scope
 
@@ -30,7 +31,7 @@ retention path.
 ## Dependency order
 
 ```text
-reviewed FR-006/NFR-002/TC-026 extension
+reviewed FR-006/NFR-002/TC-026 and TC-034 split
   -> Git tracked/untracked helper with unable-to-enumerate refusal
     -> ignored/generated and non-ignored/untracked controls
       -> required-root and per-area population controls
@@ -42,14 +43,17 @@ reviewed FR-006/NFR-002/TC-026 extension
 
 ## Verification
 
-TC-026 exercises a scratch Git repository containing one tracked source, one
+TC-034 exercises a scratch Git repository containing tracked source and ignore
+configuration paths, one
 non-ignored untracked source, and one ignored generated source. The tracked item
 must enter the population and scan; the untracked item must enter only the scan;
-the ignored item must enter neither. The live repository then checks its
-required roots, exact tracked total, exact per-area cardinalities, readable
-selected paths, and forbidden-name absence.
+the ignored item must enter neither. The untracked item also carries a forbidden
+name so the scan consumer, not only its producer, is falsified. The live
+repository then checks all 66 non-archival tracked paths exactly, checks ten
+per-area cardinalities, and reports any ordinary untracked path. TC-026 scans
+that complete live set and rejects a higher-precedence Make input.
 
-The exact candidate runs focused TC-026, strict Quire validation and coverage,
+The exact candidate runs focused TC-026 and TC-034, strict Quire validation and coverage,
 then full local `make ci CARGO_TARGET_DIR=target/cargo-review`. Hosted CI is not
 dispatched.
 
@@ -57,7 +61,8 @@ dispatched.
 
 1. Ignored generated files cannot change the reviewed population or scan.
 2. A Git enumeration failure is a named failure, never an empty successful set.
-3. Missing required roots and compensating cross-area changes fail distinctly.
+3. Missing, new, renamed, extensionless, and within- or cross-area path changes
+   fail with the exact path-set or area delta.
 4. NFR-002 and SR-013 describe the live criterion and scenario-label boundaries.
 5. Closing reviews have no unresolved high or medium finding and the exact-head
    full local gate passes.

@@ -18,7 +18,7 @@ relationships:
 | FR-003 | FR-003-AC-1, FR-003-AC-2, FR-003-AC-3 | TC-006, TC-007, TC-008 | ✅ covered |
 | FR-004 | FR-004-AC-1, FR-004-AC-2, FR-004-AC-3, FR-004-AC-4 | TC-009, TC-010, TC-011, TC-017, TC-020 | ✅ covered |
 | FR-005 | FR-005-AC-1, FR-005-AC-2, FR-005-AC-3 | TC-012, TC-013, TC-014 | ✅ covered |
-| FR-006 | FR-006-AC-1, FR-006-AC-2, FR-006-AC-3, FR-006-AC-5, FR-006-AC-6 | TC-021, TC-022, TC-023, TC-025, TC-026 | ✅ covered |
+| FR-006 | FR-006-AC-1, FR-006-AC-2, FR-006-AC-3, FR-006-AC-5, FR-006-AC-6, FR-006-AC-7 | TC-021, TC-022, TC-023, TC-025, TC-026, TC-034 | ✅ covered |
 | FR-007 | FR-007-AC-1, FR-007-AC-2, FR-007-AC-3, FR-007-AC-4, FR-007-AC-5 | TC-027, TC-028, TC-029, TC-030, TC-031, TC-032 | ✅ covered |
 
 ## Stakeholder Requirement Coverage
@@ -63,7 +63,7 @@ relationships:
 | TC-022 | Reach Quoin through the declared adapter with neither Quire nor Quoin executing a producer | Integration | P0 | FR-006-AC-2 | ✅ implemented |
 | TC-023 | Bind the sealed record's impact snapshot to the Quire static export | Integration | P0 | FR-006-AC-3 | ✅ implemented |
 | TC-025 | Demonstrate all twelve outcomes and pair every negative with an accepted positive control | Integration | P0 | FR-006-AC-5 | ✅ implemented |
-| TC-026 | Prove no generic evidence machinery remains; scan the Git-derived live source set; and bind required roots plus exact total and per-area populations | Integration | P0 | FR-006-AC-6 | ✅ implemented |
+| TC-026 | Prove no generic evidence machinery remains and no live repository source names the deleted machinery | Integration | P0 | FR-006-AC-6 | ✅ implemented |
 | TC-027 | Validate and deterministically order every supported bounded signal domain | Property | P0 | FR-007-AC-1, NFR-002-AC-5 | ✅ implemented |
 | TC-028 | Round-trip borrowed and owned signal catalogs with distinct signal/proposition identities | Integration | P0 | FR-007-AC-1, StR-003-VC-1 | ✅ implemented |
 | TC-029 | Reject every malformed catalog, bound, direct binding, and resource-limit boundary | Property | P0 | FR-007-AC-2 | ✅ implemented |
@@ -71,3 +71,4 @@ relationships:
 | TC-031 | Preserve complete requirement context, explicit consumer absence, and reject partial or malformed present wire forms | Integration | P0 | FR-007-AC-4, StR-003-VC-2, NFR-002-AC-5 | ✅ implemented |
 | TC-032 | Preserve the exact closed formula-v1 and proposition-map-v1 wire contracts | Snapshot | P0 | FR-007-AC-5 | ✅ implemented |
 | TC-033 | Compile borrowed signal and source-context APIs across the no-default/alloc/serde matrix | Compile | P0 | NFR-001-AC-1, NFR-001-AC-2 | ✅ implemented |
+| TC-034 | Prove the live-source partition is exact, name-independent, fail-closed, and distinguishes tracked, ordinary-untracked, ignored, and archival paths | Integration | P0 | FR-006-AC-7 | ✅ implemented |

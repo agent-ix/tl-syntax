@@ -16,6 +16,7 @@ type: SuiteRegistry
 | SUITE-004 | Public API documentation | `RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --all-features` | rustdoc | Static |
 | SUITE-005 | Corpus schema, derived horizon, and closed-trace oracle | `python3 scripts/validate_corpus.py --json` | Python jsonschema Draft 7, tl-syntax corpus oracle | Analysis |
 | SUITE-006 | Shared assurance intake chain | `python3 scripts/assurance_chain.py --candidate-revision <sha>` | quoin 0.23.1 change-assurance and evidence surfaces | Integration |
+| SUITE-008 | Shared assurance contract tests | `cargo test --test shared_assurance --all-features` | cargo/rustc; Git supplies the version-control path inventory | Integration |
 
 ## Notes
 
@@ -43,3 +44,10 @@ identifier, so binding it to a third meaning would make that closed review
 unreadable. The retirement is recorded alongside `FR-006-AC-4` and `TC-024` in
 [`FR-006`](../requirements/FR-006-shared-assurance-intake.md). This repository
 now retains no evidence of its own.
+
+SUITE-008 is a local verification suite, not a structured-result producer and
+not an attestation input to SUITE-006. Its TC-021 through TC-026 and TC-034
+outcomes are reported by the local gate and exact-head pull-request record; the
+Quoin record does not claim those tests ran. Git is required because TC-034
+compares the checked-out version-control inventory with the reviewed live path
+set and refuses execution outside a repository boundary.

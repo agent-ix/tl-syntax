@@ -22,9 +22,10 @@ untracked, ignored, and unable-to-enumerate states.
 
 ## Completion evidence
 
-TC-026 proves the tracked population and broader scan sets are distinct and
+TC-034 proves the tracked population and broader scan sets are distinct and
 that ignored generated files cannot perturb either one.
 
 The scratch repository admits one tracked source and one non-ignored untracked
 source into the declared sets while excluding a proptest regression seed. A
-real non-repository directory exercises the unable-to-enumerate refusal.
+repository-contained non-repository directory exercises both the Git ceiling
+and the specific unable-to-enumerate refusal.
