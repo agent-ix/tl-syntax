@@ -75,7 +75,7 @@ help:
 	@echo "  make assurance-inputs - run the producers and write their structured results"
 	@echo "  make pins             - classify the toolchain through the shared matrix"
 	@echo "  make mutation-probes  - weaken each adapter refusal and require its check to go red"
-	@echo "  make assurance-chain  - seal, retain, and verify through Quoin"
+	@echo "  make assurance-chain  - seal and verify through Quoin without local retention"
 	@echo "  make assurance        - pins + mutation-probes + assurance-chain"
 	@echo "  make ci               - All CI gates locally (hosted CI is manual-only)"
 
