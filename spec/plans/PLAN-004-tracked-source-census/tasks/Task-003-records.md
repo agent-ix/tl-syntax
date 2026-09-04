@@ -14,15 +14,16 @@ relationships:
 
 ## Scope
 
-Require every declared root, assert exact total and per-area populations with
-self-locating diagnostics, and correct the NFR-002 and SR-013 statements.
+Partition every tracked path, assert the exact non-archival path set and
+per-area populations with self-locating diagnostics, and correct the NFR-002
+and SR-013 statements.
 
 ## Completion evidence
 
-A missing root and a compensating cross-area change have distinct reactors;
+A missing, new, or substituted path and a compensating cross-area change have
+distinct reactors;
 the retained prose matches the live read sites and retired identifiers.
 
-TC-026 checks all seven source directories and seven required root files,
-asserts the exact 42-file tracked population and eight per-area cardinalities,
-and reports both expected and observed maps. NFR-002 and SR-013 carry the
-corrected retained statements.
+TC-034 checks the exact 66-path live tracked population and ten per-area
+cardinalities, and reports expected and observed path sets and maps. NFR-002 and
+SR-013 carry the corrected retained statements.

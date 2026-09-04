@@ -68,7 +68,8 @@ framework.
 | FR-006-AC-2 | The corpus conformance, corpus oracle, and feature-boundary results are structured, are produced by this repository's tools, and reach Quoin through the declared adapter without Quoin or Quire executing a producer. | Test (TC-022) |
 | FR-006-AC-3 | Static specification, obligation, and coverage facts for a candidate revision come from the Quire export named by the sealed record's impact snapshot. | Test (TC-023) |
 | FR-006-AC-5 | Each of the twelve verification outcomes is demonstrated by a case that produced it, and each negative case is paired with a positive control that was observed to be accepted. | Test (TC-025) |
-| FR-006-AC-6 | No script, Make target, or test in the repository implements a generic evidence envelope, manifest, retention store, tool-identity lock, anchor file, or aggregate verdict, and no live tracked or non-ignored untracked source, gate, workflow, or specification row still names the deleted retained-evidence machinery. The census population comes from Git-tracked paths, requires every declared root, and binds the exact total and per-area populations so ignored generated files and compensating cross-area changes cannot redefine the reviewed source set. | Test (TC-026) |
+| FR-006-AC-6 | No live repository source implements or names the deleted generic evidence envelope, manifest, retention store, tool-identity lock, anchor file, or aggregate verdict. Immutable review and plan records that describe the deleted subjects, the declaring test, and an inert directory marker are explicit non-live exclusions. | Test (TC-026) |
+| FR-006-AC-7 | Every version-control-tracked non-archival path is present in the exact reviewed live-source set regardless of its name or extension; non-ignored untracked live paths are reported separately; ignored generated paths do not redefine the tracked population; and unavailable enumeration is a refusal. | Test (TC-034) |
 
 ### Retired criteria
 

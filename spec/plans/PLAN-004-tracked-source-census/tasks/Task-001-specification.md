@@ -22,5 +22,6 @@ and EARS concerns before code changes.
 
 ## Completion evidence
 
-FR-006-AC-6 and TC-026 state the tracked/untracked split, required roots, exact
-total, and per-area controls. SR-017 closes every specification finding.
+FR-006-AC-6/AC-7 and TC-026/TC-034 separate deleted-machinery absence from the
+tracked/untracked partition and exact-path controls. SR-017 maps every external
+residual to the author's proposed remediation without granting it closure.
