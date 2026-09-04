@@ -84,10 +84,13 @@ The criterion is not reassigned and **the identifier is not reused**. The reason
 is that `SR-005` and `SR-006` adjudicate findings against `NFR-002-AC-4` by
 name, and an identifier that means one thing in a closed review and another in
 the current specification makes both unreadable.
-[FR-006](./FR-006-shared-assurance-intake.md) AC-1 through AC-6 succeed every
-clause except the Make execution-control clause. That clause remains unowned by
-an acceptance criterion and is tracked as `challenge-make-execution-control`
-and `agent-ix/tl-syntax#11`.
+The live [FR-006](./FR-006-shared-assurance-intake.md) criteria are AC-1, AC-2,
+AC-3, AC-5, and AC-6. They state the surviving shared-intake obligations and are
+not a blanket reassignment of every retired AC-4 clause. In particular, the
+per-record evidence-validator obligation went with the deleted retained-record
+subject and retired FR-006-AC-4. The Make execution-control clause remains
+unowned by an acceptance criterion and is tracked as
+`challenge-make-execution-control` and `agent-ix/tl-syntax#11`.
 
 Test case **TC-018** is retired with it, for the same reason and on the same
 terms.

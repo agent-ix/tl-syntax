@@ -61,4 +61,4 @@ relationships:
 | TC-022 | Reach Quoin through the declared adapter with neither Quire nor Quoin executing a producer | Integration | P0 | FR-006-AC-2 | ✅ implemented |
 | TC-023 | Bind the sealed record's impact snapshot to the Quire static export | Integration | P0 | FR-006-AC-3 | ✅ implemented |
 | TC-025 | Demonstrate all twelve outcomes and pair every negative with an accepted positive control | Integration | P0 | FR-006-AC-5 | ✅ implemented |
-| TC-026 | Prove no generic evidence machinery remains and no live source still names the deleted retained-evidence machinery | Integration | P0 | FR-006-AC-6 | ✅ implemented |
+| TC-026 | Prove no generic evidence machinery remains; scan the Git-derived live source set; and bind required roots plus exact total and per-area populations | Integration | P0 | FR-006-AC-6 | 🚧 extension planned |
