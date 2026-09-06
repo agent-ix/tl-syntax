@@ -90,8 +90,10 @@ reported the scenario as
 `declared-unknowns-are-carried-not-dropped [inconclusive]: ok`. Quoin therefore
 carries the `accepted` unknown into the unresolved,
 inconclusive receipt state; it does not treat the declaration disposition as a
-resolved unknown. This is an execution observation, not a local read site for
-the `disposition` field.
+resolved unknown. The bracketed `inconclusive` text is the scenario's locally
+declared expected-state label; the actual predicate reads the carried unknowns
+and `unresolved_unknown` reason from Quoin's audited receipt. This is an
+execution observation, not a local read site for the `disposition` field.
 
 ## Findings
 

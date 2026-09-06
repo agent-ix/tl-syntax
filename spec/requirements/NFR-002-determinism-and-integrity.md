@@ -74,20 +74,34 @@ validation outcomes using fixed checked-in inputs.
 
 **NFR-002-AC-4** is retired. It required this repository to verify source-locked
 launcher and toolchain identities, bind a compiled test census, reject in-file
-Make execution controls, behaviourally verify per-record evidence validators, and
-require an active qualified record. Every one of those is a generic assurance
-control that the released Engineering Assurance, Quire, and Quoin contracts now
-own, and a repository that keeps its own copy is the arrangement
-`agent-ix/engineering-assurance#10` was written to end.
+Make execution controls, behaviourally verify per-record evidence validators,
+and require an active qualified record. Those local implementations were the
+arrangement `agent-ix/engineering-assurance#10` was written to end; retirement
+does not imply that every clause moved wholesale into another local criterion.
 
 The criterion is not reassigned and **the identifier is not reused**. The reason
 is that `SR-005` and `SR-006` adjudicate findings against `NFR-002-AC-4` by
 name, and an identifier that means one thing in a closed review and another in
 the current specification makes both unreadable.
-[FR-006](./FR-006-shared-assurance-intake.md) AC-1 through AC-6 succeed every
-clause except the Make execution-control clause. That clause remains unowned by
-an acceptance criterion and is tracked as `challenge-make-execution-control`
-and `agent-ix/tl-syntax#11`.
+The live [FR-006](./FR-006-shared-assurance-intake.md) criteria are AC-1, AC-2,
+AC-3, AC-5, AC-6, and AC-7. Their relationship to the five retired clauses is
+explicit and not a blanket reassignment:
+
+- FR-006-AC-1 carries only classification of the adopted shared component
+  versions. It does not claim source-lock or qualification of every launcher
+  and toolchain; that broader use-specific obligation remains outside this
+  pre-stable claim under `agent-ix/engineering-assurance#11`.
+- FR-006-AC-3 carries Quire's static specification, obligation, and Rust-symbol
+  coverage export. The deleted repository-local compiled-test census is not
+  retained or claimed as an equivalent control.
+- The Make execution-control clause remains unowned by an acceptance criterion
+  and is tracked as `challenge-make-execution-control` and
+  `agent-ix/tl-syntax#11`.
+- The per-record evidence-validator obligation went with the deleted retained
+  record subject and retired FR-006-AC-4.
+- No active qualified record is claimed for this pre-stable release. That
+  obligation re-applies at the first stable release candidate under
+  `agent-ix/engineering-assurance#11`.
 
 Test case **TC-018** is retired with it, for the same reason and on the same
 terms.
@@ -96,5 +110,6 @@ terms.
 
 Constrains [FR-002](./FR-002-validated-formula.md),
 [FR-004](./FR-004-versioned-serialization.md), and
-[FR-005](./FR-005-conformance-corpus.md). Its retired evidence obligations are
-carried by [FR-006](./FR-006-shared-assurance-intake.md).
+[FR-005](./FR-005-conformance-corpus.md). The surviving shared-intake
+relationships and the clauses that remain unclaimed are enumerated above; no
+blanket succession by [FR-006](./FR-006-shared-assurance-intake.md) is implied.
