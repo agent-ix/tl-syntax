@@ -22,3 +22,7 @@ description: "Chronological changes to the qualification-integrity ownership pla
   triggers for the Make and stable-record limitations. Existing tests now trace
   the other NFR-003 criteria, and the exact source census includes the one new
   non-archival path. No new tooling or hosted CI dispatch was added.
+- **2026-09-06** - The first full shared-assurance run found that the exact path
+  set included NFR-003 but its independently authored `spec` area population
+  still expected 18 paths. Corrected that expectation to 19; the failure proves
+  the coarse partition check remains independently load-bearing.

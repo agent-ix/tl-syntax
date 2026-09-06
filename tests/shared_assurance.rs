@@ -823,7 +823,7 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         ("corpus", 14),
         ("examples", 1),
         ("scripts", 7),
-        ("spec", 20),
+        ("spec", 21),
         ("src", 8),
         ("tests", 7),
     ]
