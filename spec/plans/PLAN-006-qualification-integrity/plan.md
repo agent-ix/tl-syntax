@@ -23,7 +23,7 @@ Quoin contracts without adding repository-local assurance machinery.
 ## Base and dependency
 
 This branch is stacked on issue #20 candidate
-`500531c3070a5ca1e66ab9f47f2ea6c2af524355`, because #19 reconciles the same
+`273b4cdea83d2ee92e83fc557bd5fd5cb16d8a02`, because #19 reconciles the same
 FR-006 text that #20 changes. It must not be proposed for merge until PR #22 is
 landed and this branch is integrated with that reviewed tree. The stack leaves
 PR #21 and PR #22 heads unchanged.

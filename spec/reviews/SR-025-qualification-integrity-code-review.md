@@ -3,7 +3,7 @@ id: SR-025
 title: Qualification-integrity ownership code review
 type: SpecReview
 analysis: code-review
-scope: "agent-ix/tl-syntax#19 implementation candidate a8f8a76; changes from stacked base 500531c; NFR-003; FR-006; TC-036"
+scope: "agent-ix/tl-syntax#19 implementation candidate 6183568; changes from stacked base 273b4cd; NFR-003; FR-006; TC-036"
 review_set: all
 relationships:
   - target: ix://agent-ix/tl-syntax/NFR-003
@@ -37,8 +37,8 @@ remains. This author review grants no merge authority.
 
 | ID | Severity | Summary | Refs | Escape Cause |
 |---|---|---|---|---|
-| FND-2501 | medium | Candidate 4d99368 added NFR-003 to the exact path set but left the independently authored `spec` population at 18, so TC-034 reached the coarse diagnostic before the intended within-area mutation. | NFR-003-AC-3, TC-034 | implementation-bug-despite-evidence |
-| FND-2502 | medium | Candidate a85dd89 paraphrased sealed FR-006/NFR-003 statements and omitted FR-006-AC-8, allowing the shared declaration to diverge from the authoritative requirement rows. | FR-006, NFR-003, `assurance/change-assurance.json` | implementation-bug-despite-evidence |
+| FND-2501 | medium | Candidate 396315a added NFR-003 to the exact path set but left the independently authored `spec` population at 18, so TC-034 reached the coarse diagnostic before the intended within-area mutation. | NFR-003-AC-3, TC-034 | implementation-bug-despite-evidence |
+| FND-2502 | medium | Candidate 2a490b7 paraphrased sealed FR-006/NFR-003 statements and omitted FR-006-AC-8, allowing the shared declaration to diverge from the authoritative requirement rows. | FR-006, NFR-003, `assurance/change-assurance.json` | implementation-bug-despite-evidence |
 | FND-2503 | medium | The SUITE-008 note said TC-021 through TC-026, implicitly treating retired TC-024 as a live local result. | SUITE-008, FR-006-AC-4 | wrong-requirement |
 | FND-2504 | low | AA-001 now states the first-stable qualified-record challenge, but the current change declaration does not bind AA-001 as an individually identified authoritative source. | AA-001, `tl-syntax#16` | correct-requirement-no-evidence |
 | FND-2505 | low | TC-036 can prove the local suite is not declared as a proof input but cannot prove an independent reviewer actually ran it at an exact head. | NFR-003-AC-2, TC-036 | correct-requirement-no-evidence |
@@ -47,8 +47,8 @@ remains. This author review grants no merge authority.
 
 | Finding | Disposition | Evidence |
 |---|---|---|
-| FND-2501 | **AUTHOR REMEDIATED; EXTERNAL CLEARANCE REQUIRED** | Candidate a85dd89 expects 19 `spec` paths; focused TC-034 and the full nine-test shared suite pass. |
-| FND-2502 | **AUTHOR REMEDIATED; EXTERNAL CLEARANCE REQUIRED** | Candidate a8f8a76 makes every live FR-006/NFR-003 declaration statement byte-identical to its criterion and includes FR-006-AC-8. |
+| FND-2501 | **AUTHOR REMEDIATED; EXTERNAL CLEARANCE REQUIRED** | Candidate 2a490b7 expects 19 `spec` paths; focused TC-034 and the full nine-test shared suite pass. |
+| FND-2502 | **AUTHOR REMEDIATED; EXTERNAL CLEARANCE REQUIRED** | Candidate 6183568 makes every live FR-006/NFR-003 declaration statement byte-identical to its criterion and includes FR-006-AC-8. |
 | FND-2503 | **AUTHOR REMEDIATED; EXTERNAL CLEARANCE REQUIRED** | SUITE-008 now enumerates TC-021, TC-022, TC-023, TC-025, TC-026, TC-034, TC-035, and TC-036 explicitly. |
 | FND-2504 | **DEFERRED TO EXISTING OWNER** | Issue #16 owns path/source binding and authoritative declaration metadata through the released shared contract; this change adds no local parser. |
 | FND-2505 | **EXPECTED EXTERNAL BOUNDARY** | NFR-003 requires an independent exact-head review record in addition to TC-036; the author record does not self-grant that evidence. |

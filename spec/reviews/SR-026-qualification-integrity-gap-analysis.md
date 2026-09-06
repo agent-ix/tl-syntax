@@ -3,7 +3,7 @@ id: SR-026
 title: Qualification-integrity ownership closing gap analysis
 type: SpecReview
 analysis: gap-analysis
-scope: "agent-ix/tl-syntax#19 implementation candidate a8f8a76; NFR-003; FR-006; NFR-002; qualification and shared-assurance lifecycle"
+scope: "agent-ix/tl-syntax#19 implementation candidate 6183568; NFR-003; FR-006; NFR-002; qualification and shared-assurance lifecycle"
 review_set: all
 relationships:
   - target: ix://agent-ix/tl-syntax/NFR-003
@@ -71,6 +71,6 @@ and checks declared bytes. None executes a producer.
 
 ## Conclusion
 
-Issue #19 has no unresolved high or medium gap at candidate a8f8a76. Exact-head
+Issue #19 has no unresolved high or medium gap at candidate 6183568. Exact-head
 complete local verification, dependency integration, and independent review
 remain before merge. Hosted CI was not dispatched.
