@@ -39,6 +39,7 @@ medium finding remains. This author review grants no merge authority.
 |---|---|---|---|---|
 | FND-2201 | medium | Candidate `ae16c3b` allowed unstaged edits to a tracked `.gitignore` to change which files the same indexed revision scanned. | FR-006-AC-8, TC-035 | implementation-bug-despite-evidence |
 | FND-2202 | low | Git path identities remain required to be UTF-8 even though selected file contents no longer are. | FR-006-AC-7, `git_files` | missing-requirement |
+| FND-2203 | medium | The two scratch repositories were created under the candidate's ignored `target/` tree. Their `.gitignore` test inputs could race a concurrent real-tree census, which deliberately enumerates all untracked ignore-policy paths before applying repository ignores. | FR-006-AC-7, FR-006-AC-8, TC-034, TC-035 | implementation-bug-despite-evidence |
 
 ## Dispositions
 
@@ -46,6 +47,7 @@ medium finding remains. This author review grants no merge authority.
 |---|---|---|
 | FND-2201 | **AUTHOR REMEDIATED; EXTERNAL CLEARANCE REQUIRED** | Candidate `1b6c1b5` runs `git diff --quiet` over every `.gitignore` path and TC-035 mutates a tracked rule before proving the specific refusal. |
 | FND-2202 | **ACCEPTED** | FR-006-AC-8 concerns arbitrary file content bytes. Repository-relative path strings were already an explicit fail-closed UTF-8 boundary in PR #18 and are not silently skipped. |
+| FND-2203 | **AUTHOR REMEDIATED; EXTERNAL CLEARANCE REQUIRED** | Both Git scratch repositories now use process-unique system temporary paths and remain cleanup-owned by `ScratchDirectory`; their policy fixtures cannot enter the real candidate census. |
 
 ## Finding-by-finding closure proposed to the independent reviewer
 
@@ -69,6 +71,14 @@ Focused TC-034, TC-035, and TC-026 runs pass. Strict Quire validation reports
 seven FR-006 criteria, and 29/29 Rust trace symbols. The exact final-head full
 local gate remains for the post-review-record commit. Hosted CI was not
 dispatched.
+
+A later full-gate run on the stacked issue #19 branch exposed FND-2203 under
+default parallel test scheduling. The same sandboxed run made Quoin report a
+false Quire version-premise failure; outside the sandbox, two concurrent
+isolated chains both passed, so no concurrency defect or local serialization is
+claimed. Quoin #353 owns only the misleading collapse of an `EPERM` execution
+error. The source-fixture fix requires a fresh exact-head full local gate and
+independent review of the new PR #22 head.
 
 ## Conclusion
 

@@ -39,6 +39,7 @@ or owned by existing shared-assurance tickets.
 | FND-2301 | low | Repository-relative Git path bytes remain a strict UTF-8 boundary rather than a byte-preserving path model. | FR-006-AC-7 | missing-requirement |
 | FND-2302 | low | SUITE-008 declares the local Rust command but explicitly remains outside Quoin attestation. | `spec/evidence/suites.md`, `tl-syntax#19` | correct-requirement-no-evidence |
 | FND-2303 | low | The shared traceability module still reports its known status-column and empty-inspection diagnostics. | `tl-syntax#16`, `quire-contract-ir#21` | correct-requirement-no-evidence |
+| FND-2304 | medium | Parallel tests could expose scratch-repository `.gitignore` inputs to the real-tree census and make a clean candidate fail based on scheduling. | FR-006-AC-7, FR-006-AC-8 | implementation-bug-despite-evidence |
 
 ## Dispositions
 
@@ -47,6 +48,7 @@ or owned by existing shared-assurance tickets.
 | FND-2301 | **ACCEPTED** | Enumeration refuses rather than skips a non-UTF-8 path. Expanding repository path identity is not required to close the content-byte finding and needs its own specification. |
 | FND-2302 | **DEFERRED** | Issue #19 already owns verification-suite identity and stable qualification without converting Quoin or Quire into a runner. |
 | FND-2303 | **DEFERRED** | Existing tickets own the shared contract corrections; this repository adds no local traceability implementation. |
+| FND-2304 | **AUTHOR REMEDIATED; EXTERNAL CLEARANCE REQUIRED** | Scratch Git repositories now live in process-unique system temporary paths and are removed on drop. |
 
 ## Architecture and ownership audit
 

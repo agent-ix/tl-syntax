@@ -26,3 +26,12 @@ description: "Chronological changes to the source-census reproducibility plan."
   against implementation candidate `1b6c1b5`. FND-2201 was fixed before the
   reviews closed; no high or medium finding remains. Exact-final-head local
   verification and independent review remain. Hosted CI was not dispatched.
+- **2026-09-06** - A default-parallel full gate on the stacked issue #19 branch
+  exposed one latent scheduling defect. Moved TC-034/TC-035 scratch Git
+  repositories out of the candidate source tree so their `.gitignore` inputs
+  cannot race the real census. An apparent Quoin concurrency failure was
+  falsified by two concurrent isolated chains outside the sandbox, so no local
+  mutex was retained; Quoin #353 owns only the misleading conversion of sandbox
+  `EPERM` into a version-premise message. No new runner, Make logic, or hosted
+  CI dispatch was added; fresh exact-head verification and independent review
+  remain.

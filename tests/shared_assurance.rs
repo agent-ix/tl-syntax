@@ -694,8 +694,12 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
     // Pin tracked, ordinary-untracked, and ignored paths through the production
     // helpers. The ordinary untracked file deliberately carries a forbidden
     // name so the control reaches the consumer, not only `source_sets`.
-    let fixture =
-        ScratchDirectory::create(root.join(format!("target/source-census-fixture-{process}")));
+    // Keep the scratch repository outside the source tree. Its own untracked
+    // `.gitignore` is a test input; exposing it concurrently to the real-tree
+    // census would make one correct test invalidate another correct test.
+    let fixture = ScratchDirectory::create(
+        std::env::temp_dir().join(format!("tl-syntax-source-census-fixture-{process}")),
+    );
     fs::create_dir_all(fixture.path().join("src")).expect("create tracked fixture area");
     fs::create_dir_all(fixture.path().join("tests/proptest-regressions"))
         .expect("create ignored fixture area");
@@ -833,8 +837,10 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
 #[test]
 fn source_scanning_is_byte_safe_and_independent_of_local_git_excludes() {
     let process = std::process::id();
+    // This fixture also carries an untracked `.gitignore` negative control, so
+    // it must not appear inside a concurrently scanned candidate source tree.
     let fixture = ScratchDirectory::create(
-        root().join(format!("target/source-census-reproducibility-{process}")),
+        std::env::temp_dir().join(format!("tl-syntax-source-census-reproducibility-{process}")),
     );
     fs::create_dir_all(fixture.path().join("src")).expect("create binary fixture area");
     fs::create_dir_all(fixture.path().join("tests")).expect("create untracked fixture area");
