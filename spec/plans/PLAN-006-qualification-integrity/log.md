@@ -26,3 +26,9 @@ description: "Chronological changes to the qualification-integrity ownership pla
   set included NFR-003 but its independently authored `spec` area population
   still expected 18 paths. Corrected that expectation to 19; the failure proves
   the coarse partition check remains independently load-bearing.
+- **2026-09-06** - Author review found two declaration-integrity defects before
+  closure: the suite note's numeric range accidentally included retired TC-024,
+  and sealed requirement statements paraphrased their authoritative rows. The
+  suite note now enumerates only live cases, every FR-006/NFR-003 declaration
+  statement is exact, FR-006-AC-8 is no longer omitted, and AA-001 carries the
+  human-owned first-stable qualified-record challenge.

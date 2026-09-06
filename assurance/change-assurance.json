@@ -62,57 +62,62 @@
       "requirements": [
         {
           "id": "FR-006-AC-1",
-          "statement": "The adopted component versions are classified by the packaged Engineering Assurance compatibility matrix, not by a local restatement of it.",
-          "source_ids": ["FR-006", "assurance-pins"]
+          "statement": "Every declared component version and consumed artifact digest is supplied to the packaged compatibility classifier, and the repository supplies neither a local compatibility mapping nor an internal mirror registry.",
+          "source_ids": ["FR-006", "NFR-003", "assurance-pins"]
         },
         {
           "id": "FR-006-AC-2",
-          "statement": "Native corpus, feature-boundary, and serialization results are produced by domain tools in a declared structured format and transcribed by Quoin without Quoin executing the producer.",
-          "source_ids": ["FR-006", "FR-005", "NFR-001"]
+          "statement": "The corpus conformance, corpus oracle, and feature-boundary results are structured, are produced by this repository's tools, and reach Quoin through the declared adapter without Quoin or Quire executing a producer.",
+          "source_ids": ["FR-006", "NFR-003", "FR-005", "NFR-001"]
         },
         {
           "id": "FR-006-AC-3",
-          "statement": "Static specification, obligation, and coverage facts come from a Quire export, and Quire does not execute a producer.",
+          "statement": "Static specification, obligation, and coverage facts for a candidate revision come from the Quire export named by the sealed record's impact snapshot.",
           "source_ids": ["FR-006", "TM-001"]
         },
         {
           "id": "FR-006-AC-5",
-          "statement": "Pass, fail, unavailable, unsupported, inconclusive, not-computed, malformed, partial, stale, suspect, vacuous, and tampered remain twelve distinguishable states across the intake path.",
-          "source_ids": ["FR-006", "NFR-002"]
+          "statement": "Each of the twelve verification outcomes is demonstrated by a case that produced it, and each negative case is paired with a positive control that was observed to be accepted.",
+          "source_ids": ["FR-006", "NFR-003"]
         },
         {
           "id": "FR-006-AC-6",
           "statement": "No live repository source implements or names the deleted generic evidence envelope, manifest, retention store, tool-identity lock, anchor file, or aggregate verdict. Immutable review and plan records that describe the deleted subjects, the declaring test, and an inert directory marker are explicit non-live exclusions.",
-          "source_ids": ["FR-006", "NFR-002"]
+          "source_ids": ["FR-006", "NFR-003"]
         },
         {
           "id": "FR-006-AC-7",
-          "statement": "Every version-control-tracked non-archival path is present in the exact reviewed live-source set regardless of its name or extension; non-ignored untracked live paths are reported separately; ignored generated paths do not redefine the tracked population; and unavailable enumeration is a refusal.",
-          "source_ids": ["FR-006", "NFR-002"]
+          "statement": "Every version-control-tracked non-archival path is present in the exact reviewed live-source set regardless of its name or extension; a changed per-area population is diagnosed before the exact path delta; every ordinary-untracked live path is scanned, named, and refuses a clean reviewed population; repository-authored ignored generated paths do not redefine that population; and unavailable enumeration is a typed refusal rather than an intercepted panic.",
+          "source_ids": ["FR-006", "NFR-003"]
+        },
+        {
+          "id": "FR-006-AC-8",
+          "statement": "The deleted-identity scan accepts arbitrary non-UTF-8 tracked bytes, still detects an embedded forbidden ASCII identity with its path named, includes ordinary-untracked paths even when workstation or administrative Git excludes name them, and refuses untracked or index-divergent `.gitignore` policy.",
+          "source_ids": ["FR-006", "NFR-003"]
         },
         {
           "id": "NFR-003-AC-1",
-          "statement": "Every declared shared component version and consumed artifact digest is classified by the packaged Engineering Assurance compatibility matrix, without a local mapping or internal mirror substitute.",
+          "statement": "Every declared shared component version and consumed artifact digest is classified by the packaged Engineering Assurance compatibility matrix, with no repository-local mapping or internal mirror substitute.",
           "source_ids": ["NFR-003", "assurance-pins"]
         },
         {
           "id": "NFR-003-AC-2",
-          "statement": "SUITE-008 is an exact-head local verification result and is not claimed as a Quoin proof attestation.",
+          "statement": "SUITE-008 identifies the exact local shared-assurance test command, and neither the change-assurance declaration nor any Quoin proof obligation claims that SUITE-008 was attested; its result is valid only for the exact-head review that reports it.",
           "source_ids": ["NFR-003", "SUR-001"]
         },
         {
           "id": "NFR-003-AC-3",
-          "statement": "The reviewed candidate source identity is complete, byte-safe, and independent of mutable workstation or administrative ignore policy.",
+          "statement": "The candidate source identity covers every non-archival tracked path, refuses every ordinary-untracked live path and mutable ignore policy, and scans arbitrary tracked bytes without allowing a forbidden deleted identity to hide.",
           "source_ids": ["NFR-003", "FR-006"]
         },
         {
           "id": "NFR-003-AC-4",
-          "statement": "Every attested proof result derives from declared producer bytes, absent or malformed input is refused, and neither Quire nor Quoin executes a producer.",
+          "statement": "Every attested proof result is derived from a declared producer's structured bytes, with absent, empty, unreadable, or foreign-protocol input refused, and neither Quire nor Quoin executes a producer.",
           "source_ids": ["NFR-003", "FR-006"]
         },
         {
           "id": "NFR-003-AC-5",
-          "statement": "The twelve verification outcomes remain distinguishable and no non-success outcome is reported as passing.",
+          "statement": "Pass, fail, unavailable, unsupported, inconclusive, not-computed, malformed, partial, stale, suspect, vacuous, and tampered remain distinguishable, and no non-success outcome is reported as passing.",
           "source_ids": ["NFR-003", "FR-006"]
         }
       ],
@@ -135,7 +140,7 @@
         {
           "id": "PRESERVE-manual-ci",
           "statement": "Hosted CI remains workflow_dispatch only and is not dispatched by this change.",
-          "source_ids": ["NFR-002"]
+          "source_ids": ["NFR-003"]
         },
         {
           "id": "PRESERVE-local-suite-boundary",

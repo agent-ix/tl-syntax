@@ -46,8 +46,8 @@ unreadable. The retirement is recorded alongside `FR-006-AC-4` and `TC-024` in
 now retains no evidence of its own.
 
 SUITE-008 is a local verification suite, not a structured-result producer and
-not an attestation input to SUITE-006. Its TC-021 through TC-026 and TC-034
-through TC-036
+not an attestation input to SUITE-006. Its TC-021, TC-022, TC-023, TC-025,
+TC-026, TC-034, TC-035, and TC-036
 outcomes are reported by the local gate and exact-head pull-request record; the
 Quoin record does not claim those tests ran. Git is required because TC-034
 compares the checked-out version-control inventory with the reviewed live path
