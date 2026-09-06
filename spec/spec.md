@@ -59,9 +59,11 @@ the sealed assurance chain to check compatibility and determinism.
 The stakeholder requirements define portability and interoperability needs.
 Functional requirements own interval validation, graph validation, identity,
 versioning, corpus publication, bounded signal declarations, proposition
-binding, and caller-source context. Non-functional requirements constrain the
-feature boundary and deterministic behavior. The test matrix maps every
-acceptance criterion to executable or inspection evidence.
+binding, caller-source context, and shared-assurance intake behavior.
+Non-functional requirements constrain the feature boundary, deterministic
+domain behavior, and the meaning and lifecycle of candidate-qualification
+claims. The test matrix maps every acceptance criterion to executable or
+inspection evidence.
 
 ## References
 
