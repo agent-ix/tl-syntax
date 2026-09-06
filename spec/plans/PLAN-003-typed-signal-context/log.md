@@ -40,3 +40,9 @@ description: "Chronological changes to the typed signal and caller context plan 
   closing reviews to name that proposed downstream contract. PR creation and
   landing remain gated on PR #14 landing and explicit reviewer clearance;
   hosted CI was not dispatched.
+- **2026-09-06** - Integrated the exact tree independently cleared for PR #18
+  and landed on `main` as `ba292615`. The feature branch now differs from the
+  landed base only by issue #15 content, and its fail-closed live-source census
+  names all 77 non-archival tracked inputs introduced by that content. Final
+  exact-head local verification and independent pull-request review remain;
+  hosted CI was not dispatched.
