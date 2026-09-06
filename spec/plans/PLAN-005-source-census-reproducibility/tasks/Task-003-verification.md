@@ -2,7 +2,7 @@
 id: Task-003
 title: "Verification and closing review"
 type: Task
-status: pending
+status: in_progress
 track: Review
 priority: P0
 relationships:

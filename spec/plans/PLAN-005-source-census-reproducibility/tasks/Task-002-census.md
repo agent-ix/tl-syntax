@@ -2,7 +2,7 @@
 id: Task-002
 title: "Reproducible byte-level census"
 type: Task
-status: in_progress
+status: done
 track: Verification
 priority: P0
 relationships:
