@@ -17,6 +17,8 @@ description: "Chronological changes to the source-census reproducibility plan."
 - **2026-09-06** - Implemented fallible Git/source-scan helpers, tracked-only
   `.gitignore` policy, byte-level forbidden-identity matching, independently
   reachable area and exact-path diagnostics, and TC-035 controls for binary
-  content plus workstation and administrative excludes. Focused TC-034 and
-  TC-035 pass; final review and full local verification remain. Hosted CI was
-  not dispatched.
+  content plus workstation and administrative excludes. A code-review pass
+  found that unstaged edits to a tracked `.gitignore` could still alter the
+  population; the candidate now refuses both modified and untracked ignore
+  policy. Focused TC-034 and TC-035 pass; final review and full local
+  verification remain. Hosted CI was not dispatched.

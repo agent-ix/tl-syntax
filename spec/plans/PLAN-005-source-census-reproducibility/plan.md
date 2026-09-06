@@ -47,7 +47,9 @@ second, and explicitly refuses any ordinary-untracked delta after scanning it.
 TC-035 extends the scratch repository with a tracked non-UTF-8 input and two
 ordinary-untracked paths named by mutable Git excludes. Benign arbitrary bytes
 must scan successfully; embedding a forbidden ASCII identity must return a
-path-specific refusal. Both locally excluded paths must remain visible.
+path-specific refusal. Both locally excluded paths must remain visible, while
+an untracked `.gitignore` or unstaged change to tracked ignore policy refuses
+enumeration.
 
 The exact candidate runs focused TC-034/TC-035, strict Quire validation and
 coverage, then full local `make ci CARGO_TARGET_DIR=target/cargo-review`.
@@ -56,7 +58,8 @@ Hosted CI is not dispatched.
 ## Exit criteria
 
 1. Workstation and `.git/info` excludes cannot narrow the ordinary-untracked
-   source set; repository `.gitignore` rules still exclude generated paths.
+   source set; only index-matching tracked `.gitignore` rules exclude generated
+   paths.
 2. Arbitrary bytes are scanned without UTF-8 decoding, and forbidden ASCII
    identities remain detectable with the source path named.
 3. Expected refusal controls use explicit errors and produce no panic-hook

@@ -461,6 +461,33 @@ fn source_sets(root: &Path) -> CensusResult<(BTreeSet<String>, BTreeSet<String>)
         ));
     }
 
+    let ignore_diff = Command::new("git")
+        .args([
+            "diff",
+            "--quiet",
+            "--no-ext-diff",
+            "--",
+            ":(glob)**/.gitignore",
+        ])
+        .current_dir(root)
+        .output()
+        .map_err(|error| format!("git diff could not inspect ignore policy: {error}"))?;
+    match ignore_diff.status.code() {
+        Some(0) => {}
+        Some(1) => {
+            return Err(
+                "the source census refuses tracked .gitignore bytes that differ from the index"
+                    .to_owned(),
+            );
+        }
+        code => {
+            return Err(format!(
+                "git diff could not inspect tracked .gitignore policy (status {code:?}): {}",
+                String::from_utf8_lossy(&ignore_diff.stderr)
+            ));
+        }
+    }
+
     let mut scanned = tracked.clone();
     for entry in git_files(
         root,
@@ -894,6 +921,20 @@ fn source_scanning_is_byte_safe_and_independent_of_local_git_excludes() {
         refusal.contains("src/tracked.bin") && refusal.contains("legacy_evidence_view"),
         "the binary scan refused for the wrong reason: {refusal}"
     );
+
+    fs::write(
+        fixture.path().join(".gitignore"),
+        "generated/\ntests/workstation-hidden.rs\n",
+    )
+    .expect("mutate tracked ignore policy");
+    let refusal = source_sets(fixture.path())
+        .expect_err("unstaged tracked ignore-policy bytes changed the source set");
+    assert!(
+        refusal.contains(".gitignore bytes") && refusal.contains("differ from the index"),
+        "the modified ignore-policy refusal was not specific: {refusal}"
+    );
+    fs::write(fixture.path().join(".gitignore"), "generated/\n")
+        .expect("restore tracked ignore policy");
 
     fs::write(
         fixture.path().join("tests/.gitignore"),

@@ -40,7 +40,7 @@ evidence envelope, identity registry, retention layer, or shared-contract copy.
 | FND-2101 | **SPECIFIED; EXTERNAL CLEARANCE REQUIRED** | TC-034 checks the independently authored area map first, then exact paths. |
 | FND-2102 | **SPECIFIED; EXTERNAL CLEARANCE REQUIRED** | FR-006-AC-8 requires byte-level search with a benign binary control and an embedded-identity refusal. |
 | FND-2103 | **SPECIFIED; EXTERNAL CLEARANCE REQUIRED** | FR-006-AC-7 now states scan, report, and refusal explicitly and explains why. |
-| FND-2104 | **SPECIFIED; EXTERNAL CLEARANCE REQUIRED** | Only per-directory repository `.gitignore` rules define generated exclusions; both external sources receive falsifying controls. |
+| FND-2104 | **SPECIFIED; EXTERNAL CLEARANCE REQUIRED** | Only index-matching tracked `.gitignore` rules define generated exclusions; untracked/modified policy and both external sources receive falsifying controls. |
 | FND-2105 | **SPECIFIED; EXTERNAL CLEARANCE REQUIRED** | Fallible helpers return explicit errors, so controls inspect refusals without intercepting panics. |
 
 ## Composite analysis
@@ -53,8 +53,9 @@ evidence envelope, identity registry, retention layer, or shared-contract copy.
   producer set and the byte-level read site.
 - **Falsifiability:** A scratch repository supplies a tracked non-UTF-8 file,
   toggles an embedded forbidden byte sequence, and names ordinary untracked
-  paths through both `core.excludesFile` and `.git/info/exclude`. Each case has
-  an accepted neighboring control.
+  paths through both `core.excludesFile` and `.git/info/exclude`, then mutates
+  tracked and untracked `.gitignore` policy. Each case has an accepted
+  neighboring control.
 - **Integrity:** Exact paths remain the final authority. The area map is checked
   first only to make its diagnostic reachable; it cannot replace exact
   equality or admit a within-area substitution.

@@ -23,5 +23,6 @@ area and exact-path diagnostics observable.
 ## Completion evidence
 
 TC-034 and TC-035 exercise every expected success/refusal boundary without
-intercepted panics. Machine-local excludes cannot hide an ordinary source, and
-a non-UTF-8 tracked file remains searchable for forbidden identities.
+intercepted panics. Machine-local excludes cannot hide an ordinary source,
+modified or untracked ignore policy refuses the census, and a non-UTF-8 tracked
+file remains searchable for forbidden identities.

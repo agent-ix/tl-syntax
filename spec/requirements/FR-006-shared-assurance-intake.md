@@ -63,7 +63,8 @@ framework.
   enumeration failure.
 - Repository-authored `.gitignore` files shall be the only ignore rules applied
   to the ordinary-untracked census. Workstation `core.excludesFile` and
-  administrative `.git/info/exclude` rules shall not hide a live input.
+  administrative `.git/info/exclude` rules shall not hide a live input, and the
+  active `.gitignore` bytes shall match the version-control index.
 - The published crate shall depend on neither Quire nor Quoin at runtime.
 
 ## Acceptance Criteria
@@ -76,7 +77,7 @@ framework.
 | FR-006-AC-5 | Each of the twelve verification outcomes is demonstrated by a case that produced it, and each negative case is paired with a positive control that was observed to be accepted. | Test (TC-025) |
 | FR-006-AC-6 | No live repository source implements or names the deleted generic evidence envelope, manifest, retention store, tool-identity lock, anchor file, or aggregate verdict. Immutable review and plan records that describe the deleted subjects, the declaring test, and an inert directory marker are explicit non-live exclusions. | Test (TC-026) |
 | FR-006-AC-7 | Every version-control-tracked non-archival path is present in the exact reviewed live-source set regardless of its name or extension; a changed per-area population is diagnosed before the exact path delta; every ordinary-untracked live path is scanned, named, and refuses a clean reviewed population; repository-authored ignored generated paths do not redefine that population; and unavailable enumeration is a typed refusal rather than an intercepted panic. | Test (TC-034) |
-| FR-006-AC-8 | The deleted-identity scan accepts arbitrary non-UTF-8 tracked bytes, still detects an embedded forbidden ASCII identity with its path named, and includes ordinary-untracked paths even when workstation or administrative Git excludes name them. | Test (TC-035) |
+| FR-006-AC-8 | The deleted-identity scan accepts arbitrary non-UTF-8 tracked bytes, still detects an embedded forbidden ASCII identity with its path named, includes ordinary-untracked paths even when workstation or administrative Git excludes name them, and refuses untracked or index-divergent `.gitignore` policy. | Test (TC-035) |
 
 ### Source-census reproducibility
 
@@ -84,9 +85,10 @@ The clean-population refusal in FR-006-AC-7 is deliberate: an unstaged live
 source is scanned so it cannot hide a deleted identity, then the gate fails
 because the file is not part of the reviewed tracked population. Generated
 paths are excluded only by version-controlled per-directory `.gitignore`
-rules. A developer-global ignore file and `.git/info/exclude` are mutable local
-state, so accepting either as census policy would let two clean checkouts scan
-different inputs.
+rules whose active bytes match the Git index. A developer-global ignore file,
+`.git/info/exclude`, an untracked `.gitignore`, or unstaged edits to a tracked
+`.gitignore` are mutable local state, so accepting any of them as census policy
+would let two checkouts of one revision scan different inputs.
 
 ### Retired criteria
 
