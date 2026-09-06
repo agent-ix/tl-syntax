@@ -15,3 +15,10 @@ description: "Chronological changes to the qualification-integrity ownership pla
   retired identities, and kept Make execution control plus the first-stable
   qualified-record obligation explicitly unclosed. Hosted CI was not
   dispatched.
+- **2026-09-06** - Added NFR-003 to the existing Quoin change declaration,
+  bound its five criteria, and implemented TC-036 in the existing native
+  shared-assurance suite. The test fixes SUITE-008's command identity, proves it
+  is not a proof obligation, and checks the structured owners and lifecycle
+  triggers for the Make and stable-record limitations. Existing tests now trace
+  the other NFR-003 criteria, and the exact source census includes the one new
+  non-archival path. No new tooling or hosted CI dispatch was added.

@@ -46,7 +46,7 @@ NFR-003 says what may be inferred from it.
 | Metric | Target | Threshold | Method |
 |---|---|---|---|
 | Declared shared components classified by the packaged matrix | 4/4 | 4/4 | Test |
-| Local verification suites misrepresented as Quoin proof inputs | 0 | 0 | Test and review |
+| Local verification suites misrepresented as Quoin proof inputs | 0 | 0 | Test |
 | Reviewed live-source paths omitted or admitted by mutable machine policy | 0 | 0 | Test |
 | Attested results not derived from declared producer bytes | 0 | 0 | Test |
 | Non-success outcomes classified as passing | 0 | 0 | Test |

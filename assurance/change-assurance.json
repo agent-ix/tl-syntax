@@ -14,6 +14,7 @@
     "FR-006": "spec/requirements/FR-006-shared-assurance-intake.md",
     "NFR-001": "spec/requirements/NFR-001-no-std-feature-boundary.md",
     "NFR-002": "spec/requirements/NFR-002-determinism-and-integrity.md",
+    "NFR-003": "spec/requirements/NFR-003-qualification-integrity.md",
     "FR-005": "spec/requirements/FR-005-conformance-corpus.md",
     "TM-001": "spec/test-matrix.md",
     "SUR-001": "spec/evidence/suites.md",
@@ -44,6 +45,7 @@
       { "source_id": "FR-006", "kind": "requirement" },
       { "source_id": "NFR-001", "kind": "requirement" },
       { "source_id": "NFR-002", "kind": "requirement" },
+      { "source_id": "NFR-003", "kind": "requirement" },
       { "source_id": "FR-005", "kind": "requirement" },
       { "source_id": "TM-001", "kind": "test" },
       { "source_id": "SUR-001", "kind": "test" },
@@ -87,6 +89,31 @@
           "id": "FR-006-AC-7",
           "statement": "Every version-control-tracked non-archival path is present in the exact reviewed live-source set regardless of its name or extension; non-ignored untracked live paths are reported separately; ignored generated paths do not redefine the tracked population; and unavailable enumeration is a refusal.",
           "source_ids": ["FR-006", "NFR-002"]
+        },
+        {
+          "id": "NFR-003-AC-1",
+          "statement": "Every declared shared component version and consumed artifact digest is classified by the packaged Engineering Assurance compatibility matrix, without a local mapping or internal mirror substitute.",
+          "source_ids": ["NFR-003", "assurance-pins"]
+        },
+        {
+          "id": "NFR-003-AC-2",
+          "statement": "SUITE-008 is an exact-head local verification result and is not claimed as a Quoin proof attestation.",
+          "source_ids": ["NFR-003", "SUR-001"]
+        },
+        {
+          "id": "NFR-003-AC-3",
+          "statement": "The reviewed candidate source identity is complete, byte-safe, and independent of mutable workstation or administrative ignore policy.",
+          "source_ids": ["NFR-003", "FR-006"]
+        },
+        {
+          "id": "NFR-003-AC-4",
+          "statement": "Every attested proof result derives from declared producer bytes, absent or malformed input is refused, and neither Quire nor Quoin executes a producer.",
+          "source_ids": ["NFR-003", "FR-006"]
+        },
+        {
+          "id": "NFR-003-AC-5",
+          "statement": "The twelve verification outcomes remain distinguishable and no non-success outcome is reported as passing.",
+          "source_ids": ["NFR-003", "FR-006"]
         }
       ],
       "preservation_constraints": [
@@ -109,6 +136,11 @@
           "id": "PRESERVE-manual-ci",
           "statement": "Hosted CI remains workflow_dispatch only and is not dispatched by this change.",
           "source_ids": ["NFR-002"]
+        },
+        {
+          "id": "PRESERVE-local-suite-boundary",
+          "statement": "SUITE-008 is the local cargo test --test shared_assurance --all-features command. Its result belongs to the exact-head pull-request review and is not a structured producer input or Quoin proof attestation.",
+          "source_ids": ["NFR-003", "SUR-001"]
         }
       ],
       "proof_obligations": [
@@ -190,6 +222,12 @@
           "id": "UNKNOWN-make-execution-control-guard-removed",
           "statement": "At base 4cb5787 an invalid Rust item made ordinary make ci stop at fmt-check and exit 2; make -k ci classified eight paths as failed or unmade, while the other five were unaffected by that compile fault and were not measured under their own faults. With global .IGNORE:, the same eight paths emitted ignored failures, Make treated all thirteen prerequisites as successful, and make ci exited 0. Quoin constrains producer bytes only when a record is actually produced; this chain retains nothing locally, and under .IGNORE: its own refusal was suppressed and no record was produced. The owner accepts only this measured spelling for pre-stable development and must re-evaluate the deviation before the first stable release candidate; seventeen other spellings and use-specific qualification remain open under agent-ix/engineering-assurance#11.",
           "disposition": "accepted",
+          "owner": "tl-syntax-release-owner"
+        },
+        {
+          "id": "UNKNOWN-stable-qualified-record-deferred",
+          "statement": "No active qualified record is claimed for pre-stable development. Before the first stable release candidate, the tl-syntax release owner must re-apply the preservation constraint, re-evaluate the Make execution-control limitation, and require a current qualified record under agent-ix/engineering-assurance#11.",
+          "disposition": "open",
           "owner": "tl-syntax-release-owner"
         }
       ]
