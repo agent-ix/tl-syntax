@@ -32,3 +32,9 @@ description: "Chronological changes to the qualification-integrity ownership pla
   suite note now enumerates only live cases, every FR-006/NFR-003 declaration
   statement is exact, FR-006-AC-8 is no longer omitted, and AA-001 carries the
   human-owned first-stable qualified-record challenge.
+- **2026-09-06** - Completed author code review SR-025 and gap analysis SR-026
+  against candidate a8f8a76. The records include the independently caught area
+  count, declaration-statement, omitted-AC-8, and retired-TC range defects; no
+  unresolved high or medium gap remains. Exact-final-head full local CI,
+  dependency integration, and independent review remain. Hosted CI was not
+  dispatched.
