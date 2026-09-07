@@ -342,7 +342,7 @@ fn git_files(root: &Path, arguments: &[&str]) -> Vec<String> {
         .collect()
 }
 
-const EXPECTED_LIVE_TRACKED: [&str; 66] = [
+const EXPECTED_LIVE_TRACKED: [&str; 78] = [
     ".agent/rules/writing_rust.md",
     ".github/CODEOWNERS",
     ".github/workflows/ci.yml",
@@ -398,17 +398,29 @@ const EXPECTED_LIVE_TRACKED: [&str; 66] = [
     "spec/requirements/FR-004-versioned-serialization.md",
     "spec/requirements/FR-005-conformance-corpus.md",
     "spec/requirements/FR-006-shared-assurance-intake.md",
+    "spec/requirements/FR-007-typed-signal-context.md",
     "spec/requirements/NFR-001-no-std-feature-boundary.md",
     "spec/requirements/NFR-002-determinism-and-integrity.md",
     "spec/requirements/StR-001-embedded-consumers.md",
     "spec/requirements/StR-002-temporal-interoperability.md",
+    "spec/requirements/StR-003-formal-temporal-frontends.md",
     "spec/spec.md",
     "spec/test-matrix.md",
+    "src/bounded_string.rs",
+    "src/context.rs",
+    "src/context_document.rs",
     "src/document.rs",
     "src/lib.rs",
+    "src/signal.rs",
+    "src/signal_document.rs",
     "src/syntax.rs",
     "tests/feature_boundary.rs",
+    "tests/fixtures/invalid-nonboolean-binding.json",
+    "tests/fixtures/invalid-partial-context.json",
+    "tests/fixtures/valid-requirement-context.json",
+    "tests/fixtures/valid-signal-catalog.json",
     "tests/integration.rs",
+    "tests/typed_signal_context.rs",
 ];
 
 const FORBIDDEN: [&str; 5] = [
@@ -716,9 +728,9 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         ("corpus", 14),
         ("examples", 1),
         ("scripts", 7),
-        ("spec", 18),
-        ("src", 3),
-        ("tests", 2),
+        ("spec", 20),
+        ("src", 8),
+        ("tests", 7),
     ]
     .into_iter()
     .map(|(area, count)| (area.to_owned(), count))

@@ -1,0 +1,11 @@
+{
+  "schema_version": "tl-syntax.signal-catalog/v1",
+  "signals": [
+    {
+      "id": 1,
+      "name": "retry_count",
+      "domain": { "kind": "integer", "minimum": 0, "maximum": 8 }
+    }
+  ],
+  "bindings": [{ "proposition": 7, "signal": 1 }]
+}

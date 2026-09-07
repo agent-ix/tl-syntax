@@ -282,7 +282,7 @@ fn formula_wire_decode_stops_at_the_document_node_limit() {
     )));
 }
 
-// Trace: TC-011, FR-004-AC-3
+// Trace: TC-011, TC-032, FR-004-AC-3, FR-007-AC-5
 #[test]
 fn unknown_node_fields_and_invalid_proposition_maps_are_rejected_on_decode() {
     let unknown_formula_document_field = r#"{
@@ -378,7 +378,7 @@ fn proposition_map_round_trips_in_stable_order() {
     assert_eq!(FormulaSchemaVersion::V1.as_str(), "tl-syntax.formula/v1");
 }
 
-// Trace: TC-012, TC-013, TC-014, FR-005-AC-1, FR-005-AC-2, FR-005-AC-3, NFR-002-AC-2, StR-002-VC-2
+// Trace: TC-012, TC-013, TC-014, TC-032, FR-005-AC-1, FR-005-AC-2, FR-005-AC-3, FR-007-AC-5, NFR-002-AC-2, StR-002-VC-2
 #[test]
 fn shared_corpus_is_complete_stable_and_self_consistent() {
     use std::{collections::BTreeSet, fs, path::PathBuf};

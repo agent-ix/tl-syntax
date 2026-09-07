@@ -1,0 +1,8 @@
+{
+  "schema_version": "tl-syntax.requirement-context/v1",
+  "requirement_id": "agent-ix/config/FR-006",
+  "requirement_revision": "17",
+  "clause_id": "AC-1",
+  "anchor": "handler.overlay.accepted",
+  "source_span": { "start": 128, "end": 196 }
+}
