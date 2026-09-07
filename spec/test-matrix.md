@@ -69,6 +69,6 @@ relationships:
 | TC-029 | Reject every malformed catalog, bound, direct binding, and resource-limit boundary | Property | P0 | FR-007-AC-2 | ✅ implemented |
 | TC-030 | Bind every formula proposition occurrence in node order through already-validated Boolean signals and reject the first missing occurrence | Integration | P0 | FR-007-AC-3, StR-003-VC-1 | ✅ implemented |
 | TC-031 | Preserve complete requirement context, explicit consumer absence, and reject partial or malformed present wire forms | Integration | P0 | FR-007-AC-4, StR-003-VC-2, NFR-002-AC-5 | ✅ implemented |
-| TC-032 | Preserve the exact closed formula-v1 and proposition-map-v1 wire contracts | Snapshot | P0 | FR-007-AC-5 | ✅ implemented |
+| TC-032 | Preserve the exact closed formula-v1 and proposition-map-v1 wire contracts; discharged by the existing compatibility snapshot tests | Snapshot | P0 | FR-007-AC-5 | ✅ implemented |
 | TC-033 | Compile borrowed signal and source-context APIs across the no-default/alloc/serde matrix | Compile | P0 | NFR-001-AC-1, NFR-001-AC-2 | ✅ implemented |
 | TC-034 | Prove the live-source partition is exact, name-independent, fail-closed, and distinguishes tracked, ordinary-untracked, ignored, and archival paths | Integration | P0 | FR-006-AC-7 | ✅ implemented |

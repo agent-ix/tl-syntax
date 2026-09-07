@@ -240,6 +240,9 @@ fn catalog_wire_refuses_unknown_and_over_limit_forms() {
     for mutation in [
         "version",
         "domain",
+        "boolean-domain-field",
+        "integer-domain-field",
+        "decimal-domain-field",
         "integer-bounds",
         "decimal-bounds",
         "decimal-scale",
@@ -251,6 +254,9 @@ fn catalog_wire_refuses_unknown_and_over_limit_forms() {
         match mutation {
             "version" => candidate["schema_version"] = "tl-syntax.signal-catalog/v2".into(),
             "domain" => candidate["signals"][0]["domain"]["kind"] = "opaque".into(),
+            "boolean-domain-field" => candidate["signals"][0]["domain"]["minimum"] = 0.into(),
+            "integer-domain-field" => candidate["signals"][1]["domain"]["scale"] = 0.into(),
+            "decimal-domain-field" => candidate["signals"][2]["domain"]["maximum"] = 8.into(),
             "integer-bounds" => candidate["signals"][1]["domain"]["minimum"] = 9.into(),
             "decimal-bounds" => {
                 candidate["signals"][2]["domain"]["minimum_coefficient"] = 1_251.into()
@@ -277,6 +283,20 @@ fn catalog_wire_refuses_unknown_and_over_limit_forms() {
     );
     let error = serde_json::from_str::<SignalCatalogDocument>(&oversized).unwrap_err();
     assert!(error.to_string().contains("wire limit"));
+
+    let maximum_name = "x".repeat(MAX_SIGNAL_NAME_BYTES);
+    let maximum_name_document = format!(
+        r#"{{"schema_version":"tl-syntax.signal-catalog/v1","signals":[{{"id":1,"name":"{maximum_name}","domain":{{"kind":"boolean"}}}}],"bindings":[]}}"#
+    );
+    assert!(serde_json::from_str::<SignalCatalogDocument>(&maximum_name_document).is_ok());
+
+    let oversized_name = "x".repeat(MAX_SIGNAL_NAME_BYTES + 1);
+    let oversized_name_document = format!(
+        r#"{{"schema_version":"tl-syntax.signal-catalog/v1","signals":[{{"id":1,"name":"{oversized_name}","domain":{{"kind":"boolean"}}}}],"bindings":[]}}"#
+    );
+    let error =
+        serde_json::from_str::<SignalCatalogDocument>(&oversized_name_document).unwrap_err();
+    assert!(error.to_string().contains("signal name"));
 
     let repeated_binding = r#"{"proposition":1,"signal":1}"#;
     let bindings = std::iter::repeat(repeated_binding)
@@ -439,6 +459,30 @@ fn every_context_refusal_has_a_neighboring_positive_control() {
                 ..
             }) if observed == field
         ));
+    }
+
+    let maximum_wire_field = "x".repeat(MAX_REQUIREMENT_CONTEXT_FIELD_BYTES);
+    let oversized_wire_field = "x".repeat(MAX_REQUIREMENT_CONTEXT_FIELD_BYTES + 1);
+    for field in [
+        "requirement_id",
+        "requirement_revision",
+        "clause_id",
+        "anchor",
+    ] {
+        let document = r#"{"schema_version":"tl-syntax.requirement-context/v1","requirement_id":"REQ","requirement_revision":"1","clause_id":"AC","anchor":"handler","source_span":{"start":1,"end":2}}"#;
+        let mut value: serde_json::Value = serde_json::from_str(document).unwrap();
+        value[field] = maximum_wire_field.clone().into();
+        assert!(
+            serde_json::from_str::<RequirementContextDocument>(&value.to_string()).is_ok(),
+            "maximum wire field {field} was rejected"
+        );
+        value[field] = oversized_wire_field.clone().into();
+        let error =
+            serde_json::from_str::<RequirementContextDocument>(&value.to_string()).unwrap_err();
+        assert!(
+            error.to_string().contains("caller context field"),
+            "oversized wire field {field} was accepted or refused opaquely: {error}"
+        );
     }
 
     let valid: serde_json::Value =

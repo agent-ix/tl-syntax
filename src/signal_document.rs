@@ -33,8 +33,17 @@ impl SignalCatalogSchemaVersion {
 #[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
 pub struct OwnedSignalDeclaration {
     id: SignalId,
+    #[cfg_attr(feature = "serde", serde(deserialize_with = "deserialize_signal_name"))]
     name: String,
     domain: SignalDomain,
+}
+
+#[cfg(feature = "serde")]
+fn deserialize_signal_name<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    crate::bounded_string::deserialize(deserializer, crate::MAX_SIGNAL_NAME_BYTES, "signal name")
 }
 
 impl OwnedSignalDeclaration {

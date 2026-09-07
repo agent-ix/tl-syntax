@@ -5,6 +5,8 @@
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
+#[cfg(feature = "alloc")]
+mod bounded_string;
 mod context;
 mod signal;
 mod syntax;

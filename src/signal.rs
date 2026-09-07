@@ -20,28 +20,10 @@ pub struct SignalId(pub u32);
 
 /// Checked inclusive bounds for a signed integer signal.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-#[cfg_attr(feature = "serde", serde(try_from = "IntegerSignalDomainWire"))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct IntegerSignalDomain {
     minimum: i64,
     maximum: i64,
-}
-
-#[cfg(feature = "serde")]
-#[derive(serde::Deserialize)]
-#[serde(deny_unknown_fields)]
-struct IntegerSignalDomainWire {
-    minimum: i64,
-    maximum: i64,
-}
-
-#[cfg(feature = "serde")]
-impl TryFrom<IntegerSignalDomainWire> for IntegerSignalDomain {
-    type Error = SignalDomainError;
-
-    fn try_from(wire: IntegerSignalDomainWire) -> Result<Self, Self::Error> {
-        Self::new(wire.minimum, wire.maximum)
-    }
 }
 
 impl IntegerSignalDomain {
@@ -67,34 +49,11 @@ impl IntegerSignalDomain {
 
 /// Checked inclusive coefficient bounds and scale for a fixed-decimal signal.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-#[cfg_attr(feature = "serde", serde(try_from = "FixedDecimalSignalDomainWire"))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct FixedDecimalSignalDomain {
     minimum_coefficient: i64,
     maximum_coefficient: i64,
     scale: u8,
-}
-
-#[cfg(feature = "serde")]
-#[derive(serde::Deserialize)]
-#[serde(deny_unknown_fields)]
-struct FixedDecimalSignalDomainWire {
-    minimum_coefficient: i64,
-    maximum_coefficient: i64,
-    scale: u8,
-}
-
-#[cfg(feature = "serde")]
-impl TryFrom<FixedDecimalSignalDomainWire> for FixedDecimalSignalDomain {
-    type Error = SignalDomainError;
-
-    fn try_from(wire: FixedDecimalSignalDomainWire) -> Result<Self, Self::Error> {
-        Self::new(
-            wire.minimum_coefficient,
-            wire.maximum_coefficient,
-            wire.scale,
-        )
-    }
 }
 
 impl FixedDecimalSignalDomain {
@@ -191,7 +150,7 @@ impl<'de> serde::Deserialize<'de> for SignalDomain {
         #[derive(serde::Deserialize)]
         #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
         enum Wire {
-            Boolean,
+            Boolean {},
             Integer {
                 minimum: i64,
                 maximum: i64,
@@ -204,7 +163,7 @@ impl<'de> serde::Deserialize<'de> for SignalDomain {
         }
 
         match Wire::deserialize(deserializer)? {
-            Wire::Boolean => Ok(Self::Boolean),
+            Wire::Boolean {} => Ok(Self::Boolean),
             Wire::Integer { minimum, maximum } => IntegerSignalDomain::new(minimum, maximum)
                 .map(Self::Integer)
                 .map_err(D::Error::custom),

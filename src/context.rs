@@ -146,3 +146,31 @@ impl fmt::Display for RequirementContextError {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    extern crate std;
+
+    use super::*;
+
+    // Trace: TC-033, NFR-001-AC-1
+    #[test]
+    fn requirement_context_validates_default_feature_fields() {
+        let span = SourceSpan::new(1, 2).unwrap();
+        assert!(RequirementContext::new("REQ", "1", "AC", "anchor", span).is_ok());
+        assert!(matches!(
+            RequirementContext::new("", "1", "AC", "anchor", span),
+            Err(RequirementContextError::EmptyField {
+                field: RequirementContextField::RequirementId
+            })
+        ));
+        let oversized = "x".repeat(MAX_REQUIREMENT_CONTEXT_FIELD_BYTES + 1);
+        assert!(matches!(
+            RequirementContext::new(&oversized, "1", "AC", "anchor", span),
+            Err(RequirementContextError::FieldTooLong {
+                field: RequirementContextField::RequirementId,
+                ..
+            })
+        ));
+    }
+}

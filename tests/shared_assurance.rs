@@ -342,7 +342,7 @@ fn git_files(root: &Path, arguments: &[&str]) -> Vec<String> {
         .collect()
 }
 
-const EXPECTED_LIVE_TRACKED: [&str; 77] = [
+const EXPECTED_LIVE_TRACKED: [&str; 78] = [
     ".agent/rules/writing_rust.md",
     ".github/CODEOWNERS",
     ".github/workflows/ci.yml",
@@ -406,6 +406,7 @@ const EXPECTED_LIVE_TRACKED: [&str; 77] = [
     "spec/requirements/StR-003-formal-temporal-frontends.md",
     "spec/spec.md",
     "spec/test-matrix.md",
+    "src/bounded_string.rs",
     "src/context.rs",
     "src/context_document.rs",
     "src/document.rs",
@@ -728,7 +729,7 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         ("examples", 1),
         ("scripts", 7),
         ("spec", 20),
-        ("src", 7),
+        ("src", 8),
         ("tests", 7),
     ]
     .into_iter()

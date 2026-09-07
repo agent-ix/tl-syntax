@@ -1,5 +1,7 @@
 use alloc::string::String;
 
+#[cfg(feature = "serde")]
+use crate::MAX_REQUIREMENT_CONTEXT_FIELD_BYTES;
 use crate::{RequirementContext, RequirementContextError, SourceSpan};
 
 /// Version of the serialized caller-context document.
@@ -38,11 +40,27 @@ pub struct RequirementContextDocument {
 #[serde(deny_unknown_fields)]
 struct RequirementContextDocumentWire {
     schema_version: RequirementContextSchemaVersion,
+    #[serde(deserialize_with = "deserialize_context_field")]
     requirement_id: String,
+    #[serde(deserialize_with = "deserialize_context_field")]
     requirement_revision: String,
+    #[serde(deserialize_with = "deserialize_context_field")]
     clause_id: String,
+    #[serde(deserialize_with = "deserialize_context_field")]
     anchor: String,
     source_span: SourceSpan,
+}
+
+#[cfg(feature = "serde")]
+fn deserialize_context_field<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    crate::bounded_string::deserialize(
+        deserializer,
+        MAX_REQUIREMENT_CONTEXT_FIELD_BYTES,
+        "caller context field",
+    )
 }
 
 #[cfg(feature = "serde")]
