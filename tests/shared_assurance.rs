@@ -452,7 +452,14 @@ fn source_sets(root: &Path) -> CensusResult<(BTreeSet<String>, BTreeSet<String>)
 
     let untracked_ignore_files = git_files(
         root,
-        &["ls-files", "-z", "--others", "--", ":(glob)**/.gitignore"],
+        &[
+            "ls-files",
+            "-z",
+            "--others",
+            "--exclude-per-directory=.gitignore",
+            "--",
+            ":(glob)**/.gitignore",
+        ],
     )?;
     if !untracked_ignore_files.is_empty() {
         return Err(format!(
@@ -461,7 +468,26 @@ fn source_sets(root: &Path) -> CensusResult<(BTreeSet<String>, BTreeSet<String>)
         ));
     }
 
-    let ignore_diff = Command::new("git")
+    let mut refresh = Command::new("git");
+    refresh
+        .args(["update-index", "-q", "--refresh"])
+        .current_dir(root);
+    if let Some(parent) = root.parent() {
+        refresh.env("GIT_CEILING_DIRECTORIES", parent);
+    }
+    let refresh = refresh
+        .output()
+        .map_err(|error| format!("git update-index could not refresh ignore policy: {error}"))?;
+    if !refresh.status.success() {
+        return Err(format!(
+            "git update-index could not refresh ignore policy (status {:?}): {}",
+            refresh.status.code(),
+            String::from_utf8_lossy(&refresh.stderr)
+        ));
+    }
+
+    let mut ignore_diff = Command::new("git");
+    ignore_diff
         .args([
             "diff",
             "--quiet",
@@ -469,7 +495,11 @@ fn source_sets(root: &Path) -> CensusResult<(BTreeSet<String>, BTreeSet<String>)
             "--",
             ":(glob)**/.gitignore",
         ])
-        .current_dir(root)
+        .current_dir(root);
+    if let Some(parent) = root.parent() {
+        ignore_diff.env("GIT_CEILING_DIRECTORIES", parent);
+    }
+    let ignore_diff = ignore_diff
         .output()
         .map_err(|error| format!("git diff could not inspect ignore policy: {error}"))?;
     match ignore_diff.status.code() {
@@ -897,6 +927,8 @@ fn source_scanning_is_byte_safe_and_independent_of_local_git_excludes() {
     .expect("write administrative-hidden source");
     fs::write(fixture.path().join("generated/ignored.bin"), [0xff, 0x00])
         .expect("write repository-ignored generated input");
+    fs::write(fixture.path().join("generated/.gitignore"), "*\n")
+        .expect("write ignored generated-directory metadata");
 
     let (tracked, scanned) =
         source_sets(fixture.path()).expect("enumerate reproducibility fixture");
@@ -912,6 +944,10 @@ fn source_scanning_is_byte_safe_and_independent_of_local_git_excludes() {
     assert!(
         !scanned.contains("generated/ignored.bin"),
         "the repository-authored generated ignore rule was not applied: {scanned:?}"
+    );
+    assert!(
+        !scanned.contains("generated/.gitignore"),
+        "an ignored directory's metadata was treated as active ignore policy: {scanned:?}"
     );
     assert_no_forbidden_references(fixture.path(), &scanned)
         .expect("benign non-UTF-8 bytes must remain scannable");
