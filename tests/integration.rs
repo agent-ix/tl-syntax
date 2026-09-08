@@ -6,6 +6,11 @@ use tl_syntax::{
 };
 
 use proptest::prelude::*;
+use std::{
+    cmp::Ordering,
+    collections::hash_map::DefaultHasher,
+    hash::{Hash, Hasher},
+};
 
 #[derive(serde::Deserialize)]
 struct CorpusManifest {
@@ -133,6 +138,56 @@ fn formula_document_round_trips_with_required_profile() {
 
     let missing_profile = json.replace("\"semantic_profile\":\"mltl.closed-trace/v1\",", "");
     assert!(serde_json::from_str::<FormulaDocument>(&missing_profile).is_err());
+}
+
+// Trace: TC-037, FR-003-AC-4
+#[test]
+fn spans_are_diagnostic_provenance_not_semantic_identity() {
+    let kind = NodeKind::Proposition {
+        proposition: PropositionId(4),
+    };
+    let first = FormulaDocument::new(
+        SemanticProfile::ClosedTraceV1,
+        NodeId(0),
+        vec![Node::with_span(kind, SourceSpan::new(0, 2).unwrap())],
+    )
+    .unwrap();
+    let second = FormulaDocument::new(
+        SemanticProfile::ClosedTraceV1,
+        NodeId(0),
+        vec![Node::with_span(kind, SourceSpan::new(8, 10).unwrap())],
+    )
+    .unwrap();
+
+    assert_eq!(
+        first, second,
+        "source layout must not change formula equality"
+    );
+    let hash = |document: &FormulaDocument| {
+        let mut hasher = DefaultHasher::new();
+        document.hash(&mut hasher);
+        hasher.finish()
+    };
+    assert_eq!(
+        hash(&first),
+        hash(&second),
+        "source layout must not change formula hashing"
+    );
+    assert_eq!(
+        first.nodes()[0].cmp(&second.nodes()[0]),
+        Ordering::Equal,
+        "source layout must not change node ordering"
+    );
+
+    assert_ne!(
+        serde_json::to_vec(&first).unwrap(),
+        serde_json::to_vec(&second).unwrap()
+    );
+    assert_eq!(
+        serde_json::to_vec(&first.semantic_view()).unwrap(),
+        serde_json::to_vec(&second.semantic_view()).unwrap(),
+        "the semantic serialization must omit diagnostic provenance"
+    );
 }
 
 // Trace: TC-017, FR-004-AC-1
