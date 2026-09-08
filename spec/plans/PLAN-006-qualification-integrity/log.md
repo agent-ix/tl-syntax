@@ -39,3 +39,9 @@ description: "Chronological changes to the qualification-integrity ownership pla
   unresolved high or medium gap remains. Exact-final-head full local CI,
   dependency integration, and independent review remain. Hosted CI was not
   dispatched.
+- **2026-09-08** - Rebased the completed #19 work onto merged PR #22 mainline
+  `31c6ced`. The integration retained the newer mainline source-census
+  hardening, added NFR-003 to its exact live set and `spec` partition, and
+  removed the obsolete stack dependency. Complete local `make ci` passed at
+  `c0883b18004a2c83939dc421b09fb52a9366050b`; hosted CI was not dispatched.
+  Independent exact-head review remains required.

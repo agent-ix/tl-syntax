@@ -2,7 +2,7 @@
 id: Task-003
 title: Verify and review qualification ownership
 type: Task
-status: in_progress
+status: done
 relationships:
   - target: ix://agent-ix/tl-syntax/PLAN-006
     type: part_of
@@ -18,5 +18,8 @@ review only after the stacked dependency is landed and integrated.
 
 SR-025 and SR-026 record the author code review and closing gap analysis. Three
 medium defects were fixed before closure; no unresolved high or medium finding
-remains. Exact-final-head full local CI and later dependency integration plus
-independent review remain.
+remains. The branch was then rebased onto the merged PR #22 mainline and the
+complete local `make ci` gate passed at `c0883b18004a2c83939dc421b09fb52a9366050b`.
+That rebase retained mainline's stricter source-census controls and adjusted
+only the exact NFR-003 source population. Independent exact-head review remains
+the external merge boundary; hosted CI was not dispatched.

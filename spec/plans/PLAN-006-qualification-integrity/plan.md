@@ -22,11 +22,11 @@ Quoin contracts without adding repository-local assurance machinery.
 
 ## Base and dependency
 
-This branch is stacked on issue #20 candidate
-`273b4cdea83d2ee92e83fc557bd5fd5cb16d8a02`, because #19 reconciles the same
-FR-006 text that #20 changes. It must not be proposed for merge until PR #22 is
-landed and this branch is integrated with that reviewed tree. The stack leaves
-PR #21 and PR #22 heads unchanged.
+Issue #20's implementation merged as PR #22. This branch is rebased onto the
+resulting current mainline (`31c6ced6567645b637be20bef5c256d0ea4ed45c`) so
+#19 reconciles its FR-006 changes with the reviewed tree rather than retaining
+a stack dependency. Independent review of this branch's exact head remains
+required before merge.
 
 ## Work sequence
 

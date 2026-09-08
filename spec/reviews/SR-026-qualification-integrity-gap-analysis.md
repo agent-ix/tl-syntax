@@ -48,7 +48,7 @@ non-claims for Make execution control and the stable qualified record.
 |---|---|---|---|---|
 | FND-2601 | low | AA-001/source-scope binding and authoritative declaration metadata still need the generic shared-contract migration. | `tl-syntax#16` | correct-requirement-no-evidence |
 | FND-2602 | low | Quire still reports the shared status-column, empty-inspection-archetype, and property-shape advisories; they predate this change and do not leave NFR-003 unbacked. | `quire-contract-ir#21`, shared module owners | correct-requirement-no-evidence |
-| FND-2603 | low | This branch is stacked on PR #22 and cannot be merged independently until that reviewed tree lands and is integrated. | PLAN-006 | correct-requirement-no-evidence |
+| FND-2603 | low | At analysis time, this branch was stacked on PR #22 and could not be merged independently until that reviewed tree landed and was integrated. | PLAN-006 | correct-requirement-no-evidence |
 | FND-2604 | low | Only independent exact-head review can establish that SUITE-008 and the full local gate ran for the candidate. | NFR-003-AC-2 | correct-requirement-no-evidence |
 
 ## Dispositions
@@ -57,7 +57,7 @@ non-claims for Make execution control and the stable qualified record.
 |---|---|---|
 | FND-2601 | **DEFERRED TO EXISTING OWNER** | Issue #16 owns the shared-contract migration; no local parser is introduced here. |
 | FND-2602 | **DEFERRED TO SHARED OWNERS** | Strict coverage still backs all five NFR-003 criteria and all 27 test cases. |
-| FND-2603 | **DEPENDENCY RECORDED** | PLAN-006 names PR #22 as the stack base and forbids independent merge. |
+| FND-2603 | **RESOLVED BY INTEGRATION; EXTERNAL CLEARANCE REQUIRED** | PR #22 merged, and this branch was rebased onto its current-mainline result before final local verification. |
 | FND-2604 | **EXTERNAL REVIEW REQUIRED** | The author records grant no authority; an exact-head review request follows dependency integration. |
 
 ## Architecture audit
@@ -71,6 +71,6 @@ and checks declared bytes. None executes a producer.
 
 ## Conclusion
 
-Issue #19 has no unresolved high or medium gap at candidate 6183568. Exact-head
-complete local verification, dependency integration, and independent review
-remain before merge. Hosted CI was not dispatched.
+Issue #19 has no unresolved high or medium gap. Complete local verification
+passed after integration; independent exact-head review remains before merge.
+Hosted CI was not dispatched.
