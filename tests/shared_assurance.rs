@@ -319,7 +319,9 @@ fn the_sealed_records_impact_snapshot_is_the_quire_export() {
     );
 }
 
-fn git_files(root: &Path, arguments: &[&str]) -> Vec<String> {
+type CensusResult<T> = Result<T, String>;
+
+fn git_files(root: &Path, arguments: &[&str]) -> CensusResult<BTreeSet<String>> {
     let mut command = Command::new("git");
     command.args(arguments).current_dir(root);
     if let Some(parent) = root.parent() {
@@ -327,19 +329,23 @@ fn git_files(root: &Path, arguments: &[&str]) -> Vec<String> {
         // ancestor. A missing local Git boundary must remain a refusal.
         command.env("GIT_CEILING_DIRECTORIES", parent);
     }
-    let output = command.output().expect("git ls-files failed");
-    assert!(
-        output.status.success(),
-        "git ls-files {arguments:?} exited non-zero; the source census cannot enumerate \
-         the repository and reporting it clean would be vacuous: {}",
-        String::from_utf8_lossy(&output.stderr)
-    );
-    String::from_utf8(output.stdout)
-        .expect("the source census refuses non-UTF-8 Git paths")
+    let output = command
+        .output()
+        .map_err(|error| format!("git ls-files {arguments:?} could not start: {error}"))?;
+    if !output.status.success() {
+        return Err(format!(
+            "git ls-files {arguments:?} exited non-zero; the source census cannot enumerate \
+             the repository and reporting it clean would be vacuous: {}",
+            String::from_utf8_lossy(&output.stderr)
+        ));
+    }
+    let stdout = String::from_utf8(output.stdout)
+        .map_err(|_| "the source census refuses non-UTF-8 Git paths".to_owned())?;
+    Ok(stdout
         .split('\0')
         .filter(|value| !value.is_empty())
         .map(str::to_owned)
-        .collect()
+        .collect())
 }
 
 const EXPECTED_LIVE_TRACKED: [&str; 78] = [
@@ -438,19 +444,96 @@ fn is_archival_record(relative: &str) -> bool {
         || relative.starts_with("spec/plans/")
 }
 
-fn source_sets(root: &Path) -> (BTreeSet<String>, BTreeSet<String>) {
-    let tracked: BTreeSet<String> = git_files(root, &["ls-files", "-z"])
+fn source_sets(root: &Path) -> CensusResult<(BTreeSet<String>, BTreeSet<String>)> {
+    let tracked: BTreeSet<String> = git_files(root, &["ls-files", "-z"])?
         .into_iter()
         .filter(|entry| !is_archival_record(entry))
         .collect();
+
+    let untracked_ignore_files = git_files(
+        root,
+        &[
+            "ls-files",
+            "-z",
+            "--others",
+            "--exclude-per-directory=.gitignore",
+            "--",
+            ":(glob)**/.gitignore",
+        ],
+    )?;
+    if !untracked_ignore_files.is_empty() {
+        return Err(format!(
+            "the source census refuses untracked ignore policy; track or remove: \
+             {untracked_ignore_files:?}"
+        ));
+    }
+
+    let mut refresh = Command::new("git");
+    refresh
+        .args(["update-index", "-q", "--refresh"])
+        .current_dir(root);
+    if let Some(parent) = root.parent() {
+        refresh.env("GIT_CEILING_DIRECTORIES", parent);
+    }
+    let refresh = refresh
+        .output()
+        .map_err(|error| format!("git update-index could not refresh ignore policy: {error}"))?;
+    if !refresh.status.success() {
+        return Err(format!(
+            "git update-index could not refresh ignore policy (status {:?}): {}",
+            refresh.status.code(),
+            String::from_utf8_lossy(&refresh.stderr)
+        ));
+    }
+
+    let mut ignore_diff = Command::new("git");
+    ignore_diff
+        .args([
+            "diff",
+            "--quiet",
+            "--no-ext-diff",
+            "--",
+            ":(glob)**/.gitignore",
+        ])
+        .current_dir(root);
+    if let Some(parent) = root.parent() {
+        ignore_diff.env("GIT_CEILING_DIRECTORIES", parent);
+    }
+    let ignore_diff = ignore_diff
+        .output()
+        .map_err(|error| format!("git diff could not inspect ignore policy: {error}"))?;
+    match ignore_diff.status.code() {
+        Some(0) => {}
+        Some(1) => {
+            return Err(
+                "the source census refuses tracked .gitignore bytes that differ from the index"
+                    .to_owned(),
+            );
+        }
+        code => {
+            return Err(format!(
+                "git diff could not inspect tracked .gitignore policy (status {code:?}): {}",
+                String::from_utf8_lossy(&ignore_diff.stderr)
+            ));
+        }
+    }
+
     let mut scanned = tracked.clone();
-    for entry in git_files(root, &["ls-files", "-z", "--others", "--exclude-standard"])
-        .into_iter()
-        .filter(|entry| !is_archival_record(entry))
+    for entry in git_files(
+        root,
+        &[
+            "ls-files",
+            "-z",
+            "--others",
+            "--exclude-per-directory=.gitignore",
+        ],
+    )?
+    .into_iter()
+    .filter(|entry| !is_archival_record(entry))
     {
         scanned.insert(entry);
     }
-    (tracked, scanned)
+    Ok((tracked, scanned))
 }
 
 fn source_area(relative: &str) -> String {
@@ -460,20 +543,49 @@ fn source_area(relative: &str) -> String {
         .to_owned()
 }
 
-fn assert_no_forbidden_references(root: &Path, sources: &BTreeSet<String>) {
+fn validate_tracked_partition(
+    tracked: &BTreeSet<String>,
+    expected: &BTreeSet<String>,
+    expected_areas: &BTreeMap<String, usize>,
+) -> CensusResult<()> {
+    let mut observed_areas = BTreeMap::new();
+    for relative in tracked {
+        *observed_areas
+            .entry(source_area(relative))
+            .or_insert(0_usize) += 1;
+    }
+    if &observed_areas != expected_areas {
+        return Err(format!(
+            "the live tracked area populations changed; observed {observed_areas:?}; \
+             expected {expected_areas:?}"
+        ));
+    }
+    if tracked != expected {
+        return Err(format!(
+            "the reviewed live tracked path set changed; observed {tracked:?}; expected {expected:?}"
+        ));
+    }
+    Ok(())
+}
+
+fn assert_no_forbidden_references(root: &Path, sources: &BTreeSet<String>) -> CensusResult<()> {
     for relative in sources {
         let path = root.join(relative);
-        let source = fs::read_to_string(&path).unwrap_or_else(|error| {
-            panic!("cannot read selected source {}: {error}", path.display())
-        });
+        let source = fs::read(&path)
+            .map_err(|error| format!("cannot read selected source {}: {error}", path.display()))?;
         for name in FORBIDDEN {
-            assert!(
-                !source.contains(name),
-                "{} still references {name}, which was deleted",
-                path.display()
-            );
+            if source
+                .windows(name.len())
+                .any(|window| window == name.as_bytes())
+            {
+                return Err(format!(
+                    "{} still references {name}, which was deleted",
+                    path.display()
+                ));
+            }
         }
     }
+    Ok(())
 }
 
 struct ScratchDirectory(PathBuf);
@@ -612,8 +724,12 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
     // Pin tracked, ordinary-untracked, and ignored paths through the production
     // helpers. The ordinary untracked file deliberately carries a forbidden
     // name so the control reaches the consumer, not only `source_sets`.
-    let fixture =
-        ScratchDirectory::create(root.join(format!("target/source-census-fixture-{process}")));
+    // Keep the scratch repository outside the source tree. Its own untracked
+    // `.gitignore` is a test input; exposing it concurrently to the real-tree
+    // census would make one correct test invalidate another correct test.
+    let fixture = ScratchDirectory::create(
+        std::env::temp_dir().join(format!("tl-syntax-source-census-fixture-{process}")),
+    );
     fs::create_dir_all(fixture.path().join("src")).expect("create tracked fixture area");
     fs::create_dir_all(fixture.path().join("tests/proptest-regressions"))
         .expect("create ignored fixture area");
@@ -649,7 +765,8 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         .expect("stage source-census fixture");
     assert!(staged.success(), "fixture git add failed");
 
-    let (fixture_tracked, fixture_scanned) = source_sets(fixture.path());
+    let (fixture_tracked, fixture_scanned) =
+        source_sets(fixture.path()).expect("enumerate source-census fixture");
     assert_eq!(
         fixture_tracked,
         BTreeSet::from([".gitignore".to_owned(), "src/tracked.rs".to_owned()])
@@ -664,15 +781,8 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         "tracked and non-ignored untracked sources did not reach their declared sets, \
          or an ignored generated source perturbed the census"
     );
-    let scan_refusal = std::panic::catch_unwind(|| {
-        assert_no_forbidden_references(fixture.path(), &fixture_scanned)
-    })
-    .expect_err("the live-source consumer skipped its ordinary untracked input");
-    let scan_refusal = scan_refusal
-        .downcast_ref::<String>()
-        .map(String::as_str)
-        .or_else(|| scan_refusal.downcast_ref::<&str>().copied())
-        .unwrap_or("non-string panic");
+    let scan_refusal = assert_no_forbidden_references(fixture.path(), &fixture_scanned)
+        .expect_err("the live-source consumer skipped its ordinary untracked input");
     assert!(
         scan_refusal.contains("tests/untracked.rs")
             && scan_refusal.contains("legacy_evidence_view"),
@@ -685,14 +795,8 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
     let non_repository = ScratchDirectory::create(
         root.join(format!("target/source-census-non-repository-{process}")),
     );
-    let refusal =
-        std::panic::catch_unwind(|| git_files(non_repository.path(), &["ls-files", "-z"]))
-            .expect_err("source enumeration inherited an ancestor repository");
-    let refusal = refusal
-        .downcast_ref::<String>()
-        .map(String::as_str)
-        .or_else(|| refusal.downcast_ref::<&str>().copied())
-        .unwrap_or("non-string panic");
+    let refusal = git_files(non_repository.path(), &["ls-files", "-z"])
+        .expect_err("source enumeration inherited an ancestor repository");
     assert!(
         refusal.contains("source census cannot enumerate")
             && refusal.contains("not a git repository"),
@@ -704,22 +808,12 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
     // exact live path set catches new roots, extensions, top-level areas, and
     // within-area substitutions; records remain excluded so closing a review
     // cannot invalidate the population it reviewed.
-    let (tracked, scanned) = source_sets(&root);
+    let (tracked, scanned) = source_sets(&root).expect("enumerate the live source tree");
     let expected: BTreeSet<String> = EXPECTED_LIVE_TRACKED
         .into_iter()
         .map(str::to_owned)
         .collect();
-    assert_eq!(
-        tracked, expected,
-        "the reviewed live tracked path set changed; the left/right sets name the exact delta"
-    );
 
-    let mut observed_areas = BTreeMap::new();
-    for relative in &tracked {
-        *observed_areas
-            .entry(source_area(relative))
-            .or_insert(0_usize) += 1;
-    }
     let expected_areas: BTreeMap<String, usize> = [
         ("<root>", 15),
         (".agent", 1),
@@ -735,16 +829,165 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
     .into_iter()
     .map(|(area, count)| (area.to_owned(), count))
     .collect();
-    assert_eq!(
-        observed_areas, expected_areas,
-        "the live tracked area populations changed; inspect the exact path-set delta above"
+
+    // The area map is checked first and the exact set remains authoritative.
+    // These two mutations prove each diagnostic has a reachable failure role.
+    let mut cross_area = expected.clone();
+    assert!(cross_area.remove("src/lib.rs"));
+    cross_area.insert("tools/lib.rs".to_owned());
+    let area_refusal = validate_tracked_partition(&cross_area, &expected, &expected_areas)
+        .expect_err("a cross-area substitution escaped the coarse diagnostic");
+    assert!(
+        area_refusal.contains("area populations changed"),
+        "a cross-area substitution reached the wrong diagnostic: {area_refusal}"
     );
+
+    let mut within_area = expected.clone();
+    assert!(within_area.remove("src/lib.rs"));
+    within_area.insert("src/alternate.rs".to_owned());
+    let path_refusal = validate_tracked_partition(&within_area, &expected, &expected_areas)
+        .expect_err("a within-area substitution escaped exact path equality");
+    assert!(
+        path_refusal.contains("tracked path set changed"),
+        "a within-area substitution reached the wrong diagnostic: {path_refusal}"
+    );
+
+    validate_tracked_partition(&tracked, &expected, &expected_areas)
+        .expect("the live tracked partition changed");
 
     let untracked: BTreeSet<String> = scanned.difference(&tracked).cloned().collect();
     assert!(
         untracked.is_empty(),
         "non-ignored untracked live sources were scanned but are outside the reviewed \
          tracked population: {untracked:?}"
+    );
+}
+
+// Trace: TC-035, FR-006-AC-8
+#[test]
+fn source_scanning_is_byte_safe_and_independent_of_local_git_excludes() {
+    let process = std::process::id();
+    // This fixture also carries an untracked `.gitignore` negative control, so
+    // it must not appear inside a concurrently scanned candidate source tree.
+    let fixture = ScratchDirectory::create(
+        std::env::temp_dir().join(format!("tl-syntax-source-census-reproducibility-{process}")),
+    );
+    fs::create_dir_all(fixture.path().join("src")).expect("create binary fixture area");
+    fs::create_dir_all(fixture.path().join("tests")).expect("create untracked fixture area");
+    fs::create_dir_all(fixture.path().join("generated")).expect("create generated fixture area");
+    fs::write(fixture.path().join(".gitignore"), "generated/\n")
+        .expect("write repository ignore policy");
+    fs::write(fixture.path().join("src/tracked.bin"), [0xff, 0xfe, 0xfd])
+        .expect("write non-UTF-8 tracked input");
+
+    let initialized = Command::new("git")
+        .args(["init", "--quiet"])
+        .current_dir(fixture.path())
+        .status()
+        .expect("initialize reproducibility fixture repository");
+    assert!(initialized.success(), "fixture git init failed");
+    let staged = Command::new("git")
+        .args(["add", ".gitignore", "src/tracked.bin"])
+        .current_dir(fixture.path())
+        .status()
+        .expect("stage reproducibility fixture");
+    assert!(staged.success(), "fixture git add failed");
+
+    let workstation_excludes = fixture.path().join(".git/workstation-excludes");
+    fs::write(&workstation_excludes, "tests/workstation-hidden.rs\n")
+        .expect("write workstation exclude fixture");
+    fs::write(
+        fixture.path().join(".git/info/exclude"),
+        "tests/administrative-hidden.rs\n",
+    )
+    .expect("write administrative exclude fixture");
+    let configured = Command::new("git")
+        .args([
+            "config",
+            "--local",
+            "core.excludesFile",
+            workstation_excludes
+                .to_str()
+                .expect("fixture path is valid UTF-8"),
+        ])
+        .current_dir(fixture.path())
+        .status()
+        .expect("configure workstation exclude fixture");
+    assert!(configured.success(), "fixture git config failed");
+
+    fs::write(
+        fixture.path().join("tests/workstation-hidden.rs"),
+        "pub const WORKSTATION_HIDDEN: bool = false;\n",
+    )
+    .expect("write workstation-hidden source");
+    fs::write(
+        fixture.path().join("tests/administrative-hidden.rs"),
+        "pub const ADMINISTRATIVE_HIDDEN: bool = false;\n",
+    )
+    .expect("write administrative-hidden source");
+    fs::write(fixture.path().join("generated/ignored.bin"), [0xff, 0x00])
+        .expect("write repository-ignored generated input");
+    fs::write(fixture.path().join("generated/.gitignore"), "*\n")
+        .expect("write ignored generated-directory metadata");
+
+    let (tracked, scanned) =
+        source_sets(fixture.path()).expect("enumerate reproducibility fixture");
+    assert_eq!(
+        tracked,
+        BTreeSet::from([".gitignore".to_owned(), "src/tracked.bin".to_owned()])
+    );
+    assert!(
+        scanned.contains("tests/workstation-hidden.rs")
+            && scanned.contains("tests/administrative-hidden.rs"),
+        "mutable workstation or administrative excludes hid a live input: {scanned:?}"
+    );
+    assert!(
+        !scanned.contains("generated/ignored.bin"),
+        "the repository-authored generated ignore rule was not applied: {scanned:?}"
+    );
+    assert!(
+        !scanned.contains("generated/.gitignore"),
+        "an ignored directory's metadata was treated as active ignore policy: {scanned:?}"
+    );
+    assert_no_forbidden_references(fixture.path(), &scanned)
+        .expect("benign non-UTF-8 bytes must remain scannable");
+
+    let mut forbidden_binary = vec![0xff, 0xfe, 0xfd];
+    forbidden_binary.extend_from_slice(b"legacy_evidence_view");
+    fs::write(fixture.path().join("src/tracked.bin"), forbidden_binary)
+        .expect("write forbidden identity into binary input");
+    let binary_only = BTreeSet::from(["src/tracked.bin".to_owned()]);
+    let refusal = assert_no_forbidden_references(fixture.path(), &binary_only)
+        .expect_err("the byte-level scan missed an embedded forbidden identity");
+    assert!(
+        refusal.contains("src/tracked.bin") && refusal.contains("legacy_evidence_view"),
+        "the binary scan refused for the wrong reason: {refusal}"
+    );
+
+    fs::write(
+        fixture.path().join(".gitignore"),
+        "generated/\ntests/workstation-hidden.rs\n",
+    )
+    .expect("mutate tracked ignore policy");
+    let refusal = source_sets(fixture.path())
+        .expect_err("unstaged tracked ignore-policy bytes changed the source set");
+    assert!(
+        refusal.contains(".gitignore bytes") && refusal.contains("differ from the index"),
+        "the modified ignore-policy refusal was not specific: {refusal}"
+    );
+    fs::write(fixture.path().join(".gitignore"), "generated/\n")
+        .expect("restore tracked ignore policy");
+
+    fs::write(
+        fixture.path().join("tests/.gitignore"),
+        "administrative-hidden.rs\n",
+    )
+    .expect("write untracked ignore-policy mutation");
+    let refusal = source_sets(fixture.path())
+        .expect_err("an untracked ignore-policy file changed the source set");
+    assert!(
+        refusal.contains("tests/.gitignore"),
+        "the untracked ignore-policy refusal did not name its source: {refusal}"
     );
 }
 
@@ -790,8 +1033,9 @@ fn no_local_evidence_framework_remains_and_nothing_still_reads_the_dropped_tree(
     // The live-source path set includes every non-archival tracked path without
     // an extension or directory allowlist, plus ordinary untracked paths. The
     // companion TC-034 control pins this function's untracked read site.
-    let (tracked, scanned) = source_sets(&root);
-    assert_no_forbidden_references(&root, &scanned);
+    let (tracked, scanned) = source_sets(&root).expect("enumerate the live source tree");
+    assert_no_forbidden_references(&root, &scanned)
+        .expect("scan the live source tree for deleted identities");
 
     // The Makefile is orchestration, not a trust root, and carries no gate that
     // polices its own execution, nor the compatibility view it used to run.

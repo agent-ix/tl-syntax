@@ -18,7 +18,7 @@ relationships:
 | FR-003 | FR-003-AC-1, FR-003-AC-2, FR-003-AC-3 | TC-006, TC-007, TC-008 | ✅ covered |
 | FR-004 | FR-004-AC-1, FR-004-AC-2, FR-004-AC-3, FR-004-AC-4 | TC-009, TC-010, TC-011, TC-017, TC-020 | ✅ covered |
 | FR-005 | FR-005-AC-1, FR-005-AC-2, FR-005-AC-3 | TC-012, TC-013, TC-014 | ✅ covered |
-| FR-006 | FR-006-AC-1, FR-006-AC-2, FR-006-AC-3, FR-006-AC-5, FR-006-AC-6, FR-006-AC-7 | TC-021, TC-022, TC-023, TC-025, TC-026, TC-034 | ✅ covered |
+| FR-006 | FR-006-AC-1, FR-006-AC-2, FR-006-AC-3, FR-006-AC-5, FR-006-AC-6, FR-006-AC-7, FR-006-AC-8 | TC-021, TC-022, TC-023, TC-025, TC-026, TC-034, TC-035 | ✅ covered |
 | FR-007 | FR-007-AC-1, FR-007-AC-2, FR-007-AC-3, FR-007-AC-4, FR-007-AC-5 | TC-027, TC-028, TC-029, TC-030, TC-031, TC-032 | ✅ covered |
 
 ## Stakeholder Requirement Coverage
@@ -72,3 +72,4 @@ relationships:
 | TC-032 | Preserve the exact closed formula-v1 and proposition-map-v1 wire contracts; discharged by the existing compatibility snapshot tests | Snapshot | P0 | FR-007-AC-5 | ✅ implemented |
 | TC-033 | Compile borrowed signal and source-context APIs across the no-default/alloc/serde matrix | Compile | P0 | NFR-001-AC-1, NFR-001-AC-2 | ✅ implemented |
 | TC-034 | Prove the live-source partition is exact, name-independent, fail-closed, and distinguishes tracked, ordinary-untracked, ignored, and archival paths | Integration | P0 | FR-006-AC-7 | ✅ implemented |
+| TC-035 | Prove the deleted-identity scan accepts arbitrary bytes and cannot be narrowed by workstation or administrative Git excludes | Integration | P0 | FR-006-AC-8 | ✅ implemented |
