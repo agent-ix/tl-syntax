@@ -23,6 +23,16 @@ make assurance        # pins + the Quoin chain
 make ci               # complete local gate set (hosted CI is manual-only)
 ```
 
+## Specification workflow
+
+All new or changed work must be specified before it is implemented: use
+`quoin write` to obtain the current authoritative artifact contracts, then add
+or update the relevant requirements, plans, tasks, matrix rows, and evidence
+links. Before requesting review, run `quoin review` over the affected scope and
+validate the resulting artifacts with Quire. Record the selected analyses and
+their findings; do not advance Quoin's final `validated` to `accepted` gate,
+which remains a human decision.
+
 ## Assurance
 
 This repository produces verification results with its own tools and hands them
