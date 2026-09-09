@@ -33,6 +33,7 @@ runner and does not turn a local test result into a Quoin attestation.
 | Local verification-suite identity | NFR-003-AC-2 | TC-038 checks the declared SUITE-008 command and its exclusion from Quoin proof obligations; the independent exact-head review records whether that local command ran. | Local result for one exact revision only; never a retained Quoin attestation. |
 | Reviewed source-set integrity | NFR-003-AC-3 | TC-026, TC-034, and TC-035 exercise deleted-identity scanning, exact tracked paths, byte safety, and mutable-ignore refusals. | Re-evaluated whenever the non-archival tracked set or census policy changes. |
 | Producer/result integrity | NFR-003-AC-4 and NFR-003-AC-5 | TC-022 and TC-025 exercise producer non-execution, input derivation, and the twelve-state vocabulary. | Re-run for every candidate and adapter or declaration change. |
+| Hosted shared-assurance tool identity | NFR-003-AC-6 | TC-039 checks the exact public npm package, installed executable version, and manual-only trigger. | Re-run whenever the hosted workflow's specification-tool installation or trigger changes. |
 | Make execution-control exposure | Qualification boundary below | SR-013 records the only completed behavioral measurement; AA-001 and `assurance/change-assurance.json` keep the limitation open. | The measured global `.IGNORE:` spelling is accepted only for pre-stable development; `agent-ix/tl-syntax#11` requires re-evaluation before the first stable release candidate. |
 | Active qualified record | Qualification boundary below | Human review must inspect a current qualified record under `agent-ix/engineering-assurance#11`; no local test can create that authority. | Intentionally unclaimed during pre-stable development; required again before the first stable release candidate. |
 
@@ -50,6 +51,7 @@ NFR-003 says what may be inferred from it.
 | Reviewed live-source paths omitted or admitted by mutable machine policy | 0 | 0 | Test |
 | Attested results not derived from declared producer bytes | 0 | 0 | Test |
 | Non-success outcomes classified as passing | 0 | 0 | Test |
+| Hosted shared-assurance tool installations bound to the released public package and version | 1/1 | 1/1 | Test |
 | Automatic qualification or release decisions | 0 | 0 | Inspection |
 
 ## Verification
@@ -57,8 +59,11 @@ NFR-003 says what may be inferred from it.
 Behavior tests invoke the existing repository gates and released contracts
 rather than reimplementing them. TC-038 inspects the structured declaration and
 the suite registry only to establish the boundary between a local exact-head
-test and a proof input. Independent review remains necessary because a local
-test cannot prove that its own execution was reviewed or authorize a release.
+test and a proof input. TC-039 inspects the hosted workflow and invokes the
+installed executable to distinguish the scoped npm package identity from its
+unscoped `ix-flow` command name. Independent review remains necessary because a
+local test cannot prove that its own execution was reviewed, prove that hosted
+CI ran, or authorize a release.
 
 ## Acceptance Criteria
 
@@ -69,6 +74,7 @@ test cannot prove that its own execution was reviewed or authorize a release.
 | NFR-003-AC-3 | The candidate source identity covers every non-archival tracked path, refuses every ordinary-untracked live path and mutable ignore policy, and scans arbitrary tracked bytes without allowing a forbidden deleted identity to hide. | Test (TC-026, TC-034, TC-035) |
 | NFR-003-AC-4 | Every attested proof result is derived from a declared producer's structured bytes, with absent, empty, unreadable, or foreign-protocol input refused, and neither Quire nor Quoin executes a producer. | Test (TC-022) |
 | NFR-003-AC-5 | Pass, fail, unavailable, unsupported, inconclusive, not-computed, malformed, partial, stale, suspect, vacuous, and tampered remain distinguishable, and no non-success outcome is reported as passing. | Test (TC-025) |
+| NFR-003-AC-6 | The hosted CI workflow installs the released public npm package `@agent-ix/ix-flow@0.0.4`, the installed `ix-flow` executable reports version `0.0.4`, and `workflow_dispatch` remains the workflow's only trigger; local verification claims neither a hosted run nor a human release decision. | Test (TC-039) |
 
 ## Qualification Boundary
 
