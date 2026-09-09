@@ -21,7 +21,7 @@ cover the previously example-only complete-context and provenance boundaries.
 | --- | --- | --- | --- |
 | FND-3601 | medium | The configured functional-coverage status column is `Status`, but the authored table is headed `Coverage Status`; Quire consequently refuses status classification. The traceability repair on PR #23 remains the prerequisite for a final coverage reconciliation. | TM-001, PR #23 |
 | FND-3602 | low | **Closed by SR-037:** the reviewed `FR-004-AC-5` / TC-036 obligation now binds the two public document decoders. The target is manual-only; a campaign remains a separately measured scope. | FR-004-AC-5, TC-036, SR-037 |
-| FND-3603 | low | The 25 example-shaped criteria are correctly retained as their existing fixed corpus, malformed-wire, compile, or assurance demonstrations. They are not recast as generated properties merely to change the classifier census. | FR-002, FR-005, FR-006, NFR-001 |
+| FND-3603 | low | The 26 example-shaped criteria are correctly retained as their existing fixed corpus, malformed-wire, compile, or assurance demonstrations. They are not recast as generated properties merely to change the classifier census. | FR-002, FR-005, FR-006, NFR-001 |
 
 ## Classifier census
 
