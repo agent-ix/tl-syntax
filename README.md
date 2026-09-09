@@ -58,6 +58,20 @@ make test
 make ci
 ```
 
+## Manual wire fuzzing
+
+The versioned document decode boundary has a Rust fuzz target. It is intentionally
+manual-only and is not part of `make ci` or hosted CI:
+
+```bash
+cargo +nightly fuzz run wire_decode -- -runs=100
+```
+
+Successful decodes must still pass public validation; malformed bytes are
+expected to be rejected. The checked-in conformance corpus remains the
+authoritative compatibility corpus. Generated fuzz inputs are local campaign
+scratch, not replacement fixtures or assurance evidence.
+
 ## Development status
 
 This crate is being developed spec-first. Its public API is not stable yet, and

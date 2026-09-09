@@ -73,3 +73,4 @@ relationships:
 | TC-033 | Compile borrowed signal and source-context APIs across the no-default/alloc/serde matrix | Compile | P0 | NFR-001-AC-1, NFR-001-AC-2 | ✅ implemented |
 | TC-034 | Prove the live-source partition is exact, name-independent, fail-closed, and distinguishes tracked, ordinary-untracked, ignored, and archival paths | Integration | P0 | FR-006-AC-7 | ✅ implemented |
 | TC-035 | Prove the deleted-identity scan accepts arbitrary bytes and cannot be narrowed by workstation or administrative Git excludes | Integration | P0 | FR-006-AC-8 | ✅ implemented |
+| TC-036 | Decode arbitrary supplied bytes through both public versioned document boundaries without unwinding | Fuzz | P1 | FR-004-AC-5 | ✅ implemented |

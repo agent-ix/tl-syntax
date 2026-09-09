@@ -35,6 +35,9 @@ explicit and versioned.
 - Unknown schema or semantic-profile strings shall fail deserialization.
 - Formula wire decoding and owned programmatic construction shall reject more
   than 100,000 nodes before graph validation.
+- Wire decoding shall treat supplied bytes as untrusted input: each document
+  decoder shall either return its validated document or reject the bytes without
+  unwinding across the public boundary.
 
 ## Acceptance Criteria
 
@@ -44,6 +47,7 @@ explicit and versioned.
 | FR-004-AC-2 | Unknown schema and profile versions fail to deserialize. | Test (TC-010) |
 | FR-004-AC-3 | Malformed formula graphs and proposition maps fail validation. | Test (TC-011) |
 | FR-004-AC-4 | Formula JSON and owned programmatic construction containing more than 100,000 nodes fail at the documented bound before graph validation. | Test (TC-020) |
+| FR-004-AC-5 | Arbitrary supplied bytes presented to each public formula-document and proposition-map decoder either produce a document whose public validation succeeds or are rejected without a panic. | Test (TC-036) |
 
 ## Dependencies
 
