@@ -143,19 +143,31 @@ fn formula_document_round_trips_with_required_profile() {
 // Trace: TC-037, FR-003-AC-4
 #[test]
 fn spans_are_diagnostic_provenance_not_semantic_identity() {
-    let kind = NodeKind::Proposition {
+    let proposition = NodeKind::Proposition {
         proposition: PropositionId(4),
     };
     let first = FormulaDocument::new(
         SemanticProfile::ClosedTraceV1,
-        NodeId(0),
-        vec![Node::with_span(kind, SourceSpan::new(0, 2).unwrap())],
+        NodeId(1),
+        vec![
+            Node::with_span(proposition, SourceSpan::new(0, 2).unwrap()),
+            Node::with_span(
+                NodeKind::Not { operand: NodeId(0) },
+                SourceSpan::new(3, 6).unwrap(),
+            ),
+        ],
     )
     .unwrap();
     let second = FormulaDocument::new(
         SemanticProfile::ClosedTraceV1,
-        NodeId(0),
-        vec![Node::with_span(kind, SourceSpan::new(8, 10).unwrap())],
+        NodeId(1),
+        vec![
+            Node::with_span(proposition, SourceSpan::new(8, 10).unwrap()),
+            Node::with_span(
+                NodeKind::Not { operand: NodeId(0) },
+                SourceSpan::new(11, 14).unwrap(),
+            ),
+        ],
     )
     .unwrap();
 
@@ -203,6 +215,38 @@ fn spans_are_diagnostic_provenance_not_semantic_identity() {
     decoded.validate().unwrap();
     assert_eq!(decoded.nodes()[0].span, None);
     assert_eq!(decoded.semantic_view(), first.semantic_view());
+
+    let different_kind = FormulaDocument::new(
+        SemanticProfile::ClosedTraceV1,
+        NodeId(1),
+        vec![
+            Node::new(proposition),
+            Node::new(NodeKind::And {
+                left: NodeId(0),
+                right: NodeId(0),
+            }),
+        ],
+    )
+    .unwrap();
+    let different_root = FormulaDocument::new(
+        SemanticProfile::ClosedTraceV1,
+        NodeId(0),
+        first.nodes().to_vec(),
+    )
+    .unwrap();
+    let different_profile = FormulaDocument::new(
+        SemanticProfile::OnlinePrefixV1,
+        NodeId(1),
+        first.nodes().to_vec(),
+    )
+    .unwrap();
+    for different in [&different_kind, &different_root, &different_profile] {
+        assert_ne!(first.semantic_view(), different.semantic_view());
+        assert_ne!(
+            semantic_first,
+            serde_json::to_vec(&different.semantic_view()).unwrap()
+        );
+    }
 }
 
 // Trace: TC-017, FR-004-AC-1

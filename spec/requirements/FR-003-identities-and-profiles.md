@@ -30,8 +30,8 @@ trace or online-prefix semantic-profile identity without parser-specific state.
   expose its preserved endpoints, length, and emptiness.
 - `Node::with_span` shall associate a checked source span with the constructed
   syntax node without changing its operator.
-- The library shall exclude source spans from node and formula-document
-  equality and hash identity.
+- The library shall exclude source spans from semantic-view equality and hash
+  identity, while node and formula-document structural identity retain spans.
 - The library shall expose a formula-document semantic serialization view that
   excludes source spans.
 - The library shall preserve source spans in diagnostic formula-document wire

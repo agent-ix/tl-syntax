@@ -3,7 +3,7 @@ id: SR-039
 title: "Code review — semantic formula identity"
 type: SpecReview
 analysis: code-review
-scope: "src/syntax.rs, src/document.rs, src/lib.rs, tests/integration.rs, spec/requirements/FR-003-identities-and-profiles.md, spec/test-matrix.md"
+scope: "src/document.rs, src/lib.rs, tests/integration.rs, spec/requirements/FR-003-identities-and-profiles.md, spec/test-matrix.md"
 review_set: subset
 ---
 
