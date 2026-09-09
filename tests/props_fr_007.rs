@@ -8,10 +8,10 @@ fn context_field() -> impl Strategy<Value = String> {
 }
 
 proptest! {
-    /// Trace: FR-007-AC-4 — complete caller contexts round-trip exactly.
-    /// spec-correctness: row=FR-007-AC-4 property=round-trip extraction=extractable origin=regex
+    // Trace: TC-031, FR-007-AC-4
+    // spec-correctness: row=FR-007-AC-4 property=round-trip extraction=extractable origin=regex
     #[test]
-    fn fr_007_ac_4_complete_context_round_trips_exactly(
+    fn complete_context_round_trips_exactly(
         requirement_id in context_field(),
         requirement_revision in context_field(),
         clause_id in context_field(),
@@ -37,10 +37,10 @@ proptest! {
         prop_assert_eq!(decoded.validate().unwrap(), context);
     }
 
-    /// Trace: StR-003-VC-2 — supplied requirement provenance survives owned and borrowed boundaries.
-    /// spec-correctness: row=StR-003-VC-2 property=universal extraction=extractable origin=regex
+    // Trace: TC-031, StR-003-VC-2
+    // spec-correctness: row=StR-003-VC-2 property=universal extraction=extractable origin=regex
     #[test]
-    fn str_003_vc_2_context_preserves_each_supplied_identity(
+    fn context_preserves_each_supplied_identity(
         requirement_id in context_field(),
         requirement_revision in context_field(),
         clause_id in context_field(),
