@@ -47,14 +47,14 @@ now retains no evidence of its own.
 
 SUITE-008 is a local verification suite, not a structured-result producer and
 not an attestation input to SUITE-006. Its TC-021, TC-022, TC-023, TC-025,
-TC-026, TC-034, TC-035, and TC-036
+TC-026, TC-034, TC-035, and TC-038
 outcomes are reported by the local gate and exact-head pull-request record; the
 Quoin record does not claim those tests ran. Git is required because TC-034
 compares the checked-out version-control inventory with the reviewed live path
 set and refuses execution outside a repository boundary.
 
 [NFR-003](../requirements/NFR-003-qualification-integrity.md) owns this identity
-and lifecycle boundary. TC-036 checks the exact command and verifies that the
+and lifecycle boundary. TC-038 checks the exact command and verifies that the
 change-assurance proof declarations do not convert SUITE-008 into an attested
 proof input. Independent review, not that self-check, establishes whether the
 suite ran at the reported exact head.

@@ -1063,7 +1063,7 @@ fn no_local_evidence_framework_remains_and_nothing_still_reads_the_dropped_tree(
     }
 }
 
-// Trace: TC-036, NFR-003-AC-2
+// Trace: TC-038, NFR-003-AC-2
 #[test]
 fn local_suite_identity_is_declared_without_becoming_a_quoin_proof_claim() {
     let suite_registry = fs::read_to_string(root().join("spec/evidence/suites.md"))

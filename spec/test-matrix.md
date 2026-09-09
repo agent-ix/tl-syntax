@@ -75,4 +75,4 @@ relationships:
 | TC-034 | Prove the live-source partition is exact, name-independent, fail-closed, and distinguishes tracked, ordinary-untracked, ignored, and archival paths | Integration | P0 | FR-006-AC-7, NFR-003-AC-3 | ✅ implemented |
 | TC-035 | Prove the deleted-identity scan accepts arbitrary bytes and cannot be narrowed by workstation or administrative Git excludes | Integration | P0 | FR-006-AC-8, NFR-003-AC-3 | ✅ implemented |
 | TC-036 | Decode arbitrary supplied bytes through both public versioned document boundaries without unwinding | Fuzz | P1 | FR-004-AC-5 | ✅ implemented |
-| TC-038 | Bind the local SUITE-008 identity and keep it outside Quoin proof claims | Integration | P0 | NFR-003-AC-2 | 🚧 specified |
+| TC-038 | Bind the local SUITE-008 identity and keep it outside Quoin proof claims | Integration | P0 | NFR-003-AC-2 | ✅ implemented |

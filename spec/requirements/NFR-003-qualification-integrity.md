@@ -30,7 +30,7 @@ runner and does not turn a local test result into a Quoin attestation.
 | Control | Requirement owner | Verification | Lifecycle boundary |
 |---|---|---|---|
 | Shared component compatibility | NFR-003-AC-1 | TC-021 invokes the packaged Engineering Assurance classifier over every declared component and consumed artifact digest. | Re-run for every candidate or adopted shared-component release. |
-| Local verification-suite identity | NFR-003-AC-2 | TC-036 checks the declared SUITE-008 command and its exclusion from Quoin proof obligations; the independent exact-head review records whether that local command ran. | Local result for one exact revision only; never a retained Quoin attestation. |
+| Local verification-suite identity | NFR-003-AC-2 | TC-038 checks the declared SUITE-008 command and its exclusion from Quoin proof obligations; the independent exact-head review records whether that local command ran. | Local result for one exact revision only; never a retained Quoin attestation. |
 | Reviewed source-set integrity | NFR-003-AC-3 | TC-026, TC-034, and TC-035 exercise deleted-identity scanning, exact tracked paths, byte safety, and mutable-ignore refusals. | Re-evaluated whenever the non-archival tracked set or census policy changes. |
 | Producer/result integrity | NFR-003-AC-4 and NFR-003-AC-5 | TC-022 and TC-025 exercise producer non-execution, input derivation, and the twelve-state vocabulary. | Re-run for every candidate and adapter or declaration change. |
 | Make execution-control exposure | Qualification boundary below | SR-013 records the only completed behavioral measurement; AA-001 and `assurance/change-assurance.json` keep the limitation open. | The measured global `.IGNORE:` spelling is accepted only for pre-stable development; `agent-ix/tl-syntax#11` requires re-evaluation before the first stable release candidate. |
@@ -55,7 +55,7 @@ NFR-003 says what may be inferred from it.
 ## Verification
 
 Behavior tests invoke the existing repository gates and released contracts
-rather than reimplementing them. TC-036 inspects the structured declaration and
+rather than reimplementing them. TC-038 inspects the structured declaration and
 the suite registry only to establish the boundary between a local exact-head
 test and a proof input. Independent review remains necessary because a local
 test cannot prove that its own execution was reviewed or authorize a release.
@@ -65,7 +65,7 @@ test cannot prove that its own execution was reviewed or authorize a release.
 | ID | Criteria | Verification |
 |---|---|---|
 | NFR-003-AC-1 | Every declared shared component version and consumed artifact digest is classified by the packaged Engineering Assurance compatibility matrix, with no repository-local mapping or internal mirror substitute. | Test (TC-021) |
-| NFR-003-AC-2 | SUITE-008 identifies the exact local shared-assurance test command, and neither the change-assurance declaration nor any Quoin proof obligation claims that SUITE-008 was attested; its result is valid only for the exact-head review that reports it. | Test (TC-036) |
+| NFR-003-AC-2 | SUITE-008 identifies the exact local shared-assurance test command, and neither the change-assurance declaration nor any Quoin proof obligation claims that SUITE-008 was attested; its result is valid only for the exact-head review that reports it. | Test (TC-038) |
 | NFR-003-AC-3 | The candidate source identity covers every non-archival tracked path, refuses every ordinary-untracked live path and mutable ignore policy, and scans arbitrary tracked bytes without allowing a forbidden deleted identity to hide. | Test (TC-026, TC-034, TC-035) |
 | NFR-003-AC-4 | Every attested proof result is derived from a declared producer's structured bytes, with absent, empty, unreadable, or foreign-protocol input refused, and neither Quire nor Quoin executes a producer. | Test (TC-022) |
 | NFR-003-AC-5 | Pass, fail, unavailable, unsupported, inconclusive, not-computed, malformed, partial, stale, suspect, vacuous, and tampered remain distinguishable, and no non-success outcome is reported as passing. | Test (TC-025) |

@@ -35,7 +35,7 @@ required before merge.
 2. Reconcile FR-006 and NFR-002 without reusing retired identifiers or implying
    blanket succession from deleted local controls.
 3. Add NFR-003 to the shared change declaration and Quire source set; add a
-   focused TC-036 boundary check and extend existing trace bindings.
+   focused TC-038 boundary check and extend existing trace bindings.
 4. Update the exact live-source census for the new requirement path and prove
    no local runner, collector, parser, envelope, identity registry, retention
    store, or alternate contract appeared.

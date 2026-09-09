@@ -26,7 +26,7 @@ non-claims for Make execution control and the stable qualified record.
 | Requirement | Evidence | Gap |
 |---|---|---|
 | NFR-003-AC-1 shared compatibility | TC-021 invokes the packaged Engineering Assurance 4/4 classifier and its digest/mirror refusals. | none |
-| NFR-003-AC-2 local-suite identity | TC-036 fixes the SUITE-008 command and proves no declaration proof obligation claims it; independent exact-head review remains the execution authority. | none inside local behavior |
+| NFR-003-AC-2 local-suite identity | TC-038 fixes the SUITE-008 command and proves no declaration proof obligation claims it; independent exact-head review remains the execution authority. | none inside local behavior |
 | NFR-003-AC-3 source-set integrity | TC-026, TC-034, and TC-035 cover exact paths, independently authored areas, raw bytes, ordinary-untracked refusal, and mutable ignore policy. | none |
 | NFR-003-AC-4 producer/result integrity | TC-022 exercises structured inputs, absent/foreign input refusal, and producer non-execution by Quire/Quoin. | none |
 | NFR-003-AC-5 state integrity | TC-025 demonstrates all twelve states, pairs every negative with an accepted positive, and rejects a dangling control. | none |
