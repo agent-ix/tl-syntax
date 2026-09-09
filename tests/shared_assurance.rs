@@ -348,7 +348,7 @@ fn git_files(root: &Path, arguments: &[&str]) -> CensusResult<BTreeSet<String>> 
         .collect())
 }
 
-const EXPECTED_LIVE_TRACKED: [&str; 79] = [
+const EXPECTED_LIVE_TRACKED: [&str; 84] = [
     ".agent/rules/writing_rust.md",
     ".github/CODEOWNERS",
     ".github/workflows/ci.yml",
@@ -382,6 +382,10 @@ const EXPECTED_LIVE_TRACKED: [&str; 79] = [
     "corpus/schema/proposition-map-v1.schema.json",
     "deny.toml",
     "examples/corpus_conformance.rs",
+    "fuzz/.gitignore",
+    "fuzz/Cargo.lock",
+    "fuzz/Cargo.toml",
+    "fuzz/fuzz_targets/wire_decode.rs",
     "requirements-assurance.txt",
     "rust-toolchain.toml",
     "rustfmt.toml",
@@ -427,6 +431,7 @@ const EXPECTED_LIVE_TRACKED: [&str; 79] = [
     "tests/fixtures/valid-requirement-context.json",
     "tests/fixtures/valid-signal-catalog.json",
     "tests/integration.rs",
+    "tests/props_fr_007.rs",
     "tests/typed_signal_context.rs",
 ];
 
@@ -822,10 +827,11 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         ("assurance", 3),
         ("corpus", 14),
         ("examples", 1),
+        ("fuzz", 4),
         ("scripts", 7),
         ("spec", 21),
         ("src", 8),
-        ("tests", 7),
+        ("tests", 8),
     ]
     .into_iter()
     .map(|(area, count)| (area.to_owned(), count))
@@ -1118,6 +1124,10 @@ fn local_suite_identity_is_declared_without_becoming_a_quoin_proof_claim() {
     let proofs = definition["proof_obligations"]
         .as_array()
         .expect("proof_obligations");
+    assert!(
+        !proofs.is_empty(),
+        "the declared proof-obligation set is empty; exclusion would be vacuous"
+    );
     let proof_text = serde_json::to_string(proofs).expect("serialize proof declarations");
     assert!(
         !proof_text.contains("SUITE-008") && !proof_text.contains("NFR-003-AC-2"),
