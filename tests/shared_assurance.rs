@@ -88,7 +88,7 @@ fn chain_report() -> &'static Value {
     })
 }
 
-// Trace: TC-021, FR-006-AC-1
+// Trace: TC-021, FR-006-AC-1, NFR-003-AC-1
 #[test]
 fn every_shared_pin_is_classified_by_the_packaged_matrix() {
     let python = assurance_python();
@@ -140,7 +140,7 @@ fn every_shared_pin_is_classified_by_the_packaged_matrix() {
     );
 }
 
-// Trace: TC-022, FR-006-AC-2
+// Trace: TC-022, FR-006-AC-2, NFR-003-AC-4
 #[test]
 fn the_chain_reaches_quoin_without_quoin_or_quire_executing_a_producer() {
     let report = chain_report();
@@ -297,7 +297,7 @@ fn the_sealed_records_impact_snapshot_is_the_quire_export() {
     let export: Value = serde_json::from_slice(&bytes).expect("the Quire export is JSON");
     let text = String::from_utf8_lossy(&bytes);
     for requirement in [
-        "FR-001", "FR-002", "FR-003", "FR-004", "FR-005", "FR-006", "NFR-001", "NFR-002",
+        "FR-001", "FR-002", "FR-003", "FR-004", "FR-005", "FR-006", "NFR-001", "NFR-002", "NFR-003",
     ] {
         assert!(
             text.contains(requirement),
@@ -348,7 +348,7 @@ fn git_files(root: &Path, arguments: &[&str]) -> CensusResult<BTreeSet<String>> 
         .collect())
 }
 
-const EXPECTED_LIVE_TRACKED: [&str; 78] = [
+const EXPECTED_LIVE_TRACKED: [&str; 84] = [
     ".agent/rules/writing_rust.md",
     ".github/CODEOWNERS",
     ".github/workflows/ci.yml",
@@ -382,6 +382,10 @@ const EXPECTED_LIVE_TRACKED: [&str; 78] = [
     "corpus/schema/proposition-map-v1.schema.json",
     "deny.toml",
     "examples/corpus_conformance.rs",
+    "fuzz/.gitignore",
+    "fuzz/Cargo.lock",
+    "fuzz/Cargo.toml",
+    "fuzz/fuzz_targets/wire_decode.rs",
     "requirements-assurance.txt",
     "rust-toolchain.toml",
     "rustfmt.toml",
@@ -407,6 +411,7 @@ const EXPECTED_LIVE_TRACKED: [&str; 78] = [
     "spec/requirements/FR-007-typed-signal-context.md",
     "spec/requirements/NFR-001-no-std-feature-boundary.md",
     "spec/requirements/NFR-002-determinism-and-integrity.md",
+    "spec/requirements/NFR-003-qualification-integrity.md",
     "spec/requirements/StR-001-embedded-consumers.md",
     "spec/requirements/StR-002-temporal-interoperability.md",
     "spec/requirements/StR-003-formal-temporal-frontends.md",
@@ -426,6 +431,7 @@ const EXPECTED_LIVE_TRACKED: [&str; 78] = [
     "tests/fixtures/valid-requirement-context.json",
     "tests/fixtures/valid-signal-catalog.json",
     "tests/integration.rs",
+    "tests/props_fr_007.rs",
     "tests/typed_signal_context.rs",
 ];
 
@@ -613,7 +619,7 @@ impl Drop for ScratchDirectory {
     }
 }
 
-// Trace: TC-025, TC-016, FR-006-AC-5, NFR-002-AC-3
+// Trace: TC-025, TC-016, FR-006-AC-5, NFR-002-AC-3, NFR-003-AC-5
 #[test]
 fn all_twelve_verification_outcomes_are_demonstrated_and_paired_with_controls() {
     // The twelve states this migration must keep distinguishable. Every one of
@@ -715,7 +721,7 @@ fn all_twelve_verification_outcomes_are_demonstrated_and_paired_with_controls() 
     }
 }
 
-// Trace: TC-034, FR-006-AC-7
+// Trace: TC-034, FR-006-AC-7, NFR-003-AC-3
 #[test]
 fn live_source_enumeration_has_an_exact_fail_closed_partition() {
     let root = root();
@@ -821,10 +827,11 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         ("assurance", 3),
         ("corpus", 14),
         ("examples", 1),
+        ("fuzz", 4),
         ("scripts", 7),
-        ("spec", 20),
+        ("spec", 21),
         ("src", 8),
-        ("tests", 7),
+        ("tests", 8),
     ]
     .into_iter()
     .map(|(area, count)| (area.to_owned(), count))
@@ -863,7 +870,7 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
     );
 }
 
-// Trace: TC-035, FR-006-AC-8
+// Trace: TC-035, FR-006-AC-8, NFR-003-AC-3
 #[test]
 fn source_scanning_is_byte_safe_and_independent_of_local_git_excludes() {
     let process = std::process::id();
@@ -991,7 +998,7 @@ fn source_scanning_is_byte_safe_and_independent_of_local_git_excludes() {
     );
 }
 
-// Trace: TC-026, FR-006-AC-6
+// Trace: TC-026, FR-006-AC-6, NFR-003-AC-3
 #[test]
 fn no_local_evidence_framework_remains_and_nothing_still_reads_the_dropped_tree() {
     let root = root();
@@ -1060,4 +1067,114 @@ fn no_local_evidence_framework_remains_and_nothing_still_reads_the_dropped_tree(
             "the Makefile still carries {gone}"
         );
     }
+}
+
+// Trace: TC-038, NFR-003-AC-2
+#[test]
+fn local_suite_identity_is_declared_without_becoming_a_quoin_proof_claim() {
+    let suite_registry = fs::read_to_string(root().join("spec/evidence/suites.md"))
+        .expect("read the suite registry");
+    let suite_rows: Vec<&str> = suite_registry
+        .lines()
+        .filter(|line| line.starts_with("| SUITE-008 |"))
+        .collect();
+    assert_eq!(
+        suite_rows,
+        ["| SUITE-008 | Shared assurance contract tests | `cargo test --test shared_assurance --all-features` | cargo/rustc; Git supplies the version-control path inventory | Integration |"],
+        "SUITE-008 must have one exact local command identity"
+    );
+
+    let declaration: Value = serde_json::from_slice(
+        &fs::read(root().join("assurance/change-assurance.json"))
+            .expect("read the change-assurance declaration"),
+    )
+    .expect("the change-assurance declaration is JSON");
+    assert_eq!(
+        declaration["sources"]["NFR-003"],
+        "spec/requirements/NFR-003-qualification-integrity.md"
+    );
+    assert!(
+        declaration["record"]["source_connections"]
+            .as_array()
+            .expect("source_connections")
+            .iter()
+            .any(|connection| {
+                connection["source_id"] == "NFR-003" && connection["kind"] == "requirement"
+            }),
+        "NFR-003 is not bound into the candidate's source connections"
+    );
+
+    let definition = &declaration["record"]["definition"];
+    let requirement_ids: BTreeSet<&str> = definition["requirements"]
+        .as_array()
+        .expect("definition requirements")
+        .iter()
+        .filter_map(|requirement| requirement["id"].as_str())
+        .collect();
+    for id in [
+        "NFR-003-AC-1",
+        "NFR-003-AC-2",
+        "NFR-003-AC-3",
+        "NFR-003-AC-4",
+        "NFR-003-AC-5",
+    ] {
+        assert!(requirement_ids.contains(id), "the declaration omits {id}");
+    }
+
+    let proofs = definition["proof_obligations"]
+        .as_array()
+        .expect("proof_obligations");
+    assert!(
+        !proofs.is_empty(),
+        "the declared proof-obligation set is empty; exclusion would be vacuous"
+    );
+    let proof_text = serde_json::to_string(proofs).expect("serialize proof declarations");
+    assert!(
+        !proof_text.contains("SUITE-008") && !proof_text.contains("NFR-003-AC-2"),
+        "the local SUITE-008 result was misrepresented as a Quoin proof input: {proof_text}"
+    );
+
+    let local_boundary = definition["preservation_constraints"]
+        .as_array()
+        .expect("preservation_constraints")
+        .iter()
+        .find(|constraint| constraint["id"] == "PRESERVE-local-suite-boundary")
+        .expect("the local-suite boundary is absent");
+    assert!(
+        local_boundary["statement"]
+            .as_str()
+            .expect("local-suite statement")
+            .contains("not a structured producer input or Quoin proof attestation"),
+        "the local-suite boundary does not disclaim attestation"
+    );
+
+    let unknowns = definition["unknowns"].as_array().expect("unknowns");
+    let unknown = |id: &str| {
+        unknowns
+            .iter()
+            .find(|item| item["id"] == id)
+            .unwrap_or_else(|| panic!("qualification boundary {id} is absent"))
+    };
+    let make = unknown("UNKNOWN-make-execution-control-guard-removed");
+    assert_eq!(make["disposition"], "accepted");
+    assert_eq!(make["owner"], "tl-syntax-release-owner");
+    let make_statement = make["statement"].as_str().expect("Make boundary statement");
+    assert!(
+        make_statement.contains("first stable release candidate")
+            && make_statement.contains("agent-ix/engineering-assurance#11"),
+        "the accepted pre-stable Make limitation lost its trigger or upstream owner"
+    );
+
+    let stable = unknown("UNKNOWN-stable-qualified-record-deferred");
+    assert_eq!(stable["disposition"], "open");
+    assert_eq!(stable["owner"], "tl-syntax-release-owner");
+    let stable_statement = stable["statement"]
+        .as_str()
+        .expect("stable qualified-record statement");
+    assert!(
+        stable_statement.contains("No active qualified record is claimed")
+            && stable_statement.contains("first stable release candidate")
+            && stable_statement.contains("agent-ix/engineering-assurance#11"),
+        "the stable qualified-record gap lost its non-claim, trigger, or owner"
+    );
 }

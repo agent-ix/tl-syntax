@@ -19,32 +19,11 @@ source contexts shall likewise retain identical order and wire bytes.
 
 ## Scope
 
-The requirement covers all public syntax values and checked-in JSON artifacts.
-
-Retained evidence is not in scope for this requirement. This repository retains
-no evidence: the records its deleted collector wrote were themselves deleted
-under `agent-ix/tl-syntax#12`, and retention, integrity, and qualification
-authority belong to Quoin under
-[FR-006](./FR-006-shared-assurance-intake.md).
-
-Make execution control is also outside the evidence-integrity claim. The local
-guard that rejected Make failure-suppression features was removed with the
-collector it protected. At base `4cb5787`, an intentionally invalid Rust item
-made ordinary `make ci` stop at `fmt-check` and exit 2. A `make -k ci`
-diagnostic classified eight paths as failed or unmade. The other five were
-unaffected by the selected compile fault, so their behaviour under their own
-faults and `.IGNORE:` remains unmeasured. Adding a global `.IGNORE:` made the
-eight affected paths emit ignored failures while Make treated all thirteen
-prerequisites as successful and returned 0.
-[SR-013](../reviews/SR-013-make-execution-control-measurement.md) records the
-exact matrix and reproduction procedure. Quoin constrains charted producer
-bytes only when a record is actually produced. The chain retains nothing
-locally; under `.IGNORE:` its refusal was suppressed and no record was produced.
-The `tl-syntax-release-owner` accepts only this measured spelling for pre-stable
-development under `agent-ix/tl-syntax#11`. Seventeen other spellings remain
-unmeasured, and the deviation must be re-evaluated before the first stable
-release candidate. Use-specific qualification remains open under
-`agent-ix/engineering-assurance#11`.
+The requirement covers public syntax values and checked-in domain JSON
+artifacts. Shared-assurance intake, candidate source identity, local-suite
+identity, Make execution-control exposure, retained-record policy, and release
+qualification are outside this deterministic-domain claim and are owned by
+[NFR-003](./NFR-003-qualification-integrity.md).
 
 ## Rationale
 
@@ -85,25 +64,27 @@ The criterion is not reassigned and **the identifier is not reused**. The reason
 is that `SR-005` and `SR-006` adjudicate findings against `NFR-002-AC-4` by
 name, and an identifier that means one thing in a closed review and another in
 the current specification makes both unreadable.
-The live [FR-006](./FR-006-shared-assurance-intake.md) criteria are AC-1, AC-2,
-AC-3, AC-5, AC-6, and AC-7. Their relationship to the five retired clauses is
-explicit and not a blanket reassignment:
+The live [FR-006](./FR-006-shared-assurance-intake.md) criteria and
+[NFR-003](./NFR-003-qualification-integrity.md) qualification boundary do not
+inherit the five retired clauses wholesale. Their relationship is explicit:
 
-- FR-006-AC-1 carries only classification of the adopted shared component
-  versions. It does not claim source-lock or qualification of every launcher
-  and toolchain; that broader use-specific obligation remains outside this
-  pre-stable claim under `agent-ix/engineering-assurance#11`.
+- FR-006-AC-1 supplies declared component versions and artifact digests to the
+  released classifier; NFR-003-AC-1 owns the resulting shared-component
+  compatibility claim. Neither claims source-lock or qualification of every
+  launcher and toolchain; that broader use-specific obligation remains outside
+  this pre-stable claim under `agent-ix/engineering-assurance#11`.
 - FR-006-AC-3 carries Quire's static specification, obligation, and Rust-symbol
   coverage export. The deleted repository-local compiled-test census is not
   retained or claimed as an equivalent control.
-- The Make execution-control clause remains unowned by an acceptance criterion
-  and is tracked as `challenge-make-execution-control` and
-  `agent-ix/tl-syntax#11`.
+- The Make execution-control clause is an explicitly unclosed NFR-003
+  qualification boundary, tracked as `challenge-make-execution-control` and
+  `agent-ix/tl-syntax#11`; no acceptance criterion claims the deleted guard
+  still exists.
 - The per-record evidence-validator obligation went with the deleted retained
   record subject and retired FR-006-AC-4.
-- No active qualified record is claimed for this pre-stable release. That
-  obligation re-applies at the first stable release candidate under
-  `agent-ix/engineering-assurance#11`.
+- NFR-003 explicitly claims no active qualified record for this pre-stable
+  release. The obligation re-applies at the first stable release candidate
+  under `agent-ix/engineering-assurance#11`.
 
 Test case **TC-018** is retired with it, for the same reason and on the same
 terms.
@@ -115,6 +96,6 @@ The next acceptance-criterion identifier is AC-5; retired AC-4 is not reused.
 Constrains [FR-002](./FR-002-validated-formula.md),
 [FR-004](./FR-004-versioned-serialization.md), and
 [FR-005](./FR-005-conformance-corpus.md), and
-[FR-007](./FR-007-typed-signal-context.md). The surviving shared-intake
-relationships and the clauses that remain unclaimed are enumerated above; no
-blanket succession by [FR-006](./FR-006-shared-assurance-intake.md) is implied.
+[FR-007](./FR-007-typed-signal-context.md). Qualification and shared-intake
+relationships are enumerated above and in NFR-003; no blanket succession by
+FR-006 or NFR-003 is implied.

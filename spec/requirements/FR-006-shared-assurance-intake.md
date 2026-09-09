@@ -3,7 +3,7 @@ id: FR-006
 title: Adopt the shared assurance intake path
 type: FR
 relationships:
-  - target: ix://agent-ix/tl-syntax/NFR-002
+  - target: ix://agent-ix/tl-syntax/NFR-003
     type: depends_on
   - target: ix://agent-ix/tl-syntax/FR-005
     type: depends_on
@@ -71,7 +71,7 @@ framework.
 
 | ID | Criteria | Verification |
 |---|---|---|
-| FR-006-AC-1 | Every pinned component is classified by the packaged compatibility matrix, no consumed artifact digest differs from its pin, and no internal mirror registry is named anywhere in the repository. | Test (TC-021) |
+| FR-006-AC-1 | Every declared component version and consumed artifact digest is supplied to the packaged compatibility classifier, and the repository supplies neither a local compatibility mapping nor an internal mirror registry. | Test (TC-021) |
 | FR-006-AC-2 | The corpus conformance, corpus oracle, and feature-boundary results are structured, are produced by this repository's tools, and reach Quoin through the declared adapter without Quoin or Quire executing a producer. | Test (TC-022) |
 | FR-006-AC-3 | Static specification, obligation, and coverage facts for a candidate revision come from the Quire export named by the sealed record's impact snapshot. | Test (TC-023) |
 | FR-006-AC-5 | Each of the twelve verification outcomes is demonstrated by a case that produced it, and each negative case is paired with a positive control that was observed to be accepted. | Test (TC-025) |
@@ -89,6 +89,16 @@ rules whose active bytes match the Git index. A developer-global ignore file,
 `.git/info/exclude`, an untracked `.gitignore`, or unstaged edits to a tracked
 `.gitignore` are mutable local state, so accepting any of them as census policy
 would let two checkouts of one revision scan different inputs.
+
+### Qualification ownership
+
+This requirement owns intake behavior: producing domain results, exporting
+static facts, transcribing declared bytes, retaining state distinctions, and
+enumerating the live source set. [NFR-003](./NFR-003-qualification-integrity.md)
+owns what those behaviors permit a reviewer to infer about one candidate, the
+identity and non-attested status of the local SUITE-008 run, the disclosed Make
+execution-control limitation, and the stable-release qualified-record trigger.
+That split does not make either requirement a second runner or evidence format.
 
 ### Retired criteria
 
@@ -114,7 +124,7 @@ releases; evidence retained from that point is immutable.
 
 ## Dependencies
 
-Depends on [NFR-002](./NFR-002-determinism-and-integrity.md) and
+Depends on [NFR-003](./NFR-003-qualification-integrity.md) and
 [FR-005](./FR-005-conformance-corpus.md). Constrained by the accepted shared
 release pins recorded in `assurance/pins.json` and by the migration contract at
 `agent-ix/engineering-assurance#10`.

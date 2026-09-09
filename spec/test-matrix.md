@@ -35,6 +35,7 @@ relationships:
 |---|---|---|---|
 | NFR-001 | NFR-001-AC-1, NFR-001-AC-2 | TC-015, TC-019, TC-033 | ✅ covered |
 | NFR-002 | NFR-002-AC-1, NFR-002-AC-2, NFR-002-AC-3, NFR-002-AC-5 | TC-005, TC-014, TC-016, TC-027, TC-031 | ✅ covered |
+| NFR-003 | NFR-003-AC-1 through NFR-003-AC-5 | TC-021, TC-022, TC-025, TC-026, TC-034, TC-035, TC-038 | ✅ covered |
 
 ## Test Case Summary
 
@@ -59,11 +60,11 @@ relationships:
 | TC-017 | Round-trip every supported node wire variant and tag | Integration | P0 | FR-004-AC-1 | ✅ implemented |
 | TC-019 | Execute the no-std feature matrix and empty-default-dependency gate | Integration | P0 | NFR-001-AC-1, NFR-001-AC-2, StR-001-VC-1 | ✅ implemented |
 | TC-020 | Bound formula node allocation during wire decoding and owned construction | Integration | P0 | FR-004-AC-1, FR-004-AC-4 | ✅ implemented |
-| TC-021 | Classify every shared pin through the packaged compatibility matrix and refuse a mirror registry | Integration | P0 | FR-006-AC-1 | ✅ implemented |
-| TC-022 | Reach Quoin through the declared adapter with neither Quire nor Quoin executing a producer | Integration | P0 | FR-006-AC-2 | ✅ implemented |
+| TC-021 | Classify every shared pin through the packaged compatibility matrix and refuse a mirror registry | Integration | P0 | FR-006-AC-1, NFR-003-AC-1 | ✅ implemented |
+| TC-022 | Reach Quoin through the declared adapter with neither Quire nor Quoin executing a producer | Integration | P0 | FR-006-AC-2, NFR-003-AC-4 | ✅ implemented |
 | TC-023 | Bind the sealed record's impact snapshot to the Quire static export | Integration | P0 | FR-006-AC-3 | ✅ implemented |
-| TC-025 | Demonstrate all twelve outcomes and pair every negative with an accepted positive control | Integration | P0 | FR-006-AC-5 | ✅ implemented |
-| TC-026 | Prove no generic evidence machinery remains and no live repository source names the deleted machinery | Integration | P0 | FR-006-AC-6 | ✅ implemented |
+| TC-025 | Demonstrate all twelve outcomes and pair every negative with an accepted positive control | Integration | P0 | FR-006-AC-5, NFR-003-AC-5 | ✅ implemented |
+| TC-026 | Prove no generic evidence machinery remains and no live repository source names the deleted machinery | Integration | P0 | FR-006-AC-6, NFR-003-AC-3 | ✅ implemented |
 | TC-027 | Validate and deterministically order every supported bounded signal domain | Property | P0 | FR-007-AC-1, NFR-002-AC-5 | ✅ implemented |
 | TC-028 | Round-trip borrowed and owned signal catalogs with distinct signal/proposition identities | Integration | P0 | FR-007-AC-1, StR-003-VC-1 | ✅ implemented |
 | TC-029 | Reject every malformed catalog, bound, direct binding, and resource-limit boundary | Property | P0 | FR-007-AC-2 | ✅ implemented |
@@ -71,6 +72,7 @@ relationships:
 | TC-031 | Preserve complete requirement context, explicit consumer absence, and reject partial or malformed present wire forms | Integration | P0 | FR-007-AC-4, StR-003-VC-2, NFR-002-AC-5 | ✅ implemented |
 | TC-032 | Preserve the exact closed formula-v1 and proposition-map-v1 wire contracts; discharged by the existing compatibility snapshot tests | Snapshot | P0 | FR-007-AC-5 | ✅ implemented |
 | TC-033 | Compile borrowed signal and source-context APIs across the no-default/alloc/serde matrix | Compile | P0 | NFR-001-AC-1, NFR-001-AC-2 | ✅ implemented |
-| TC-034 | Prove the live-source partition is exact, name-independent, fail-closed, and distinguishes tracked, ordinary-untracked, ignored, and archival paths | Integration | P0 | FR-006-AC-7 | ✅ implemented |
-| TC-035 | Prove the deleted-identity scan accepts arbitrary bytes and cannot be narrowed by workstation or administrative Git excludes | Integration | P0 | FR-006-AC-8 | ✅ implemented |
+| TC-034 | Prove the live-source partition is exact, name-independent, fail-closed, and distinguishes tracked, ordinary-untracked, ignored, and archival paths | Integration | P0 | FR-006-AC-7, NFR-003-AC-3 | ✅ implemented |
+| TC-035 | Prove the deleted-identity scan accepts arbitrary bytes and cannot be narrowed by workstation or administrative Git excludes | Integration | P0 | FR-006-AC-8, NFR-003-AC-3 | ✅ implemented |
 | TC-036 | Decode arbitrary supplied bytes through both public versioned document boundaries without unwinding | Fuzz | P1 | FR-004-AC-5 | ✅ implemented |
+| TC-038 | Bind the local SUITE-008 identity and keep it outside Quoin proof claims | Integration | P0 | NFR-003-AC-2 | ✅ implemented |
