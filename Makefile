@@ -70,6 +70,7 @@ help:
 	@echo "  make build            - Release build"
 	@echo "  make clean            - cargo clean and drop the assurance environment"
 	@echo "  make deny             - run all declared cargo-deny policy checks"
+	@echo "  make fuzz-check       - compile and dependency-audit the manual fuzz targets"
 	@echo "  make audit-unsafe     - Enforce // SAFETY: comments on unsafe blocks"
 	@echo "  make assurance-env    - create the pinned shared-assurance interpreter"
 	@echo "  make assurance-inputs - run the producers and write their structured results"
@@ -149,6 +150,13 @@ deny:
 	$(CARGO) deny check licenses
 	$(CARGO) deny check sources
 
+# This compiles and audits the target but never starts a fuzzing campaign. The
+# campaign remains an explicit, manual operator action documented in README.
+.PHONY: fuzz-check
+fuzz-check:
+	$(CARGO) +nightly fuzz build wire_decode
+	cd fuzz && $(CARGO) deny check --config ../deny.toml
+
 .PHONY: audit-unsafe
 audit-unsafe:
 	bash scripts/check_unsafe_comments.sh
@@ -227,4 +235,4 @@ assurance-record: assurance-inputs
 
 .PHONY: ci
 ci: fmt-check check-features check-default-dependencies lint test check-corpus \
-	conformance deny audit-unsafe spec msrv rustdoc assurance
+	conformance deny fuzz-check audit-unsafe spec msrv rustdoc assurance

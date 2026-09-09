@@ -9,7 +9,7 @@ review_set: base
 
 ## Summary
 
-Quire 0.31.0 classified 39 binding criteria: 14 extractable and 25 concrete
+Quire 0.31.0 classifies 40 binding criteria: 14 extractable and 26 concrete
 examples. The existing suite already binds every criterion through its named
 test case; this review distinguishes generated domains from corpus, compile,
 and assurance demonstrations. Two generated caller-context properties now
@@ -27,9 +27,9 @@ cover the previously example-only complete-context and provenance boundaries.
 
 | Dimension | Counts |
 | --- | --- |
-| Criteria | 39 |
-| Extraction | 14 extractable; 25 not-extractable |
-| Property | 10 universal; 2 round-trip; 1 ordering; 1 invariant; 25 example |
+| Criteria | 40 |
+| Extraction | 14 extractable; 26 not-extractable |
+| Property | 10 universal; 2 round-trip; 1 ordering; 1 invariant; 26 example |
 | Harness | Existing Rust property harness in `src/syntax.rs`, `tests/integration.rs`, and `tests/typed_signal_context.rs` |
 
 ## Extractable-criterion grounding ledger
