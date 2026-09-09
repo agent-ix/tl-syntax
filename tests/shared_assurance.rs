@@ -77,14 +77,12 @@ fn hosted_ci_uses_the_released_scoped_ix_flow_package_and_stays_manual_only() {
         "hosted CI must retain workflow_dispatch as its only trigger"
     );
 
-    let install = workflow
+    let ix_flow_packages: Vec<&str> = workflow
         .lines()
-        .find(|line| line.contains("npm install --global"))
-        .expect("hosted CI has no global specification-tool install command");
-    let ix_flow_packages: Vec<&str> = install
-        .split_ascii_whitespace()
+        .filter(|line| line.contains("npm install --global"))
+        .flat_map(str::split_ascii_whitespace)
         .map(|token| token.trim_matches('\''))
-        .filter(|token| token.ends_with("ix-flow@0.0.4"))
+        .filter(|token| token.contains("ix-flow@"))
         .collect();
     assert_eq!(
         ix_flow_packages,
