@@ -1,5 +1,9 @@
 use alloc::{collections::BTreeMap, string::String, vec::Vec};
-use core::fmt;
+use core::{
+    cmp::Ordering,
+    fmt,
+    hash::{Hash, Hasher},
+};
 
 use crate::{Formula, FormulaError, Node, NodeId, PropositionId, SemanticProfile};
 
@@ -27,7 +31,7 @@ impl FormulaSchemaVersion {
 }
 
 /// Owned, versioned formula exchange document.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 #[cfg_attr(feature = "serde", serde(try_from = "FormulaDocumentWire"))]
 pub struct FormulaDocument {
@@ -39,6 +43,105 @@ pub struct FormulaDocument {
     root: NodeId,
     /// Nodes in stable topological order.
     nodes: Vec<Node>,
+}
+
+/// A span-free, semantic serialization view of a formula document.
+///
+/// This view preserves the stable document fields and topological node order,
+/// but serializes each node's operator and operands without its diagnostic
+/// source span. Use it for semantic cache keys, replay identities, and other
+/// content-addressed operations. The `FormulaDocument` wire form remains the
+/// diagnostic exchange form and retains spans when they are available.
+#[derive(Debug)]
+pub struct SemanticFormulaDocument<'a> {
+    document: &'a FormulaDocument,
+}
+
+impl PartialEq for SemanticFormulaDocument<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.document.schema_version == other.document.schema_version
+            && self.document.semantic_profile == other.document.semantic_profile
+            && self.document.root == other.document.root
+            && self.document.nodes.iter().map(|node| node.kind).eq(other
+                .document
+                .nodes
+                .iter()
+                .map(|node| node.kind))
+    }
+}
+
+impl Eq for SemanticFormulaDocument<'_> {}
+
+impl Hash for SemanticFormulaDocument<'_> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.document.schema_version.hash(state);
+        self.document.semantic_profile.hash(state);
+        self.document.root.hash(state);
+        self.document.nodes.len().hash(state);
+        for node in &self.document.nodes {
+            node.kind.hash(state);
+        }
+    }
+}
+
+impl Ord for SemanticFormulaDocument<'_> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        (
+            self.document.schema_version,
+            self.document.semantic_profile,
+            self.document.root,
+        )
+            .cmp(&(
+                other.document.schema_version,
+                other.document.semantic_profile,
+                other.document.root,
+            ))
+            .then_with(|| {
+                self.document
+                    .nodes
+                    .iter()
+                    .map(|node| node.kind)
+                    .cmp(other.document.nodes.iter().map(|node| node.kind))
+            })
+    }
+}
+
+impl PartialOrd for SemanticFormulaDocument<'_> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for SemanticFormulaDocument<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::{SerializeSeq, SerializeStruct};
+
+        struct SemanticNodes<'a>(&'a [Node]);
+
+        impl serde::Serialize for SemanticNodes<'_> {
+            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+            where
+                S: serde::Serializer,
+            {
+                let mut sequence = serializer.serialize_seq(Some(self.0.len()))?;
+                for node in self.0 {
+                    sequence.serialize_element(&node.kind)?;
+                }
+                sequence.end()
+            }
+        }
+
+        let mut document = serializer.serialize_struct("FormulaDocument", 4)?;
+        document.serialize_field("schema_version", &self.document.schema_version)?;
+        document.serialize_field("semantic_profile", &self.document.semantic_profile)?;
+        document.serialize_field("root", &self.document.root)?;
+        document.serialize_field("nodes", &SemanticNodes(&self.document.nodes))?;
+        document.end()
+    }
 }
 
 #[cfg(feature = "serde")]
@@ -156,6 +259,11 @@ impl FormulaDocument {
     /// Returns the nodes in stable topological order.
     pub fn nodes(&self) -> &[Node] {
         &self.nodes
+    }
+
+    /// Returns the canonical semantic view, excluding diagnostic source spans.
+    pub const fn semantic_view(&self) -> SemanticFormulaDocument<'_> {
+        SemanticFormulaDocument { document: self }
     }
 
     /// Copies a validated borrowed formula into a bounded owned v1 document.

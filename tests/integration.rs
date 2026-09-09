@@ -6,6 +6,11 @@ use tl_syntax::{
 };
 
 use proptest::prelude::*;
+use std::{
+    cmp::Ordering,
+    collections::hash_map::DefaultHasher,
+    hash::{Hash, Hasher},
+};
 
 #[derive(serde::Deserialize)]
 struct CorpusManifest {
@@ -133,6 +138,115 @@ fn formula_document_round_trips_with_required_profile() {
 
     let missing_profile = json.replace("\"semantic_profile\":\"mltl.closed-trace/v1\",", "");
     assert!(serde_json::from_str::<FormulaDocument>(&missing_profile).is_err());
+}
+
+// Trace: TC-037, FR-003-AC-4
+#[test]
+fn spans_are_diagnostic_provenance_not_semantic_identity() {
+    let proposition = NodeKind::Proposition {
+        proposition: PropositionId(4),
+    };
+    let first = FormulaDocument::new(
+        SemanticProfile::ClosedTraceV1,
+        NodeId(1),
+        vec![
+            Node::with_span(proposition, SourceSpan::new(0, 2).unwrap()),
+            Node::with_span(
+                NodeKind::Not { operand: NodeId(0) },
+                SourceSpan::new(3, 6).unwrap(),
+            ),
+        ],
+    )
+    .unwrap();
+    let second = FormulaDocument::new(
+        SemanticProfile::ClosedTraceV1,
+        NodeId(1),
+        vec![
+            Node::with_span(proposition, SourceSpan::new(8, 10).unwrap()),
+            Node::with_span(
+                NodeKind::Not { operand: NodeId(0) },
+                SourceSpan::new(11, 14).unwrap(),
+            ),
+        ],
+    )
+    .unwrap();
+
+    assert_ne!(
+        first, second,
+        "structural documents retain source provenance"
+    );
+    assert_ne!(
+        first.nodes()[0].cmp(&second.nodes()[0]),
+        Ordering::Equal,
+        "structural node ordering retains source provenance"
+    );
+    let semantic_hash = |document: &FormulaDocument| {
+        let mut hasher = DefaultHasher::new();
+        document.semantic_view().hash(&mut hasher);
+        hasher.finish()
+    };
+    assert_eq!(
+        first.semantic_view(),
+        second.semantic_view(),
+        "semantic equality excludes source provenance"
+    );
+    assert_eq!(
+        first.semantic_view().cmp(&second.semantic_view()),
+        Ordering::Equal,
+        "semantic ordering excludes source provenance"
+    );
+    assert_eq!(
+        semantic_hash(&first),
+        semantic_hash(&second),
+        "semantic hashes exclude source provenance"
+    );
+
+    assert_ne!(
+        serde_json::to_vec(&first).unwrap(),
+        serde_json::to_vec(&second).unwrap()
+    );
+    let semantic_first = serde_json::to_vec(&first.semantic_view()).unwrap();
+    let semantic_second = serde_json::to_vec(&second.semantic_view()).unwrap();
+    assert_eq!(
+        semantic_first, semantic_second,
+        "the semantic serialization must omit diagnostic provenance"
+    );
+    let decoded: FormulaDocument = serde_json::from_slice(&semantic_first).unwrap();
+    decoded.validate().unwrap();
+    assert_eq!(decoded.nodes()[0].span, None);
+    assert_eq!(decoded.semantic_view(), first.semantic_view());
+
+    let different_kind = FormulaDocument::new(
+        SemanticProfile::ClosedTraceV1,
+        NodeId(1),
+        vec![
+            Node::new(proposition),
+            Node::new(NodeKind::And {
+                left: NodeId(0),
+                right: NodeId(0),
+            }),
+        ],
+    )
+    .unwrap();
+    let different_root = FormulaDocument::new(
+        SemanticProfile::ClosedTraceV1,
+        NodeId(0),
+        first.nodes().to_vec(),
+    )
+    .unwrap();
+    let different_profile = FormulaDocument::new(
+        SemanticProfile::OnlinePrefixV1,
+        NodeId(1),
+        first.nodes().to_vec(),
+    )
+    .unwrap();
+    for different in [&different_kind, &different_root, &different_profile] {
+        assert_ne!(first.semantic_view(), different.semantic_view());
+        assert_ne!(
+            semantic_first,
+            serde_json::to_vec(&different.semantic_view()).unwrap()
+        );
+    }
 }
 
 // Trace: TC-017, FR-004-AC-1

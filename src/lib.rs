@@ -27,7 +27,8 @@ pub use context_document::{RequirementContextDocument, RequirementContextSchemaV
 #[cfg(feature = "alloc")]
 pub use document::{
     FormulaDocument, FormulaSchemaVersion, PropositionEntry, PropositionMapDocument,
-    PropositionMapError, PropositionMapSchemaVersion, MAX_FORMULA_DOCUMENT_NODES,
+    PropositionMapError, PropositionMapSchemaVersion, SemanticFormulaDocument,
+    MAX_FORMULA_DOCUMENT_NODES,
 };
 pub use signal::{
     BoundFormula, FixedDecimalSignalDomain, FormulaBindingError, IntegerSignalDomain,

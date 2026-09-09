@@ -15,7 +15,7 @@ relationships:
 |---|---|---|---|
 | FR-001 | FR-001-AC-1, FR-001-AC-2 | TC-001, TC-002 | ✅ covered |
 | FR-002 | FR-002-AC-1, FR-002-AC-2, FR-002-AC-3 | TC-003, TC-004, TC-005 | ✅ covered |
-| FR-003 | FR-003-AC-1, FR-003-AC-2, FR-003-AC-3 | TC-006, TC-007, TC-008 | ✅ covered |
+| FR-003 | FR-003-AC-1, FR-003-AC-2, FR-003-AC-3, FR-003-AC-4 | TC-006, TC-007, TC-008, TC-037 | ✅ covered |
 | FR-004 | FR-004-AC-1, FR-004-AC-2, FR-004-AC-3, FR-004-AC-4, FR-004-AC-5 | TC-009, TC-010, TC-011, TC-017, TC-020, TC-036 | ✅ covered |
 | FR-005 | FR-005-AC-1, FR-005-AC-2, FR-005-AC-3 | TC-012, TC-013, TC-014 | ✅ covered |
 | FR-006 | FR-006-AC-1, FR-006-AC-2, FR-006-AC-3, FR-006-AC-5, FR-006-AC-6, FR-006-AC-7, FR-006-AC-8 | TC-021, TC-022, TC-023, TC-025, TC-026, TC-034, TC-035 | ✅ covered |
@@ -75,4 +75,5 @@ relationships:
 | TC-034 | Prove the live-source partition is exact, name-independent, fail-closed, and distinguishes tracked, ordinary-untracked, ignored, and archival paths | Integration | P0 | FR-006-AC-7, NFR-003-AC-3 | ✅ implemented |
 | TC-035 | Prove the deleted-identity scan accepts arbitrary bytes and cannot be narrowed by workstation or administrative Git excludes | Integration | P0 | FR-006-AC-8, NFR-003-AC-3 | ✅ implemented |
 | TC-036 | Decode arbitrary supplied bytes through both public versioned document boundaries without unwinding | Fuzz | P1 | FR-004-AC-5 | ✅ implemented |
+| TC-037 | Exclude diagnostic source spans from semantic identity and serialization | Integration | P0 | FR-003-AC-4 | ✅ implemented |
 | TC-038 | Bind the local SUITE-008 identity and keep it outside Quoin proof claims | Integration | P0 | NFR-003-AC-2 | ✅ implemented |
