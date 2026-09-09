@@ -1,8 +1,4 @@
-use core::{
-    cmp::Ordering,
-    fmt,
-    hash::{Hash, Hasher},
-};
+use core::fmt;
 
 /// A discrete-time inclusive interval `[start, end]`.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -168,7 +164,7 @@ impl SemanticProfile {
 }
 
 /// One MLTL syntax node. Operands are indices into the containing node table.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
 pub struct Node {
     /// Operator and operands.
@@ -194,35 +190,6 @@ impl Node {
             kind,
             span: Some(span),
         }
-    }
-}
-
-// Source locations describe provenance for diagnostics.  They deliberately do
-// not describe the formula itself: callers use `Node` and `Formula` as keys
-// for semantic operations such as interning and replay identity.
-impl PartialEq for Node {
-    fn eq(&self, other: &Self) -> bool {
-        self.kind == other.kind
-    }
-}
-
-impl Eq for Node {}
-
-impl Hash for Node {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.kind.hash(state);
-    }
-}
-
-impl Ord for Node {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.kind.cmp(&other.kind)
-    }
-}
-
-impl PartialOrd for Node {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
     }
 }
 

@@ -159,35 +159,50 @@ fn spans_are_diagnostic_provenance_not_semantic_identity() {
     )
     .unwrap();
 
-    assert_eq!(
+    assert_ne!(
         first, second,
-        "source layout must not change formula equality"
+        "structural documents retain source provenance"
     );
-    let hash = |document: &FormulaDocument| {
+    assert_ne!(
+        first.nodes()[0].cmp(&second.nodes()[0]),
+        Ordering::Equal,
+        "structural node ordering retains source provenance"
+    );
+    let semantic_hash = |document: &FormulaDocument| {
         let mut hasher = DefaultHasher::new();
-        document.hash(&mut hasher);
+        document.semantic_view().hash(&mut hasher);
         hasher.finish()
     };
     assert_eq!(
-        hash(&first),
-        hash(&second),
-        "source layout must not change formula hashing"
+        first.semantic_view(),
+        second.semantic_view(),
+        "semantic equality excludes source provenance"
     );
     assert_eq!(
-        first.nodes()[0].cmp(&second.nodes()[0]),
+        first.semantic_view().cmp(&second.semantic_view()),
         Ordering::Equal,
-        "source layout must not change node ordering"
+        "semantic ordering excludes source provenance"
+    );
+    assert_eq!(
+        semantic_hash(&first),
+        semantic_hash(&second),
+        "semantic hashes exclude source provenance"
     );
 
     assert_ne!(
         serde_json::to_vec(&first).unwrap(),
         serde_json::to_vec(&second).unwrap()
     );
+    let semantic_first = serde_json::to_vec(&first.semantic_view()).unwrap();
+    let semantic_second = serde_json::to_vec(&second.semantic_view()).unwrap();
     assert_eq!(
-        serde_json::to_vec(&first.semantic_view()).unwrap(),
-        serde_json::to_vec(&second.semantic_view()).unwrap(),
+        semantic_first, semantic_second,
         "the semantic serialization must omit diagnostic provenance"
     );
+    let decoded: FormulaDocument = serde_json::from_slice(&semantic_first).unwrap();
+    decoded.validate().unwrap();
+    assert_eq!(decoded.nodes()[0].span, None);
+    assert_eq!(decoded.semantic_view(), first.semantic_view());
 }
 
 // Trace: TC-017, FR-004-AC-1

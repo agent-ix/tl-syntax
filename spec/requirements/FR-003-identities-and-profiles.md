@@ -46,7 +46,7 @@ trace or online-prefix semantic-profile identity without parser-specific state.
 | FR-003-AC-1 | Proposition identities and valid source spans compare and order deterministically; spans preserve their endpoints, report correct length and emptiness, and `Node::with_span` preserves both the operator and span. | Test (TC-006) |
 | FR-003-AC-2 | Both v1 semantic profiles have distinct stable wire names. | Test (TC-007) |
 | FR-003-AC-3 | Every serialized formula document requires a semantic profile. | Test (TC-008) |
-| FR-003-AC-4 | Documents that differ only in valid source spans compare, order, and hash equally; their semantic serialization bytes are equal while diagnostic wire bytes retain the distinct spans. | Test (TC-037) |
+| FR-003-AC-4 | The semantic views of documents that differ only in valid source spans compare, order, and hash equally; their semantic serialization bytes are equal and decode as valid v1 documents without spans, while structural documents and diagnostic wire bytes retain the distinct spans. | Test (TC-037) |
 
 ## Dependencies
 

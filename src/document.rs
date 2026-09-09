@@ -1,5 +1,9 @@
 use alloc::{collections::BTreeMap, string::String, vec::Vec};
-use core::fmt;
+use core::{
+    cmp::Ordering,
+    fmt,
+    hash::{Hash, Hasher},
+};
 
 use crate::{Formula, FormulaError, Node, NodeId, PropositionId, SemanticProfile};
 
@@ -48,8 +52,64 @@ pub struct FormulaDocument {
 /// source span. Use it for semantic cache keys, replay identities, and other
 /// content-addressed operations. The `FormulaDocument` wire form remains the
 /// diagnostic exchange form and retains spans when they are available.
+#[derive(Debug)]
 pub struct SemanticFormulaDocument<'a> {
     document: &'a FormulaDocument,
+}
+
+impl PartialEq for SemanticFormulaDocument<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.document.schema_version == other.document.schema_version
+            && self.document.semantic_profile == other.document.semantic_profile
+            && self.document.root == other.document.root
+            && self.document.nodes.iter().map(|node| node.kind).eq(other
+                .document
+                .nodes
+                .iter()
+                .map(|node| node.kind))
+    }
+}
+
+impl Eq for SemanticFormulaDocument<'_> {}
+
+impl Hash for SemanticFormulaDocument<'_> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.document.schema_version.hash(state);
+        self.document.semantic_profile.hash(state);
+        self.document.root.hash(state);
+        self.document.nodes.len().hash(state);
+        for node in &self.document.nodes {
+            node.kind.hash(state);
+        }
+    }
+}
+
+impl Ord for SemanticFormulaDocument<'_> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        (
+            self.document.schema_version,
+            self.document.semantic_profile,
+            self.document.root,
+        )
+            .cmp(&(
+                other.document.schema_version,
+                other.document.semantic_profile,
+                other.document.root,
+            ))
+            .then_with(|| {
+                self.document
+                    .nodes
+                    .iter()
+                    .map(|node| node.kind)
+                    .cmp(other.document.nodes.iter().map(|node| node.kind))
+            })
+    }
+}
+
+impl PartialOrd for SemanticFormulaDocument<'_> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 #[cfg(feature = "serde")]
