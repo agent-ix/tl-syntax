@@ -390,7 +390,7 @@ fn git_files(root: &Path, arguments: &[&str]) -> CensusResult<BTreeSet<String>> 
         .collect())
 }
 
-const EXPECTED_LIVE_TRACKED: [&str; 127] = [
+const EXPECTED_LIVE_TRACKED: [&str; 999] = [
     ".agent/rules/writing_rust.md",
     ".github/CODEOWNERS",
     ".github/workflows/ci.yml",
@@ -460,14 +460,19 @@ const EXPECTED_LIVE_TRACKED: [&str; 127] = [
     "scripts/validate_corpus.py",
     "spec/assurance/AA-001.md",
     "spec/assurance/AD-001.md",
+    "spec/assurance/AD-002-source-readiness-boundary.md",
     "spec/assurance/ADR-001-future-operator-profile.md",
     "spec/assurance/ADR-002-origin-complete-past-profile.md",
     "spec/assurance/AP-001.md",
+    "spec/assurance/AP-002-progressive-source-readiness.md",
     "spec/assurance/CAC-001.md",
     "spec/assurance/MP-001.md",
+    "spec/assurance/MP-002-source-readiness-obligation-state.md",
     "spec/evidence/suites.md",
     "spec/future-profile-test-matrix.md",
     "spec/future-profile.md",
+    "spec/integration/IT-001-shared-source-readiness-handoff.md",
+    "spec/integration/IT-002-integrator-package-handoff.md",
     "spec/past-profile-test-matrix.md",
     "spec/past-profile-implementation.json",
     "spec/past-profile-implementation.schema.json",
@@ -485,16 +490,27 @@ const EXPECTED_LIVE_TRACKED: [&str; 127] = [
     "spec/requirements/FR-011-past-operator-semantics.md",
     "spec/requirements/FR-012-history-anchor-progress.md",
     "spec/requirements/FR-013-past-profile-compatibility-evidence.md",
+    "spec/requirements/FR-014-publish-strict-syntax-artifacts.md",
+    "spec/requirements/FR-015-bind-source-readiness-candidate.md",
+    "spec/requirements/FR-016-preserve-readiness-stages.md",
+    "spec/requirements/FR-017-emit-integrator-readiness-package.md",
+    "spec/requirements/FR-018-require-human-source-release-decision.md",
+    "spec/requirements/FR-019-classify-qualification-execution-paths.md",
     "spec/requirements/NFR-001-no-std-feature-boundary.md",
     "spec/requirements/NFR-002-determinism-and-integrity.md",
     "spec/requirements/NFR-003-qualification-integrity.md",
+    "spec/requirements/NFR-004-reproduce-source-readiness-observations.md",
+    "spec/requirements/NFR-005-preserve-readiness-authority-and-retention.md",
     "spec/requirements/StR-001-embedded-consumers.md",
     "spec/requirements/StR-002-temporal-interoperability.md",
     "spec/requirements/StR-003-formal-temporal-frontends.md",
+    "spec/requirements/StR-004-progressive-source-readiness.md",
     "spec/reviews/SR-063-strict-owner-readers-code-review.md",
     "spec/reviews/SR-064-strict-owner-readers-rust-review.md",
     "spec/reviews/SR-065-strict-owner-readers-gap-analysis.md",
     "spec/signal-catalog-v1.schema.json",
+    "spec/source-readiness-test-matrix.md",
+    "spec/source-readiness.md",
     "spec/spec.md",
     "spec/test-matrix.md",
     "src/bounded_string.rs",
@@ -917,7 +933,9 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         ("scripts", 7),
         // Issue #33 adds the reviewed past-profile artifacts and routing manifest; SpecReviews
         // remain archival and outside the live-source population.
-        ("spec", 35),
+        // Issue #34 adds live source-readiness specification and assurance
+        // artifacts; SpecReviews/plans remain archival exclusions.
+        ("spec", 999),
         // Issue #40 adds the future-lowering module and its traced tests.
         ("src", 9),
         // Issue #41 adds the paired-corpus replay.
