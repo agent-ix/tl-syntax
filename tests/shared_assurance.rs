@@ -390,7 +390,7 @@ fn git_files(root: &Path, arguments: &[&str]) -> CensusResult<BTreeSet<String>> 
         .collect())
 }
 
-const EXPECTED_LIVE_TRACKED: [&str; 84] = [
+const EXPECTED_LIVE_TRACKED: [&str; 99] = [
     ".agent/rules/writing_rust.md",
     ".github/CODEOWNERS",
     ".github/workflows/ci.yml",
@@ -440,10 +440,15 @@ const EXPECTED_LIVE_TRACKED: [&str; 84] = [
     "scripts/validate_corpus.py",
     "spec/assurance/AA-001.md",
     "spec/assurance/AD-001.md",
+    "spec/assurance/AD-002-source-readiness-boundary.md",
     "spec/assurance/AP-001.md",
+    "spec/assurance/AP-002-progressive-source-readiness.md",
     "spec/assurance/CAC-001.md",
     "spec/assurance/MP-001.md",
+    "spec/assurance/MP-002-source-readiness-obligation-state.md",
     "spec/evidence/suites.md",
+    "spec/integration/IT-001-shared-source-readiness-handoff.md",
+    "spec/integration/IT-002-integrator-package-handoff.md",
     "spec/requirements/FR-001-inclusive-intervals.md",
     "spec/requirements/FR-002-validated-formula.md",
     "spec/requirements/FR-003-identities-and-profiles.md",
@@ -451,12 +456,22 @@ const EXPECTED_LIVE_TRACKED: [&str; 84] = [
     "spec/requirements/FR-005-conformance-corpus.md",
     "spec/requirements/FR-006-shared-assurance-intake.md",
     "spec/requirements/FR-007-typed-signal-context.md",
+    "spec/requirements/FR-014-bind-source-readiness-candidate.md",
+    "spec/requirements/FR-015-preserve-readiness-stages.md",
+    "spec/requirements/FR-016-emit-integrator-readiness-package.md",
+    "spec/requirements/FR-017-require-human-source-release-decision.md",
+    "spec/requirements/FR-018-classify-qualification-execution-paths.md",
     "spec/requirements/NFR-001-no-std-feature-boundary.md",
     "spec/requirements/NFR-002-determinism-and-integrity.md",
     "spec/requirements/NFR-003-qualification-integrity.md",
+    "spec/requirements/NFR-004-reproduce-source-readiness-observations.md",
+    "spec/requirements/NFR-005-preserve-readiness-authority-and-retention.md",
     "spec/requirements/StR-001-embedded-consumers.md",
     "spec/requirements/StR-002-temporal-interoperability.md",
     "spec/requirements/StR-003-formal-temporal-frontends.md",
+    "spec/requirements/StR-004-progressive-source-readiness.md",
+    "spec/source-readiness-test-matrix.md",
+    "spec/source-readiness.md",
     "spec/spec.md",
     "spec/test-matrix.md",
     "src/bounded_string.rs",
@@ -871,7 +886,9 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         ("examples", 1),
         ("fuzz", 4),
         ("scripts", 7),
-        ("spec", 21),
+        // Issue #34 adds fifteen live source-readiness specification and
+        // assurance artifacts; SpecReviews/plans remain archival exclusions.
+        ("spec", 36),
         ("src", 8),
         ("tests", 8),
     ]

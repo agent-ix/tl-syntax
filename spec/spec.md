@@ -38,6 +38,11 @@ without redefining or weakening it.
 - Formula rewriting or normalization.
 - Finite-trace evaluation and horizon computation algorithms.
 - Production stream monitoring.
+- A user-authored TL or FRETish source language; native Quire is the sole
+  editable formal-clause authority.
+- Automatic release approval, tool certification, consuming-system
+  qualification, monitor qualification, crates.io publication, or a local
+  evidence/approval framework.
 
 ## System Overview
 
@@ -69,8 +74,11 @@ inspection evidence.
 
 - [tl-syntax epic](https://github.com/agent-ix/tl-syntax/issues/5).
 - [Contract-derived verification program](https://github.com/agent-ix/quire-contract-ir/issues/1).
-- [FRETish temporal frontend](https://github.com/agent-ix/quire-contract-ir/issues/57).
+- [Native Quire typed-predicate bridge](https://github.com/agent-ix/quire-contract-ir/issues/63).
+- [Export-only FRETish mapping](https://github.com/agent-ix/quire-contract-ir/issues/57).
 - [Typed signal and source-context child](https://github.com/agent-ix/tl-syntax/issues/15).
+- [Progressive source-readiness child](https://github.com/agent-ix/tl-syntax/issues/34).
+- [Progressive source-readiness specification](./source-readiness.md).
 - [PGM-01 governance gate](https://github.com/agent-ix/quire-contract-ir/issues/3),
   identified as `ix://agent-ix/quire-contract-ir/PGM-01`.
 - Cargo package manifest and repository contribution policy.
