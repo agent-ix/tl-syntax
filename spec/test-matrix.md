@@ -35,7 +35,7 @@ relationships:
 |---|---|---|---|
 | NFR-001 | NFR-001-AC-1, NFR-001-AC-2 | TC-015, TC-019, TC-033 | ✅ covered |
 | NFR-002 | NFR-002-AC-1, NFR-002-AC-2, NFR-002-AC-3, NFR-002-AC-5 | TC-005, TC-014, TC-016, TC-027, TC-031 | ✅ covered |
-| NFR-003 | NFR-003-AC-1 through NFR-003-AC-5 | TC-021, TC-022, TC-025, TC-026, TC-034, TC-035, TC-038 | ✅ covered |
+| NFR-003 | NFR-003-AC-1 through NFR-003-AC-6 | TC-021, TC-022, TC-025, TC-026, TC-034, TC-035, TC-038, TC-039 | ✅ covered |
 
 ## Test Case Summary
 
@@ -77,3 +77,4 @@ relationships:
 | TC-036 | Decode arbitrary supplied bytes through both public versioned document boundaries without unwinding | Fuzz | P1 | FR-004-AC-5 | ✅ implemented |
 | TC-037 | Exclude diagnostic source spans from semantic identity and serialization | Integration | P0 | FR-003-AC-4 | ✅ implemented |
 | TC-038 | Bind the local SUITE-008 identity and keep it outside Quoin proof claims | Integration | P0 | NFR-003-AC-2 | ✅ implemented |
+| TC-039 | Bind hosted CI to the released scoped ix-flow package while retaining its executable version and manual-only trigger | Integration | P0 | NFR-003-AC-6 | ✅ implemented |

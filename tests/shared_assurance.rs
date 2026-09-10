@@ -65,6 +65,48 @@ fn head_revision() -> String {
     String::from_utf8_lossy(&output.stdout).trim().to_owned()
 }
 
+// Trace: TC-039, NFR-003-AC-6
+#[test]
+fn hosted_ci_uses_the_released_scoped_ix_flow_package_and_stays_manual_only() {
+    let workflow_path = root().join(".github/workflows/ci.yml");
+    let workflow = fs::read_to_string(&workflow_path)
+        .unwrap_or_else(|error| panic!("cannot read {}: {error}", workflow_path.display()));
+
+    assert!(
+        workflow.contains("\non:\n  workflow_dispatch:\n\njobs:\n"),
+        "hosted CI must retain workflow_dispatch as its only trigger"
+    );
+
+    let ix_flow_packages: Vec<&str> = workflow
+        .lines()
+        .filter(|line| line.contains("npm install --global"))
+        .flat_map(str::split_ascii_whitespace)
+        .map(|token| token.trim_matches('\''))
+        .filter(|token| token.contains("ix-flow@"))
+        .collect();
+    assert_eq!(
+        ix_flow_packages,
+        ["@agent-ix/ix-flow@0.0.4"],
+        "hosted CI must install the released scoped package exactly once"
+    );
+
+    let output = Command::new("ix-flow")
+        .arg("--version")
+        .current_dir(root())
+        .output()
+        .expect("the exact ix-flow executable is absent from PATH");
+    assert!(
+        output.status.success(),
+        "ix-flow --version failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    assert_eq!(
+        String::from_utf8_lossy(&output.stdout).trim(),
+        "0.0.4",
+        "the local gate must exercise the same released version installed by hosted CI"
+    );
+}
+
 /// The chain is expensive and several tests read it. It runs once per test
 /// binary, and every reader sees the same run rather than a different one.
 static CHAIN: OnceLock<Value> = OnceLock::new();
