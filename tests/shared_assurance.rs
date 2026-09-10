@@ -505,6 +505,7 @@ fn is_archival_record(relative: &str) -> bool {
         || relative == "spec/.gitkeep"
         || relative.starts_with("spec/reviews/")
         || relative.starts_with("spec/plans/")
+        || relative.starts_with("plan/")
 }
 
 fn source_sets(root: &Path) -> CensusResult<(BTreeSet<String>, BTreeSet<String>)> {
