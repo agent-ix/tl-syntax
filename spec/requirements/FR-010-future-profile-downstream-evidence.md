@@ -80,7 +80,7 @@ FR-008, FR-009, this requirement, ADR-001, and TM-002. Dependency order is:
 
 1. `tl-syntax` owns the no-alloc lowering values, closed catalog, report, typed
    refusals, and exact node-budget accounting.
-2. `tl-parse` owns the successor internal dialect, precedence, spans,
+2. `tl-parse` owns `tl-parse.clean-ascii/v2`, precedence, spans,
    diagnostics, fuzz target, and primitive-only canonical formatter.
 3. `tl-mltl` and `tl-rewrite` independently add direct-versus-lowered
    evaluation/progress/horizon/resource and rewrite-equivalence controls; they

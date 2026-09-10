@@ -41,11 +41,11 @@ The four profile axes are orthogonal:
 | Axis | v1 decision |
 |---|---|
 | derived operator catalog | `tl-syntax.future-operators/v1` admits only W and M lowerings |
-| internal text dialect | old `tl-parse.clean-ascii/v1` stays closed; a successor identity is required for W/M input |
+| internal text dialect | old `tl-parse.clean-ascii/v1` stays closed; `tl-parse.clean-ascii/v2` admits W/M input |
 | formula wire | `tl-syntax.formula/v1` remains primitive-only and unchanged |
 | evaluation | the selected closed-trace or online-prefix v1 profile is preserved, never inferred from spelling |
 
-A successor internal ASCII dialect may use only case-sensitive `W[a,b]` and
+The `tl-parse.clean-ascii/v2` internal ASCII dialect may use only case-sensitive `W[a,b]` and
 `M[a,b]` infix spellings at the existing U/R precedence and left
 associativity, with the existing checked canonical interval syntax. It shall
 reject interval-less W/M, any X spelling, lowercase or long-name aliases,
@@ -54,13 +54,13 @@ unknown operators, and non-canonical bounds rather than guessing.
 The parser supplies distinct checked spans for the operator token and full
 derived expression. Canonical formatting never re-sugars: it emits the existing
 primitive F/G/U/R expression. Old v1 text parsers therefore continue to reject
-derived input and accept successor-dialect canonical output. A formula-v1
+derived input and accept v2-dialect canonical output. A formula-v1
 document alone does not claim which surface produced it; a source
 correspondence claim retains its source/dialect or native-clause identity
 beside the formula.
 
 Adding, removing, renaming, or changing a derived spelling or lowering requires
-a new `tl-syntax.future-operators/vN` identity and successor text dialect.
+a new `tl-syntax.future-operators/vN` identity and a new text-dialect identity.
 Adding or changing a canonical node requires a new formula schema. Changing
 closed-trace, prefix, interval, or U/R meaning requires a new semantic-profile
 identity and compatibility review. Changing only a diagnostic/report field
@@ -84,7 +84,7 @@ before a formula document is produced and identifies the mismatched axis.
 
 | ID | Criteria | Verification |
 |---|---|---|
-| FR-009-AC-1 | A successor dialect gives W/M the exact U/R precedence, associativity, interval and token/expression-span rules, rejects malformed or unrecognized forms, and normalizes only to primitive text; old v1 rejects derived input and accepts that output. | Test (TC-043, TC-047) |
+| FR-009-AC-1 | `tl-parse.clean-ascii/v2` gives W/M the exact U/R precedence, associativity, interval and token/expression-span rules, rejects malformed or unrecognized forms, and normalizes only to primitive text; old v1 rejects derived input and accepts that output. | Test (TC-043, TC-047) |
 | FR-009-AC-2 | Lowered formulas use the unchanged primitive-only formula-v1 wire schema and preserve the selected existing semantic profile; operator-profile and source attribution remain in their owning non-wire or source-correspondence records. | Test (TC-040, TC-044) |
 | FR-009-AC-3 | A mutation in any derived spelling/lowering, canonical node, wire field, evaluation meaning, or diagnostic/report field requires the specified successor identity and cannot retain the old identity. | Test (TC-040, TC-043, TC-044) |
 | FR-009-AC-4 | Every strong/weak-next, past/mixed-time, interval/time/closure, derived-wire, malformed, or unknown-profile combination returns a distinct refusal on the owning axis before document construction. | Test (TC-046, TC-047) |
