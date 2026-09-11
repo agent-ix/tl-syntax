@@ -71,6 +71,7 @@ inspection evidence.
 - [Contract-derived verification program](https://github.com/agent-ix/quire-contract-ir/issues/1).
 - [FRETish temporal frontend](https://github.com/agent-ix/quire-contract-ir/issues/57).
 - [Typed signal and source-context child](https://github.com/agent-ix/tl-syntax/issues/15).
+- [Post-v0.1 future operator-profile specification](./future-profile.md).
 - [PGM-01 governance gate](https://github.com/agent-ix/quire-contract-ir/issues/3),
   identified as `ix://agent-ix/quire-contract-ir/PGM-01`.
 - Cargo package manifest and repository contribution policy.
