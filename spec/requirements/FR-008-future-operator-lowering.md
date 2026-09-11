@@ -29,11 +29,15 @@ The public boundary receives an allocation-free borrowed
 `tl-syntax.future-lowering-request/v1` admission request. Its fields preserve
 invalid states until this component has classified them:
 
-- byte slices bounded to 128 bytes for operator-profile and semantic-profile
-  identities and 16 bytes for derived kind, so unknown and non-UTF-8 values
-  remain representable and over-limit identity is a distinct refusal;
-- two raw `u64` operand identities and raw `u64` existing-node/document-limit
-  counts;
+- byte slices bounded to 128 bytes for request, operator-profile, and
+  semantic-profile identities and 16 bytes for derived kind, so unknown and
+  non-UTF-8 values remain representable and over-limit identity is a distinct
+  refusal;
+- one borrowed FR-002-validated `Formula<'a>` whose node table is the caller's
+  existing graph and whose length is the sole base count for generated
+  identities;
+- two raw `u64` operand identities, so conversion and membership in that
+  borrowed formula remain admission checks;
 - an optional pair of raw `u64` interval bounds, so missing, inverted, and
   values beyond `u32::MAX` remain distinct; and
 - independently optional raw token/expression spans with `u64` endpoints, so
@@ -42,8 +46,9 @@ invalid states until this component has classified them:
 
 Successful admission produces a private typed request containing the exact
 `tl-syntax.future-operators/v1` identity, W or M, one existing
-`SemanticProfile`, validated operand roots, checked `[a,b]`, checked paired
-spans, and preflighted counts. The total lowerer accepts only that typed value.
+`SemanticProfile`, the borrowed validated formula, operand roots proven present
+in its node table, checked `[a,b]`, checked paired spans, and preflighted counts.
+The total lowerer accepts only that typed value.
 
 ## Outputs
 
@@ -83,10 +88,14 @@ are irrelevant.
 
 Admission checks, in stable precedence order: request identity; operator
 profile; known-but-unsupported versus unknown kind; semantic-profile identity;
-interval presence, `u32` range and order; operand range; span pair, endpoint
-range, order and containment; `existing_node_count + 3`; conversion of every
-generated identity to `NodeId`; then the formula-document node limit. A caller
-therefore receives exactly one refusal even when several raw fields are bad.
+agreement between that identity and the borrowed formula's selected profile;
+interval presence, `u32` range and order; operand `NodeId` conversion and
+membership in the borrowed formula; span pair, endpoint range, order and
+containment; checked addition of three to `Formula::nodes().len()`; conversion
+of every generated identity to `NodeId`; then the fixed 100,000-node
+formula-v1 document limit from FR-004. Neither a base count nor a document
+limit is caller-supplied. A caller therefore receives exactly one refusal even
+when several raw fields are bad.
 Recognized X or past-time kinds are `unsupported_kind`; an unrecognized kind is
 `unknown_kind`. Text tokenization and grammar failures remain owned by
 tl-parse, while this request boundary owns decoded identity/value admission.
@@ -109,8 +118,8 @@ identity.
 
 | ID | Criteria | Verification |
 |---|---|---|
-| FR-008-AC-1 | The raw v1 admission boundary represents and classifies every valid, unsupported, unknown, missing, malformed, over-range, and inconsistent field in the stated precedence, while the closed operator catalog admits only W/M without fallback. | Test (TC-040, TC-046) |
-| FR-008-AC-2 | For all valid operands, intervals, counts, spans, and existing semantic profiles, W generates exactly U/G/Or and M generates exactly R/F/And in the specified order, reuses both operand graphs, and preserves the selected profile. | Test (TC-041, TC-042, TC-044) |
+| FR-008-AC-1 | The raw v1 admission boundary represents and classifies every valid, unsupported, unknown, missing, malformed, over-range, and inconsistent field in the stated precedence, proves each operand belongs to its borrowed validated formula, and admits only W/M without fallback. | Test (TC-040, TC-046) |
+| FR-008-AC-2 | For all valid operands, intervals, spans, borrowed validated formulas, and existing semantic profiles, W generates exactly U/G/Or and M generates exactly R/F/And in the specified order, reuses both operand graphs, and preserves the selected profile. | Test (TC-041, TC-042, TC-044) |
 | FR-008-AC-3 | The default-feature admission/lowering API allocates nothing, preflights every raw and typed input, and returns either one fixed-size three-node result with absolute identities or one identified typed refusal without caller mutation. | Test (TC-041, TC-042, TC-044, TC-046) |
 | FR-008-AC-4 | A successful identified report preserves request/profile/kind/operand/generated-range/root/count and paired token/expression attribution; generated nodes carry only the expression span, and equal inputs return structurally equal nodes and reports. | Test (TC-041, TC-042, TC-044) |
 

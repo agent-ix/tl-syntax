@@ -19,6 +19,6 @@ and identity obligations.
 | ID | Severity | Summary | Refs |
 |---|---|---|---|
 | FND-4701 | high | A one-node X lowering looked cheap but hid a trace-closure mismatch. Fixed by removing X; a future next operator requires a separate closure-aware profile decision. | ADR-001, FR-009 |
-| FND-4702 | medium | Nested input can triple graph growth near the limit and expose partial mutation or identity overflow. Fixed with a base count, preflighted count/NodeId bounds, fixed-size output, and no caller mutation. | FR-008-AC-3, TC-044 |
+| FND-4702 | medium | Nested input can triple graph growth near the limit and expose partial mutation or identity overflow. Fixed by deriving the base count from the borrowed validated formula, preflighting count/NodeId bounds, and returning a fixed-size output without caller mutation. | FR-008-AC-3, TC-044 |
 | FND-4703 | medium | Independent dialect, wire, evaluator, and report changes could reuse one vague profile label. Fixed with four orthogonal axes and explicit successor-identity triggers. | FR-009-AC-2, FR-009-AC-3 |
 | FND-4704 | medium | Calling the W/M text profile only “successor” left its identity ambiguous to downstream tickets. Fixed by naming `tl-parse.clean-ascii/v2`; later changes require another identity. | FR-009-AC-1 |
