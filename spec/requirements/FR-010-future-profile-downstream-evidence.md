@@ -78,17 +78,27 @@ derived interchange/evaluator inputs.
 Implementation starts only after M0 stabilization and acceptance of MRS-002,
 FR-008, FR-009, this requirement, ADR-001, and TM-002. Dependency order is:
 
-1. `tl-syntax` owns the no-alloc lowering values, closed catalog, report, typed
+1. `tl-syntax` issue [#40](https://github.com/agent-ix/tl-syntax/issues/40)
+   owns the no-alloc admission/lowering values, closed catalog, report, typed
    refusals, and exact node-budget accounting.
-2. `tl-parse` owns `tl-parse.clean-ascii/v2`, precedence, spans,
+2. `tl-parse` issue [#31](https://github.com/agent-ix/tl-parse/issues/31)
+   owns `tl-parse.clean-ascii/v2`, precedence, spans,
    diagnostics, fuzz target, and primitive-only canonical formatter.
-3. `tl-mltl` and `tl-rewrite` independently add direct-versus-lowered
-   evaluation/progress/horizon/resource and rewrite-equivalence controls; they
-   add no operator branch.
-4. The shared corpus adds paired source/document fixtures after syntax and
-   parser revisions exist.
-5. Interoperability work adds lowered-graph export and target-profile
-   loss/refusal cases after the evaluator and corpus revisions exist.
+3. `tl-mltl` issue [#47](https://github.com/agent-ix/tl-mltl/issues/47)
+   and `tl-rewrite` issue
+   [#35](https://github.com/agent-ix/tl-rewrite/issues/35) independently add
+   direct-versus-lowered evaluation/progress/horizon/resource and
+   rewrite-equivalence controls; they add no operator branch.
+4. `tl-syntax` issue [#41](https://github.com/agent-ix/tl-syntax/issues/41)
+   adds paired source/document fixtures after all four preceding component
+   revisions exist.
+5. `tl-mltl` issue [#48](https://github.com/agent-ix/tl-mltl/issues/48)
+   adds lowered-graph export and target-profile loss/refusal cases after the
+   evaluator and corpus revisions exist.
+
+Each issue names M0 closure and the preceding issue identities as hard
+predecessors. These links route work; they do not authorize implementation
+before the acceptance gates above are satisfied.
 
 quire-contract-ir's native bridge consumes a reviewed canonical profile but is
 blocked independently on its total-Boolean predicate projection and native

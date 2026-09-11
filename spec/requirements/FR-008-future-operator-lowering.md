@@ -25,24 +25,36 @@ an internal representation contract, not an editable formal-clause language.
 
 ## Inputs
 
-- The exact operator-profile identity and one admitted derived kind.
-- The selected existing `SemanticProfile` value.
-- Two already-validated Boolean operand roots and the existing canonical node
-  count at which generated nodes would begin.
-- One checked inclusive discrete interval `[a,b]` satisfying
-  `0 <= a <= b <= u32::MAX`.
-- Checked operator-token and full-expression source spans that are either both
-  absent or both present; a present token span is contained in the expression
-  span.
+The public boundary receives an allocation-free borrowed
+`tl-syntax.future-lowering-request/v1` admission request. Its fields preserve
+invalid states until this component has classified them:
+
+- byte slices bounded to 128 bytes for operator-profile and semantic-profile
+  identities and 16 bytes for derived kind, so unknown and non-UTF-8 values
+  remain representable and over-limit identity is a distinct refusal;
+- two raw `u64` operand identities and raw `u64` existing-node/document-limit
+  counts;
+- an optional pair of raw `u64` interval bounds, so missing, inverted, and
+  values beyond `u32::MAX` remain distinct; and
+- independently optional raw token/expression spans with `u64` endpoints, so
+  missing halves, inverted spans, non-contained tokens, and `u32` conversion
+  overflow remain representable.
+
+Successful admission produces a private typed request containing the exact
+`tl-syntax.future-operators/v1` identity, W or M, one existing
+`SemanticProfile`, validated operand roots, checked `[a,b]`, checked paired
+spans, and preflighted counts. The total lowerer accepts only that typed value.
 
 ## Outputs
 
 - Exactly three topologically ordered generated `Node` values in a fixed-size
   result, their absolute node identities and output root, or one typed refusal.
 - The selected semantic profile unchanged.
-- A deterministic, non-wire report naming the operator profile, derived kind,
-  operand roots, output root, generated node range and count, and supplied
-  token/expression spans.
+- A deterministic `tl-syntax.future-lowering-report/v1` non-wire Rust value
+  naming the request identity, operator profile, derived kind, semantic
+  profile, operand roots, output root, generated node range and count, and
+  supplied token/expression spans; or one
+  `tl-syntax.future-lowering-refusal/v1` value.
 
 ## Behavior
 
@@ -69,12 +81,17 @@ branch, horizon rule, rewrite rule, or wire variant for them. The meaning of
 through the instant immediately before the witness for `q`; offsets before `a`
 are irrelevant.
 
-Before constructing a result, lowering checks the exact profile and kind, both
-operand identities are below `existing_node_count`, the interval, the paired
-span state and containment, `existing_node_count + 3`, the formula document
-node limit, and conversion of all three generated identities to `NodeId`.
-Failure returns one typed refusal and no fixed-size result, so the caller is the
-only graph-storage owner and cannot observe a partially appended expansion.
+Admission checks, in stable precedence order: request identity; operator
+profile; known-but-unsupported versus unknown kind; semantic-profile identity;
+interval presence, `u32` range and order; operand range; span pair, endpoint
+range, order and containment; `existing_node_count + 3`; conversion of every
+generated identity to `NodeId`; then the formula-document node limit. A caller
+therefore receives exactly one refusal even when several raw fields are bad.
+Recognized X or past-time kinds are `unsupported_kind`; an unrecognized kind is
+`unknown_kind`. Text tokenization and grammar failures remain owned by
+tl-parse, while this request boundary owns decoded identity/value admission.
+Failure returns no typed request and no fixed-size result, so the caller is the
+only graph-storage owner and cannot observe a partial append.
 
 Both operands are referenced and never copied. All three generated nodes carry
 the full expression span when present because no smaller source expression
@@ -83,19 +100,19 @@ operator-token span. If spans are absent, none is invented. The report is
 diagnostic attribution, not formula semantic identity and not a serialized
 document.
 
-Distinct refusals cover unknown profile, unknown or unsupported kind, missing
-or malformed interval, invalid operand root, partial/inverted/non-contained
-span state, count arithmetic overflow, `NodeId` overflow, and expansion beyond
-the formula document node limit.
+The request, report, and refusal identities are owned by `tl-syntax`; changing
+their fields, refusal precedence, or meaning requires a successor identity and
+Rust API compatibility review. None is a formula-wire or authored-source
+identity.
 
 ## Acceptance Criteria
 
 | ID | Criteria | Verification |
 |---|---|---|
-| FR-008-AC-1 | The closed v1 catalog classifies every admitted operator and rejects every unknown profile or operator without fallback. | Test (TC-040, TC-046) |
+| FR-008-AC-1 | The raw v1 admission boundary represents and classifies every valid, unsupported, unknown, missing, malformed, over-range, and inconsistent field in the stated precedence, while the closed operator catalog admits only W/M without fallback. | Test (TC-040, TC-046) |
 | FR-008-AC-2 | For all valid operands, intervals, counts, spans, and existing semantic profiles, W generates exactly U/G/Or and M generates exactly R/F/And in the specified order, reuses both operand graphs, and preserves the selected profile. | Test (TC-041, TC-042, TC-044) |
-| FR-008-AC-3 | The default-feature lowering API preflights every input and returns either one fixed-size three-node result with absolute identities or one distinct typed refusal without allocation or caller mutation. | Test (TC-041, TC-042, TC-044, TC-046) |
-| FR-008-AC-4 | A successful report preserves profile, kind, operands, generated range/root/count, and paired token/expression spans; generated nodes carry only the expression span, and equal inputs return structurally equal nodes and reports. | Test (TC-041, TC-042, TC-044) |
+| FR-008-AC-3 | The default-feature admission/lowering API allocates nothing, preflights every raw and typed input, and returns either one fixed-size three-node result with absolute identities or one identified typed refusal without caller mutation. | Test (TC-041, TC-042, TC-044, TC-046) |
+| FR-008-AC-4 | A successful identified report preserves request/profile/kind/operand/generated-range/root/count and paired token/expression attribution; generated nodes carry only the expression span, and equal inputs return structurally equal nodes and reports. | Test (TC-041, TC-042, TC-044) |
 
 ## Dependencies
 

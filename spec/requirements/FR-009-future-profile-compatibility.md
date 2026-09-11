@@ -36,11 +36,12 @@ evaluation-profile identities and shall not reinterpret an old identity.
 
 ## Behavior
 
-The four profile axes are orthogonal:
+The compatibility axes are orthogonal:
 
 | Axis | v1 decision |
 |---|---|
 | derived operator catalog | `tl-syntax.future-operators/v1` admits only W and M lowerings |
+| lowering request/report/refusal | `tl-syntax.future-lowering-request/v1`, `tl-syntax.future-lowering-report/v1`, and `tl-syntax.future-lowering-refusal/v1` are non-wire Rust API contracts owned by tl-syntax |
 | internal text dialect | old `tl-parse.clean-ascii/v1` stays closed; `tl-parse.clean-ascii/v2` admits W/M input |
 | formula wire | `tl-syntax.formula/v1` remains primitive-only and unchanged |
 | evaluation | the selected closed-trace or online-prefix v1 profile is preserved, never inferred from spelling |
@@ -59,13 +60,16 @@ document alone does not claim which surface produced it; a source
 correspondence claim retains its source/dialect or native-clause identity
 beside the formula.
 
-Adding, removing, renaming, or changing a derived spelling or lowering requires
-a new `tl-syntax.future-operators/vN` identity and a new text-dialect identity.
+Adding, removing, or changing an admitted derived kind or lowering requires a
+new `tl-syntax.future-operators/vN` identity. Adding, removing, or renaming a
+text spelling requires a new text-dialect identity; it does not by itself
+change the operator-profile identity.
 Adding or changing a canonical node requires a new formula schema. Changing
 closed-trace, prefix, interval, or U/R meaning requires a new semantic-profile
-identity and compatibility review. Changing only a diagnostic/report field
-requires a new owning diagnostic/report identity, never silent reuse of an
-exchanged identity.
+identity and compatibility review. Changing an admission, report, or refusal
+field or precedence requires a successor of its named
+`tl-syntax.future-lowering-*/v1` identity and Rust API compatibility review,
+never silent reuse of the v1 contract.
 
 Strong and weak next are refused. End-of-trace existence is not a proposition
 in the canonical graph: under current false extension, `F[1,1] true` is true
