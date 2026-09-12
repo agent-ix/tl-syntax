@@ -96,9 +96,11 @@ Backported from `agent-ix/ecaz`:
 ```
 src/lib.rs                     # crate root
 src/document.rs                # bounded owned/wire documents (alloc + serde)
+src/future.rs                  # allocation-free W/M admission, lowering, and reports
 src/syntax.rs                  # intervals, spans, nodes, profiles, borrowed validation
 examples/corpus_conformance.rs # the domain conformance runner over the shared corpus
 tests/integration.rs           # end-to-end domain tests
+tests/future_lowering.rs       # FR-008 traced lowering and refusal tests
 tests/shared_assurance.rs      # FR-006 traced tests over the shared intake path
 corpus/                        # pinned formula schemas, fixtures, traces, and oracles
 assurance/                     # the change declaration and the adopted release pins
