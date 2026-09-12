@@ -77,6 +77,7 @@ inspection evidence.
 - [Native Quire typed-predicate bridge](https://github.com/agent-ix/quire-contract-ir/issues/63).
 - [Export-only FRETish mapping](https://github.com/agent-ix/quire-contract-ir/issues/57).
 - [Typed signal and source-context child](https://github.com/agent-ix/tl-syntax/issues/15).
+- [Post-v0.1 future operator-profile specification](./future-profile.md).
 - [Progressive source-readiness child](https://github.com/agent-ix/tl-syntax/issues/34).
 - [Progressive source-readiness specification](./source-readiness.md).
 - [PGM-01 governance gate](https://github.com/agent-ix/quire-contract-ir/issues/3),

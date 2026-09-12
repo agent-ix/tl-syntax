@@ -64,7 +64,8 @@ help:
 	@echo "  make check-features   - check no-default, alloc, serde, and all features"
 	@echo "  make check-corpus     - verify corpus digests, schemas, and derived oracles"
 	@echo "  make conformance      - replay the shared temporal corpus through the crate"
-	@echo "  make spec             - validate the specification with Quire"
+	@echo "  make spec             - validate specs and report implementation coverage"
+	@echo "  make spec-release     - require every active specification row to be backed"
 	@echo "  make msrv             - test all targets and features with Rust 1.75"
 	@echo "  make rustdoc          - build warning-free public documentation"
 	@echo "  make build            - Release build"
@@ -125,8 +126,15 @@ check-corpus:
 	$(PYTHON) scripts/validate_corpus.py
 	$(PYTHON) scripts/test_corpus_gate.py
 
-.PHONY: spec
+# Specification-first work is allowed to land before its implementation. The
+# authoring gate reports those rows without treating them as evidence; the
+# human release task requires the strict sibling once every routed ticket lands.
+.PHONY: spec spec-release
 spec:
+	$(QUIRE) validate --scope . 'spec/**/*.md' --strict --summary
+	$(QUIRE) coverage --scope .
+
+spec-release:
 	$(QUIRE) validate --scope . 'spec/**/*.md' --strict --summary
 	$(QUIRE) coverage --scope . --strict
 
@@ -233,6 +241,8 @@ assurance-record: assurance-inputs
 # Composite
 # =============================================================================
 
+# `ci` is the development composite. A release candidate additionally runs
+# `spec-release` under Task-007 after planned roadmap rows have backing.
 .PHONY: ci
 ci: fmt-check check-features check-default-dependencies lint test check-corpus \
 	conformance deny fuzz-check audit-unsafe spec msrv rustdoc assurance

@@ -390,7 +390,7 @@ fn git_files(root: &Path, arguments: &[&str]) -> CensusResult<BTreeSet<String>> 
         .collect())
 }
 
-const EXPECTED_LIVE_TRACKED: [&str; 99] = [
+const EXPECTED_LIVE_TRACKED: [&str; 105] = [
     ".agent/rules/writing_rust.md",
     ".github/CODEOWNERS",
     ".github/workflows/ci.yml",
@@ -441,12 +441,15 @@ const EXPECTED_LIVE_TRACKED: [&str; 99] = [
     "spec/assurance/AA-001.md",
     "spec/assurance/AD-001.md",
     "spec/assurance/AD-002-source-readiness-boundary.md",
+    "spec/assurance/ADR-001-future-operator-profile.md",
     "spec/assurance/AP-001.md",
     "spec/assurance/AP-002-progressive-source-readiness.md",
     "spec/assurance/CAC-001.md",
     "spec/assurance/MP-001.md",
     "spec/assurance/MP-002-source-readiness-obligation-state.md",
     "spec/evidence/suites.md",
+    "spec/future-profile-test-matrix.md",
+    "spec/future-profile.md",
     "spec/integration/IT-001-shared-source-readiness-handoff.md",
     "spec/integration/IT-002-integrator-package-handoff.md",
     "spec/requirements/FR-001-inclusive-intervals.md",
@@ -456,6 +459,9 @@ const EXPECTED_LIVE_TRACKED: [&str; 99] = [
     "spec/requirements/FR-005-conformance-corpus.md",
     "spec/requirements/FR-006-shared-assurance-intake.md",
     "spec/requirements/FR-007-typed-signal-context.md",
+    "spec/requirements/FR-008-future-operator-lowering.md",
+    "spec/requirements/FR-009-future-profile-compatibility.md",
+    "spec/requirements/FR-010-future-profile-downstream-evidence.md",
     "spec/requirements/FR-014-bind-source-readiness-candidate.md",
     "spec/requirements/FR-015-preserve-readiness-stages.md",
     "spec/requirements/FR-016-emit-integrator-readiness-package.md",
@@ -887,9 +893,10 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         ("examples", 1),
         ("fuzz", 4),
         ("scripts", 7),
-        // Issue #34 adds fifteen live source-readiness specification and
-        // assurance artifacts; SpecReviews/plans remain archival exclusions.
-        ("spec", 36),
+        // Issue #32 adds six reviewed post-v0.1 profile artifacts and issue #34
+        // adds fifteen live source-readiness specification and assurance
+        // artifacts; SpecReviews/plans remain archival exclusions.
+        ("spec", 42),
         ("src", 8),
         ("tests", 8),
     ]
