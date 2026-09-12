@@ -11,11 +11,20 @@ relationships:
 
 ## Functional Requirement Coverage
 
-| Functional Req | Acceptance Criteria | Test Cases | Coverage Status |
+| Functional Req | Acceptance Criteria | Test Cases | Status |
 |---|---|---|---|
 | FR-008 | FR-008-AC-1 through FR-008-AC-4 | TC-040, TC-041, TC-042, TC-044, TC-046 | 🚧 planned |
 | FR-009 | FR-009-AC-1 through FR-009-AC-4 | TC-040, TC-043, TC-044, TC-046, TC-047 | 🚧 planned |
 | FR-010 | FR-010-AC-1 through FR-010-AC-4 | TC-041 through TC-046 | 🚧 planned |
+
+Each row stays planned until every listed test case is implemented. Issue #40
+implements TC-040, TC-041, TC-042, and TC-046 in `tests/future_lowering.rs`,
+and the tl-syntax portion of TC-044: lowered and direct formula-v1 documents
+are equal, byte-identical on the wire, and semantically identical under both
+profiles, and the 100,000-node limit holds. TC-044 stays planned until the
+evaluation, prefix-progress, horizon, and resource evidence owned downstream
+lands; TC-043, TC-045, and TC-047 are owned by the parser, rewrite, and
+interoperability follow-ons.
 
 ## Operator and profile evidence allocation
 
@@ -36,11 +45,11 @@ derived semantic branch.
 
 | Test ID | Title | Type | Priority | Traces To | Status |
 |---|---|---|---|---|---|
-| TC-040 | Bind the closed operator catalog, identified request/report/refusal contracts, unchanged formula-v1 wire vocabulary, and orthogonal operator/dialect/semantic-profile identities | Integration | P0 | FR-008-AC-1, FR-009-AC-2, FR-009-AC-3 | 🚧 planned |
-| TC-041 | Lower bounded weak until in U/G/Or order, retain attribution, and compare interval/trace/profile boundaries with direct construction | Property | P0 | FR-008-AC-2, FR-008-AC-3, FR-008-AC-4, FR-010-AC-4 | 🚧 planned |
-| TC-042 | Lower bounded strong release in R/F/And order, retain attribution, and compare interval/trace/profile boundaries with direct construction | Property | P0 | FR-008-AC-2, FR-008-AC-3, FR-008-AC-4, FR-010-AC-4 | 🚧 planned |
+| TC-040 | Bind the closed operator catalog, identified request/report/refusal contracts, unchanged formula-v1 wire vocabulary, and orthogonal operator/dialect/semantic-profile identities | Integration | P0 | FR-008-AC-1, FR-009-AC-2, FR-009-AC-3 | ✅ implemented |
+| TC-041 | Lower bounded weak until in U/G/Or order, retain attribution, and compare interval/trace/profile boundaries with direct construction | Property | P0 | FR-008-AC-2, FR-008-AC-3, FR-008-AC-4, FR-010-AC-4 | ✅ implemented |
+| TC-042 | Lower bounded strong release in R/F/And order, retain attribution, and compare interval/trace/profile boundaries with direct construction | Property | P0 | FR-008-AC-2, FR-008-AC-3, FR-008-AC-4, FR-010-AC-4 | ✅ implemented |
 | TC-043 | Parse `tl-parse.clean-ascii/v2` with exact precedence, associativity, interval and token/expression-span rules; reject malformed forms and normalize to old-v1 primitive text | Integration | P0 | FR-009-AC-1, FR-009-AC-3, FR-010-AC-4 | 🚧 planned |
 | TC-044 | Prove direct/lowered wire, semantic identity, evaluation, prefix progress, horizon, resource, report-identity, and no-partial-mutation behavior under both profiles | Property | P0 | FR-008-AC-2, FR-008-AC-3, FR-008-AC-4, FR-009-AC-2, FR-009-AC-3, FR-010-AC-1, FR-010-AC-4 | 🚧 planned |
 | TC-045 | Keep rewrite, paired corpus, native bridge, R2U2/C2PO, and output-only FRETish paths canonical and preserve every unsupported/unavailable result | Integration | P0 | FR-010-AC-2, FR-010-AC-3, FR-010-AC-4 | 🚧 planned |
-| TC-046 | Generate every raw admission-field failure and require the exact refusal precedence; include unknown request identity, semantic-profile/formula mismatch, an operand absent from the borrowed validated formula, and the fixed 100,000-node formula-v1 limit; refuse every unknown, over-limit, strong/weak-next, past/mixed-time, unbounded/open/dense/timestamped/unit-bearing, window-closure, and derived-wire combination before construction | Property | P0 | FR-008-AC-1, FR-008-AC-3, FR-009-AC-4, FR-010-AC-4 | 🚧 planned |
+| TC-046 | Generate every raw admission-field failure and require the exact refusal precedence; include unknown request identity, semantic-profile/formula mismatch, an operand absent from the borrowed validated formula, and the fixed 100,000-node formula-v1 limit; refuse every unknown, over-limit, strong/weak-next, past/mixed-time, unbounded/open/dense/timestamped/unit-bearing, window-closure, and derived-wire combination before construction | Property | P0 | FR-008-AC-1, FR-008-AC-3, FR-009-AC-4, FR-010-AC-4 | ✅ implemented |
 | TC-047 | Fuzz `tl-parse.clean-ascii/v2` so arbitrary bytes either produce the specified lowered graph/report or a bounded diagnostic without unwinding or v1-dialect misattribution | Fuzz | P1 | FR-009-AC-1, FR-009-AC-4 | 🚧 planned |

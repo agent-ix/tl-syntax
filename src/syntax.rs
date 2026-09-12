@@ -1,5 +1,11 @@
 use core::fmt;
 
+/// Maximum node count accepted by the v1 JSON wire decoder.
+///
+/// This bounds allocation for both wire decoding and programmatic construction,
+/// and bounds the node budget of allocation-free future-operator lowering.
+pub const MAX_FORMULA_DOCUMENT_NODES: usize = 100_000;
+
 /// A discrete-time inclusive interval `[start, end]`.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Interval {
