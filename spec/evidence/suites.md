@@ -1,10 +1,10 @@
 ---
 id: SUR-001
-title: tl-syntax v0.1 evidence suite registry
+title: tl-syntax evidence suite registry
 type: SuiteRegistry
 ---
 
-# tl-syntax v0.1 evidence suite registry
+# tl-syntax evidence suite registry
 
 ## Suites
 
@@ -17,6 +17,11 @@ type: SuiteRegistry
 | SUITE-005 | Corpus schema, derived horizon, and closed-trace oracle | `python3 scripts/validate_corpus.py --json` | Python jsonschema Draft 7, tl-syntax corpus oracle | Analysis |
 | SUITE-006 | Shared assurance intake chain | `python3 scripts/assurance_chain.py --candidate-revision <sha>` | quoin 0.23.1 change-assurance and evidence surfaces | Integration |
 | SUITE-008 | Shared assurance contract tests | `cargo test --test shared_assurance --all-features` | cargo/rustc; Git supplies the version-control path inventory | Integration |
+| SUITE-009 | Source-readiness property and state-model tests | `cargo test --test source_readiness_properties --all-features` | planned Rust proptest/state-machine harness | Property |
+| SUITE-010 | Source-readiness fault and freshness tests | `cargo test --test source_readiness_failures --all-features` | planned Rust fault-injection harness | Integration |
+| SUITE-011 | Real shared source-readiness contract tests | `cargo test --test source_readiness_shared --all-features -- --ignored` | planned Rust integration harness plus released Engineering Assurance/Quire/Quoin | Integration |
+| SUITE-012 | Real integrator-package contract tests | `cargo test --test integrator_package --all-features -- --ignored` | planned Rust contract/state/concurrency harness plus released shared package | Integration |
+| SUITE-013 | Rust dependency license/source facts | `cargo deny check licenses sources` | cargo-deny input to the independent TC-072 rights-source review; not a complete material-population disposition by itself | Static |
 
 ## Notes
 
@@ -58,3 +63,11 @@ and lifecycle boundary. TC-038 checks the exact command and verifies that the
 change-assurance proof declarations do not convert SUITE-008 into an attested
 proof input. Independent review, not that self-check, establishes whether the
 suite ran at the reported exact head.
+
+SUITE-009 through SUITE-013 are planned M6 producer identities, not present
+executables and not current evidence. SUITE-011 remains blocked on the
+`tl-syntax#16` accepted release set. SUITE-012 remains blocked on a compatible
+released integrator-package contract. The durable-retention branch of
+SUITE-011 remains blocked until a shared backend/operator, immutable handle and
+lifecycle pass TC-067. Every P0 M6 suite requires a load-bearing negative
+mutation before its positive result may support a source-readiness claim.
