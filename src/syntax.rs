@@ -160,6 +160,9 @@ pub enum SemanticProfile {
 }
 
 impl SemanticProfile {
+    /// Every profile; `as_str`'s exhaustive match below names the same set.
+    pub(crate) const ALL: [Self; 2] = [Self::ClosedTraceV1, Self::OnlinePrefixV1];
+
     /// Returns the stable wire identifier.
     pub const fn as_str(self) -> &'static str {
         match self {

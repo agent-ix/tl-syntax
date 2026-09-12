@@ -284,6 +284,16 @@ pub enum FutureLoweringOperand {
     Right,
 }
 
+impl FutureLoweringOperand {
+    /// Returns the stable operand name.
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Left => "left",
+            Self::Right => "right",
+        }
+    }
+}
+
 /// Which span a refusal names.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum FutureLoweringSpanRole {
@@ -291,6 +301,16 @@ pub enum FutureLoweringSpanRole {
     Operator,
     /// The full derived expression.
     Expression,
+}
+
+impl FutureLoweringSpanRole {
+    /// Returns the stable span-role name.
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Operator => "operator",
+            Self::Expression => "expression",
+        }
+    }
 }
 
 /// One `tl-syntax.future-lowering-refusal/v1` value.
@@ -520,19 +540,26 @@ impl fmt::Display for FutureLoweringRefusal {
             }
             Self::InvertedInterval { start, end } => write!(formatter, " ([{start},{end}])"),
             Self::OperandIdOutOfRange { operand, id } => {
-                write!(formatter, " ({operand:?} {id})")
+                write!(formatter, " ({} {id})", operand.as_str())
             }
             Self::OperandAbsent {
                 operand,
                 id,
                 node_count,
-            } => write!(formatter, " ({operand:?} {} of {node_count} nodes)", id.0),
-            Self::SpanHalfMissing { missing } => write!(formatter, " ({missing:?} absent)"),
+            } => write!(
+                formatter,
+                " ({} {} of {node_count} nodes)",
+                operand.as_str(),
+                id.0
+            ),
+            Self::SpanHalfMissing { missing } => {
+                write!(formatter, " ({} absent)", missing.as_str())
+            }
             Self::SpanEndpointOutOfRange { role, start, end } => {
-                write!(formatter, " ({role:?} [{start},{end}))")
+                write!(formatter, " ({} [{start},{end}))", role.as_str())
             }
             Self::InvertedSpan { role, start, end } => {
-                write!(formatter, " ({role:?} [{start},{end}))")
+                write!(formatter, " ({} [{start},{end}))", role.as_str())
             }
             Self::OperatorSpanOutsideExpression {
                 operator,
@@ -719,13 +746,10 @@ fn admit_semantic_profile(supplied: &[u8]) -> Result<SemanticProfile, FutureLowe
             len: supplied.len(),
         });
     }
-    [
-        SemanticProfile::ClosedTraceV1,
-        SemanticProfile::OnlinePrefixV1,
-    ]
-    .into_iter()
-    .find(|profile| supplied == profile.as_str().as_bytes())
-    .ok_or(FutureLoweringRefusal::UnknownSemanticProfile)
+    SemanticProfile::ALL
+        .into_iter()
+        .find(|profile| supplied == profile.as_str().as_bytes())
+        .ok_or(FutureLoweringRefusal::UnknownSemanticProfile)
 }
 
 fn admit_interval(supplied: Option<RawBounds>) -> Result<Interval, FutureLoweringRefusal> {
@@ -828,9 +852,9 @@ fn checked_span(
 
 /// Preflights the node charge against a node-table length.
 ///
-/// The length is only ever `Formula::nodes().len()`; it is a parameter so the
-/// overflow and identity-range branches, unreachable with real tables, stay
-/// testable.
+/// The length is only ever `Formula::nodes().len()`; it is a parameter so every
+/// branch stays testable. The overflow branch is unreachable with a real table,
+/// and the identity-range branch needs a table longer than `u32::MAX - 2` nodes.
 fn preflight_node_ids(
     node_count: usize,
 ) -> Result<[NodeId; FUTURE_LOWERING_NODE_CHARGE], FutureLoweringRefusal> {
@@ -854,7 +878,289 @@ fn preflight_node_ids(
 
 #[cfg(test)]
 mod tests {
+    extern crate std;
+
+    use std::string::ToString;
+
     use super::*;
+
+    /// Position in the FR-008 precedence. The match has no wildcard, so a new
+    /// variant fails to compile until it is placed.
+    fn precedence(refusal: FutureLoweringRefusal) -> u8 {
+        use FutureLoweringOperand::{Left, Right};
+        use FutureLoweringRefusal as Refusal;
+        use FutureLoweringSpanRole::{Expression, Operator};
+
+        match refusal {
+            Refusal::RequestIdentityTooLong { .. } => 0,
+            Refusal::UnknownRequestIdentity => 1,
+            Refusal::OperatorProfileTooLong { .. } => 2,
+            Refusal::UnknownOperatorProfile => 3,
+            Refusal::KindTooLong { .. } => 4,
+            Refusal::UnsupportedKind { .. } => 5,
+            Refusal::UnknownKind => 6,
+            Refusal::SemanticProfileTooLong { .. } => 7,
+            Refusal::UnknownSemanticProfile => 8,
+            Refusal::SemanticProfileMismatch { .. } => 9,
+            Refusal::MissingInterval => 10,
+            Refusal::IntervalBoundOutOfRange { .. } => 11,
+            Refusal::InvertedInterval { .. } => 12,
+            Refusal::OperandIdOutOfRange { operand: Left, .. } => 13,
+            Refusal::OperandIdOutOfRange { operand: Right, .. } => 14,
+            Refusal::OperandAbsent { operand: Left, .. } => 15,
+            Refusal::OperandAbsent { operand: Right, .. } => 16,
+            Refusal::SpanHalfMissing { .. } => 17,
+            Refusal::SpanEndpointOutOfRange { role: Operator, .. } => 18,
+            Refusal::SpanEndpointOutOfRange {
+                role: Expression, ..
+            } => 19,
+            Refusal::InvertedSpan { role: Operator, .. } => 20,
+            Refusal::InvertedSpan {
+                role: Expression, ..
+            } => 21,
+            Refusal::OperatorSpanOutsideExpression { .. } => 22,
+            Refusal::NodeCountOverflow { .. } => 23,
+            Refusal::GeneratedIdOutOfRange { .. } => 24,
+            Refusal::DocumentNodeLimitExceeded { .. } => 25,
+        }
+    }
+
+    // Trace: TC-046, FR-008-AC-1, FR-008-AC-3
+    #[test]
+    fn every_refusal_has_its_code_axis_and_display() {
+        use FutureLoweringAxis as Axis;
+        use FutureLoweringOperand::{Left, Right};
+        use FutureLoweringRefusal as Refusal;
+        use FutureLoweringSpanRole::{Expression, Operator};
+
+        let span = |start, end| SourceSpan::new(start, end).unwrap();
+        let wide = u64::from(u32::MAX) + 1;
+        let table = [
+            (
+                Refusal::RequestIdentityTooLong { len: 129 },
+                Axis::RequestIdentity,
+                "request_identity_too_long",
+                " (129 bytes exceeds 128)",
+            ),
+            (
+                Refusal::UnknownRequestIdentity,
+                Axis::RequestIdentity,
+                "unknown_request_identity",
+                "",
+            ),
+            (
+                Refusal::OperatorProfileTooLong { len: 130 },
+                Axis::OperatorProfile,
+                "operator_profile_too_long",
+                " (130 bytes exceeds 128)",
+            ),
+            (
+                Refusal::UnknownOperatorProfile,
+                Axis::OperatorProfile,
+                "unknown_operator_profile",
+                "",
+            ),
+            (
+                Refusal::KindTooLong { len: 17 },
+                Axis::Kind,
+                "kind_too_long",
+                " (17 bytes exceeds 16)",
+            ),
+            (
+                Refusal::UnsupportedKind {
+                    kind: UnsupportedFutureKind::Next,
+                },
+                Axis::Kind,
+                "unsupported_kind",
+                " (X)",
+            ),
+            (Refusal::UnknownKind, Axis::Kind, "unknown_kind", ""),
+            (
+                Refusal::SemanticProfileTooLong { len: 131 },
+                Axis::SemanticProfile,
+                "semantic_profile_too_long",
+                " (131 bytes exceeds 128)",
+            ),
+            (
+                Refusal::UnknownSemanticProfile,
+                Axis::SemanticProfile,
+                "unknown_semantic_profile",
+                "",
+            ),
+            (
+                Refusal::SemanticProfileMismatch {
+                    requested: SemanticProfile::OnlinePrefixV1,
+                    formula: SemanticProfile::ClosedTraceV1,
+                },
+                Axis::ProfileAgreement,
+                "semantic_profile_mismatch",
+                " (requested mltl.online-prefix/v1, formula mltl.closed-trace/v1)",
+            ),
+            (
+                Refusal::MissingInterval,
+                Axis::Interval,
+                "missing_interval",
+                "",
+            ),
+            (
+                Refusal::IntervalBoundOutOfRange {
+                    start: 1,
+                    end: wide,
+                },
+                Axis::Interval,
+                "interval_bound_out_of_range",
+                " ([1,4294967296])",
+            ),
+            (
+                Refusal::InvertedInterval { start: 5, end: 2 },
+                Axis::Interval,
+                "inverted_interval",
+                " ([5,2])",
+            ),
+            (
+                Refusal::OperandIdOutOfRange {
+                    operand: Left,
+                    id: wide,
+                },
+                Axis::Operand,
+                "operand_id_out_of_range",
+                " (left 4294967296)",
+            ),
+            (
+                Refusal::OperandIdOutOfRange {
+                    operand: Right,
+                    id: u64::MAX,
+                },
+                Axis::Operand,
+                "operand_id_out_of_range",
+                " (right 18446744073709551615)",
+            ),
+            (
+                Refusal::OperandAbsent {
+                    operand: Left,
+                    id: NodeId(3),
+                    node_count: 3,
+                },
+                Axis::Operand,
+                "operand_absent",
+                " (left 3 of 3 nodes)",
+            ),
+            (
+                Refusal::OperandAbsent {
+                    operand: Right,
+                    id: NodeId(7),
+                    node_count: 3,
+                },
+                Axis::Operand,
+                "operand_absent",
+                " (right 7 of 3 nodes)",
+            ),
+            (
+                Refusal::SpanHalfMissing { missing: Operator },
+                Axis::Span,
+                "span_half_missing",
+                " (operator absent)",
+            ),
+            (
+                Refusal::SpanHalfMissing {
+                    missing: Expression,
+                },
+                Axis::Span,
+                "span_half_missing",
+                " (expression absent)",
+            ),
+            (
+                Refusal::SpanEndpointOutOfRange {
+                    role: Operator,
+                    start: wide,
+                    end: 0,
+                },
+                Axis::Span,
+                "span_endpoint_out_of_range",
+                " (operator [4294967296,0))",
+            ),
+            (
+                Refusal::SpanEndpointOutOfRange {
+                    role: Expression,
+                    start: 0,
+                    end: wide,
+                },
+                Axis::Span,
+                "span_endpoint_out_of_range",
+                " (expression [0,4294967296))",
+            ),
+            (
+                Refusal::InvertedSpan {
+                    role: Operator,
+                    start: 9,
+                    end: 8,
+                },
+                Axis::Span,
+                "inverted_span",
+                " (operator [9,8))",
+            ),
+            (
+                Refusal::InvertedSpan {
+                    role: Expression,
+                    start: 4,
+                    end: 1,
+                },
+                Axis::Span,
+                "inverted_span",
+                " (expression [4,1))",
+            ),
+            (
+                Refusal::OperatorSpanOutsideExpression {
+                    operator: span(99, 150),
+                    expression: span(100, 200),
+                },
+                Axis::Span,
+                "operator_span_outside_expression",
+                " ([99,150) outside [100,200))",
+            ),
+            (
+                Refusal::NodeCountOverflow { node_count: 7 },
+                Axis::NodeBudget,
+                "node_count_overflow",
+                " (7 nodes)",
+            ),
+            (
+                Refusal::GeneratedIdOutOfRange {
+                    node_count: 4_294_967_294,
+                },
+                Axis::NodeBudget,
+                "generated_id_out_of_range",
+                " (4294967294 nodes)",
+            ),
+            (
+                Refusal::DocumentNodeLimitExceeded {
+                    node_count: 100_001,
+                    limit: MAX_FORMULA_DOCUMENT_NODES,
+                },
+                Axis::NodeBudget,
+                "document_node_limit_exceeded",
+                " (100001 exceeds 100000)",
+            ),
+        ];
+
+        let mut placed = [false; 26];
+        let mut previous = (0, Axis::RequestIdentity);
+        for (refusal, axis, code, detail) in table {
+            let slot = precedence(refusal);
+            placed[usize::from(slot)] = true;
+            assert!(slot >= previous.0, "{code} is out of precedence order");
+            assert!(axis >= previous.1, "{code} lowers the axis");
+            previous = (slot, axis);
+            assert_eq!(refusal.axis(), axis, "{code}");
+            assert_eq!(refusal.code(), code);
+            assert_eq!(refusal.identity(), FUTURE_LOWERING_REFUSAL_V1);
+            assert_eq!(
+                refusal.to_string(),
+                std::format!("{FUTURE_LOWERING_REFUSAL_V1}: {code}{detail}")
+            );
+        }
+        assert_eq!(placed, [true; 26], "every precedence slot has a row");
+    }
 
     // Trace: TC-046, FR-008-AC-1, FR-008-AC-3
     #[test]

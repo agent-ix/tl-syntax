@@ -19,3 +19,10 @@ description: "Chronological changes to the future-operator lowering plan."
   installs `375fc2a` explicitly until a quoin release carries #371.
   Per owner direction, review happens once at PR time. Hosted CI was not
   dispatched.
+- **2026-09-12** - Addressed the PR #42 Rust review and gap analysis. The
+  TC-046 precedence property now forces each admission axis to be the first
+  fault with every earlier axis valid, generates one-sided out-of-range
+  endpoints and start-side containment faults, and is backed by adjacent-pair,
+  exact-field, byte-limit, and all-variant code/axis/Display tables. The
+  TC-041, TC-042, and TC-046 titles no longer claim trace or source-level
+  refusals this boundary cannot express.
