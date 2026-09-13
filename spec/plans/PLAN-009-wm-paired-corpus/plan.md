@@ -2,7 +2,7 @@
 id: PLAN-009
 title: Paired W/M source and canonical-graph corpus plan
 type: Plan
-status: in_progress
+status: done
 relationships:
   - target: ix://agent-ix/tl-syntax/FR-010
     type: references
@@ -24,8 +24,10 @@ and mutation controls.
 
 Branch `issue/41-wm-corpus` starts at mainline `8dc18ee`, which carries the
 FR-008 lowering API from issue #40. Derived-source expectations were checked
-against `tl-parse` `9ca856b` (`parse_clean_ascii_v2`) outside this repository;
-tl-syntax does not depend on tl-parse.
+against `tl-parse` `9ca856b` (`parse` and `parse_clean_ascii_v2`) outside this
+repository; tl-syntax does not depend on tl-parse. Issue #41 was dispatched in
+parallel with tl-mltl#47 and tl-rewrite#35: it consumes no output of either and
+lands after them.
 
 ## Work sequence
 
@@ -46,8 +48,10 @@ tl-syntax does not depend on tl-parse.
 ## Exit criteria
 
 1. Every derived-source case and its direct pair produce one shared expected
-   document under both semantic profiles, including `[0,0]`,
-   `[u32::MAX,u32::MAX]`, left-associative and right-nested lowerings.
+   document under both semantic profiles; W and M each cover `[0,0]` and
+   `[u32::MAX,u32::MAX]` under both profiles, with left-associative and
+   right-nested lowerings. One primitive `tl-parse.clean-ascii/v1` source case
+   shares its document with a direct case.
 2. Refused and malformed cases fail with their declared codes and produce no
    document.
 3. Each enumerated mutation dimension turns the replay red with a specific

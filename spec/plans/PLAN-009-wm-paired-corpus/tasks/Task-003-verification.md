@@ -2,7 +2,7 @@
 id: Task-003
 title: Verify the corpus and close the review
 type: Task
-status: in_progress
+status: done
 relationships:
   - target: ix://agent-ix/tl-syntax/PLAN-009
     type: part_of

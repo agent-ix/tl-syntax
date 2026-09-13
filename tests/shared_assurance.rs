@@ -390,7 +390,7 @@ fn git_files(root: &Path, arguments: &[&str]) -> CensusResult<BTreeSet<String>> 
         .collect())
 }
 
-const EXPECTED_LIVE_TRACKED: [&str; 106] = [
+const EXPECTED_LIVE_TRACKED: [&str; 113] = [
     ".agent/rules/writing_rust.md",
     ".github/CODEOWNERS",
     ".github/workflows/ci.yml",
@@ -420,13 +420,20 @@ const EXPECTED_LIVE_TRACKED: [&str; 106] = [
     "corpus/future-operators/cases.json",
     "corpus/future-operators/expected/compound-operands.json",
     "corpus/future-operators/expected/left-associative-chain.json",
+    "corpus/future-operators/expected/primitive-until-or-globally.json",
     "corpus/future-operators/expected/right-nested-release.json",
     "corpus/future-operators/expected/strong-release-closed.json",
-    "corpus/future-operators/expected/strong-release-max-singleton.json",
+    "corpus/future-operators/expected/strong-release-max-singleton-closed.json",
+    "corpus/future-operators/expected/strong-release-max-singleton-online.json",
     "corpus/future-operators/expected/strong-release-online.json",
+    "corpus/future-operators/expected/strong-release-zero-singleton-closed.json",
+    "corpus/future-operators/expected/strong-release-zero-singleton-online.json",
     "corpus/future-operators/expected/weak-until-closed.json",
+    "corpus/future-operators/expected/weak-until-max-singleton-closed.json",
+    "corpus/future-operators/expected/weak-until-max-singleton-online.json",
     "corpus/future-operators/expected/weak-until-online.json",
-    "corpus/future-operators/expected/weak-until-zero-singleton.json",
+    "corpus/future-operators/expected/weak-until-zero-singleton-closed.json",
+    "corpus/future-operators/expected/weak-until-zero-singleton-online.json",
     "corpus/future-operators/manifest.json",
     "corpus/malformed/forward-reference.json",
     "corpus/malformed/inverted-interval.json",
@@ -889,8 +896,8 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         (".agent", 1),
         (".github", 2),
         ("assurance", 3),
-        // Issue #41 adds the thirteen-file paired W/M corpus.
-        ("corpus", 27),
+        // Issue #41 adds the twenty-file paired W/M corpus.
+        ("corpus", 34),
         ("examples", 1),
         ("fuzz", 4),
         ("scripts", 7),

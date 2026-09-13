@@ -6,7 +6,14 @@
 //! append and lower steps; the replay builds its document only through
 //! [`Formula::new`] and [`FutureLoweringRequest::lower`] and compares it with a
 //! span-free expected formula-v1 document that a directly constructed case
-//! shares. The replay evaluates nothing and admits no derived wire node.
+//! shares. A primitive-source case binds `tl-parse.clean-ascii/v1` text to an
+//! append-only graph the same way. The replay evaluates nothing and admits no
+//! derived wire node.
+//!
+//! The replay binds every span to the bytes and operator spellings of its
+//! source, but it does not parse: precedence, associativity, and grouping are
+//! grammar rules owned by tl-parse and TC-043. The manifest names the tl-parse
+//! revision the case steps were cross-checked against.
 
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -19,9 +26,9 @@ use std::{
 use serde::Deserialize;
 use serde_json::Value;
 use tl_syntax::{
-    Formula, FormulaDocument, FutureKind, FutureLoweringAxis, FutureLoweringRefusal,
-    FutureLoweringReport, FutureLoweringRequest, Node, NodeId, NodeKind, RawBounds,
-    SemanticProfile, SourceSpan, FUTURE_LOWERING_NODE_CHARGE, FUTURE_LOWERING_REQUEST_V1,
+    Formula, FormulaDocument, FutureKind, FutureLoweringRefusal, FutureLoweringReport,
+    FutureLoweringRequest, Node, NodeId, NodeKind, RawBounds, SemanticProfile, SourceSpan,
+    FUTURE_LOWERING_NODE_CHARGE, FUTURE_LOWERING_REPORT_V1, FUTURE_LOWERING_REQUEST_V1,
     FUTURE_OPERATORS_V1,
 };
 
@@ -31,21 +38,33 @@ const CORPUS_REVISION: u64 = 1;
 const EVIDENCE_ROLE: &str = "evidence-input";
 const DERIVED_DIALECT: &str = "tl-parse.clean-ascii/v2";
 const PRIMITIVE_DIALECT: &str = "tl-parse.clean-ascii/v1";
+const CROSS_CHECK_PARSER: &str = "tl-parse";
+const CROSS_CHECK_ENTRY_POINTS: [&str; 2] = ["parse", "parse_clean_ascii_v2"];
 const MANIFEST: &str = "manifest.json";
 const CASES: &str = "cases.json";
 const EXPECTED_PREFIX: &str = "expected/";
 /// Files the replay does not read: prose, and the `make check-corpus` digest list.
 const UNREPLAYED: [&str; 2] = ["README.md", "SHA256SUMS"];
+const KINDS: [FutureKind; 2] = [FutureKind::WeakUntil, FutureKind::StrongRelease];
+const PROFILES: [SemanticProfile; 2] = [
+    SemanticProfile::ClosedTraceV1,
+    SemanticProfile::OnlinePrefixV1,
+];
+const BOUNDARIES: [(u32, u32); 2] = [(0, 0), (u32::MAX, u32::MAX)];
 
 /// SHA-256 of `corpus/future-operators/manifest.json`; the manifest pins every other file.
-const MANIFEST_SHA256: &str = "cd1748c8c04096193b86c8ee95b4703486084b1eb1a6032227f435ef48a864d8";
+const MANIFEST_SHA256: &str = "e38ef2a7bfc49631932c9c8527b9d08ba1087825e8ae3bccff5f326e74605172";
 
-/// Stable replay failure classes. Tests match these, never diagnostic text.
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+/// Stable replay failure classes. Tests and malformed cases match these, never
+/// diagnostic text; `cases.json` spells them in snake case.
+#[derive(Clone, Copy, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd)]
+#[serde(rename_all = "snake_case")]
 enum Code {
     MissingFile,
     ManifestDigestMismatch,
     ManifestDecodeRejected,
+    ManifestPinsItself,
+    DuplicatePin,
     CorpusIdentityMismatch,
     FileDigestMismatch,
     UnpinnedFile,
@@ -56,6 +75,7 @@ enum Code {
     NodeDecodeRejected,
     UnknownDialect,
     DialectRefusesDerived,
+    PrimitiveDialectMismatch,
     OperatorProfileBindingMismatch,
     DerivedCaseWithoutLowering,
     DirectCaseLowers,
@@ -81,53 +101,10 @@ enum Code {
     UnpairedExpectedDocument,
 }
 
-impl Code {
-    fn as_str(self) -> &'static str {
-        match self {
-            Self::MissingFile => "missing_file",
-            Self::ManifestDigestMismatch => "manifest_digest_mismatch",
-            Self::ManifestDecodeRejected => "manifest_decode_rejected",
-            Self::CorpusIdentityMismatch => "corpus_identity_mismatch",
-            Self::FileDigestMismatch => "file_digest_mismatch",
-            Self::UnpinnedFile => "unpinned_file",
-            Self::CasesDecodeRejected => "cases_decode_rejected",
-            Self::ExpectedDocumentRejected => "expected_document_rejected",
-            Self::ExpectedDocumentCarriesSpan => "expected_document_carries_span",
-            Self::CaseDecodeRejected => "case_decode_rejected",
-            Self::NodeDecodeRejected => "node_decode_rejected",
-            Self::UnknownDialect => "unknown_dialect",
-            Self::DialectRefusesDerived => "dialect_refuses_derived",
-            Self::OperatorProfileBindingMismatch => "operator_profile_binding_mismatch",
-            Self::DerivedCaseWithoutLowering => "derived_case_without_lowering",
-            Self::DirectCaseLowers => "direct_case_lowers",
-            Self::DirectCaseCarriesSpan => "direct_case_carries_span",
-            Self::OverrideOutsideRefused => "override_outside_refused",
-            Self::UnpinnedExpectedDocument => "unpinned_expected_document",
-            Self::GraphInvalid => "graph_invalid",
-            Self::UnexpectedRefusal => "unexpected_refusal",
-            Self::MissingRefusal => "missing_refusal",
-            Self::RefusalMismatch => "refusal_mismatch",
-            Self::SourceBindingMismatch => "source_binding_mismatch",
-            Self::GeneratedSpanMismatch => "generated_span_mismatch",
-            Self::LoweringReportMismatch => "lowering_report_mismatch",
-            Self::DocumentMismatch => "document_mismatch",
-            Self::NestedMalformed => "nested_malformed",
-            Self::MalformedCaseAccepted => "malformed_case_accepted",
-            Self::MalformedErrorMismatch => "malformed_error_mismatch",
-            Self::DuplicateCaseId => "duplicate_case_id",
-            Self::ClassAbsent => "class_absent",
-            Self::ProfileRowAbsent => "profile_row_absent",
-            Self::BoundaryAbsent => "boundary_absent",
-            Self::NestingAbsent => "nesting_absent",
-            Self::UnpairedExpectedDocument => "unpaired_expected_document",
-        }
-    }
-}
-
 #[derive(Debug)]
 struct ReplayError {
     code: Code,
-    /// Case identity or corpus path the failure belongs to.
+    /// Case identity, corpus path, or coverage cell the failure belongs to.
     subject: String,
     /// Human diagnostic only; no test inspects it.
     detail: String,
@@ -149,20 +126,6 @@ fn fail<T>(code: Code, subject: &str, detail: impl Into<String>) -> Replay<T> {
     Err(ReplayError::new(code, subject, detail))
 }
 
-fn axis_name(axis: FutureLoweringAxis) -> &'static str {
-    match axis {
-        FutureLoweringAxis::RequestIdentity => "request_identity",
-        FutureLoweringAxis::OperatorProfile => "operator_profile",
-        FutureLoweringAxis::Kind => "kind",
-        FutureLoweringAxis::SemanticProfile => "semantic_profile",
-        FutureLoweringAxis::ProfileAgreement => "profile_agreement",
-        FutureLoweringAxis::Interval => "interval",
-        FutureLoweringAxis::Operand => "operand",
-        FutureLoweringAxis::Span => "span",
-        FutureLoweringAxis::NodeBudget => "node_budget",
-    }
-}
-
 // ---------------------------------------------------------------------------
 // Wire shapes
 // ---------------------------------------------------------------------------
@@ -177,7 +140,19 @@ struct ManifestWire {
     operator_profile: String,
     request_identity: String,
     derived_dialect: String,
+    primitive_dialect: String,
+    source_cross_check: CrossCheckWire,
     files: Vec<PinWire>,
+}
+
+/// The out-of-band parser run the case steps were checked against. tl-syntax
+/// cannot depend on tl-parse, so this records the revision and does not re-run it.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct CrossCheckWire {
+    parser: String,
+    revision: String,
+    entry_points: Vec<String>,
 }
 
 #[derive(Deserialize)]
@@ -257,11 +232,12 @@ struct LoweringRecord {
     expression_span: Bounds,
 }
 
+/// The stable refusal code. The code determines the admission axis inside
+/// tl-syntax, so the corpus records no second, test-invented axis name.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct RefusalRecord {
     code: String,
-    axis: String,
 }
 
 #[derive(Deserialize)]
@@ -277,6 +253,15 @@ enum CaseWire {
         root: u32,
         expected: String,
         expected_lowerings: Vec<LoweringRecord>,
+    },
+    Primitive {
+        id: String,
+        dialect: String,
+        semantic_profile: SemanticProfile,
+        source: String,
+        steps: Vec<StepWire>,
+        root: u32,
+        expected: String,
     },
     Direct {
         id: String,
@@ -297,7 +282,7 @@ enum CaseWire {
     Malformed {
         id: String,
         entry: Value,
-        expected_error: String,
+        expected_error: Code,
     },
 }
 
@@ -378,10 +363,11 @@ fn load_corpus() -> CorpusFiles {
 #[derive(Debug, Default)]
 struct Summary {
     derived: usize,
+    primitive: usize,
     direct: usize,
     refused: usize,
     malformed: usize,
-    malformed_codes: BTreeSet<&'static str>,
+    malformed_codes: BTreeSet<Code>,
     refusal_codes: BTreeSet<&'static str>,
 }
 
@@ -390,6 +376,9 @@ enum Outcome {
         expected: String,
         reports: Vec<FutureLoweringReport>,
     },
+    Primitive {
+        expected: String,
+    },
     Direct {
         expected: String,
     },
@@ -397,7 +386,7 @@ enum Outcome {
         code: &'static str,
     },
     Malformed {
-        code: &'static str,
+        code: Code,
     },
 }
 
@@ -405,21 +394,7 @@ struct Corpus {
     expected: BTreeMap<String, FormulaDocument>,
 }
 
-fn replay(files: &CorpusFiles, manifest_pin: &str) -> Replay<Summary> {
-    let manifest_bytes = files
-        .get(MANIFEST)
-        .ok_or_else(|| ReplayError::new(Code::MissingFile, MANIFEST, "manifest is absent"))?;
-    let manifest_digest = sha256_hex(manifest_bytes);
-    if manifest_digest != manifest_pin {
-        return fail(
-            Code::ManifestDigestMismatch,
-            MANIFEST,
-            format!("manifest digest {manifest_digest} is not the pinned {manifest_pin}"),
-        );
-    }
-    let manifest: ManifestWire = serde_json::from_slice(manifest_bytes).map_err(|error| {
-        ReplayError::new(Code::ManifestDecodeRejected, MANIFEST, error.to_string())
-    })?;
+fn check_manifest_identity(manifest: &ManifestWire) -> Replay<()> {
     let identities = [
         (manifest.corpus.as_str(), CORPUS_IDENTITY),
         (manifest.role.as_str(), EVIDENCE_ROLE),
@@ -430,6 +405,11 @@ fn replay(files: &CorpusFiles, manifest_pin: &str) -> Replay<Summary> {
             FUTURE_LOWERING_REQUEST_V1,
         ),
         (manifest.derived_dialect.as_str(), DERIVED_DIALECT),
+        (manifest.primitive_dialect.as_str(), PRIMITIVE_DIALECT),
+        (
+            manifest.source_cross_check.parser.as_str(),
+            CROSS_CHECK_PARSER,
+        ),
     ];
     for (declared, required) in identities {
         if declared != required {
@@ -450,11 +430,53 @@ fn replay(files: &CorpusFiles, manifest_pin: &str) -> Replay<Summary> {
             ),
         );
     }
+    let revision = &manifest.source_cross_check.revision;
+    let full_commit = revision.len() == 40
+        && revision
+            .bytes()
+            .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte));
+    if !full_commit || manifest.source_cross_check.entry_points != CROSS_CHECK_ENTRY_POINTS {
+        return fail(
+            Code::CorpusIdentityMismatch,
+            MANIFEST,
+            "the source cross-check names a full tl-parse commit and both parser entry points",
+        );
+    }
+    Ok(())
+}
+
+fn replay(files: &CorpusFiles, manifest_pin: &str) -> Replay<Summary> {
+    let manifest_bytes = files
+        .get(MANIFEST)
+        .ok_or_else(|| ReplayError::new(Code::MissingFile, MANIFEST, "manifest is absent"))?;
+    let manifest_digest = sha256_hex(manifest_bytes);
+    if manifest_digest != manifest_pin {
+        return fail(
+            Code::ManifestDigestMismatch,
+            MANIFEST,
+            format!("manifest digest {manifest_digest} is not the pinned {manifest_pin}"),
+        );
+    }
+    let manifest: ManifestWire = serde_json::from_slice(manifest_bytes).map_err(|error| {
+        ReplayError::new(Code::ManifestDecodeRejected, MANIFEST, error.to_string())
+    })?;
+    check_manifest_identity(&manifest)?;
 
     let mut pins = BTreeMap::new();
     for pin in &manifest.files {
-        if pin.path == MANIFEST || pins.insert(pin.path.clone(), pin.sha256.clone()).is_some() {
-            return fail(Code::ManifestDecodeRejected, &pin.path, "pinned twice");
+        if pin.path == MANIFEST {
+            return fail(
+                Code::ManifestPinsItself,
+                MANIFEST,
+                "the test pins the manifest; the manifest cannot pin itself",
+            );
+        }
+        if pins.insert(pin.path.clone(), pin.sha256.clone()).is_some() {
+            return fail(
+                Code::DuplicatePin,
+                &pin.path,
+                "the manifest pins this path twice",
+            );
         }
         let bytes = files.get(&pin.path).ok_or_else(|| {
             ReplayError::new(Code::MissingFile, &pin.path, "pinned file is absent")
@@ -484,6 +506,16 @@ fn replay(files: &CorpusFiles, manifest_pin: &str) -> Replay<Summary> {
             "the manifest does not pin the cases",
         );
     }
+    if let Some(path) = pins
+        .keys()
+        .find(|path| path.as_str() != CASES && !path.starts_with(EXPECTED_PREFIX))
+    {
+        return fail(
+            Code::UnpinnedFile,
+            path,
+            "the manifest pins a file the replay has no role for",
+        );
+    }
 
     let mut corpus = Corpus {
         expected: BTreeMap::new(),
@@ -501,16 +533,6 @@ fn replay(files: &CorpusFiles, manifest_pin: &str) -> Replay<Summary> {
         }
         corpus.expected.insert(path.clone(), document);
     }
-    if let Some(path) = pins
-        .keys()
-        .find(|path| path.as_str() != CASES && !path.starts_with(EXPECTED_PREFIX))
-    {
-        return fail(
-            Code::UnpinnedFile,
-            path,
-            "the manifest pins a file the replay has no role for",
-        );
-    }
 
     let cases: CasesWire = serde_json::from_slice(&files[CASES])
         .map_err(|error| ReplayError::new(Code::CasesDecodeRejected, CASES, error.to_string()))?;
@@ -520,7 +542,7 @@ fn replay(files: &CorpusFiles, manifest_pin: &str) -> Replay<Summary> {
 
     let mut summary = Summary::default();
     let mut ids = BTreeSet::new();
-    let mut derived_documents = BTreeSet::new();
+    let mut source_documents = BTreeSet::new();
     let mut direct_documents = BTreeSet::new();
     let mut rows = BTreeSet::new();
     let mut intervals = BTreeSet::new();
@@ -540,14 +562,20 @@ fn replay(files: &CorpusFiles, manifest_pin: &str) -> Replay<Summary> {
                 summary.derived += 1;
                 let mut generated_roots = BTreeSet::new();
                 for report in reports {
-                    rows.insert((report.kind(), report.semantic_profile()));
+                    let (kind, profile) = (report.kind(), report.semantic_profile());
+                    rows.insert((kind, profile));
                     let first = report.first_generated().0;
-                    intervals.insert(interval_of(&corpus.expected[&expected], first));
+                    let interval = interval_of(&corpus.expected[&expected], first);
+                    intervals.insert((kind, profile, interval));
                     nested_left |= generated_roots.contains(&report.left());
                     nested_right |= generated_roots.contains(&report.right());
                     generated_roots.insert(report.root());
                 }
-                derived_documents.insert(expected);
+                source_documents.insert(expected);
+            }
+            Outcome::Primitive { expected } => {
+                summary.primitive += 1;
+                source_documents.insert(expected);
             }
             Outcome::Direct { expected } => {
                 summary.direct += 1;
@@ -564,8 +592,31 @@ fn replay(files: &CorpusFiles, manifest_pin: &str) -> Replay<Summary> {
         }
     }
 
+    check_census(
+        &summary,
+        &rows,
+        &intervals,
+        (nested_left, nested_right),
+        &corpus,
+        (&source_documents, &direct_documents),
+    )?;
+    Ok(summary)
+}
+
+type Row = (FutureKind, SemanticProfile);
+type Cell = (FutureKind, SemanticProfile, Option<(u32, u32)>);
+
+fn check_census(
+    summary: &Summary,
+    rows: &BTreeSet<Row>,
+    intervals: &BTreeSet<Cell>,
+    (nested_left, nested_right): (bool, bool),
+    corpus: &Corpus,
+    (source_documents, direct_documents): (&BTreeSet<String>, &BTreeSet<String>),
+) -> Replay<()> {
     for (class, count) in [
         ("derived", summary.derived),
+        ("primitive", summary.primitive),
         ("direct", summary.direct),
         ("refused", summary.refused),
         ("malformed", summary.malformed),
@@ -578,11 +629,8 @@ fn replay(files: &CorpusFiles, manifest_pin: &str) -> Replay<Summary> {
             );
         }
     }
-    for kind in [FutureKind::WeakUntil, FutureKind::StrongRelease] {
-        for profile in [
-            SemanticProfile::ClosedTraceV1,
-            SemanticProfile::OnlinePrefixV1,
-        ] {
+    for kind in KINDS {
+        for profile in PROFILES {
             if !rows.contains(&(kind, profile)) {
                 return fail(
                     Code::ProfileRowAbsent,
@@ -590,15 +638,15 @@ fn replay(files: &CorpusFiles, manifest_pin: &str) -> Replay<Summary> {
                     format!("no derived lowering under {}", profile.as_str()),
                 );
             }
-        }
-    }
-    for boundary in [(0, 0), (u32::MAX, u32::MAX)] {
-        if !intervals.contains(&Some(boundary)) {
-            return fail(
-                Code::BoundaryAbsent,
-                CASES,
-                format!("no derived lowering over [{},{}]", boundary.0, boundary.1),
-            );
+            for (start, end) in BOUNDARIES {
+                if !intervals.contains(&(kind, profile, Some((start, end)))) {
+                    return fail(
+                        Code::BoundaryAbsent,
+                        &format!("{} {} [{start},{end}]", kind.as_str(), profile.as_str()),
+                        "no derived lowering over this boundary",
+                    );
+                }
+            }
         }
     }
     if !(nested_left && nested_right) {
@@ -609,15 +657,15 @@ fn replay(files: &CorpusFiles, manifest_pin: &str) -> Replay<Summary> {
         );
     }
     for path in corpus.expected.keys() {
-        if !(derived_documents.contains(path) && direct_documents.contains(path)) {
+        if !(source_documents.contains(path) && direct_documents.contains(path)) {
             return fail(
                 Code::UnpairedExpectedDocument,
                 path,
-                "each expected document needs a derived and a direct case",
+                "each expected document needs a source case and a direct case",
             );
         }
     }
-    Ok(summary)
+    Ok(())
 }
 
 /// Interval of the first generated node, which is the U or R node of the expansion.
@@ -650,18 +698,32 @@ fn has_lower(steps: &[Step]) -> bool {
     steps.iter().any(|step| matches!(step, Step::Lower(_)))
 }
 
-fn check_dialect(id: &str, dialect: &str, steps: &[Step]) -> Replay<()> {
+/// Derived and refused cases carry derived source, which only v2 spells.
+fn check_derived_dialect(id: &str, dialect: &str) -> Replay<()> {
     match dialect {
         DERIVED_DIALECT => Ok(()),
+        PRIMITIVE_DIALECT => fail(
+            Code::DialectRefusesDerived,
+            id,
+            "tl-parse.clean-ascii/v1 has no derived future operator",
+        ),
+        other => fail(Code::UnknownDialect, id, other),
+    }
+}
+
+/// Primitive-source cases are the v1 compatibility pair and never lower.
+fn check_primitive_dialect(id: &str, dialect: &str, steps: &[Step]) -> Replay<()> {
+    match dialect {
         PRIMITIVE_DIALECT if has_lower(steps) => fail(
             Code::DialectRefusesDerived,
             id,
             "tl-parse.clean-ascii/v1 has no derived future operator",
         ),
-        PRIMITIVE_DIALECT => fail(
-            Code::DerivedCaseWithoutLowering,
+        PRIMITIVE_DIALECT => Ok(()),
+        DERIVED_DIALECT => fail(
+            Code::PrimitiveDialectMismatch,
             id,
-            "a primitive-dialect case carries no derived source",
+            "the compatibility pair binds tl-parse.clean-ascii/v1 source",
         ),
         other => fail(Code::UnknownDialect, id, other),
     }
@@ -780,27 +842,23 @@ fn execute(
     Ok(execution)
 }
 
-fn span_text<'s>(id: &str, source: &'s str, span: Option<SourceSpan>) -> Replay<&'s str> {
-    let span = span.ok_or_else(|| {
-        ReplayError::new(
-            Code::SourceBindingMismatch,
-            id,
-            "derived source nodes carry spans",
-        )
-    })?;
-    let range = usize::try_from(span.start()).expect("u32 fits usize")
-        ..usize::try_from(span.end()).expect("u32 fits usize");
+fn source_slice<'s>(id: &str, source: &'s str, start: u32, end: u32) -> Replay<&'s str> {
+    let range = usize::try_from(start).expect("u32 fits usize")
+        ..usize::try_from(end).expect("u32 fits usize");
     source.get(range).ok_or_else(|| {
         ReplayError::new(
             Code::SourceBindingMismatch,
             id,
-            format!(
-                "span {}..{} lies outside the source",
-                span.start(),
-                span.end()
-            ),
+            format!("bytes {start}..{end} are not a slice of the source"),
         )
     })
+}
+
+fn span_text<'s>(id: &str, source: &'s str, span: Option<SourceSpan>) -> Replay<&'s str> {
+    let span = span.ok_or_else(|| {
+        ReplayError::new(Code::SourceBindingMismatch, id, "source nodes carry spans")
+    })?;
+    source_slice(id, source, span.start(), span.end())
 }
 
 fn covers(outer: SourceSpan, inner: Option<SourceSpan>) -> bool {
@@ -822,8 +880,78 @@ fn operands(kind: NodeKind) -> Vec<NodeId> {
     }
 }
 
+/// The source spelling of a node's own token: a leaf's whole text, or the
+/// operator between (or before) its operands.
+fn spelling(kind: NodeKind) -> String {
+    let timed = |operator: &str, start: u32, end: u32| format!("{operator}[{start},{end}]");
+    match kind {
+        NodeKind::False => "false".to_owned(),
+        NodeKind::True => "true".to_owned(),
+        NodeKind::Proposition { proposition } => format!("p{}", proposition.0),
+        NodeKind::Not { .. } => "!".to_owned(),
+        NodeKind::And { .. } => "&".to_owned(),
+        NodeKind::Or { .. } => "|".to_owned(),
+        NodeKind::Implies { .. } => "->".to_owned(),
+        NodeKind::Equivalent { .. } => "<->".to_owned(),
+        NodeKind::Future { interval, .. } => timed("F", interval.start(), interval.end()),
+        NodeKind::Globally { interval, .. } => timed("G", interval.start(), interval.end()),
+        NodeKind::Until { interval, .. } => timed("U", interval.start(), interval.end()),
+        NodeKind::Release { interval, .. } => timed("R", interval.start(), interval.end()),
+    }
+}
+
+/// Text between tokens may hold only whitespace and the named grouping character.
+fn only_grouping(text: &str, grouping: char) -> bool {
+    text.chars()
+        .all(|character| character.is_whitespace() || character == grouping)
+}
+
+fn is_grouping(character: char) -> bool {
+    character.is_whitespace() || character == '(' || character == ')'
+}
+
 fn node_span(nodes: &[Node], id: NodeId) -> Option<SourceSpan> {
     nodes.get(usize::try_from(id.0).ok()?)?.span
+}
+
+/// Checks that a span reads `(`* left operand, operator, right operand `)`*, or
+/// operator `(`* operand `)`* for a unary node.
+fn check_token_layout(
+    id: &str,
+    source: &str,
+    span: SourceSpan,
+    operand_spans: &[SourceSpan],
+    spelled: &str,
+) -> Replay<()> {
+    let separated = match operand_spans {
+        [operand] => {
+            let prefix = source_slice(id, source, span.start(), operand.start())?;
+            let suffix = source_slice(id, source, operand.end(), span.end())?;
+            prefix.trim_end_matches(|c: char| c.is_whitespace() || c == '(') == spelled
+                && only_grouping(suffix, ')')
+        }
+        [left, right] => {
+            let lead = source_slice(id, source, span.start(), left.start())?;
+            let middle = source_slice(id, source, left.end(), right.start())?;
+            let tail = source_slice(id, source, right.end(), span.end())?;
+            only_grouping(lead, '(')
+                && middle.trim_matches(is_grouping) == spelled
+                && only_grouping(tail, ')')
+        }
+        _ => true,
+    };
+    if separated {
+        Ok(())
+    } else {
+        fail(
+            Code::SourceBindingMismatch,
+            id,
+            format!(
+                "{:?} does not read as {spelled:?} around its operands",
+                source_slice(id, source, span.start(), span.end())?
+            ),
+        )
+    }
 }
 
 /// Binds every appended node, operator token, and expression to the source text.
@@ -845,7 +973,6 @@ fn check_source_binding(id: &str, source: &str, execution: &Execution, root: u32
             }
         }
         let token = span_text(id, source, report.operator_span())?;
-        let expression_text = span_text(id, source, expression)?;
         let interval = performed.step.interval.ok_or_else(|| {
             ReplayError::new(
                 Code::SourceBindingMismatch,
@@ -866,18 +993,53 @@ fn check_source_binding(id: &str, source: &str, execution: &Execution, root: u32
                 format!("operator span reads {token:?}, the step lowers {spelled:?}"),
             );
         }
-        let expression = expression.expect("span_text accepted the expression span");
-        for operand in [report.left(), report.right()] {
-            if !covers(expression, node_span(nodes, operand)) {
-                return fail(
-                    Code::SourceBindingMismatch,
-                    id,
-                    format!(
-                        "expression {expression_text:?} does not cover operand {}",
-                        operand.0
-                    ),
-                );
-            }
+        let (Some(expression), Some(operator)) = (expression, report.operator_span()) else {
+            return fail(
+                Code::SourceBindingMismatch,
+                id,
+                "derived lowerings carry spans",
+            );
+        };
+        let (Some(left), Some(right)) = (
+            node_span(nodes, report.left()),
+            node_span(nodes, report.right()),
+        ) else {
+            return fail(
+                Code::SourceBindingMismatch,
+                id,
+                "derived operands carry spans",
+            );
+        };
+        let ordered = expression.start() <= left.start()
+            && left.end() <= operator.start()
+            && operator.end() <= right.start()
+            && right.end() <= expression.end();
+        if !ordered {
+            return fail(
+                Code::SourceBindingMismatch,
+                id,
+                "the expression must read left operand, operator, right operand in order",
+            );
+        }
+        let separated = only_grouping(
+            source_slice(id, source, expression.start(), left.start())?,
+            '(',
+        ) && only_grouping(
+            source_slice(id, source, left.end(), operator.start())?,
+            ')',
+        ) && only_grouping(
+            source_slice(id, source, operator.end(), right.start())?,
+            '(',
+        ) && only_grouping(
+            source_slice(id, source, right.end(), expression.end())?,
+            ')',
+        );
+        if !separated {
+            return fail(
+                Code::SourceBindingMismatch,
+                id,
+                format!("{spelled:?} is separated from its operands by more than grouping"),
+            );
         }
     }
     for (index, node) in nodes.iter().enumerate() {
@@ -885,22 +1047,9 @@ fn check_source_binding(id: &str, source: &str, execution: &Execution, root: u32
             continue;
         }
         let text = span_text(id, source, node.span)?;
-        let required = match node.kind {
-            NodeKind::Proposition { proposition } => Some(format!("p{}", proposition.0)),
-            NodeKind::True => Some("true".to_owned()),
-            NodeKind::False => Some("false".to_owned()),
-            _ => None,
-        };
-        if let Some(required) = required {
-            if text != required {
-                return fail(
-                    Code::SourceBindingMismatch,
-                    id,
-                    format!("node {index} reads {text:?}, its kind spells {required:?}"),
-                );
-            }
-        }
         let span = node.span.expect("span_text accepted the span");
+        let spelled = spelling(node.kind);
+        let mut operand_spans = Vec::new();
         for operand in operands(node.kind) {
             if !covers(span, node_span(nodes, operand)) {
                 return fail(
@@ -909,6 +1058,18 @@ fn check_source_binding(id: &str, source: &str, execution: &Execution, root: u32
                     format!("node {index} does not cover operand {}", operand.0),
                 );
             }
+            operand_spans.push(node_span(nodes, operand).expect("covers checked the span"));
+        }
+        if operand_spans.is_empty() {
+            if text != spelled {
+                return fail(
+                    Code::SourceBindingMismatch,
+                    id,
+                    format!("node {index} reads {text:?}, its kind spells {spelled:?}"),
+                );
+            }
+        } else {
+            check_token_layout(id, source, span, &operand_spans, &spelled)?;
         }
     }
     let whole = SourceSpan::new(0, u32::try_from(source.len()).expect("small source"))
@@ -923,7 +1084,12 @@ fn check_source_binding(id: &str, source: &str, execution: &Execution, root: u32
     Ok(())
 }
 
-fn check_reports(id: &str, execution: &Execution, records: &[LoweringRecord]) -> Replay<()> {
+fn check_reports(
+    id: &str,
+    profile: SemanticProfile,
+    execution: &Execution,
+    records: &[LoweringRecord],
+) -> Replay<()> {
     if execution.lowerings.len() != records.len() {
         return fail(
             Code::LoweringReportMismatch,
@@ -937,7 +1103,9 @@ fn check_reports(id: &str, execution: &Execution, records: &[LoweringRecord]) ->
     }
     for (performed, record) in execution.lowerings.iter().zip(records) {
         let report = &performed.report;
-        let matches = report.kind().as_str() == record.kind
+        let matches = report.identity() == FUTURE_LOWERING_REPORT_V1
+            && report.kind().as_str() == record.kind
+            && report.semantic_profile() == profile
             && report.left() == NodeId(record.left)
             && report.right() == NodeId(record.right)
             && report.first_generated() == NodeId(record.first_generated)
@@ -962,6 +1130,28 @@ fn semantic_bytes(document: &FormulaDocument) -> Vec<u8> {
     serde_json::to_vec(&document.semantic_view()).expect("semantic view serializes")
 }
 
+/// Builds a source-bound graph and compares it, without spans, to the shared document.
+fn build_source_document(
+    id: &str,
+    profile: SemanticProfile,
+    root: u32,
+    execution: &Execution,
+    document: &FormulaDocument,
+) -> Replay<()> {
+    let built = FormulaDocument::new(profile, NodeId(root), execution.nodes.clone())
+        .map_err(|error| ReplayError::new(Code::GraphInvalid, id, error.to_string()))?;
+    if built.semantic_view() != document.semantic_view()
+        || semantic_bytes(&built) != semantic_bytes(document)
+    {
+        return fail(
+            Code::DocumentMismatch,
+            id,
+            "the source graph differs from the shared expected document",
+        );
+    }
+    Ok(())
+}
+
 fn replay_case(corpus: &Corpus, value: Value, top_level: bool) -> Replay<Outcome> {
     let fallback_id = value
         .get("id")
@@ -984,7 +1174,7 @@ fn replay_case(corpus: &Corpus, value: Value, top_level: bool) -> Replay<Outcome
             expected_lowerings,
         } => {
             let steps = decode_steps(&id, steps)?;
-            check_dialect(&id, &dialect, &steps)?;
+            check_derived_dialect(&id, &dialect)?;
             check_operator_profile(&id, &operator_profile)?;
             if !has_lower(&steps) {
                 return fail(Code::DerivedCaseWithoutLowering, &id, "no lower step");
@@ -992,21 +1182,8 @@ fn replay_case(corpus: &Corpus, value: Value, top_level: bool) -> Replay<Outcome
             let document = expected_document(corpus, &id, &expected)?;
             let execution = execute(&id, semantic_profile, steps, false)?;
             check_source_binding(&id, &source, &execution, root)?;
-            check_reports(&id, &execution, &expected_lowerings)?;
-            let built =
-                FormulaDocument::new(semantic_profile, NodeId(root), execution.nodes.clone())
-                    .map_err(|error| {
-                        ReplayError::new(Code::GraphInvalid, &id, error.to_string())
-                    })?;
-            if built.semantic_view() != document.semantic_view()
-                || semantic_bytes(&built) != semantic_bytes(document)
-            {
-                return fail(
-                    Code::DocumentMismatch,
-                    &id,
-                    "the lowered graph differs from the shared expected document",
-                );
-            }
+            check_reports(&id, semantic_profile, &execution, &expected_lowerings)?;
+            build_source_document(&id, semantic_profile, root, &execution, document)?;
             Ok(Outcome::Derived {
                 expected,
                 reports: execution
@@ -1015,6 +1192,23 @@ fn replay_case(corpus: &Corpus, value: Value, top_level: bool) -> Replay<Outcome
                     .map(|performed| performed.report)
                     .collect(),
             })
+        }
+        CaseWire::Primitive {
+            id,
+            dialect,
+            semantic_profile,
+            source,
+            steps,
+            root,
+            expected,
+        } => {
+            let steps = decode_steps(&id, steps)?;
+            check_primitive_dialect(&id, &dialect, &steps)?;
+            let document = expected_document(corpus, &id, &expected)?;
+            let execution = execute(&id, semantic_profile, steps, false)?;
+            check_source_binding(&id, &source, &execution, root)?;
+            build_source_document(&id, semantic_profile, root, &execution, document)?;
+            Ok(Outcome::Primitive { expected })
         }
         CaseWire::Direct {
             id,
@@ -1057,7 +1251,7 @@ fn replay_case(corpus: &Corpus, value: Value, top_level: bool) -> Replay<Outcome
             expected_refusal,
         } => {
             let steps = decode_steps(&id, steps)?;
-            check_dialect(&id, &dialect, &steps)?;
+            check_derived_dialect(&id, &dialect)?;
             check_operator_profile(&id, &operator_profile)?;
             if !matches!(steps.last(), Some(Step::Lower(_))) {
                 return fail(
@@ -1066,8 +1260,9 @@ fn replay_case(corpus: &Corpus, value: Value, top_level: bool) -> Replay<Outcome
                     "a refused case ends in a lower step",
                 );
             }
-            // Refused requests may carry deliberately inconsistent spans, but each
-            // supplied span still names bytes of the bound source.
+            // Refused requests may carry deliberately inconsistent spans. Every
+            // span that is representable still names bytes of the bound source;
+            // unrepresentable bounds are exactly what the lowering API refuses.
             for step in &steps {
                 match step {
                     Step::Append(node) if node.span.is_some() => {
@@ -1075,11 +1270,12 @@ fn replay_case(corpus: &Corpus, value: Value, top_level: bool) -> Replay<Outcome
                     }
                     Step::Append(_) => {}
                     Step::Lower(lower) => {
-                        for bounds in [lower.operator_span, lower.expression_span]
+                        for span in [lower.operator_span, lower.expression_span]
                             .into_iter()
                             .flatten()
+                            .filter_map(Bounds::as_span)
                         {
-                            span_text(&id, &source, bounds.as_span())?;
+                            span_text(&id, &source, Some(span))?;
                         }
                     }
                 }
@@ -1092,18 +1288,14 @@ fn replay_case(corpus: &Corpus, value: Value, top_level: bool) -> Replay<Outcome
                     "the final lower step was admitted",
                 );
             };
-            if refusal.code() != expected_refusal.code
-                || axis_name(refusal.axis()) != expected_refusal.axis
-            {
+            if refusal.code() != expected_refusal.code {
                 return fail(
                     Code::RefusalMismatch,
                     &id,
                     format!(
-                        "refused {} on {}, recorded {} on {}",
+                        "refused {}, recorded {}",
                         refusal.code(),
-                        axis_name(refusal.axis()),
-                        expected_refusal.code,
-                        expected_refusal.axis
+                        expected_refusal.code
                     ),
                 );
             }
@@ -1125,16 +1317,15 @@ fn replay_case(corpus: &Corpus, value: Value, top_level: bool) -> Replay<Outcome
                     &id,
                     "the malformed entry replayed",
                 ),
-                Err(error) if error.code.as_str() == expected_error => Ok(Outcome::Malformed {
-                    code: error.code.as_str(),
-                }),
+                Err(error) if error.code == expected_error => {
+                    Ok(Outcome::Malformed { code: error.code })
+                }
                 Err(error) => fail(
                     Code::MalformedErrorMismatch,
                     &id,
                     format!(
-                        "failed with {} ({}), recorded {expected_error}",
-                        error.code.as_str(),
-                        error.detail
+                        "failed with {:?} ({}), recorded {expected_error:?}",
+                        error.code, error.detail
                     ),
                 ),
             }
@@ -1197,6 +1388,18 @@ fn remove_cases(files: &mut CorpusFiles, remove: impl Fn(&Value) -> bool) {
     });
 }
 
+/// Removes a derived/direct pair and the expected document they share.
+fn remove_pair(files: &mut CorpusFiles, stem: &str) {
+    let derived = format!("{stem}-derived");
+    let direct = format!("{stem}-direct");
+    remove_cases(files, |case| {
+        case["id"] == derived.as_str() || case["id"] == direct.as_str()
+    });
+    files
+        .remove(&format!("{EXPECTED_PREFIX}{stem}.json"))
+        .unwrap_or_else(|| panic!("no expected document for {stem}"));
+}
+
 fn replay_code(files: &CorpusFiles, pin: &str) -> Code {
     match replay(files, pin) {
         Ok(summary) => panic!("the mutated corpus replayed: {summary:?}"),
@@ -1204,17 +1407,31 @@ fn replay_code(files: &CorpusFiles, pin: &str) -> Code {
     }
 }
 
-fn assert_mutation(code: Code, subject: &str, mutate: impl FnOnce(&mut CorpusFiles)) {
-    let mut files = load_corpus();
-    mutate(&mut files);
-    let pin = repin(&mut files);
-    let error = replay(&files, &pin).expect_err("the mutated corpus replayed");
+fn assert_failure(files: &CorpusFiles, pin: &str, code: Code, subject: &str) {
+    let error = replay(files, pin).expect_err("the mutated corpus replayed");
     assert_eq!(
         (error.code, error.subject.as_str()),
         (code, subject),
         "mutation failed for the wrong reason: {}",
         error.detail
     );
+}
+
+/// Mutates corpus files, re-pins them, and requires the named failure.
+fn assert_mutation(code: Code, subject: &str, mutate: impl FnOnce(&mut CorpusFiles)) {
+    let mut files = load_corpus();
+    mutate(&mut files);
+    let pin = repin(&mut files);
+    assert_failure(&files, &pin, code, subject);
+}
+
+/// Mutates the re-pinned manifest itself, re-pins its digest, and requires the named failure.
+fn assert_manifest_mutation(code: Code, subject: &str, mutate: impl FnOnce(&mut Value)) {
+    let mut files = load_corpus();
+    repin(&mut files);
+    mutate_json(&mut files, MANIFEST, mutate);
+    let pin = sha256_hex(&files[MANIFEST]);
+    assert_failure(&files, &pin, code, subject);
 }
 
 // ---------------------------------------------------------------------------
@@ -1225,32 +1442,30 @@ fn assert_mutation(code: Code, subject: &str, mutate: impl FnOnce(&mut CorpusFil
 #[test]
 fn paired_corpus_replays_through_the_lowering_api() {
     let files = load_corpus();
-    let summary = replay(&files, MANIFEST_SHA256).unwrap_or_else(|error| {
-        panic!(
-            "{} at {}: {}",
-            error.code.as_str(),
-            error.subject,
-            error.detail
-        )
-    });
+    let summary = replay(&files, MANIFEST_SHA256)
+        .unwrap_or_else(|error| panic!("{:?} at {}: {}", error.code, error.subject, error.detail));
     assert_eq!(
         (
             summary.derived,
+            summary.primitive,
             summary.direct,
             summary.refused,
             summary.malformed
         ),
-        (9, 9, 12, 15)
+        (15, 1, 16, 16, 21)
     );
     assert_eq!(
         summary.refusal_codes,
         BTreeSet::from([
             "inverted_interval",
+            "inverted_span",
             "interval_bound_out_of_range",
             "missing_interval",
             "operand_absent",
+            "operand_id_out_of_range",
             "operator_span_outside_expression",
             "semantic_profile_mismatch",
+            "span_endpoint_out_of_range",
             "span_half_missing",
             "unknown_kind",
             "unknown_operator_profile",
@@ -1262,20 +1477,24 @@ fn paired_corpus_replays_through_the_lowering_api() {
     assert_eq!(
         summary.malformed_codes,
         BTreeSet::from([
-            "case_decode_rejected",
-            "dialect_refuses_derived",
-            "direct_case_carries_span",
-            "direct_case_lowers",
-            "document_mismatch",
-            "graph_invalid",
-            "lowering_report_mismatch",
-            "missing_refusal",
-            "node_decode_rejected",
-            "override_outside_refused",
-            "refusal_mismatch",
-            "source_binding_mismatch",
-            "unknown_dialect",
-            "unpinned_expected_document",
+            Code::CaseDecodeRejected,
+            Code::DerivedCaseWithoutLowering,
+            Code::DialectRefusesDerived,
+            Code::DirectCaseCarriesSpan,
+            Code::DirectCaseLowers,
+            Code::DocumentMismatch,
+            Code::GraphInvalid,
+            Code::LoweringReportMismatch,
+            Code::MissingRefusal,
+            Code::NestedMalformed,
+            Code::NodeDecodeRejected,
+            Code::OverrideOutsideRefused,
+            Code::PrimitiveDialectMismatch,
+            Code::RefusalMismatch,
+            Code::SourceBindingMismatch,
+            Code::UnexpectedRefusal,
+            Code::UnknownDialect,
+            Code::UnpinnedExpectedDocument,
         ])
     );
 }
@@ -1305,13 +1524,22 @@ fn make_digest_list_names_exactly_the_manifest_and_its_pins() {
 
 // Trace: TC-074, FR-010-AC-4
 #[test]
-fn mutating_the_lowering_branch_changes_the_expected_graph() {
+fn mutating_either_lowering_branch_changes_the_expected_graph() {
     assert_mutation(
         Code::DocumentMismatch,
         "weak-until-closed-derived",
         |files| {
             mutate_json(files, "expected/weak-until-closed.json", |document| {
                 document["nodes"][4]["kind"] = "and".into();
+            });
+        },
+    );
+    assert_mutation(
+        Code::DocumentMismatch,
+        "strong-release-closed-derived",
+        |files| {
+            mutate_json(files, "expected/strong-release-closed.json", |document| {
+                document["nodes"][4]["kind"] = "or".into();
             });
         },
     );
@@ -1329,39 +1557,47 @@ fn mutating_generated_node_order_changes_the_expected_graph() {
             });
         },
     );
+    assert_mutation(
+        Code::DocumentMismatch,
+        "weak-until-online-derived",
+        |files| {
+            mutate_json(files, "expected/weak-until-online.json", |document| {
+                document["nodes"].as_array_mut().expect("nodes").swap(2, 3);
+            });
+        },
+    );
 }
 
 // Trace: TC-074, FR-010-AC-4
 #[test]
 fn mutating_an_inclusive_endpoint_changes_the_expected_graph() {
-    assert_mutation(
-        Code::DocumentMismatch,
-        "strong-release-closed-derived",
-        |files| {
-            mutate_json(files, "expected/strong-release-closed.json", |document| {
-                for index in [2, 3] {
-                    document["nodes"][index]["interval"]["end"] = 2.into();
-                }
-            });
-        },
-    );
-    assert_mutation(
-        Code::DocumentMismatch,
-        "strong-release-max-singleton-derived",
-        |files| {
-            mutate_json(
-                files,
-                "expected/strong-release-max-singleton.json",
-                |document| {
+    let endpoints = [
+        ("strong-release-closed", "end", 2_u64),
+        (
+            "strong-release-max-singleton-online",
+            "start",
+            4_294_967_294,
+        ),
+        ("weak-until-closed", "end", 1),
+        ("weak-until-max-singleton-closed", "start", 4_294_967_294),
+    ];
+    for (stem, endpoint, value) in endpoints {
+        assert_mutation(
+            Code::DocumentMismatch,
+            &format!("{stem}-derived"),
+            |files| {
+                mutate_json(files, &format!("expected/{stem}.json"), |document| {
                     for index in [2, 3] {
-                        document["nodes"][index]["interval"]["start"] = 4_294_967_294_u64.into();
+                        document["nodes"][index]["interval"][endpoint] = value.into();
                     }
-                },
-            );
-        },
-    );
+                });
+            },
+        );
+    }
 }
 
+// The replay does not parse, so this proves the graph comparison detects a
+// regrouped expectation; TC-043 owns which grouping a source text denotes.
 // Trace: TC-074, FR-010-AC-4
 #[test]
 fn mutating_associativity_changes_the_expected_graph() {
@@ -1468,6 +1704,58 @@ fn mutating_span_attribution_turns_the_replay_red() {
             });
         },
     );
+    assert_mutation(
+        Code::SourceBindingMismatch,
+        "compound-operands-derived",
+        |files| {
+            mutate_case(files, "compound-operands-derived", |case| {
+                case["source"] = "!p0 W[0,2] (p1 | true)".into();
+            });
+        },
+    );
+    assert_mutation(
+        Code::SourceBindingMismatch,
+        "primitive-until-or-globally-source",
+        |files| {
+            mutate_case(files, "primitive-until-or-globally-source", |case| {
+                case["source"] = "(p0 U[1,2] p1) | F[1,2] p0".into();
+            });
+        },
+    );
+}
+
+// Trace: TC-074, FR-010-AC-4
+#[test]
+fn a_generated_node_without_the_expression_span_turns_the_replay_red() {
+    let files = load_corpus();
+    let case = json(&files, CASES)["cases"]
+        .as_array()
+        .expect("case array")
+        .iter()
+        .find(|case| case["id"] == "weak-until-closed-derived")
+        .cloned()
+        .expect("weak-until-closed-derived");
+    let CaseWire::Derived {
+        id,
+        semantic_profile,
+        source,
+        steps,
+        root,
+        ..
+    } = serde_json::from_value(case).expect("derived case")
+    else {
+        panic!("weak-until-closed-derived is a derived case");
+    };
+    let steps = decode_steps(&id, steps).expect("steps decode");
+    let mut execution = execute(&id, semantic_profile, steps, false).expect("case lowers");
+    check_source_binding(&id, &source, &execution, root).expect("the unmutated case binds");
+    execution.nodes[3].span = SourceSpan::new(0, 2).ok();
+    let error = check_source_binding(&id, &source, &execution, root)
+        .expect_err("a generated node lost its expression span");
+    assert_eq!(
+        (error.code, error.subject.as_str()),
+        (Code::GeneratedSpanMismatch, "weak-until-closed-derived")
+    );
 }
 
 // Trace: TC-074, FR-010-AC-4
@@ -1487,7 +1775,7 @@ fn mutating_a_refusal_or_malformed_expectation_turns_the_replay_red() {
         "refused-span-half-missing",
         |files| {
             mutate_case(files, "refused-span-half-missing", |case| {
-                case["expected_refusal"]["axis"] = "interval".into();
+                case["expected_refusal"]["code"] = "inverted_span".into();
             });
         },
     );
@@ -1497,6 +1785,24 @@ fn mutating_a_refusal_or_malformed_expectation_turns_the_replay_red() {
         |files| {
             mutate_case(files, "malformed-derived-wire-node", |case| {
                 case["expected_error"] = "case_decode_rejected".into();
+            });
+        },
+    );
+    assert_mutation(
+        Code::CaseDecodeRejected,
+        "malformed-derived-wire-node",
+        |files| {
+            mutate_case(files, "malformed-derived-wire-node", |case| {
+                case["expected_error"] = "node_decode_rejectd".into();
+            });
+        },
+    );
+    assert_mutation(
+        Code::OperatorProfileBindingMismatch,
+        "weak-until-closed-derived",
+        |files| {
+            mutate_case(files, "weak-until-closed-derived", |case| {
+                case["operator_profile"] = "tl-syntax.future-operators/v2".into();
             });
         },
     );
@@ -1537,13 +1843,6 @@ fn changed_pinned_bytes_turn_the_replay_red() {
         Code::ManifestDigestMismatch
     );
 
-    let mut revised = files.clone();
-    mutate_json(&mut revised, MANIFEST, |value| {
-        value["revision"] = 2.into();
-    });
-    let pin = sha256_hex(&revised[MANIFEST]);
-    assert_eq!(replay_code(&revised, &pin), Code::CorpusIdentityMismatch);
-
     let mut extra = files.clone();
     extra.insert("expected/unlisted.json".to_owned(), b"{}".to_vec());
     assert_eq!(replay_code(&extra, MANIFEST_SHA256), Code::UnpinnedFile);
@@ -1555,9 +1854,77 @@ fn changed_pinned_bytes_turn_the_replay_red() {
 
 // Trace: TC-074, FR-010-AC-4
 #[test]
+fn manifest_identity_and_pin_faults_turn_the_replay_red() {
+    assert_manifest_mutation(Code::CorpusIdentityMismatch, MANIFEST, |manifest| {
+        manifest["revision"] = 2.into();
+    });
+    assert_manifest_mutation(Code::CorpusIdentityMismatch, MANIFEST, |manifest| {
+        manifest["source_cross_check"]["revision"] = "9ca856b".into();
+    });
+    assert_manifest_mutation(Code::CorpusIdentityMismatch, MANIFEST, |manifest| {
+        manifest["primitive_dialect"] = DERIVED_DIALECT.into();
+    });
+    assert_manifest_mutation(Code::ManifestDecodeRejected, MANIFEST, |manifest| {
+        manifest["notes"] = "unreviewed".into();
+    });
+    assert_manifest_mutation(Code::ManifestPinsItself, MANIFEST, |manifest| {
+        let pin = serde_json::json!({ "path": MANIFEST, "sha256": MANIFEST_SHA256 });
+        manifest["files"].as_array_mut().expect("pins").push(pin);
+    });
+    assert_manifest_mutation(Code::DuplicatePin, CASES, |manifest| {
+        let pins = manifest["files"].as_array_mut().expect("pins");
+        let first = pins[0].clone();
+        pins.push(first);
+    });
+    assert_mutation(Code::UnpinnedFile, "notes.json", |files| {
+        files.insert("notes.json".to_owned(), b"{}".to_vec());
+    });
+    assert_mutation(Code::MissingFile, CASES, |files| {
+        files.remove(CASES);
+    });
+}
+
+// Trace: TC-074, FR-010-AC-4
+#[test]
+fn malformed_expected_documents_and_case_files_turn_the_replay_red() {
+    assert_mutation(
+        Code::ExpectedDocumentCarriesSpan,
+        "expected/weak-until-closed.json",
+        |files| {
+            mutate_json(files, "expected/weak-until-closed.json", |document| {
+                document["nodes"][0]["span"] = serde_json::json!({ "start": 0, "end": 2 });
+            });
+        },
+    );
+    assert_mutation(
+        Code::ExpectedDocumentRejected,
+        "expected/weak-until-closed.json",
+        |files| {
+            mutate_json(files, "expected/weak-until-closed.json", |document| {
+                document["nodes"][4]["kind"] = "weak_until".into();
+            });
+        },
+    );
+    assert_mutation(Code::CasesDecodeRejected, CASES, |files| {
+        mutate_json(files, CASES, |cases| {
+            cases["notes"] = "unreviewed".into();
+        });
+    });
+    assert_mutation(Code::CorpusIdentityMismatch, CASES, |files| {
+        mutate_json(files, CASES, |cases| {
+            cases["corpus"] = "tl-syntax-corpus/v1".into();
+        });
+    });
+}
+
+// Trace: TC-074, FR-010-AC-4
+#[test]
 fn removing_required_coverage_turns_the_replay_red() {
     assert_mutation(Code::ClassAbsent, "refused", |files| {
         remove_cases(files, |case| case["class"] == "refused");
+    });
+    assert_mutation(Code::ClassAbsent, "primitive", |files| {
+        remove_cases(files, |case| case["class"] == "primitive");
     });
     assert_mutation(
         Code::UnpairedExpectedDocument,
@@ -1566,32 +1933,34 @@ fn removing_required_coverage_turns_the_replay_red() {
             remove_cases(files, |case| case["id"] == "compound-operands-direct");
         },
     );
+    assert_mutation(
+        Code::UnpairedExpectedDocument,
+        "expected/weak-until-closed.json",
+        |files| {
+            remove_cases(files, |case| case["id"] == "weak-until-closed-derived");
+        },
+    );
     assert_mutation(Code::ProfileRowAbsent, "W", |files| {
-        remove_cases(files, |case| {
-            case["id"] == "weak-until-online-derived" || case["id"] == "weak-until-online-direct"
-        });
-        files.remove("expected/weak-until-online.json");
-        // The right-nested case is the only other online W lowering.
-        remove_cases(files, |case| {
-            case["id"] == "right-nested-release-derived"
-                || case["id"] == "right-nested-release-direct"
-        });
-        files.remove("expected/right-nested-release.json");
+        // Every online W lowering, including the nested one.
+        for stem in [
+            "weak-until-online",
+            "weak-until-zero-singleton-online",
+            "weak-until-max-singleton-online",
+            "right-nested-release",
+        ] {
+            remove_pair(files, stem);
+        }
     });
-    assert_mutation(Code::BoundaryAbsent, CASES, |files| {
-        remove_cases(files, |case| {
-            case["id"] == "weak-until-zero-singleton-derived"
-                || case["id"] == "weak-until-zero-singleton-direct"
-        });
-        files.remove("expected/weak-until-zero-singleton.json");
-    });
+    assert_mutation(
+        Code::BoundaryAbsent,
+        "M mltl.online-prefix/v1 [0,0]",
+        |files| {
+            remove_pair(files, "strong-release-zero-singleton-online");
+        },
+    );
     assert_mutation(Code::NestingAbsent, CASES, |files| {
         // The right-nested case is the only lowering whose right operand is a lowered root.
-        remove_cases(files, |case| {
-            case["id"] == "right-nested-release-derived"
-                || case["id"] == "right-nested-release-direct"
-        });
-        files.remove("expected/right-nested-release.json");
+        remove_pair(files, "right-nested-release");
     });
     assert_mutation(Code::DuplicateCaseId, "refused-next-unsupported", |files| {
         mutate_case(files, "refused-unknown-kind", |case| {
