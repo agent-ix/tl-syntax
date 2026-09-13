@@ -1,14 +1,19 @@
 ---
-id: Task-005
+id: Task-013
 title: "Preserve lifecycle, retention and human decision authority"
 type: Task
 status: blocked
 track: A
 priority: P0
+owner_repository: agent-ix/tl-syntax
+consumer_repositories: [agent-ix/tl-syntax]
+evidence_method: state-machine-and-integration-test
+github_issue: ix://agent-ix/tl-syntax/issues/48
+resume_conditions: [ix://agent-ix/tl-syntax/issues/45, ix://agent-ix/tl-syntax/issues/47]
 relationships:
-  - target: ix://agent-ix/tl-syntax/Task-002
+  - target: ix://agent-ix/tl-syntax/Task-010
     type: depends_on
-  - target: ix://agent-ix/tl-syntax/Task-004
+  - target: ix://agent-ix/tl-syntax/Task-012
     type: depends_on
   - target: ix://agent-ix/tl-syntax/FR-015
     type: references
@@ -27,7 +32,7 @@ relationships:
   - target: ix://agent-ix/tl-syntax/TC-073
     type: verifies
 ---
-# Task-005: Preserve lifecycle, retention and human decision authority
+# Task-013: Preserve lifecycle, retention and human decision authority
 
 ## Scope
 
@@ -48,4 +53,5 @@ supersession and policy-backed decision admission without automated promotion.
 
 ## Notes
 
-- Blocked until Task-002 selects the retention backend/operator and authoritative policy/event source.
+- Blocked until Task-010 selects the retention backend/operator and
+  authoritative policy/event source.

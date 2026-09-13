@@ -1,14 +1,19 @@
 ---
-id: Task-007
+id: Task-015
 title: "Publish and verify the shared integrator package"
 type: Task
 status: blocked
 track: C
 priority: P0
+owner_repository: agent-ix/tl-syntax
+consumer_repositories: [agent-ix/tl-syntax]
+evidence_method: real-writer-reader-integration-and-analysis
+github_issue: ix://agent-ix/tl-syntax/issues/50
+resume_conditions: [ix://agent-ix/tl-syntax/issues/45, ix://agent-ix/tl-syntax/issues/49, ix://agent-ix/engineering-assurance/issues/11]
 relationships:
-  - target: ix://agent-ix/tl-syntax/Task-002
+  - target: ix://agent-ix/tl-syntax/Task-010
     type: depends_on
-  - target: ix://agent-ix/tl-syntax/Task-006
+  - target: ix://agent-ix/tl-syntax/Task-014
     type: depends_on
   - target: ix://agent-ix/tl-syntax/FR-016
     type: references
@@ -29,7 +34,7 @@ relationships:
   - target: ix://agent-ix/tl-syntax/TC-072
     type: verifies
 ---
-# Task-007: Publish and verify the shared integrator package
+# Task-015: Publish and verify the shared integrator package
 
 ## Scope
 

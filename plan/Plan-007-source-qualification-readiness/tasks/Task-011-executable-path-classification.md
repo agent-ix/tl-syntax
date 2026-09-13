@@ -1,12 +1,17 @@
 ---
-id: Task-003
+id: Task-011
 title: "Classify executable paths and prove Rust/shared parity"
 type: Task
 status: blocked
 track: A
 priority: P0
+owner_repository: agent-ix/tl-syntax
+consumer_repositories: [agent-ix/tl-syntax]
+evidence_method: integration-and-property-test
+github_issue: ix://agent-ix/tl-syntax/issues/46
+resume_conditions: [ix://agent-ix/tl-syntax/issues/34, ix://agent-ix/tl-syntax/issues/45, ix://agent-ix/quire-research/issues/64]
 relationships:
-  - target: ix://agent-ix/tl-syntax/Task-002
+  - target: ix://agent-ix/tl-syntax/Task-010
     type: depends_on
   - target: ix://agent-ix/tl-syntax/FR-018
     type: references
@@ -17,7 +22,7 @@ relationships:
   - target: ix://agent-ix/tl-syntax/TC-066
     type: verifies
 ---
-# Task-003: Classify executable paths and prove Rust/shared parity
+# Task-011: Classify executable paths and prove Rust/shared parity
 
 ## Scope
 
@@ -38,4 +43,5 @@ first-party behavior to Rust or a released shared capability.
 
 ## Notes
 
-- Blocked until the current specification is independently reviewed/merged and the consumed LR08/shared-runner entries are admitted by Task-002.
+- Blocked until the current specification is independently reviewed/merged and
+  the consumed LR08/shared-runner entries are admitted by Task-010.

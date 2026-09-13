@@ -77,7 +77,7 @@ relationships:
 
 ## Integration Test Matrix
 
-| Integration ID | Purpose | Type | Target | Test Cases | Status |
+| Test ID | Purpose | Type | Target | Test Cases | Status |
 |---|---|---|---|---|---|
 | IT-001 | Source-grounded handoff through real released Engineering Assurance, Quire and Quoin | service | shared assurance stack | TC-059, TC-060, TC-062, TC-063, TC-066 through TC-070, TC-073 | 🚧 blocked on tl-syntax#16 release set and authoritative policy/event source |
 | IT-002 | Lossless future integrator-package handoff without transferred qualification | service | Engineering Assurance integrator package | TC-061, TC-062, TC-063, TC-066, TC-068, TC-070 through TC-072 | 🚧 blocked on accepted shared contract |

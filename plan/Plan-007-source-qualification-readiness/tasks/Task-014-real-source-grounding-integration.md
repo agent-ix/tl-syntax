@@ -1,16 +1,21 @@
 ---
-id: Task-006
+id: Task-014
 title: "Exercise the real shared source-grounding handoff"
 type: Task
 status: blocked
 track: A
 priority: P0
+owner_repository: agent-ix/tl-syntax
+consumer_repositories: [agent-ix/tl-syntax]
+evidence_method: real-shared-contract-integration-test
+github_issue: ix://agent-ix/tl-syntax/issues/49
+resume_conditions: [ix://agent-ix/tl-syntax/issues/16, ix://agent-ix/tl-syntax/issues/45, ix://agent-ix/tl-syntax/issues/47, ix://agent-ix/tl-syntax/issues/48]
 relationships:
-  - target: ix://agent-ix/tl-syntax/Task-002
+  - target: ix://agent-ix/tl-syntax/Task-010
     type: depends_on
-  - target: ix://agent-ix/tl-syntax/Task-004
+  - target: ix://agent-ix/tl-syntax/Task-012
     type: depends_on
-  - target: ix://agent-ix/tl-syntax/Task-005
+  - target: ix://agent-ix/tl-syntax/Task-013
     type: depends_on
   - target: ix://agent-ix/tl-syntax/IT-001
     type: references
@@ -43,7 +48,7 @@ relationships:
   - target: ix://agent-ix/tl-syntax/TC-073
     type: verifies
 ---
-# Task-006: Exercise the real shared source-grounding handoff
+# Task-014: Exercise the real shared source-grounding handoff
 
 ## Scope
 
@@ -63,4 +68,5 @@ contracts with no mock reader or local substitute.
 
 ## Notes
 
-- Blocked on the tl-syntax#16 accepted release set and completion of Tasks 004–005.
+- Blocked on the tl-syntax#16 accepted release set and completion of Tasks
+  012–013.
