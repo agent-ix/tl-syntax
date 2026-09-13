@@ -33,5 +33,5 @@ introduced.
 ## Gates
 
 Rustfmt, strict all-target/all-feature Clippy, all non-qualification Rust tests,
-the legacy corpus gates, the new checksum gate, and closed JSON-schema
-validation pass.
+the legacy corpus gates, the new checksum gate, and the Rust closed-wire reader
+and replay tests pass.
