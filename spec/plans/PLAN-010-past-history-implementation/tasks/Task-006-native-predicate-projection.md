@@ -23,7 +23,8 @@ Deliver `quire-contract-ir#70` after PR #67: the complete FR-025 strict total-Bo
 
 ## Subtasks
 
-- [ ] Merge the accepted FR-025 specification and set this task in progress.
+- [x] Merge the accepted FR-025 specification (`quire-contract-ir#67`,
+  `39bffb40f41b7caceaf026f438546b15bf140ce4`).
 - [ ] Write TC-038 red cases for every value, non-value, contract, identity, completeness, correction, and resource dimension.
 - [ ] Implement strict readers, projection, canonical identity, and typed decisions.
 - [ ] Run all owning repository gates/reviews.
@@ -35,3 +36,6 @@ Deliver `quire-contract-ir#70` after PR #67: the complete FR-025 strict total-Bo
 ## Notes
 
 - GitHub owner: `agent-ix/quire-contract-ir#70`.
+- Blocked on owner-published native checked-leaf/source-result/result-availability
+  strict readers and `tl-syntax#61`'s signal-catalog/proposition-map schema and
+  strict-reader surface; no Contract-IR substitute is permitted.
