@@ -105,7 +105,7 @@ B1 -----------------/
 | Task-001 | A | FR-011, FR-013 | TC-054, TC-057 | completed |
 | Task-002 | A | FR-013 | TC-055, TC-057 | completed |
 | Task-003 | A | FR-011, FR-012 | TC-048..TC-053, TC-056 | completed |
-| Task-004 | A | FR-011, FR-013 | TC-056 | not_started |
+| Task-004 | A | FR-011, FR-013 | TC-056 | completed |
 | Task-005 | A | FR-013 | TC-056, TC-058 | not_started |
 | Task-006 | B | FR-012, FR-013 | TC-053, TC-056 | blocked on accepted IR FR-025 |
 | Task-007 | C | FR-012, FR-013 | TC-056 | blocked on Tasks 005/006 and accepted IR FR-026 |
