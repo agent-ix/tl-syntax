@@ -36,6 +36,9 @@ configuration through released shared-assurance contracts.
 - For every executed producer: executable bytes, invocation identity/run nonce,
   arguments/environment, start and completion facts, process outcome and fresh
   output identity.
+- For every opened source or producer input: the released-contract snapshot or
+  capability identity whose exact bytes are hashed and consumed without a
+  pathname reopen.
 
 ## Outputs
 
@@ -54,8 +57,12 @@ configuration through released shared-assurance contracts.
 - tl-syntax shall refuse a dirty or incompletely enumerated live source
   population instead of describing it as the reviewed candidate.
 - tl-syntax shall execute against immutable isolated candidate/configuration
-  bytes or revalidate every bound identity before and after each producer and
-  shared handoff.
+  snapshots. A before/after pathname recheck alone is not evidence of
+  immutability because an input can change and return to its original identity
+  between checks.
+- The same descriptor-backed snapshot or capability whose bytes and metadata
+  establish a bound identity shall be the input exposed to each producer and
+  shared handoff; reopening the original pathname after observation is refused.
 - If any bound identity changes during execution, then the tl-syntax Rust
   readiness projection shall produce `refused`.
 - tl-syntax shall quarantine or remove prior producer outputs before invocation.
@@ -105,8 +112,8 @@ configuration through released shared-assurance contracts.
 | FR-014-AC-2 | Mutating any identity or digest changes the readiness subject; omitting a required candidate identity is refused, while absence/incompatibility of a required shared capability is unavailable, and no prior result is reused. | Test (TC-060) |
 | FR-014-AC-3 | Dirty, untracked-live, mutable-ignore, incomplete-census and unavailable-enumeration cases cannot be represented as a clean reviewed candidate. | Test (TC-060) |
 | FR-014-AC-4 | Absence of a compatible released source-grounding contract remains unavailable and creates no local parser, schema, matrix or branch-head substitute. | Test (TC-066) |
-| FR-014-AC-5 | Every `ExecutionOutcome` value in MRS-004 is exercised with a valid stale output present; no non-`succeeded` value yields a current successful domain output, every accepted output binds fresh invocation/executable/termination facts, and a mid-run source/configuration mutation is refused. | Test (TC-068) |
-| FR-014-AC-6 | Candidate identity includes repository/Git/materialized-source/admitted-root identities; material or root/path/mount substitution/race is detected or unavailable, symlink chains below/at AP-002's bound terminate, and dangling/cyclic/out-of-root/special/mount-crossing/over-bound paths are refused. | Test (TC-069) |
+| FR-014-AC-5 | Every `ExecutionOutcome` value in MRS-004 is exercised with a valid stale output present; no non-`succeeded` value yields a current successful domain output, every accepted output binds fresh invocation/executable/termination facts, and mid-run plus change-then-restore source/configuration mutations are refused. | Test (TC-068) |
+| FR-014-AC-6 | Candidate identity includes repository/Git/materialized-source/admitted-root identities; the exact descriptor-backed bytes that are identified are consumed without pathname reopen; material or root/path/mount substitution/race is detected or unavailable; symlink chains below/at AP-002's bound terminate; and dangling/cyclic/out-of-root/special/mount-crossing/over-bound paths are refused. | Test (TC-069) |
 
 ## Dependencies
 

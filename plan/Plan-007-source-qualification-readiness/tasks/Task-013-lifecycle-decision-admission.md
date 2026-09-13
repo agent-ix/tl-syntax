@@ -45,6 +45,8 @@ supersession and policy-backed decision admission without automated promotion.
 - [ ] Implement bounded same-subject supersession/conflict traversal.
 - [ ] Verify real retention handles and map every retrieval failure.
 - [ ] Admit complete decision-event sets against policy, quorum and independence facts.
+- [ ] Refuse incomplete/cross-snapshot event enumeration and bind expiry to the
+  verified authoritative evaluation-time contract.
 
 ## Deliverables
 

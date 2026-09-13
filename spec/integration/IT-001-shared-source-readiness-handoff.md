@@ -59,14 +59,18 @@ producer input.
 4. Repeat each one-axis missing, stale, incompatible and substituted input case.
    - IT-001-SC-04: each case refuses or remains unavailable/incomplete and cannot reuse the healthy result.
 5. Quarantine prior output, force skip/crash/timeout/partial-output outcomes,
-   and mutate one bound source/configuration identity during a run.
-   - IT-001-SC-05: no stale output is accepted and every mid-run mutation refuses the observation.
+   mutate one bound source/configuration identity during a run, restore it
+   before completion, and replace a pathname after its bytes are observed.
+   - IT-001-SC-05: no stale output is accepted; mid-run and change-then-restore mutations refuse the observation; and the exact descriptor-backed bytes identified before execution are the bytes consumed without pathname reopen.
 6. Substitute repository/Git object identity and each applicable symlink,
    submodule, Git LFS, generated or fetched-input identity.
    - IT-001-SC-06: each changed materialized input creates a new subject or an explicit unavailable result.
 7. Mutate the selected reviewer/decision policy and each actor, contributor,
-   conflict, delegation, revocation, quorum and review-subject binding.
-   - IT-001-SC-07: an unverifiable event is refused while the disposition stays open; insufficient quorum stays open without a local policy registry.
+   conflict, delegation, revocation, quorum and review-subject binding. Split,
+   duplicate, reorder or omit event pages; change their snapshot/cursor identity;
+   exceed the event bound; and vary the evaluation instant/time authority at,
+   below and above an expiry.
+   - IT-001-SC-07: an unverifiable event is refused while the disposition stays open; insufficient quorum or an incomplete/non-atomic event population stays open without a local policy registry; and expiry changes state only under the bound verified time authority and canonical ordering.
 8. Retrieve every claimed durable handle after deleting only the disposable
    producer workspace, then substitute returned bytes, media type, subject,
    lifecycle and handle binding.
