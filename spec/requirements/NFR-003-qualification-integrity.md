@@ -14,10 +14,8 @@ relationships:
 
 ## Statement
 
-Candidate qualification shall preserve the distinction between repository
-verification, shared-contract intake, and a human release decision; bind every
-claimed result to the identified candidate and producer bytes; keep non-success
-outcomes out of the passing class; and grant no automated release authority.
+Candidate qualification shall preserve repository verification, shared-contract
+intake and a human release decision as distinct attributable states.
 
 ## Scope and ownership
 
@@ -26,6 +24,10 @@ produces structured domain results and hands them to the released Engineering
 Assurance, Quire, and Quoin contracts. This requirement owns the qualification
 meaning and lifecycle of those results. It does not make Quire or Quoin a test
 runner and does not turn a local test result into a Quoin attestation.
+
+Every claimed result shall bind the identified candidate and producer bytes.
+Every non-success outcome shall remain outside the passing class. No automated
+gate, receipt or classification shall grant release authority.
 
 | Control | Requirement owner | Verification | Lifecycle boundary |
 |---|---|---|---|
@@ -69,7 +71,7 @@ CI ran, or authorize a release.
 
 | ID | Criteria | Verification |
 |---|---|---|
-| NFR-003-AC-1 | Every declared shared component version and consumed artifact digest is classified by the packaged Engineering Assurance compatibility matrix, with no repository-local mapping or internal mirror substitute. | Test (TC-021) |
+| NFR-003-AC-1 | Every declared shared component version and externally consumed artifact digest is classified by the packaged Engineering Assurance compatibility matrix; that matrix is bound by its exact released package/version and package integrity rather than circular self-classification, with no repository-local mapping or internal mirror substitute. | Test (TC-021) |
 | NFR-003-AC-2 | SUITE-008 identifies the exact local shared-assurance test command, and neither the change-assurance declaration nor any Quoin proof obligation claims that SUITE-008 was attested; its result is valid only for the exact-head review that reports it. | Test (TC-038) |
 | NFR-003-AC-3 | The candidate source identity covers every non-archival tracked path, refuses every ordinary-untracked live path and mutable ignore policy, and scans arbitrary tracked bytes without allowing a forbidden deleted identity to hide. | Test (TC-026, TC-034, TC-035) |
 | NFR-003-AC-4 | Every attested proof result is derived from a declared producer's structured bytes, with absent, empty, unreadable, or foreign-protocol input refused, and neither Quire nor Quoin executes a producer. | Test (TC-022) |

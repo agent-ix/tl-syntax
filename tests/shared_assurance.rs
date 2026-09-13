@@ -390,7 +390,7 @@ fn git_files(root: &Path, arguments: &[&str]) -> CensusResult<BTreeSet<String>> 
         .collect())
 }
 
-const EXPECTED_LIVE_TRACKED: [&str; 113] = [
+const EXPECTED_LIVE_TRACKED: [&str; 128] = [
     ".agent/rules/writing_rust.md",
     ".github/CODEOWNERS",
     ".github/workflows/ci.yml",
@@ -460,13 +460,18 @@ const EXPECTED_LIVE_TRACKED: [&str; 113] = [
     "scripts/validate_corpus.py",
     "spec/assurance/AA-001.md",
     "spec/assurance/AD-001.md",
+    "spec/assurance/AD-002-source-readiness-boundary.md",
     "spec/assurance/ADR-001-future-operator-profile.md",
     "spec/assurance/AP-001.md",
+    "spec/assurance/AP-002-progressive-source-readiness.md",
     "spec/assurance/CAC-001.md",
     "spec/assurance/MP-001.md",
+    "spec/assurance/MP-002-source-readiness-obligation-state.md",
     "spec/evidence/suites.md",
     "spec/future-profile-test-matrix.md",
     "spec/future-profile.md",
+    "spec/integration/IT-001-shared-source-readiness-handoff.md",
+    "spec/integration/IT-002-integrator-package-handoff.md",
     "spec/requirements/FR-001-inclusive-intervals.md",
     "spec/requirements/FR-002-validated-formula.md",
     "spec/requirements/FR-003-identities-and-profiles.md",
@@ -477,12 +482,22 @@ const EXPECTED_LIVE_TRACKED: [&str; 113] = [
     "spec/requirements/FR-008-future-operator-lowering.md",
     "spec/requirements/FR-009-future-profile-compatibility.md",
     "spec/requirements/FR-010-future-profile-downstream-evidence.md",
+    "spec/requirements/FR-014-bind-source-readiness-candidate.md",
+    "spec/requirements/FR-015-preserve-readiness-stages.md",
+    "spec/requirements/FR-016-emit-integrator-readiness-package.md",
+    "spec/requirements/FR-017-require-human-source-release-decision.md",
+    "spec/requirements/FR-018-classify-qualification-execution-paths.md",
     "spec/requirements/NFR-001-no-std-feature-boundary.md",
     "spec/requirements/NFR-002-determinism-and-integrity.md",
     "spec/requirements/NFR-003-qualification-integrity.md",
+    "spec/requirements/NFR-004-reproduce-source-readiness-observations.md",
+    "spec/requirements/NFR-005-preserve-readiness-authority-and-retention.md",
     "spec/requirements/StR-001-embedded-consumers.md",
     "spec/requirements/StR-002-temporal-interoperability.md",
     "spec/requirements/StR-003-formal-temporal-frontends.md",
+    "spec/requirements/StR-004-progressive-source-readiness.md",
+    "spec/source-readiness-test-matrix.md",
+    "spec/source-readiness.md",
     "spec/spec.md",
     "spec/test-matrix.md",
     "src/bounded_string.rs",
@@ -517,8 +532,10 @@ const FORBIDDEN: [&str; 5] = [
 fn is_archival_record(relative: &str) -> bool {
     relative == "tests/shared_assurance.rs"
         || relative == "spec/.gitkeep"
-        || relative.starts_with("spec/reviews/")
-        || relative.starts_with("spec/plans/")
+        || (relative.ends_with(".md")
+            && (relative.starts_with("spec/reviews/")
+                || relative.starts_with("spec/plans/")
+                || relative.starts_with("plan/")))
 }
 
 fn source_sets(root: &Path) -> CensusResult<(BTreeSet<String>, BTreeSet<String>)> {
@@ -808,6 +825,7 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         std::env::temp_dir().join(format!("tl-syntax-source-census-fixture-{process}")),
     );
     fs::create_dir_all(fixture.path().join("src")).expect("create tracked fixture area");
+    fs::create_dir_all(fixture.path().join("plan")).expect("create plan fixture area");
     fs::create_dir_all(fixture.path().join("tests/proptest-regressions"))
         .expect("create ignored fixture area");
     fs::write(fixture.path().join(".gitignore"), "proptest-regressions/\n")
@@ -817,6 +835,13 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         "pub const TRACKED: bool = true;\n",
     )
     .expect("write tracked fixture");
+    fs::write(
+        fixture.path().join("plan/record.md"),
+        "# Inert plan record\n",
+    )
+    .expect("write archival plan fixture");
+    fs::write(fixture.path().join("plan/run"), "#!/bin/sh\nexit 0\n")
+        .expect("write executable plan fixture");
     fs::write(
         fixture.path().join("tests/untracked.rs"),
         "pub const FORBIDDEN_REFERENCE: &str = \"legacy_evidence_view\";\n",
@@ -836,7 +861,13 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         .expect("initialize source-census fixture repository");
     assert!(initialized.success(), "fixture git init failed");
     let staged = Command::new("git")
-        .args(["add", ".gitignore", "src/tracked.rs"])
+        .args([
+            "add",
+            ".gitignore",
+            "src/tracked.rs",
+            "plan/record.md",
+            "plan/run",
+        ])
         .current_dir(fixture.path())
         .status()
         .expect("stage source-census fixture");
@@ -846,12 +877,18 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         source_sets(fixture.path()).expect("enumerate source-census fixture");
     assert_eq!(
         fixture_tracked,
-        BTreeSet::from([".gitignore".to_owned(), "src/tracked.rs".to_owned()])
+        BTreeSet::from([
+            ".gitignore".to_owned(),
+            "plan/run".to_owned(),
+            "src/tracked.rs".to_owned(),
+        ]),
+        "Markdown plan records are archival, but a tracked executable under plan/ must remain live"
     );
     assert_eq!(
         fixture_scanned,
         BTreeSet::from([
             ".gitignore".to_owned(),
+            "plan/run".to_owned(),
             "src/tracked.rs".to_owned(),
             "tests/untracked.rs".to_owned(),
         ]),
@@ -901,9 +938,10 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         ("examples", 1),
         ("fuzz", 4),
         ("scripts", 7),
-        // Issue #32 adds six reviewed post-v0.1 profile artifacts; SpecReviews
-        // remain archival and outside the live-source population.
-        ("spec", 27),
+        // Issue #32 adds six reviewed post-v0.1 profile artifacts and issue #34
+        // adds fifteen live source-readiness specification and assurance
+        // artifacts; SpecReviews/plans remain archival exclusions.
+        ("spec", 42),
         // Issue #40 adds the future-lowering module and its traced tests.
         ("src", 9),
         // Issue #41 adds the paired-corpus replay.
