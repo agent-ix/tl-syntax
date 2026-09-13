@@ -2,7 +2,7 @@
 id: Task-003
 title: "Implement origin-complete evaluation"
 type: Task
-status: not_started
+status: completed
 track: A
 priority: P0
 relationships:
@@ -35,11 +35,11 @@ Deliver `tl-mltl#63`: strict histories, exact clock binding, checked history ana
 
 ## Subtasks
 
-- [ ] Write the independent reverse-offset oracle and every history/identity/resource red case.
-- [ ] Implement strict position-history and clock admission with typed errors.
-- [ ] Implement checked required-history analysis and anchored evaluation.
-- [ ] Implement immutable result identities and original/superseding/invalidating validation.
-- [ ] Preserve future evaluator behavior and run all owning repository gates/reviews.
+- [x] Write the independent reverse-offset oracle and every history/identity/resource red case.
+- [x] Implement strict position-history and clock admission with typed errors.
+- [x] Implement checked required-history analysis and anchored evaluation.
+- [x] Implement immutable result identities and original/superseding/invalidating validation.
+- [x] Preserve future evaluator behavior and run all owning repository gates/reviews.
 
 ## Deliverables
 
@@ -48,3 +48,7 @@ Deliver `tl-mltl#63`: strict histories, exact clock binding, checked history ana
 ## Notes
 
 - GitHub owner: `agent-ix/tl-mltl#63`.
+- Merged implementation: `agent-ix/tl-mltl#64` at
+  `b346cd0902794633e862f644a5575fc9776c34fb`.
+- TC-053 and TC-056 remain globally open only for allocations owned by later
+  plan tasks; the complete tl-mltl allocation is delivered here.

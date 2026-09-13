@@ -50,9 +50,9 @@ relationships:
 
 ### Syntax and wire
 
-- [ ] **TC-054**: Round-trip formula-v2; enforce profile compatibility, v1 preservation, and guarded conversions.
+- [x] **TC-054**: Round-trip formula-v2; enforce profile compatibility, v1 preservation, and guarded conversions.
 - [x] **TC-057**: Exercise bounded arbitrary formula-v2 decode without unwind or profile misattribution.
-- [ ] **TC-058**: Reject every dependency-manifest owner, edge, prerequisite, revision, or authorization mutation.
+- [x] **TC-058**: Reject every dependency-manifest owner, edge, prerequisite, revision, or authorization mutation.
 
 ### Parser
 
@@ -60,12 +60,12 @@ relationships:
 
 ### History and evaluation
 
-- [ ] **TC-048**: Compare O/H against an independent reverse-offset oracle.
-- [ ] **TC-049**: Prove S uses witness `[a,b]` and left range `[a,j)`.
-- [ ] **TC-050**: Prove T duality and strong Previous equality with O[1,1].
-- [ ] **TC-051**: Validate histories, clocks, anchors, digests, ordering, and immutable result attribution.
-- [ ] **TC-052**: Compare evaluation and checked required-history analysis at semantic/resource boundaries.
-- [ ] **TC-053**: Refuse weak Previous, mixed graphs, invalid history/clock states, and Boolean coercion.
+- [x] **TC-048**: Compare O/H against an independent reverse-offset oracle.
+- [x] **TC-049**: Prove S uses witness `[a,b]` and left range `[a,j)`.
+- [x] **TC-050**: Prove T duality and strong Previous equality with O[1,1].
+- [x] **TC-051**: Validate histories, clocks, anchors, digests, ordering, and immutable result attribution.
+- [x] **TC-052**: Compare evaluation and checked required-history analysis at semantic/resource boundaries.
+- [ ] **TC-053**: The tl-mltl history/clock/profile/non-value allocation is complete; native predicate-projection refusal remains with Task-006.
 
 ### Cross-repository behavior
 
@@ -104,7 +104,7 @@ B1 -----------------/
 | --- | --- | --- | --- | --- |
 | Task-001 | A | FR-011, FR-013 | TC-054, TC-057 | completed |
 | Task-002 | A | FR-013 | TC-055, TC-057 | completed |
-| Task-003 | A | FR-011, FR-012 | TC-048..TC-053, TC-056 | not_started |
+| Task-003 | A | FR-011, FR-012 | TC-048..TC-053, TC-056 | completed |
 | Task-004 | A | FR-011, FR-013 | TC-056 | not_started |
 | Task-005 | A | FR-013 | TC-056, TC-058 | not_started |
 | Task-006 | B | FR-012, FR-013 | TC-053, TC-056 | blocked on accepted IR FR-025 |

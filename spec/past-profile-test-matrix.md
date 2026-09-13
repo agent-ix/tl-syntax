@@ -30,12 +30,12 @@ relationships:
 
 | Test ID | Title | Type | Priority | Traces To | Status |
 |---|---|---|---|---|---|
-| TC-048 | Evaluate O/H against an independent reverse-offset oracle across Boolean, endpoint, singleton, and pre-origin cases | Property | P0 | FR-011-AC-1 | 🚧 planned |
-| TC-049 | Evaluate S with the exact reverse `[a,j)` left range and inclusive witness endpoints | Property | P0 | FR-011-AC-2 | 🚧 planned |
-| TC-050 | Evaluate T against the structural Boolean dual of S and strong Previous against O[1,1] across all bounded/origin cases | Property | P0 | FR-011-AC-3, FR-011-AC-5 | 🚧 planned |
-| TC-051 | Validate origin-complete histories, anchors, digests, ordering, gaps, duplicates, and result attribution | Property | P0 | FR-012-AC-1, FR-012-AC-3 | 🚧 planned |
-| TC-052 | Compare evaluator and required-history analysis with the independent Rust oracle across both valid clocks and all semantic/resource boundaries | Property | P0 | FR-011-AC-1, FR-011-AC-2, FR-011-AC-3, FR-012-AC-2, FR-012-AC-4, FR-013-AC-3 | 🚧 planned |
-| TC-053 | Refuse weak Previous, future/mixed graphs, invalid histories, malformed/overflowing/rounded/resampled clocks, and preserve owner-produced capture/predicate non-values without coercion | Integration | P0 | FR-011-AC-4, FR-011-AC-5, FR-012-AC-1, FR-012-AC-5 | 🚧 planned |
+| TC-048 | Evaluate O/H against an independent reverse-offset oracle across Boolean, endpoint, singleton, and pre-origin cases | Property | P0 | FR-011-AC-1 | ✅ implemented |
+| TC-049 | Evaluate S with the exact reverse `[a,j)` left range and inclusive witness endpoints | Property | P0 | FR-011-AC-2 | ✅ implemented |
+| TC-050 | Evaluate T against the structural Boolean dual of S and strong Previous against O[1,1] across all bounded/origin cases | Property | P0 | FR-011-AC-3, FR-011-AC-5 | ✅ implemented |
+| TC-051 | Validate origin-complete histories, anchors, digests, ordering, gaps, duplicates, and result attribution | Property | P0 | FR-012-AC-1, FR-012-AC-3 | ✅ implemented |
+| TC-052 | Compare evaluator and required-history analysis with the independent Rust oracle across both valid clocks and all semantic/resource boundaries | Property | P0 | FR-011-AC-1, FR-011-AC-2, FR-011-AC-3, FR-012-AC-2, FR-012-AC-4, FR-013-AC-3 | ✅ implemented |
+| TC-053 | Refuse weak Previous, future/mixed graphs, invalid histories, malformed/overflowing/rounded/resampled clocks, and preserve owner-produced capture/predicate non-values without coercion | Integration | P0 | FR-011-AC-4, FR-011-AC-5, FR-012-AC-1, FR-012-AC-5 | 🚧 tl-mltl allocation implemented; Task-006 native projection remains |
 | TC-054 | Round-trip formula-v2 profiles and enforce v1 preservation, v1-to-v2 upgrade, guarded down-conversion, and profile/operator compatibility | Integration | P0 | FR-013-AC-1 | ✅ implemented |
 | TC-055 | Parse and canonically format O/H/Y/S/T in `tl-parse.clean-ascii/v3` with exact precedence, intervals, associativity, and spans | Integration | P0 | FR-013-AC-2 | ✅ implemented |
 | TC-056 | Replay the paired corpus, every mutation, late-data/anchor/closure identity, rewrite rule, and external-target state | Integration | P0 | FR-012-AC-3, FR-012-AC-4, FR-012-AC-5, FR-013-AC-3, FR-013-AC-4 | 🚧 planned |
