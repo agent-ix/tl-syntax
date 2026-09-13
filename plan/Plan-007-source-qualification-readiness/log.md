@@ -14,3 +14,7 @@ description: "Chronological log of the progressive source-qualification-readines
   consumers, evidence methods and resume conditions. Engineering Assurance #34
   is merged but remains unavailable here until an immutable compatible release
   carries that contract.
+* **2026-09-13** — Independent SR-066 through SR-074 review at `33678fa`
+  closed pathname ABA/TOCTOU, event-population/time-authority and archival-
+  census bypass findings. All implementation tasks remain blocked; no TM-004
+  row or human release decision advanced.

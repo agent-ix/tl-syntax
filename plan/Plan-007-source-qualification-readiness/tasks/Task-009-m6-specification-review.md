@@ -46,7 +46,8 @@ assurance records and real-integration scenarios before implementation.
 ## Deliverables
 
 - Specification commit `767dc92a97f1b3d9ffbb76467bdda9ecf2261e40`
-- SR-058 through SR-065
+- Author reviews SR-058 through SR-065
+- Independent exact-head reviews SR-066 through SR-074
 
 ## Notes
 
