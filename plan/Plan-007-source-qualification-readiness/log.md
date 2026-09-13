@@ -18,3 +18,9 @@ description: "Chronological log of the progressive source-qualification-readines
   closed pathname ABA/TOCTOU, event-population/time-authority and archival-
   census bypass findings. All implementation tasks remain blocked; no TM-004
   row or human release decision advanced.
+* **2026-09-13** — Merged current main at `5b1c134`, preserving its W/M source
+  and canonical-graph corpus additions alongside the narrowed archival census.
+  SR-075 records the exact `9598fea` candidate review: `make ci` passes with 75
+  Rust tests and one doctest, Quire validates 163 specification and 11 plan
+  documents, and all 48 M6 obligations classify without an assurance mismatch.
+  TM-004 remains truthfully planned at 0 of 17 rows.
