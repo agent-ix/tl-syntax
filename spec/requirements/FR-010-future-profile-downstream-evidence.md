@@ -51,6 +51,18 @@ endpoint, associativity, selected profile, node charge, and token/expression
 span attribution; each mutation must change the expected graph/report or turn
 its owning gate red.
 
+The paired corpus is `tl-syntax.future-operator-corpus/v1` in
+`corpus/future-operators/`. Each derived-source case binds its dialect,
+operator profile, semantic profile, source text, and ordered append/lower steps
+to a span-free expected formula-v1 document; a directly constructed case shares
+the same document. A primitive-source case binds `tl-parse.clean-ascii/v1` text
+to the compatibility graph the same way. The replay binds spans to the source
+bytes and operator spellings but does not parse; grammar stays with TC-043. Refused and malformed cases declare their typed refusal or
+replay error and produce no document. File digests pin the corpus identity.
+The corpus is evidence input replayed through the tl-syntax lowering API: it is
+neither an evaluator nor an editable source language, and it defines no derived
+formula-v1 node.
+
 Interop adapters emit only from the canonical graph and report unsupported or
 unavailable when a target cannot preserve the selected profile. External parser
 acceptance is not equivalence evidence. R2U2 and C2PO remain monitor targets,
@@ -69,9 +81,9 @@ derived interchange/evaluator inputs.
 | ID | Criteria | Verification |
 |---|---|---|
 | FR-010-AC-1 | For every declared boundary, evaluation, prefix progress, horizon, and resource outcomes for a lowered graph equal direct canonical construction under both existing semantic profiles. | Test (TC-044) |
-| FR-010-AC-2 | Rewrite and paired-corpus paths contain no derived semantic branch and preserve canonical graph, semantic-profile, fixture, and unsupported-state identities. | Test (TC-045) |
+| FR-010-AC-2 | Rewrite and paired-corpus paths contain no derived semantic branch and preserve canonical graph, semantic-profile, fixture, and unsupported-state identities. | Test (TC-045, TC-074) |
 | FR-010-AC-3 | Native bridge and external-target mappings consume only canonical graphs, preserve supported/unsupported/unavailable results, keep FRETish output-only, and make no external-parser, monitor, qualification, or source-authority claim. | Test (TC-045) |
-| FR-010-AC-4 | Mutating every enumerated lowering, ordering, interval, associativity, profile, resource, or span dimension changes the expected graph/report or makes its owning control fail. | Test (TC-041, TC-042, TC-043, TC-044, TC-045, TC-046) |
+| FR-010-AC-4 | Mutating every enumerated lowering, ordering, interval, associativity, profile, resource, or span dimension changes the expected graph/report or makes its owning control fail. | Test (TC-041, TC-042, TC-043, TC-044, TC-045, TC-046, TC-074) |
 
 ## Dependencies
 
@@ -90,8 +102,9 @@ FR-008, FR-009, this requirement, ADR-001, and TM-002. Dependency order is:
    direct-versus-lowered evaluation/progress/horizon/resource and
    rewrite-equivalence controls; they add no operator branch.
 4. `tl-syntax` issue [#41](https://github.com/agent-ix/tl-syntax/issues/41)
-   adds paired source/document fixtures after all four preceding component
-   revisions exist.
+   adds paired source/document fixtures. It builds against the #40 and #31
+   revisions and consumes no tl-mltl or tl-rewrite output, so it may be
+   implemented in parallel with #47 and #35 but lands after them.
 5. `tl-mltl` issue [#48](https://github.com/agent-ix/tl-mltl/issues/48)
    adds lowered-graph export and target-profile loss/refusal cases after the
    evaluator and corpus revisions exist.
