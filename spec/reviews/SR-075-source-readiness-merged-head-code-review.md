@@ -31,6 +31,24 @@ oracle gates, cargo-deny, fuzz-target build, unsafe audit, strict specification
 validation, MSRV tests, rustdoc, pin checks, mutation probes and the shared
 assurance chain. No hosted CI result is claimed.
 
+## Verdict
+
+**PASS** — no unresolved Rust or code/test-alignment defect was found in the
+specification-only M6 PR after the current-main integration.
+
+## Assurance Context
+
+- **Profiles:** AP-001 and proposed AP-002, both profile version 0.2; AP-002
+  requires specification review, independent code review and gap analysis.
+- **Baseline:** PR #39 head `7a3d15b27436155f42e693b44b1a2f98e2ae9902`
+  over `origin/main` `5b1c134`; reviewed executable candidate `9598fea` plus
+  the final review/task-status record.
+- **Impact evaluated:** live-source omission, candidate/configuration
+  substitution, automated authority promotion and limitation loss.
+- **Decision boundary:** the PR defines M6 and its routing only. It implements
+  none of the 17 M6 rows and records no human source-release decision.
+- **Active exceptions:** none.
+
 ## Findings
 
 | ID | Severity | Summary | Refs | Escape Cause |
