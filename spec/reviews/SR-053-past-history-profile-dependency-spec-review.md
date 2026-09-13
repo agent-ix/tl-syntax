@@ -19,5 +19,5 @@ mapping consumers.
 | ID | Severity | Summary | Refs |
 |---|---|---|---|
 | FND-5301 | medium | The initial order named components without allocating every contract to a repository. Fixed with explicit ownership for syntax/wire, text, evaluator/history, rewrite, corpus replay, target adapters, and the native bridge. | FR-013 Dependencies |
-| FND-5302 | medium | A prose-only implementation gate was easy to strand or bypass. Fixed with TC-058 as an automated dependency-manifest rejection gate over owner, predecessor, M0, and profile acceptance. | FR-013-AC-5, TC-058 |
+| FND-5302 | medium | A prose-only implementation gate was easy to strand or bypass. Fixed by specifying and checking in `past-profile-implementation.json`, allocating its exact schema/refusal/trusted revisions to tl-syntax, and routing issues #53/#54, tl-parse#35, tl-mltl#63, tl-rewrite#38, and quire-contract-ir#70/#71. | FR-013-AC-5, TC-058 |
 | FND-5303 | low | quire-contract-ir #64 could be mistaken for the source of TL past semantics. Fixed: it is a downstream native correspondence consumer, independently blocked on clock/capture/predicate rules. | MRS-003, FR-012, FR-013 |

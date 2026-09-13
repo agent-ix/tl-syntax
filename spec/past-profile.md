@@ -2,8 +2,14 @@
 id: MRS-003
 title: "Finite-trace past/history semantic profile"
 type: MasterRequirements
+status: accepted
+owner: tl-syntax-maintainer
 relationships:
   - target: ix://agent-ix/tl-syntax/MRS-002
+    type: depends_on
+  - target: ix://agent-ix/quire-specification/FR-090
+    type: depends_on
+  - target: ix://agent-ix/quire-specification/FR-092
     type: depends_on
   - target: ix://agent-ix/tl-syntax/issues/33
     type: references
@@ -26,7 +32,7 @@ through a separately reviewed native correspondence.
 
 ### In scope
 
-- Bounded Once, Historically, Since, and Triggered operators over discrete
+- Bounded Once, Historically, strong Previous, Since, and Triggered operators over discrete
   event positions.
 - Inclusive intervals, exact origin/anchor behavior, pre-origin false
   extension, required-history analysis, and immutable result attribution.
@@ -40,7 +46,7 @@ through a separately reviewed native correspondence.
 
 ### Out of scope
 
-- Previous/weak-previous, mixed future/past formulas, unbounded/open/dense-time
+- Weak Previous, mixed future/past formulas, unbounded/open/dense-time
   intervals, timestamp interpolation, implicit sampling, or wall-clock advance.
 - Native Quire grammar, capture or predicate evaluation, production monitoring,
   and any external runtime as a qualification dependency.
@@ -59,6 +65,9 @@ all planned evidence.
 
 ## Dependencies
 
-M0 stabilization and accepted MRS-002 profile-evolution rules are prerequisites
-to implementation. quire-contract-ir #64 is a downstream native-correspondence
-consumer, not the source of TL past semantics.
+M0 stabilization, accepted MRS-002 profile-evolution rules, and the owner-approved
+implementation epic `agent-ix/tl-syntax#52` are prerequisites to implementation.
+The clock and native temporal meanings are consumed from
+`ix://agent-ix/quire-specification/FR-090`, `FR-092`, `FR-205`, and `FR-252`;
+quire-contract-ir #64 is a downstream native-correspondence consumer, not the
+source of TL past semantics.

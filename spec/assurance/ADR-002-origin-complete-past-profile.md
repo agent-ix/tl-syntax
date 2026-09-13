@@ -27,7 +27,7 @@ the ecosystem.
 
 ## Decision
 
-Extend the common canonical node graph with O/H/S/T only under new
+Extend the common canonical node graph with O/H/Y/S/T only under new
 `tl-syntax.formula/v2` and `mltl.origin-complete-history/v1` identities. Keep
 formula-v1 and both future profiles closed and unchanged. Reject mixed
 future/past graphs in the first past profile.
@@ -46,8 +46,11 @@ reported as maximum reverse offset, not minimum physical trace length.
   Boolean graph validation, identity, and wire infrastructure.
 - Mixed future/past v1: rejected until combined progress, lookback/lookahead,
   closure, and monitor correspondence are separately specified.
-- Previous as O[1,1] or H[1,1]: rejected because physical-position existence is
-  absent and constants expose the boundary mismatch.
+- Weak Previous as a dual of strong Previous: rejected because the authoritative
+  native v1 contract specifies only strong Previous. Strong Previous is the
+  primitive `Y` node and has exactly the `Once[1,1]` truth relation selected by
+  `ix://agent-ix/quire-specification/FR-092`; no physical-position-existence
+  condition or weak boundary value is inferred.
 - Foreign-runtime differential qualification: rejected by the native-language
   ruling and because none has an accepted exact profile correspondence.
 
@@ -58,6 +61,7 @@ old wire bytes and semantics do not change. A new evaluator path is legitimate
 past semantics inside the same architecture; derived rewrites may not replace
 it with future nodes. Native clocks/captures/predicates are resolved before TL.
 
-This decision authorizes specification and routed planning only. It does not
-authorize implementation, native Quire grammar, production monitoring,
-qualification, or release.
+The owner-approved implementation epic `agent-ix/tl-syntax#52` authorizes the
+routed Rust implementation after this profile lands on `main`. It does not
+authorize native Quire grammar, production deployment, external qualification,
+or release.

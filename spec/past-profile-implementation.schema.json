@@ -1,0 +1,88 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "tl-syntax.past-profile-implementation/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "owner_epic", "authorization", "prerequisites", "tasks"],
+  "properties": {
+    "format": {
+      "const": "tl-syntax.past-profile-implementation/v1"
+    },
+    "owner_epic": {
+      "const": "agent-ix/tl-syntax#52"
+    },
+    "authorization": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state"],
+          "properties": {
+            "state": { "const": "blocked" }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state", "revision"],
+          "properties": {
+            "state": { "const": "authorized" },
+            "revision": { "$ref": "#/definitions/revision" }
+          }
+        }
+      ]
+    },
+    "prerequisites": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["repository", "kind", "revision", "state"],
+        "properties": {
+          "repository": { "const": "agent-ix/tl-syntax" },
+          "kind": { "enum": ["m0", "mrs-002", "mrs-003"] },
+          "revision": { "$ref": "#/definitions/revision" },
+          "state": { "enum": ["accepted", "pending"] }
+        }
+      }
+    },
+    "tasks": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["repository", "issue", "owner", "predecessors"],
+        "properties": {
+          "repository": { "$ref": "#/definitions/repository" },
+          "issue": { "type": "integer", "minimum": 1, "maximum": 4294967295 },
+          "owner": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "predecessors": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": { "$ref": "#/definitions/taskKey" }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "repository": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+/[a-z0-9-]+$"
+    },
+    "revision": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "taskKey": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+/[a-z0-9-]+#[1-9][0-9]*$"
+    }
+  }
+}

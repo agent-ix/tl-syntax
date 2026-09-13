@@ -1,0 +1,79 @@
+{
+  "format": "tl-syntax.past-profile-implementation/v1",
+  "owner_epic": "agent-ix/tl-syntax#52",
+  "authorization": {
+    "state": "blocked"
+  },
+  "prerequisites": [
+    {
+      "repository": "agent-ix/tl-syntax",
+      "kind": "m0",
+      "revision": "26b801d6567645b637be20bef5c256d0ea4ed45c",
+      "state": "accepted"
+    },
+    {
+      "repository": "agent-ix/tl-syntax",
+      "kind": "mrs-002",
+      "revision": "8d3ff9873acdef9b0af03f05971620c07eacf733",
+      "state": "accepted"
+    },
+    {
+      "repository": "agent-ix/tl-syntax",
+      "kind": "mrs-003",
+      "revision": "0de2efb01ed3c58da06b76b578fbea4a92c063b3",
+      "state": "pending"
+    }
+  ],
+  "tasks": [
+    {
+      "repository": "agent-ix/tl-syntax",
+      "issue": 53,
+      "owner": "tl-syntax",
+      "predecessors": []
+    },
+    {
+      "repository": "agent-ix/tl-parse",
+      "issue": 35,
+      "owner": "tl-parse",
+      "predecessors": ["agent-ix/tl-syntax#53"]
+    },
+    {
+      "repository": "agent-ix/tl-mltl",
+      "issue": 63,
+      "owner": "tl-mltl",
+      "predecessors": ["agent-ix/tl-syntax#53"]
+    },
+    {
+      "repository": "agent-ix/tl-rewrite",
+      "issue": 38,
+      "owner": "tl-rewrite",
+      "predecessors": ["agent-ix/tl-syntax#53"]
+    },
+    {
+      "repository": "agent-ix/tl-syntax",
+      "issue": 54,
+      "owner": "tl-syntax",
+      "predecessors": [
+        "agent-ix/tl-mltl#63",
+        "agent-ix/tl-parse#35",
+        "agent-ix/tl-rewrite#38"
+      ]
+    },
+    {
+      "repository": "agent-ix/quire-contract-ir",
+      "issue": 70,
+      "owner": "quire-contract-ir",
+      "predecessors": ["agent-ix/quire-contract-ir#63"]
+    },
+    {
+      "repository": "agent-ix/quire-contract-ir",
+      "issue": 71,
+      "owner": "quire-contract-ir",
+      "predecessors": [
+        "agent-ix/quire-contract-ir#64",
+        "agent-ix/quire-contract-ir#70",
+        "agent-ix/tl-syntax#54"
+      ]
+    }
+  ]
+}

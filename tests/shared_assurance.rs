@@ -390,7 +390,7 @@ fn git_files(root: &Path, arguments: &[&str]) -> CensusResult<BTreeSet<String>> 
         .collect())
 }
 
-const EXPECTED_LIVE_TRACKED: [&str; 119] = [
+const EXPECTED_LIVE_TRACKED: [&str; 121] = [
     ".agent/rules/writing_rust.md",
     ".github/CODEOWNERS",
     ".github/workflows/ci.yml",
@@ -469,6 +469,8 @@ const EXPECTED_LIVE_TRACKED: [&str; 119] = [
     "spec/future-profile-test-matrix.md",
     "spec/future-profile.md",
     "spec/past-profile-test-matrix.md",
+    "spec/past-profile-implementation.json",
+    "spec/past-profile-implementation.schema.json",
     "spec/past-profile.md",
     "spec/requirements/FR-001-inclusive-intervals.md",
     "spec/requirements/FR-002-validated-formula.md",
@@ -907,9 +909,9 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         ("examples", 1),
         ("fuzz", 4),
         ("scripts", 7),
-        // Issue #33 adds six reviewed past-profile artifacts; SpecReviews
+        // Issue #33 adds the reviewed past-profile artifacts and routing manifest; SpecReviews
         // remain archival and outside the live-source population.
-        ("spec", 33),
+        ("spec", 35),
         // Issue #40 adds the future-lowering module and its traced tests.
         ("src", 9),
         // Issue #41 adds the paired-corpus replay.

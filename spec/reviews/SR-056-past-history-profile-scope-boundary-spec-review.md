@@ -18,7 +18,7 @@ in their named downstream boundaries.
 
 | ID | Severity | Summary | Refs |
 |---|---|---|---|
-| FND-5601 | high | Adding O/H/S/T text could create a second user-authored Quire language. Fixed: `tl-parse.clean-ascii/v3` and formula-v2 are internal interchange only and the native bridge does not parse them as source clauses. | MRS-003, FR-013 |
-| FND-5602 | high | TL could accidentally own capture absence or partial predicate truth. Fixed: the native bridge must resolve captures, clocks, anchors, and total Booleans before TL history construction. | FR-012-AC-5 |
+| FND-5601 | high | Adding O/H/Y/S/T text could create a second user-authored Quire language. Fixed: `tl-parse.clean-ascii/v3` and formula-v2 are internal interchange only and the native bridge does not parse them as source clauses. | MRS-003, FR-013 |
+| FND-5602 | high | TL could accidentally own capture absence or partial predicate truth. Fixed: the native bridge resolves and classifies those inputs; TL constructs history only from admitted total Booleans and otherwise preserves the owner-produced state. | FR-012-AC-5 |
 | FND-5603 | medium | External monitor acceptance could become a qualification or semantic-authority claim. Fixed with explicit output-only/unavailable/unsupported dispositions and no foreign-runtime dependency. | FR-013-AC-4 |
 | FND-5604 | low | Mixed future/past progress and closure are outside the pure-past contract. Fixed by profile validation refusal and a separate future-v1 preservation rule. | FR-011-AC-4, FR-013-AC-1 |

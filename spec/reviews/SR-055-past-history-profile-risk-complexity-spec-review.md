@@ -19,6 +19,6 @@ oracle or mutation control.
 | ID | Severity | Summary | Refs |
 |---|---|---|---|
 | FND-5501 | high | Since can appear correct on zero-based intervals while using the wrong left range. Fixed: the witness is inclusive in `[a,b]`, the left range is exactly `[a,j)`, offsets before `a` are irrelevant, and TC-049/TC-052 mutate the distinction. | FR-011-AC-2, TC-049, TC-052 |
-| FND-5502 | high | Previous encoded as O/H at `[1,1]` would conflate false extension with physical predecessor existence. Fixed by refusing both variants in v1. | FR-011, ADR-002 |
+| FND-5502 | high | The draft refused Previous to avoid inventing physical-position semantics, but authoritative FR-092 explicitly selects strong Previous as Once[1,1]. Fixed with a distinct primitive node using exactly that truth relation; weak Previous remains refused. | FR-011, ADR-002; quire-specification FR-092 |
 | FND-5503 | medium | Deep nesting and `u32::MAX` bounds can overflow analysis or iterate impractically. Fixed with checked u64 recurrences and preflight recursion, span, step, cardinality, and input-position limits. | FR-012-AC-2, TC-052, TC-053 |
 | FND-5504 | medium | Seven independently evolving contracts could drift under one vague “past profile” label. Fixed with exact orthogonal identities and successor triggers. | FR-013 identity table |

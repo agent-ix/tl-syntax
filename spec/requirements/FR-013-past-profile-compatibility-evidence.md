@@ -29,7 +29,8 @@ verify one shared canonical semantics without relying on a foreign runtime.
 - Formula schema `tl-syntax.formula/v2` and semantic profile
   `mltl.origin-complete-history/v1`.
 - Operator profile `tl-syntax.past-operators/v1`, internal text dialect
-  `tl-parse.clean-ascii/v3`, and target-specific mapping profiles.
+  `tl-parse.clean-ascii/v3`, implementation manifest
+  `tl-syntax.past-profile-implementation/v1`, and target-specific mapping profiles.
 
 ## Outputs
 
@@ -40,7 +41,7 @@ verify one shared canonical semantics without relying on a foreign runtime.
 ## Behavior
 
 Formula-v2 is a common graph schema containing existing Boolean/future nodes and
-the new O/H/S/T node tags. Profile validation admits only Boolean plus future
+the new O/H/Y/S/T node tags. Profile validation admits only Boolean plus future
 nodes for the two existing future profiles and only Boolean plus past nodes for
 the new past profile. Mixed graphs refuse. Existing formula-v1 bytes, schema,
 profile names, validation, and outcomes remain unchanged. Future-only v1
@@ -51,7 +52,7 @@ The exchanged identity axes and successor triggers are:
 
 | Axis | Exact v1 identity | Requires a successor identity when |
 |---|---|---|
-| operator catalog | `tl-syntax.past-operators/v1` | a spelling, arity, lowering, or admitted operator changes |
+| operator catalog | `tl-syntax.past-operators/v1` | a semantic node label, arity, lowering, or admitted operator changes; text spelling is not owned on this axis |
 | formula wire | `tl-syntax.formula/v2` | a node tag, field, validation rule, or canonical semantic view changes |
 | evaluation semantics | `mltl.origin-complete-history/v1` | truth, origin, anchor, clock, progress, or closure meaning changes |
 | internal text | `tl-parse.clean-ascii/v3` | spelling, precedence, associativity, interval, formatting, or span meaning changes |
@@ -65,12 +66,18 @@ evaluation, mapping, or attribution. A compatible additive diagnostic field
 belongs to a separately versioned diagnostic/report type and cannot silently
 change one of these exchanged contracts.
 
-`tl-parse.clean-ascii/v3` adds case-sensitive `O[a,b]`, `H[a,b]`, `S[a,b]`,
-and `T[a,b]` to the v2 grammar. O/H use existing prefix precedence; S/T use
+`tl-parse.clean-ascii/v3` adds case-sensitive `O[a,b]`, `H[a,b]`, `Y`, `S[a,b]`,
+and `T[a,b]` to the v2 grammar. O/H/Y use existing prefix precedence; S/T use
 existing U/R precedence and left associativity. The old v1 and v2 dialects
 reject past spellings. Canonical past-profile formatting retains them because
 no future-only primitive graph denotes them. Unknown, malformed,
 mixed-profile, and profile-incompatible forms refuse at stable spans.
+
+Long names such as `Once`, `Historically`, `StrongPrevious`, `Since`, and
+`Triggered` are Rust/semantic node labels only. They are not aliases accepted by
+the internal text dialect. Changing a short spelling therefore requires a new
+text-dialect identity, not a new operator-catalog identity unless the semantic
+node contract also changes.
 
 The shared corpus covers every operator, Boolean nest, endpoint, zero/singleton
 history, pre-origin extension, invalid history, mixed graph, serialization,
@@ -115,18 +122,48 @@ No repository adds its own alternate past semantics. Neither the internal text
 dialect nor formula wire is an editable formal-clause language; native Quire
 remains the sole source authority.
 
+The machine-readable routing record is
+`spec/past-profile-implementation.json`, with format identity
+`tl-syntax.past-profile-implementation/v1`; its closed Draft 7 schema is
+`spec/past-profile-implementation.schema.json`. It contains exactly `format`,
+`owner_epic`, `authorization`, `prerequisites`, and `tasks`.
+`authorization` contains `state` (`blocked` or `authorized`) and, only when
+authorized, the exact immutable merged MRS-003 revision. Each prerequisite
+contains a canonical `repository`, `kind` (`m0`, `mrs-002`, or `mrs-003`),
+immutable `revision`, and `state` (`accepted` or `pending`). Each task contains
+a canonical repository, GitHub issue number, one owner component, and a sorted
+distinct predecessor list of canonical `owner/repository#number` keys. The
+owner is `tl-syntax`; the first syntax task is the sole bootstrap exception and
+depends directly on the three prerequisites rather than on another
+implementation task.
+
+The Rust gate admits implementation only when M0 names tag `v0.1.0` at
+`26b801d6567645b637be20bef5c256d0ea4ed45c`, MRS-002 names its accepted merged
+revision, MRS-003 names the exact revision containing this accepted profile,
+`authorization.state` is `authorized`, and every routed task has its specified
+owner and predecessor edge. It returns the typed
+`past_profile_dependency_manifest_invalid` refusal naming the first canonical
+field/task mismatch. Negative fixtures independently change owner, remove an
+edge, substitute each prerequisite revision/state, omit the authorization
+receipt, and authorize against an unmerged MRS-003 revision. The gate performs
+no network or Git-history lookup; its trusted inputs are the checked-in manifest
+and these immutable accepted revisions.
+
 ## Acceptance Criteria
 
 | ID | Criteria | Verification |
 |---|---|---|
 | FR-013-AC-1 | Formula-v2 round-trips every allowed future or past graph under its exact profile, refuses mixed/profile-incompatible graphs and unknown values, preserves formula-v1 bytes/outcomes, and enforces the stated upgrade/down-conversion rules. | Test (TC-054, TC-057) |
-| FR-013-AC-2 | `tl-parse.clean-ascii/v3` parses/formats O/H/S/T with exact precedence, associativity, intervals, and spans; old v1/v2 reject past spellings and arbitrary input cannot unwind either parser or formula-v2 decoder. | Test (TC-055, TC-057) |
+| FR-013-AC-2 | `tl-parse.clean-ascii/v3` parses/formats O/H/Y/S/T with exact precedence, associativity, intervals, and spans; old v1/v2 reject past spellings and arbitrary input cannot unwind either parser or formula-v2 decoder. | Test (TC-055, TC-057) |
 | FR-013-AC-3 | The corpus, Rust oracle, properties, and mutations cover every enumerated semantic, history, resource, serialization, and identity dimension without a second production evaluator. | Test (TC-052, TC-056) |
 | FR-013-AC-4 | Every external target retains its reviewed supported/unsupported/unavailable state, introduces no foreign qualification dependency, and makes no parser-acceptance, monitor-certification, or native-source-authority claim. | Test (TC-056) |
-| FR-013-AC-5 | An automated dependency manifest gate rejects every routed implementation ticket with the wrong repository owner, a missing predecessor, or implementation authorization before M0 and MRS-002/MRS-003 acceptance. | Test (TC-058) |
+| FR-013-AC-5 | The Rust dependency-manifest gate over `spec/past-profile-implementation.json` refuses the first canonical owner, predecessor, prerequisite-revision/state, or authorization mismatch and authorizes implementation only against immutable accepted M0/MRS-002/MRS-003 revisions. | Test (TC-058) |
 
 ## Dependencies
 
 Depends on FR-004/FR-005 versioning and corpus foundations plus FR-011/FR-012.
-MRS-002 supplies the profile-evolution policy. M0 remains a hard implementation
-prerequisite.
+MRS-002 supplies the profile-evolution policy. M0 and the accepted MRS-003 merge
+revision remain hard implementation prerequisites. The routed implementation
+tickets are `tl-syntax#53`, `tl-parse#35`, `tl-mltl#63`, `tl-rewrite#38`,
+`tl-syntax#54`, `quire-contract-ir#70`, and `quire-contract-ir#71`, under epic
+`tl-syntax#52`.
