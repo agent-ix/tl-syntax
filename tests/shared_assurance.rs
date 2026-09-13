@@ -390,7 +390,7 @@ fn git_files(root: &Path, arguments: &[&str]) -> CensusResult<BTreeSet<String>> 
         .collect())
 }
 
-const EXPECTED_LIVE_TRACKED: [&str; 92] = [
+const EXPECTED_LIVE_TRACKED: [&str; 106] = [
     ".agent/rules/writing_rust.md",
     ".github/CODEOWNERS",
     ".github/workflows/ci.yml",
@@ -415,6 +415,19 @@ const EXPECTED_LIVE_TRACKED: [&str; 92] = [
     "corpus/formulas/nested-not-future.json",
     "corpus/formulas/primitive-true.json",
     "corpus/formulas/short-trace-future.json",
+    "corpus/future-operators/README.md",
+    "corpus/future-operators/SHA256SUMS",
+    "corpus/future-operators/cases.json",
+    "corpus/future-operators/expected/compound-operands.json",
+    "corpus/future-operators/expected/left-associative-chain.json",
+    "corpus/future-operators/expected/right-nested-release.json",
+    "corpus/future-operators/expected/strong-release-closed.json",
+    "corpus/future-operators/expected/strong-release-max-singleton.json",
+    "corpus/future-operators/expected/strong-release-online.json",
+    "corpus/future-operators/expected/weak-until-closed.json",
+    "corpus/future-operators/expected/weak-until-online.json",
+    "corpus/future-operators/expected/weak-until-zero-singleton.json",
+    "corpus/future-operators/manifest.json",
     "corpus/malformed/forward-reference.json",
     "corpus/malformed/inverted-interval.json",
     "corpus/malformed/unknown-profile.json",
@@ -480,6 +493,7 @@ const EXPECTED_LIVE_TRACKED: [&str; 92] = [
     "tests/fixtures/valid-requirement-context.json",
     "tests/fixtures/valid-signal-catalog.json",
     "tests/future_lowering.rs",
+    "tests/future_operator_corpus.rs",
     "tests/integration.rs",
     "tests/props_fr_007.rs",
     "tests/typed_signal_context.rs",
@@ -875,7 +889,8 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         (".agent", 1),
         (".github", 2),
         ("assurance", 3),
-        ("corpus", 14),
+        // Issue #41 adds the thirteen-file paired W/M corpus.
+        ("corpus", 27),
         ("examples", 1),
         ("fuzz", 4),
         ("scripts", 7),
@@ -884,7 +899,8 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         ("spec", 27),
         // Issue #40 adds the future-lowering module and its traced tests.
         ("src", 9),
-        ("tests", 9),
+        // Issue #41 adds the paired-corpus replay.
+        ("tests", 10),
     ]
     .into_iter()
     .map(|(area, count)| (area.to_owned(), count))

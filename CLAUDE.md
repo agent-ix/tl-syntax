@@ -101,8 +101,10 @@ src/syntax.rs                  # intervals, spans, nodes, profiles, borrowed val
 examples/corpus_conformance.rs # the domain conformance runner over the shared corpus
 tests/integration.rs           # end-to-end domain tests
 tests/future_lowering.rs       # FR-008 traced lowering and refusal tests
+tests/future_operator_corpus.rs # TC-074 replay of the paired W/M corpus
 tests/shared_assurance.rs      # FR-006 traced tests over the shared intake path
 corpus/                        # pinned formula schemas, fixtures, traces, and oracles
+corpus/future-operators/       # digest-pinned paired W/M source and canonical-graph corpus
 assurance/                     # the change declaration and the adopted release pins
 spec/                          # requirements, plans, reviews, and the test matrix
 scripts/                       # domain gates and the shared-assurance driver
