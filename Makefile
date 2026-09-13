@@ -123,6 +123,7 @@ conformance:
 .PHONY: check-corpus
 check-corpus:
 	sha256sum --check corpus/SHA256SUMS
+	sha256sum --check corpus/future-operators/SHA256SUMS
 	$(PYTHON) scripts/validate_corpus.py
 	$(PYTHON) scripts/test_corpus_gate.py
 

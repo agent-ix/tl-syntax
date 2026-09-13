@@ -8,6 +8,7 @@ extern crate alloc;
 #[cfg(feature = "alloc")]
 mod bounded_string;
 mod context;
+mod future;
 mod signal;
 mod syntax;
 
@@ -28,7 +29,13 @@ pub use context_document::{RequirementContextDocument, RequirementContextSchemaV
 pub use document::{
     FormulaDocument, FormulaSchemaVersion, PropositionEntry, PropositionMapDocument,
     PropositionMapError, PropositionMapSchemaVersion, SemanticFormulaDocument,
-    MAX_FORMULA_DOCUMENT_NODES,
+};
+pub use future::{
+    FutureKind, FutureLowering, FutureLoweringAxis, FutureLoweringOperand, FutureLoweringRefusal,
+    FutureLoweringReport, FutureLoweringRequest, FutureLoweringSpanRole, RawBounds,
+    UnsupportedFutureKind, FUTURE_LOWERING_NODE_CHARGE, FUTURE_LOWERING_REFUSAL_V1,
+    FUTURE_LOWERING_REPORT_V1, FUTURE_LOWERING_REQUEST_V1, FUTURE_OPERATORS_V1,
+    MAX_FUTURE_LOWERING_IDENTITY_BYTES, MAX_FUTURE_LOWERING_KIND_BYTES,
 };
 pub use signal::{
     BoundFormula, FixedDecimalSignalDomain, FormulaBindingError, IntegerSignalDomain,
@@ -42,7 +49,7 @@ pub use signal_document::{
 };
 pub use syntax::{
     Formula, FormulaError, Interval, IntervalError, Node, NodeId, NodeKind, PropositionId,
-    SemanticProfile, SourceSpan, SourceSpanError,
+    SemanticProfile, SourceSpan, SourceSpanError, MAX_FORMULA_DOCUMENT_NODES,
 };
 
 /// Stable revision identifier for the checked-in shared temporal corpus.
