@@ -25,7 +25,8 @@ Deliver `quire-contract-ir#71` after PR #68: the complete FR-026 formula/history
 
 ## Subtasks
 
-- [ ] Merge the accepted FR-026 specification after its stack base.
+- [x] Merge the accepted FR-026 specification after its stack base
+  (`quire-contract-ir#68`, `58f834be44927e31755b3abf797a35fb9cace507`).
 - [ ] Write TC-039 red cases for every supported/refused profile, identity, closure, progress, completeness, settlement, correction, and resource dimension.
 - [ ] Implement the strict bridge using owner-published native, TL, history, evaluator, and result APIs.
 - [ ] Run all owning repository gates/reviews and prove the quire-protocol temporal input seam is available.
@@ -37,3 +38,5 @@ Deliver `quire-contract-ir#71` after PR #68: the complete FR-026 formula/history
 ## Notes
 
 - GitHub owner: `agent-ix/quire-contract-ir#71`; downstream `quire-protocol#12/#14`.
+- Blocked on Task-006/#70 and the owner-published native, TL, history, evaluator,
+  result and quire-protocol temporal input APIs.
