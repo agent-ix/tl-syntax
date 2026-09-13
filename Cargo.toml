@@ -16,10 +16,11 @@ path = "src/lib.rs"
 [features]
 default = []
 alloc = []
-serde = ["alloc", "dep:serde"]
+serde = ["alloc", "dep:serde", "dep:serde_json"]
 
 [dependencies]
 serde = { version = "1.0", default-features = false, features = ["alloc", "derive"], optional = true }
+serde_json = { version = "1.0", default-features = false, features = ["alloc"], optional = true }
 
 [dev-dependencies]
 proptest = { version = "=1.5.0", default-features = false, features = ["std"] }

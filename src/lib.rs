@@ -16,6 +16,8 @@ mod syntax;
 mod context_document;
 #[cfg(feature = "alloc")]
 mod document;
+#[cfg(feature = "serde")]
+mod past_manifest;
 #[cfg(feature = "alloc")]
 mod signal_document;
 
@@ -38,6 +40,11 @@ pub use future::{
     FUTURE_LOWERING_REPORT_V1, FUTURE_LOWERING_REQUEST_V1, FUTURE_OPERATORS_V1,
     MAX_FUTURE_LOWERING_IDENTITY_BYTES, MAX_FUTURE_LOWERING_KIND_BYTES,
 };
+#[cfg(feature = "serde")]
+pub use past_manifest::{
+    validate_past_profile_implementation, PastProfileManifestError, PAST_PROFILE_IMPLEMENTATION_V1,
+    PAST_PROFILE_MANIFEST_MAX_BYTES,
+};
 pub use signal::{
     BoundFormula, FixedDecimalSignalDomain, FormulaBindingError, IntegerSignalDomain,
     PropositionBinding, SignalCatalog, SignalCatalogError, SignalDeclaration, SignalDomain,
@@ -56,3 +63,6 @@ pub use syntax::{
 
 /// Stable revision identifier for the checked-in shared temporal corpus.
 pub const CORPUS_REVISION: &str = "tl-syntax-corpus/v1";
+
+/// Stable identity of the immutable paired past/history corpus.
+pub const PAST_HISTORY_CORPUS_V1: &str = "tl-syntax.past-history-corpus/v1";
