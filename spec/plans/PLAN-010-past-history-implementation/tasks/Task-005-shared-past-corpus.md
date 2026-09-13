@@ -2,7 +2,7 @@
 id: Task-005
 title: "Publish the shared past/history corpus"
 type: Task
-status: not_started
+status: completed
 track: A
 priority: P0
 relationships:
@@ -27,10 +27,10 @@ Deliver `tl-syntax#54`: one immutable paired corpus, exact digest, consumer repl
 
 ## Subtasks
 
-- [ ] Populate every semantic, history, clock, identity, correction, resource, rewrite, and target-disposition case.
-- [ ] Implement the Rust dependency-manifest reader and mutation controls.
-- [ ] Pin and replay the exact corpus from parser, evaluator, and rewrite repositories.
-- [ ] Run all owning repository gates/reviews.
+- [x] Populate every semantic, history, clock, identity, correction, resource, rewrite, and target-disposition case.
+- [x] Implement the Rust dependency-manifest reader and mutation controls.
+- [x] Pin and replay the exact corpus from parser, evaluator, and rewrite repositories.
+- [x] Run all owning repository gates/reviews.
 
 ## Deliverables
 

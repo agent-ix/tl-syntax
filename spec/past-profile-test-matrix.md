@@ -11,7 +11,7 @@ relationships:
 
 ## Functional Requirement Coverage
 
-| Functional Req | Acceptance Criteria | Test Cases | Status |
+| Functional Req | Acceptance Criteria | Test Cases | Coverage Status |
 |---|---|---|---|
 | FR-011 | FR-011-AC-1 through FR-011-AC-5 | TC-048, TC-049, TC-050, TC-052, TC-053 | 🚧 planned |
 | FR-012 | FR-012-AC-1 through FR-012-AC-5 | TC-051, TC-052, TC-053, TC-056 | 🚧 planned |
@@ -38,6 +38,6 @@ relationships:
 | TC-053 | Refuse weak Previous, future/mixed graphs, invalid histories, malformed/overflowing/rounded/resampled clocks, and preserve owner-produced capture/predicate non-values without coercion | Integration | P0 | FR-011-AC-4, FR-011-AC-5, FR-012-AC-1, FR-012-AC-5 | 🚧 tl-mltl allocation implemented; Task-006 native projection remains |
 | TC-054 | Round-trip formula-v2 profiles and enforce v1 preservation, v1-to-v2 upgrade, guarded down-conversion, and profile/operator compatibility | Integration | P0 | FR-013-AC-1 | ✅ implemented |
 | TC-055 | Parse and canonically format O/H/Y/S/T in `tl-parse.clean-ascii/v3` with exact precedence, intervals, associativity, and spans | Integration | P0 | FR-013-AC-2 | ✅ implemented |
-| TC-056 | Replay the paired corpus, every mutation, late-data/anchor/closure identity, rewrite rule, and external-target state | Integration | P0 | FR-012-AC-3, FR-012-AC-4, FR-012-AC-5, FR-013-AC-3, FR-013-AC-4 | 🚧 planned |
+| TC-056 | Replay the paired corpus, every mutation, late-data/anchor/closure identity, rewrite rule, and external-target state | Integration | P0 | FR-012-AC-3, FR-012-AC-4, FR-012-AC-5, FR-013-AC-3, FR-013-AC-4 | 🚧 TL corpus/rewrite allocation implemented; Tasks 006–007 native bridge allocation remains |
 | TC-057 | Exercise bounded arbitrary formula-v2 decoding and v3-dialect parsing without unwind or profile misattribution | Property | P1 | FR-013-AC-1, FR-013-AC-2 | ✅ implemented |
 | TC-058 | Run the dependency-manifest gate over every implementation ticket owner, predecessor, M0 gate, and MRS acceptance prerequisite | Integration | P0 | FR-013-AC-5 | ✅ implemented |
