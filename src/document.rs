@@ -10,6 +10,111 @@ use crate::{
     MAX_FORMULA_DOCUMENT_DEPTH, MAX_FORMULA_DOCUMENT_NODES,
 };
 
+/// Maximum accepted size of an owner document passed to a strict byte reader.
+#[cfg(feature = "serde")]
+pub const MAX_TL_DOCUMENT_BYTES: usize = 64 * 1024 * 1024;
+/// Maximum JSON array/object nesting accepted by strict owner readers.
+#[cfg(feature = "serde")]
+pub const MAX_TL_DOCUMENT_DEPTH: usize = 64;
+/// Maximum proposition entries accepted by the v1 proposition-map reader.
+#[cfg(feature = "serde")]
+pub const MAX_PROPOSITION_MAP_ENTRIES: usize = 100_000;
+
+/// Exact checked-in Draft 7 schema bytes for `tl-syntax.proposition-map/v1`.
+#[cfg(feature = "serde")]
+pub const PROPOSITION_MAP_V1_SCHEMA: &str =
+    include_str!("../corpus/schema/proposition-map-v1.schema.json");
+
+/// Failure to read one complete bounded owner document.
+#[cfg(feature = "serde")]
+#[derive(Debug)]
+#[non_exhaustive]
+pub enum StrictDocumentReadError {
+    /// The caller supplied more bytes than the public reader permits.
+    DocumentTooLarge {
+        /// Supplied byte count.
+        actual: usize,
+        /// Stable byte ceiling.
+        limit: usize,
+    },
+    /// JSON container nesting exceeded the public reader ceiling.
+    DepthLimitExceeded {
+        /// First rejected nesting depth.
+        actual: usize,
+        /// Stable nesting ceiling.
+        limit: usize,
+    },
+    /// JSON shape, version, duplicate-member, trailing-data, or semantic validation failed.
+    InvalidDocument(serde_json::Error),
+}
+
+#[cfg(feature = "serde")]
+impl fmt::Display for StrictDocumentReadError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::DocumentTooLarge { actual, limit } => {
+                write!(formatter, "document has {actual} bytes; limit is {limit}")
+            }
+            Self::DepthLimitExceeded { actual, limit } => {
+                write!(
+                    formatter,
+                    "document nesting depth is {actual}; limit is {limit}"
+                )
+            }
+            Self::InvalidDocument(error) => write!(formatter, "invalid document: {error}"),
+        }
+    }
+}
+
+#[cfg(feature = "serde")]
+pub(crate) fn read_strict_document<T>(bytes: &[u8]) -> Result<T, StrictDocumentReadError>
+where
+    T: serde::de::DeserializeOwned,
+{
+    if bytes.len() > MAX_TL_DOCUMENT_BYTES {
+        return Err(StrictDocumentReadError::DocumentTooLarge {
+            actual: bytes.len(),
+            limit: MAX_TL_DOCUMENT_BYTES,
+        });
+    }
+    preflight_document_depth(bytes)?;
+    serde_json::from_slice(bytes).map_err(StrictDocumentReadError::InvalidDocument)
+}
+
+#[cfg(feature = "serde")]
+fn preflight_document_depth(bytes: &[u8]) -> Result<(), StrictDocumentReadError> {
+    let mut depth = 0_usize;
+    let mut in_string = false;
+    let mut escaped = false;
+    for byte in bytes {
+        if in_string {
+            if escaped {
+                escaped = false;
+            } else if *byte == b'\\' {
+                escaped = true;
+            } else if *byte == b'"' {
+                in_string = false;
+            }
+            continue;
+        }
+        match *byte {
+            b'"' => in_string = true,
+            b'{' | b'[' => {
+                depth = depth.saturating_add(1);
+                if depth > MAX_TL_DOCUMENT_DEPTH {
+                    return Err(StrictDocumentReadError::DepthLimitExceeded {
+                        actual: depth,
+                        limit: MAX_TL_DOCUMENT_DEPTH,
+                    });
+                }
+            }
+            b'}' | b']' => depth = depth.saturating_sub(1),
+            _ => {}
+        }
+    }
+    Ok(())
+}
+
 /// Version of the serialized formula document.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
@@ -482,7 +587,54 @@ pub struct PropositionMapDocument {
 #[serde(deny_unknown_fields)]
 struct PropositionMapDocumentWire {
     schema_version: PropositionMapSchemaVersion,
+    #[serde(deserialize_with = "deserialize_propositions")]
     propositions: Vec<PropositionEntry>,
+}
+
+#[cfg(feature = "serde")]
+fn deserialize_propositions<'de, D>(deserializer: D) -> Result<Vec<PropositionEntry>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    struct PropositionVisitor;
+    impl<'de> serde::de::Visitor<'de> for PropositionVisitor {
+        type Value = Vec<PropositionEntry>;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+            formatter.write_str("at most 100000 proposition entries")
+        }
+
+        fn visit_seq<A>(self, mut sequence: A) -> Result<Self::Value, A::Error>
+        where
+            A: serde::de::SeqAccess<'de>,
+        {
+            if sequence
+                .size_hint()
+                .is_some_and(|size| size > MAX_PROPOSITION_MAP_ENTRIES)
+            {
+                return Err(serde::de::Error::custom(
+                    "propositions exceed the 100000-item wire limit",
+                ));
+            }
+            let mut values = Vec::with_capacity(
+                sequence
+                    .size_hint()
+                    .unwrap_or(0)
+                    .min(MAX_PROPOSITION_MAP_ENTRIES),
+            );
+            while let Some(value) = sequence.next_element()? {
+                if values.len() == MAX_PROPOSITION_MAP_ENTRIES {
+                    return Err(serde::de::Error::custom(
+                        "propositions exceed the 100000-item wire limit",
+                    ));
+                }
+                values.push(value);
+            }
+            Ok(values)
+        }
+    }
+
+    deserializer.deserialize_seq(PropositionVisitor)
 }
 
 #[cfg(feature = "serde")]
@@ -508,6 +660,15 @@ impl PropositionMapDocument {
         };
         document.validate()?;
         Ok(document)
+    }
+
+    /// Reads exactly one bounded closed v1 JSON document through the owner type.
+    ///
+    /// Duplicate members, trailing JSON, unknown fields and versions, excess
+    /// population, and semantic validation failures are refused.
+    #[cfg(feature = "serde")]
+    pub fn from_json_bytes(bytes: &[u8]) -> Result<Self, StrictDocumentReadError> {
+        read_strict_document(bytes)
     }
 
     /// Checks identity ordering, uniqueness, and non-empty unique names.

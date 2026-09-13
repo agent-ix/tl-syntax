@@ -8,7 +8,8 @@ use tl_syntax::{
     SemanticProfile, SignalCatalog, SignalCatalogDocument, SignalCatalogError,
     SignalCatalogSchemaVersion, SignalDeclaration, SignalDomain, SignalDomainError, SignalId,
     SourceSpan, MAX_REQUIREMENT_CONTEXT_FIELD_BYTES, MAX_SIGNAL_CATALOG_BINDINGS,
-    MAX_SIGNAL_CATALOG_SIGNALS, MAX_SIGNAL_NAME_BYTES,
+    MAX_SIGNAL_CATALOG_SIGNALS, MAX_SIGNAL_NAME_BYTES, MAX_TL_DOCUMENT_BYTES,
+    MAX_TL_DOCUMENT_DEPTH, SIGNAL_CATALOG_V1_SCHEMA,
 };
 
 fn boolean_signal(id: u32, name: &str) -> SignalDeclaration<'_> {
@@ -87,6 +88,57 @@ fn borrowed_and_owned_catalogs_round_trip_with_distinct_identities() {
         serde_json::from_slice::<SignalCatalogDocument>(&first).unwrap(),
         document
     );
+}
+
+// Trace: TC-028, TC-029, TC-032, FR-007-AC-1, FR-007-AC-2, FR-007-AC-5
+#[test]
+fn public_signal_catalog_reader_and_schema_are_strict_owner_artifacts() {
+    let valid = include_bytes!("fixtures/valid-signal-catalog.json");
+    assert_eq!(
+        SignalCatalogDocument::from_json_bytes(valid)
+            .unwrap()
+            .schema_version(),
+        SignalCatalogSchemaVersion::V1
+    );
+
+    let schema: serde_json::Value = serde_json::from_str(SIGNAL_CATALOG_V1_SCHEMA).unwrap();
+    assert_eq!(
+        schema["properties"]["schema_version"]["const"],
+        "tl-syntax.signal-catalog/v1"
+    );
+    assert_eq!(schema["properties"]["signals"]["maxItems"], 100_000);
+    assert_eq!(schema["properties"]["bindings"]["maxItems"], 100_000);
+
+    let duplicate_root = br#"{"schema_version":"tl-syntax.signal-catalog/v1","schema_version":"tl-syntax.signal-catalog/v1","signals":[],"bindings":[]}"#;
+    assert!(SignalCatalogDocument::from_json_bytes(duplicate_root).is_err());
+    let duplicate_nested = br#"{"schema_version":"tl-syntax.signal-catalog/v1","signals":[{"id":0,"id":1,"name":"ready","domain":{"kind":"boolean"}}],"bindings":[]}"#;
+    assert!(SignalCatalogDocument::from_json_bytes(duplicate_nested).is_err());
+
+    let mut trailing = valid.to_vec();
+    trailing.extend_from_slice(b" null");
+    assert!(SignalCatalogDocument::from_json_bytes(&trailing).is_err());
+
+    let oversized = vec![b' '; MAX_TL_DOCUMENT_BYTES + 1];
+    assert!(matches!(
+        SignalCatalogDocument::from_json_bytes(&oversized),
+        Err(tl_syntax::StrictDocumentReadError::DocumentTooLarge {
+            actual,
+            limit: MAX_TL_DOCUMENT_BYTES,
+        }) if actual == MAX_TL_DOCUMENT_BYTES + 1
+    ));
+
+    let deeply_nested = format!(
+        "{{\"unexpected\":{}0{}}}",
+        "[".repeat(MAX_TL_DOCUMENT_DEPTH),
+        "]".repeat(MAX_TL_DOCUMENT_DEPTH)
+    );
+    assert!(matches!(
+        SignalCatalogDocument::from_json_bytes(deeply_nested.as_bytes()),
+        Err(tl_syntax::StrictDocumentReadError::DepthLimitExceeded {
+            actual,
+            limit: MAX_TL_DOCUMENT_DEPTH,
+        }) if actual == MAX_TL_DOCUMENT_DEPTH + 1
+    ));
 }
 
 // Trace: TC-027, FR-007-AC-1, NFR-002-AC-5

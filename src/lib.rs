@@ -33,6 +33,11 @@ pub use document::{
     PropositionMapDocument, PropositionMapError, PropositionMapSchemaVersion,
     SemanticFormulaDocument,
 };
+#[cfg(feature = "serde")]
+pub use document::{
+    StrictDocumentReadError, MAX_PROPOSITION_MAP_ENTRIES, MAX_TL_DOCUMENT_BYTES,
+    MAX_TL_DOCUMENT_DEPTH, PROPOSITION_MAP_V1_SCHEMA,
+};
 pub use future::{
     FutureKind, FutureLowering, FutureLoweringAxis, FutureLoweringOperand, FutureLoweringRefusal,
     FutureLoweringReport, FutureLoweringRequest, FutureLoweringSpanRole, RawBounds,
@@ -51,6 +56,8 @@ pub use signal::{
     SignalDomainError, SignalId, SignalIter, MAX_SIGNAL_CATALOG_BINDINGS,
     MAX_SIGNAL_CATALOG_SIGNALS, MAX_SIGNAL_NAME_BYTES,
 };
+#[cfg(feature = "serde")]
+pub use signal_document::SIGNAL_CATALOG_V1_SCHEMA;
 #[cfg(feature = "alloc")]
 pub use signal_document::{
     OwnedSignalDeclaration, SignalCatalogDocument, SignalCatalogSchemaVersion,

@@ -3,6 +3,7 @@
 use tl_syntax::{
     Formula, FormulaDocument, FormulaSchemaVersion, Interval, Node, NodeId, NodeKind,
     PropositionEntry, PropositionId, PropositionMapDocument, SemanticProfile, SourceSpan,
+    PROPOSITION_MAP_V1_SCHEMA,
 };
 
 use proptest::prelude::*;
@@ -497,6 +498,39 @@ fn proposition_map_round_trips_in_stable_order() {
     decoded.validate().unwrap();
     assert_eq!(decoded, map);
     assert_eq!(FormulaSchemaVersion::V1.as_str(), "tl-syntax.formula/v1");
+}
+
+// Trace: TC-011, TC-032, FR-004-AC-3, FR-007-AC-5
+#[test]
+fn public_proposition_map_reader_and_schema_are_strict_owner_artifacts() {
+    let bytes = br#"{"schema_version":"tl-syntax.proposition-map/v1","propositions":[{"id":0,"name":"request"}]}"#;
+    let document = PropositionMapDocument::from_json_bytes(bytes).unwrap();
+    assert_eq!(document.propositions()[0].name, "request");
+
+    let schema: serde_json::Value = serde_json::from_str(PROPOSITION_MAP_V1_SCHEMA).unwrap();
+    assert_eq!(
+        schema["properties"]["schema_version"]["const"],
+        "tl-syntax.proposition-map/v1"
+    );
+
+    let duplicate = br#"{"schema_version":"tl-syntax.proposition-map/v1","propositions":[{"id":0,"name":"request","name":"response"}]}"#;
+    assert!(PropositionMapDocument::from_json_bytes(duplicate).is_err());
+    let mut trailing = bytes.to_vec();
+    trailing.extend_from_slice(b" []");
+    assert!(PropositionMapDocument::from_json_bytes(&trailing).is_err());
+
+    let mut oversized_population =
+        String::from(r#"{"schema_version":"tl-syntax.proposition-map/v1","propositions":["#);
+    for id in 0..=100_000_u32 {
+        if id != 0 {
+            oversized_population.push(',');
+        }
+        oversized_population.push_str(&format!(r#"{{"id":{id},"name":"p{id}"}}"#));
+    }
+    oversized_population.push_str("]}");
+    let error =
+        PropositionMapDocument::from_json_bytes(oversized_population.as_bytes()).unwrap_err();
+    assert!(error.to_string().contains("100000-item wire limit"));
 }
 
 // Trace: TC-012, TC-013, TC-014, TC-032, FR-005-AC-1, FR-005-AC-2, FR-005-AC-3, FR-007-AC-5, NFR-002-AC-2, StR-002-VC-2
