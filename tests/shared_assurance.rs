@@ -390,7 +390,7 @@ fn git_files(root: &Path, arguments: &[&str]) -> CensusResult<BTreeSet<String>> 
         .collect())
 }
 
-const EXPECTED_LIVE_TRACKED: [&str; 90] = [
+const EXPECTED_LIVE_TRACKED: [&str; 92] = [
     ".agent/rules/writing_rust.md",
     ".github/CODEOWNERS",
     ".github/workflows/ci.yml",
@@ -469,6 +469,7 @@ const EXPECTED_LIVE_TRACKED: [&str; 90] = [
     "src/context.rs",
     "src/context_document.rs",
     "src/document.rs",
+    "src/future.rs",
     "src/lib.rs",
     "src/signal.rs",
     "src/signal_document.rs",
@@ -478,6 +479,7 @@ const EXPECTED_LIVE_TRACKED: [&str; 90] = [
     "tests/fixtures/invalid-partial-context.json",
     "tests/fixtures/valid-requirement-context.json",
     "tests/fixtures/valid-signal-catalog.json",
+    "tests/future_lowering.rs",
     "tests/integration.rs",
     "tests/props_fr_007.rs",
     "tests/typed_signal_context.rs",
@@ -880,8 +882,9 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         // Issue #32 adds six reviewed post-v0.1 profile artifacts; SpecReviews
         // remain archival and outside the live-source population.
         ("spec", 27),
-        ("src", 8),
-        ("tests", 8),
+        // Issue #40 adds the future-lowering module and its traced tests.
+        ("src", 9),
+        ("tests", 9),
     ]
     .into_iter()
     .map(|(area, count)| (area.to_owned(), count))

@@ -5,12 +5,9 @@ use core::{
     hash::{Hash, Hasher},
 };
 
-use crate::{Formula, FormulaError, Node, NodeId, PropositionId, SemanticProfile};
-
-/// Maximum node count accepted by the v1 JSON wire decoder.
-///
-/// This bounds allocation for both wire decoding and programmatic construction.
-pub const MAX_FORMULA_DOCUMENT_NODES: usize = 100_000;
+use crate::{
+    Formula, FormulaError, Node, NodeId, PropositionId, SemanticProfile, MAX_FORMULA_DOCUMENT_NODES,
+};
 
 /// Version of the serialized formula document.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
