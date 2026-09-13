@@ -29,6 +29,7 @@ introduced.
 | FND-6002 | high | The initially open formula object was replaced with a closed formula-v2/past node union plus semantic validation. | `corpus/past-history/schema.json`; `tests/past_history_corpus.rs` |
 | FND-6003 | medium | The unreachable predecessor-order branch was reordered and mutation tested. | `src/past_manifest.rs`; `tests/past_profile_manifest.rs` |
 | FND-6004 | medium | The impossible arithmetic-overflow claim was replaced with an executable temporal-span refusal. | `corpus/past-history/cases.json`; `tl-mltl/tests/past_history_corpus.rs` |
+| FND-6005 | medium | A temporary Python schema runner violated PLAN-010's all-new-executable-logic-in-Rust constraint. It was removed; closed decoding and mutation controls remain in the Rust replay. | `tests/past_history_corpus.rs`; PLAN-010 |
 
 ## Gates
 
