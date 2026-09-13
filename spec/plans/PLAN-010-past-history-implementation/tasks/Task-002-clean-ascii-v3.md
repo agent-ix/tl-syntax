@@ -2,7 +2,7 @@
 id: Task-002
 title: "Implement clean-ascii/v3"
 type: Task
-status: not_started
+status: done
 track: A
 priority: P0
 relationships:
@@ -23,10 +23,10 @@ Deliver `tl-parse#35`: internal O/H/Y/S/T parsing, canonical formatting, exact s
 
 ## Subtasks
 
-- [ ] Write TC-055/TC-057 red cases against the public formula-v2 API.
-- [ ] Implement v3 tokenization, precedence, associativity, validation, and formatting.
-- [ ] Prove v1/v2 refusal and no-unwind bounded malformed input behavior.
-- [ ] Run the owning repository gates and close every Rust/code/gap review finding.
+- [x] Write TC-055/TC-057 red cases against the public formula-v2 API.
+- [x] Implement v3 tokenization, precedence, associativity, validation, and formatting.
+- [x] Prove v1/v2 refusal and no-unwind bounded malformed input behavior.
+- [x] Run the owning repository gates and close every Rust/code/gap review finding.
 
 ## Deliverables
 

@@ -51,12 +51,12 @@ relationships:
 ### Syntax and wire
 
 - [ ] **TC-054**: Round-trip formula-v2; enforce profile compatibility, v1 preservation, and guarded conversions.
-- [ ] **TC-057**: Exercise bounded arbitrary formula-v2 decode without unwind or profile misattribution.
+- [x] **TC-057**: Exercise bounded arbitrary formula-v2 decode without unwind or profile misattribution.
 - [ ] **TC-058**: Reject every dependency-manifest owner, edge, prerequisite, revision, or authorization mutation.
 
 ### Parser
 
-- [ ] **TC-055**: Parse and format O/H/Y/S/T in clean-ascii/v3 with exact precedence, associativity, intervals, and spans.
+- [x] **TC-055**: Parse and format O/H/Y/S/T in clean-ascii/v3 with exact precedence, associativity, intervals, and spans.
 
 ### History and evaluation
 
@@ -103,7 +103,7 @@ B1 -----------------/
 | Task | Track | Owns (references) | Verified by (verifies) | Status |
 | --- | --- | --- | --- | --- |
 | Task-001 | A | FR-011, FR-013 | TC-054, TC-057 | completed |
-| Task-002 | A | FR-013 | TC-055, TC-057 | not_started |
+| Task-002 | A | FR-013 | TC-055, TC-057 | completed |
 | Task-003 | A | FR-011, FR-012 | TC-048..TC-053, TC-056 | not_started |
 | Task-004 | A | FR-011, FR-013 | TC-056 | not_started |
 | Task-005 | A | FR-013 | TC-056, TC-058 | not_started |
