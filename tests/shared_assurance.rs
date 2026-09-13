@@ -509,9 +509,10 @@ const FORBIDDEN: [&str; 5] = [
 fn is_archival_record(relative: &str) -> bool {
     relative == "tests/shared_assurance.rs"
         || relative == "spec/.gitkeep"
-        || relative.starts_with("spec/reviews/")
-        || relative.starts_with("spec/plans/")
-        || relative.starts_with("plan/")
+        || (relative.ends_with(".md")
+            && (relative.starts_with("spec/reviews/")
+                || relative.starts_with("spec/plans/")
+                || relative.starts_with("plan/")))
 }
 
 fn source_sets(root: &Path) -> CensusResult<(BTreeSet<String>, BTreeSet<String>)> {
@@ -801,6 +802,7 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         std::env::temp_dir().join(format!("tl-syntax-source-census-fixture-{process}")),
     );
     fs::create_dir_all(fixture.path().join("src")).expect("create tracked fixture area");
+    fs::create_dir_all(fixture.path().join("plan")).expect("create plan fixture area");
     fs::create_dir_all(fixture.path().join("tests/proptest-regressions"))
         .expect("create ignored fixture area");
     fs::write(fixture.path().join(".gitignore"), "proptest-regressions/\n")
@@ -810,6 +812,13 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         "pub const TRACKED: bool = true;\n",
     )
     .expect("write tracked fixture");
+    fs::write(
+        fixture.path().join("plan/record.md"),
+        "# Inert plan record\n",
+    )
+    .expect("write archival plan fixture");
+    fs::write(fixture.path().join("plan/run"), "#!/bin/sh\nexit 0\n")
+        .expect("write executable plan fixture");
     fs::write(
         fixture.path().join("tests/untracked.rs"),
         "pub const FORBIDDEN_REFERENCE: &str = \"legacy_evidence_view\";\n",
@@ -829,7 +838,13 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         .expect("initialize source-census fixture repository");
     assert!(initialized.success(), "fixture git init failed");
     let staged = Command::new("git")
-        .args(["add", ".gitignore", "src/tracked.rs"])
+        .args([
+            "add",
+            ".gitignore",
+            "src/tracked.rs",
+            "plan/record.md",
+            "plan/run",
+        ])
         .current_dir(fixture.path())
         .status()
         .expect("stage source-census fixture");
@@ -839,12 +854,18 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         source_sets(fixture.path()).expect("enumerate source-census fixture");
     assert_eq!(
         fixture_tracked,
-        BTreeSet::from([".gitignore".to_owned(), "src/tracked.rs".to_owned()])
+        BTreeSet::from([
+            ".gitignore".to_owned(),
+            "plan/run".to_owned(),
+            "src/tracked.rs".to_owned(),
+        ]),
+        "Markdown plan records are archival, but a tracked executable under plan/ must remain live"
     );
     assert_eq!(
         fixture_scanned,
         BTreeSet::from([
             ".gitignore".to_owned(),
+            "plan/run".to_owned(),
             "src/tracked.rs".to_owned(),
             "tests/untracked.rs".to_owned(),
         ]),
