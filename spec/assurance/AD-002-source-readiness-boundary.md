@@ -118,9 +118,10 @@ missing, the guarantee remains unavailable rather than falling back locally.
   and a repository-local compatibility fixture are not substitutes.
 - The general shared integrator-package contract is not yet selected; IT-002
   remains blocked on a real accepted Rust-consumable release.
-- `agent-ix/engineering-assurance#11/#34` must reconcile use-specific
-  qualification and bounded Rust producer execution; tl-syntax must not fill
-  that gap locally.
+- `agent-ix/engineering-assurance#11` still owns use-specific qualification;
+  engineering-assurance#34 delivered bounded Rust producer execution, but no
+  immutable compatible release available to this plan contains it yet.
+  tl-syntax must not fill either remaining admission gap locally.
 - Existing Python/shell/Make/inline-workflow paths require the LR08 inventory,
   Rust parity or explicit owner disposition before stable qualification use.
 - Quire status-column classification and Quoin binary-attachment/non-release-

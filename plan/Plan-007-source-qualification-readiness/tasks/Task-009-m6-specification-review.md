@@ -1,10 +1,15 @@
 ---
-id: Task-001
+id: Task-009
 title: "M6 source-readiness specification and composite review"
 type: Task
 status: done
 track: S
 priority: P0
+owner_repository: agent-ix/tl-syntax
+consumer_repositories: [agent-ix/tl-syntax]
+evidence_method: specification-and-composite-review
+github_issue: ix://agent-ix/tl-syntax/issues/34
+resume_conditions: []
 relationships:
   - target: ix://agent-ix/tl-syntax/StR-004
     type: references
@@ -25,7 +30,7 @@ relationships:
   - target: ix://agent-ix/tl-syntax/TC-066
     type: verifies
 ---
-# Task-001: M6 source-readiness specification and composite review
+# Task-009: M6 source-readiness specification and composite review
 
 ## Scope
 

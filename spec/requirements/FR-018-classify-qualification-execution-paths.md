@@ -85,6 +85,7 @@ deciding a stable candidate.
 - `agent-ix/quire-research#64` owns the cross-repository policy/catalog;
   tl-syntax owns exhaustive local enumeration, classification, refusal and
   bounded legacy disposition.
-- `agent-ix/engineering-assurance#34` owns the planned reusable Rust producer-
-  execution boundary.
+- `agent-ix/engineering-assurance#34` delivered the reusable Rust producer-
+  execution boundary; Task-010 must still admit an immutable compatible release
+  that contains it before this repository consumes it.
 - `agent-ix/tl-syntax#16` owns the source-grounded shared-contract migration.

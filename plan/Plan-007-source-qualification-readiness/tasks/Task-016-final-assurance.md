@@ -1,20 +1,25 @@
 ---
-id: Task-008
+id: Task-016
 title: "Close implementation evidence and human source-release gate"
 type: Task
 status: blocked
 track: J
 priority: P0
+owner_repository: agent-ix/tl-syntax
+consumer_repositories: [agent-ix/tl-syntax]
+evidence_method: rust-review-gap-analysis-and-human-decision
+github_issue: ix://agent-ix/tl-syntax/issues/51
+resume_conditions: [ix://agent-ix/tl-syntax/issues/46, ix://agent-ix/tl-syntax/issues/47, ix://agent-ix/tl-syntax/issues/48, ix://agent-ix/tl-syntax/issues/49, ix://agent-ix/tl-syntax/issues/50]
 relationships:
-  - target: ix://agent-ix/tl-syntax/Task-003
+  - target: ix://agent-ix/tl-syntax/Task-011
     type: depends_on
-  - target: ix://agent-ix/tl-syntax/Task-004
+  - target: ix://agent-ix/tl-syntax/Task-012
     type: depends_on
-  - target: ix://agent-ix/tl-syntax/Task-005
+  - target: ix://agent-ix/tl-syntax/Task-013
     type: depends_on
-  - target: ix://agent-ix/tl-syntax/Task-006
+  - target: ix://agent-ix/tl-syntax/Task-014
     type: depends_on
-  - target: ix://agent-ix/tl-syntax/Task-007
+  - target: ix://agent-ix/tl-syntax/Task-015
     type: depends_on
   - target: ix://agent-ix/tl-syntax/StR-004
     type: references
@@ -53,7 +58,7 @@ relationships:
   - target: ix://agent-ix/tl-syntax/TC-073
     type: verifies
 ---
-# Task-008: Close implementation evidence and human source-release gate
+# Task-016: Close implementation evidence and human source-release gate
 
 ## Scope
 

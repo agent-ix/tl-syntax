@@ -1,12 +1,17 @@
 ---
-id: Task-002
+id: Task-010
 title: "Admit external prerequisites without local substitutes"
 type: Task
 status: blocked
 track: G
 priority: P0
+owner_repository: agent-ix/tl-syntax
+consumer_repositories: [agent-ix/tl-syntax]
+evidence_method: released-contract-admission
+github_issue: ix://agent-ix/tl-syntax/issues/45
+resume_conditions: [ix://agent-ix/tl-syntax/issues/16, ix://agent-ix/quire-research/issues/64, ix://agent-ix/engineering-assurance/issues/11]
 relationships:
-  - target: ix://agent-ix/tl-syntax/Task-001
+  - target: ix://agent-ix/tl-syntax/Task-009
     type: depends_on
   - target: ix://agent-ix/tl-syntax/FR-014
     type: references
@@ -27,7 +32,7 @@ relationships:
   - target: ix://agent-ix/tl-syntax/TC-073
     type: verifies
 ---
-# Task-002: Admit external prerequisites without local substitutes
+# Task-010: Admit external prerequisites without local substitutes
 
 ## Scope
 
@@ -48,5 +53,8 @@ capability only when its released identity satisfies MRS-004.
 
 ## Notes
 
-- Blocked on tl-syntax#16, engineering-assurance#11/#34, the retention/operator selection, policy/event source, integrator-package release and quire-research#64.
+- Blocked on tl-syntax#16, engineering-assurance#11, an immutable release
+  containing the merged engineering-assurance#34 producer boundary, the
+  retention/operator selection, policy/event source, integrator-package release
+  and quire-research#64.
 - Individual downstream work may resume only when every prerequisite it consumes is admitted; a partial ledger is not a global pass.

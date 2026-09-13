@@ -164,8 +164,9 @@ implementation node remains unavailable at an external resume condition.
   Assurance release names the Quire 0.32 source-grounded export and exact
   compatible artifacts.
 - Use-specific qualified records remain blocked on
-  `engineering-assurance#11`; reusable bounded Rust producer execution remains
-  owned by `engineering-assurance#34` when required.
+  `engineering-assurance#11`. Engineering-assurance#34 delivered reusable
+  bounded Rust producer execution, but M6 may consume it only after an immutable
+  compatible release containing that contract is admitted by Task-010.
 - Executable-language disposition remains owned by `quire-research#64`.
 - Quire status-classification and Quoin binary-attachment/non-release-build
   gaps remain conditional blockers for claims that depend on those capabilities.
