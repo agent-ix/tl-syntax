@@ -6,7 +6,8 @@ use core::{
 };
 
 use crate::{
-    Formula, FormulaError, Node, NodeId, PropositionId, SemanticProfile, MAX_FORMULA_DOCUMENT_NODES,
+    Formula, FormulaError, Node, NodeId, PastOperatorKind, PropositionId, SemanticProfile,
+    MAX_FORMULA_DOCUMENT_DEPTH, MAX_FORMULA_DOCUMENT_NODES,
 };
 
 /// Version of the serialized formula document.
@@ -16,6 +17,9 @@ pub enum FormulaSchemaVersion {
     /// Initial tl-syntax formula schema.
     #[cfg_attr(feature = "serde", serde(rename = "tl-syntax.formula/v1"))]
     V1,
+    /// Additive schema admitting the closed past-time node vocabulary.
+    #[cfg_attr(feature = "serde", serde(rename = "tl-syntax.formula/v2"))]
+    V2,
 }
 
 impl FormulaSchemaVersion {
@@ -23,6 +27,52 @@ impl FormulaSchemaVersion {
     pub const fn as_str(self) -> &'static str {
         match self {
             Self::V1 => "tl-syntax.formula/v1",
+            Self::V2 => "tl-syntax.formula/v2",
+        }
+    }
+}
+
+/// Refusal returned by guarded formula-schema conversion.
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[non_exhaustive]
+pub enum FormulaConversionError {
+    /// Formula-v1 cannot represent this semantic profile.
+    UnsupportedSemanticProfile {
+        /// Rejected profile.
+        profile: SemanticProfile,
+    },
+    /// Formula-v1 cannot represent this past-time node.
+    PastNodeUnsupported {
+        /// First rejected node in topological order.
+        node: NodeId,
+        /// Past operator found there.
+        operator: PastOperatorKind,
+    },
+    /// A node position cannot be represented by the stable `NodeId` type.
+    NodeIdentityOutOfRange {
+        /// Number of nodes in the document.
+        node_count: usize,
+    },
+}
+
+impl fmt::Display for FormulaConversionError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::UnsupportedSemanticProfile { profile } => write!(
+                formatter,
+                "formula-v1 cannot represent semantic profile {}",
+                profile.as_str()
+            ),
+            Self::PastNodeUnsupported { node, operator } => write!(
+                formatter,
+                "formula-v1 cannot represent {} at node {}",
+                operator.semantic_name(),
+                node.0
+            ),
+            Self::NodeIdentityOutOfRange { node_count } => write!(
+                formatter,
+                "formula node table length {node_count} exceeds the NodeId range"
+            ),
         }
     }
 }
@@ -217,6 +267,24 @@ impl FormulaDocument {
         root: NodeId,
         nodes: Vec<Node>,
     ) -> Result<Self, FormulaError> {
+        Self::construct(FormulaSchemaVersion::V1, semantic_profile, root, nodes)
+    }
+
+    /// Constructs and validates a v2 document.
+    pub fn new_v2(
+        semantic_profile: SemanticProfile,
+        root: NodeId,
+        nodes: Vec<Node>,
+    ) -> Result<Self, FormulaError> {
+        Self::construct(FormulaSchemaVersion::V2, semantic_profile, root, nodes)
+    }
+
+    fn construct(
+        schema_version: FormulaSchemaVersion,
+        semantic_profile: SemanticProfile,
+        root: NodeId,
+        nodes: Vec<Node>,
+    ) -> Result<Self, FormulaError> {
         if nodes.len() > MAX_FORMULA_DOCUMENT_NODES {
             return Err(FormulaError::DocumentNodeLimitExceeded {
                 node_count: nodes.len(),
@@ -224,7 +292,7 @@ impl FormulaDocument {
             });
         }
         let document = Self {
-            schema_version: FormulaSchemaVersion::V1,
+            schema_version,
             semantic_profile,
             root,
             nodes,
@@ -235,7 +303,12 @@ impl FormulaDocument {
 
     /// Validates this document and returns its allocation-free view.
     pub fn validate(&self) -> Result<Formula<'_>, FormulaError> {
-        Formula::new(self.semantic_profile, self.root, &self.nodes)
+        self.validate_schema_compatibility()?;
+        let formula = Formula::new(self.semantic_profile, self.root, &self.nodes)?;
+        if self.schema_version == FormulaSchemaVersion::V2 {
+            self.validate_depth()?;
+        }
+        Ok(formula)
     }
 
     /// Returns the wire schema version.
@@ -266,6 +339,101 @@ impl FormulaDocument {
     /// Copies a validated borrowed formula into a bounded owned v1 document.
     pub fn from_formula(formula: Formula<'_>) -> Result<Self, FormulaError> {
         Self::new(formula.profile(), formula.root(), formula.nodes().to_vec())
+    }
+
+    /// Copies a validated borrowed formula into a bounded owned v2 document.
+    pub fn from_formula_v2(formula: Formula<'_>) -> Result<Self, FormulaError> {
+        Self::new_v2(formula.profile(), formula.root(), formula.nodes().to_vec())
+    }
+
+    /// Losslessly upgrades this document to formula-v2.
+    pub fn to_v2(&self) -> Self {
+        Self {
+            schema_version: FormulaSchemaVersion::V2,
+            semantic_profile: self.semantic_profile,
+            root: self.root,
+            nodes: self.nodes.clone(),
+        }
+    }
+
+    /// Down-converts to formula-v1 only when the profile and nodes are v1-compatible.
+    pub fn try_to_v1(&self) -> Result<Self, FormulaConversionError> {
+        if self.semantic_profile == SemanticProfile::OriginCompleteHistoryV1 {
+            return Err(FormulaConversionError::UnsupportedSemanticProfile {
+                profile: self.semantic_profile,
+            });
+        }
+        if let Some((index, operator)) =
+            self.nodes.iter().enumerate().find_map(|(index, node)| {
+                node.kind.past_operator().map(|operator| (index, operator))
+            })
+        {
+            let node = u32::try_from(index).map(NodeId).map_err(|_| {
+                FormulaConversionError::NodeIdentityOutOfRange {
+                    node_count: self.nodes.len(),
+                }
+            })?;
+            return Err(FormulaConversionError::PastNodeUnsupported { node, operator });
+        }
+        Ok(Self {
+            schema_version: FormulaSchemaVersion::V1,
+            semantic_profile: self.semantic_profile,
+            root: self.root,
+            nodes: self.nodes.clone(),
+        })
+    }
+
+    fn validate_schema_compatibility(&self) -> Result<(), FormulaError> {
+        if self.schema_version != FormulaSchemaVersion::V1 {
+            return Ok(());
+        }
+        if self.semantic_profile == SemanticProfile::OriginCompleteHistoryV1 {
+            return Err(FormulaError::FormulaV1ProfileUnsupported {
+                profile: self.semantic_profile,
+            });
+        }
+        for (index, node) in self.nodes.iter().enumerate() {
+            if let Some(operator) = node.kind.past_operator() {
+                let node =
+                    u32::try_from(index)
+                        .map(NodeId)
+                        .map_err(|_| FormulaError::TooManyNodes {
+                            node_count: self.nodes.len(),
+                        })?;
+                return Err(FormulaError::FormulaV1NodeUnsupported { node, operator });
+            }
+        }
+        Ok(())
+    }
+
+    fn validate_depth(&self) -> Result<(), FormulaError> {
+        let mut depths = Vec::with_capacity(self.nodes.len());
+        for (index, node) in self.nodes.iter().enumerate() {
+            let mut depth = 1_usize;
+            for operand in node.kind.operands().into_iter().flatten() {
+                let operand_depth = usize::try_from(operand.0)
+                    .ok()
+                    .and_then(|operand| depths.get(operand))
+                    .copied()
+                    .unwrap_or(MAX_FORMULA_DOCUMENT_DEPTH);
+                depth = depth.max(operand_depth.saturating_add(1));
+            }
+            if depth > MAX_FORMULA_DOCUMENT_DEPTH {
+                let node =
+                    u32::try_from(index)
+                        .map(NodeId)
+                        .map_err(|_| FormulaError::TooManyNodes {
+                            node_count: self.nodes.len(),
+                        })?;
+                return Err(FormulaError::DocumentDepthLimitExceeded {
+                    node,
+                    depth,
+                    limit: MAX_FORMULA_DOCUMENT_DEPTH,
+                });
+            }
+            depths.push(depth);
+        }
+        Ok(())
     }
 }
 

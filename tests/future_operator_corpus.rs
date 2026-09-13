@@ -870,13 +870,18 @@ fn operands(kind: NodeKind) -> Vec<NodeId> {
         NodeKind::False | NodeKind::True | NodeKind::Proposition { .. } => Vec::new(),
         NodeKind::Not { operand }
         | NodeKind::Future { operand, .. }
-        | NodeKind::Globally { operand, .. } => vec![operand],
+        | NodeKind::Globally { operand, .. }
+        | NodeKind::Once { operand, .. }
+        | NodeKind::Historically { operand, .. }
+        | NodeKind::StrongPrevious { operand } => vec![operand],
         NodeKind::And { left, right }
         | NodeKind::Or { left, right }
         | NodeKind::Implies { left, right }
         | NodeKind::Equivalent { left, right }
         | NodeKind::Until { left, right, .. }
-        | NodeKind::Release { left, right, .. } => vec![left, right],
+        | NodeKind::Release { left, right, .. }
+        | NodeKind::Since { left, right, .. }
+        | NodeKind::Triggered { left, right, .. } => vec![left, right],
     }
 }
 
@@ -897,6 +902,11 @@ fn spelling(kind: NodeKind) -> String {
         NodeKind::Globally { interval, .. } => timed("G", interval.start(), interval.end()),
         NodeKind::Until { interval, .. } => timed("U", interval.start(), interval.end()),
         NodeKind::Release { interval, .. } => timed("R", interval.start(), interval.end()),
+        NodeKind::Once { interval, .. } => timed("O", interval.start(), interval.end()),
+        NodeKind::Historically { interval, .. } => timed("H", interval.start(), interval.end()),
+        NodeKind::StrongPrevious { .. } => "Y".to_owned(),
+        NodeKind::Since { interval, .. } => timed("S", interval.start(), interval.end()),
+        NodeKind::Triggered { interval, .. } => timed("T", interval.start(), interval.end()),
     }
 }
 

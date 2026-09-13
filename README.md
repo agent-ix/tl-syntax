@@ -3,8 +3,10 @@
 A parser-independent, `no_std` syntax tree and semantic-profile model for
 discrete bounded Mission-time Linear Temporal Logic (MLTL).
 
-The crate models propositions, Boolean operators, and bounded Future, Globally,
-Until, and Release over checked inclusive intervals. It also validates named
+The crate models propositions, Boolean operators, bounded Future, Globally,
+Until, and Release, and the origin-complete past operators Once, Historically,
+strong Previous, Since, and Triggered over checked inclusive intervals. Future
+and past primitives are admitted only by their matching semantic profiles. It also validates named
 Boolean/Integer/fixed-Decimal signal catalogs, direct Boolean proposition
 bindings, and optional caller-supplied requirement context. Formulas and
 catalogs are borrowed views, so the default API needs neither `std` nor a heap
@@ -41,11 +43,15 @@ inputs for an explicit predicate-lowering layer outside this crate.
 
 ## Wire formats and corpus
 
-The `serde` feature exposes formula schema `tl-syntax.formula/v1`, proposition-
+The `serde` feature exposes formula schemas `tl-syntax.formula/v1` and
+`tl-syntax.formula/v2`, proposition-
 map schema `tl-syntax.proposition-map/v1`, signal-catalog schema
 `tl-syntax.signal-catalog/v1`, requirement-context schema
 `tl-syntax.requirement-context/v1`, and the closed set of supported semantic-
-profile identifiers. Unknown versions and fields are rejected. The existing
+profile identifiers. Formula-v1 remains future-only and byte-compatible;
+formula-v2 adds the closed `tl-syntax.past-operators/v1` node catalog and
+`mltl.origin-complete-history/v1`. V1 documents upgrade losslessly, while v2
+down-conversion refuses a past profile. Unknown versions and fields are rejected. The existing
 formula/proposition JSON Schemas, fixtures, and expected horizon/closed-trace
 results live in [`corpus/`](corpus/README.md); that v1 corpus is unchanged by
 the new separate documents. Downstream temporal crates must pin and report

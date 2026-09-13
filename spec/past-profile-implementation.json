@@ -2,7 +2,8 @@
   "format": "tl-syntax.past-profile-implementation/v1",
   "owner_epic": "agent-ix/tl-syntax#52",
   "authorization": {
-    "state": "blocked"
+    "state": "authorized",
+    "revision": "568a5f18ea496232e0fa9eff7506990bfcecfefa"
   },
   "prerequisites": [
     {
@@ -20,8 +21,8 @@
     {
       "repository": "agent-ix/tl-syntax",
       "kind": "mrs-003",
-      "revision": "0de2efb01ed3c58da06b76b578fbea4a92c063b3",
-      "state": "pending"
+      "revision": "568a5f18ea496232e0fa9eff7506990bfcecfefa",
+      "state": "accepted"
     }
   ],
   "tasks": [

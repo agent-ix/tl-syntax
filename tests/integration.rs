@@ -66,6 +66,13 @@ fn derived_horizon(document: &FormulaDocument) -> u64 {
             } => u64::from(interval.end())
                 .checked_add(prior(&horizons, left).max(prior(&horizons, right)))
                 .unwrap(),
+            NodeKind::Once { .. }
+            | NodeKind::Historically { .. }
+            | NodeKind::StrongPrevious { .. }
+            | NodeKind::Since { .. }
+            | NodeKind::Triggered { .. } => {
+                panic!("formula-v1 future corpus cannot contain a past-time node")
+            }
         };
         horizons.push(value);
     }
@@ -331,7 +338,7 @@ fn every_supported_node_variant_round_trips_with_its_stable_wire_tag() {
 #[test]
 fn unknown_schema_and_profile_versions_are_rejected() {
     let formula = r#"{
-        "schema_version":"tl-syntax.formula/v2",
+        "schema_version":"tl-syntax.formula/v3",
         "semantic_profile":"mltl.closed-trace/v1",
         "root":0,
         "nodes":[{"kind":"true"}]
