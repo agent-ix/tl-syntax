@@ -103,6 +103,9 @@ schema has no acceptance-criterion criticality column.
   descendant mount crossing is refused.
 - A supersession traversal admits at most 4,096 facts, 8,192 directed edges and
   depth 4,096.
+- A decision-event intake admits at most 4,096 events from one immutable
+  authoritative-source query snapshot. Pagination may not mix snapshot/cursor
+  identities, omit or duplicate an event, or select a favorable prefix.
 - A value at a bound is admitted; the first value above it produces the typed
   non-success required by FR-014 or FR-015 without exposing a partial result.
 

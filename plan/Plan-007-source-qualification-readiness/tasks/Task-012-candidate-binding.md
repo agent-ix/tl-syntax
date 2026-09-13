@@ -39,6 +39,8 @@ freshness projection through released source-grounding contracts.
 
 - [ ] Write property tests for every identity axis and source-walk boundary.
 - [ ] Implement immutable-root binding and bounded symlink traversal in Rust.
+- [ ] Consume the same descriptor-backed snapshots used for identity; refuse
+  pathname reopen and change-then-restore races.
 - [ ] Implement total execution/decode mappings and stale-output quarantine.
 - [ ] Prove deterministic equality and one-axis isolation.
 

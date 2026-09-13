@@ -30,7 +30,10 @@ configuration after the required independent reviews and limitation inspection.
   version, authorized actors/quorum, candidate author/contributor set, conflict
   disclosures and current delegation/revocation facts.
 - Zero or more authenticated decision events for the exact subject lineage from
-  the authoritative event source, including every current concurrent successor.
+  the authoritative event source, including every current concurrent successor,
+  one immutable query snapshot/cursor identity and a completeness result.
+- The decision-evaluation instant, named clock/time authority and the released
+  contract's canonical timestamp/ordering rules used for expiry decisions.
 
 ## Outputs
 
@@ -46,6 +49,11 @@ configuration after the required independent reviews and limitation inspection.
   admission adapter shall keep the disposition `open`.
 - The tl-syntax Rust admission adapter shall aggregate the complete event set
   for the exact subject lineage through the AP-002 node, edge and depth bounds.
+- The event set shall come from one immutable source snapshot. Duplicate,
+  missing, reordered or cross-snapshot pages, a changed cursor/snapshot identity,
+  an incomplete enumeration or an over-bound population shall keep the current
+  disposition `open` and retain the exact non-success limitation; no observed
+  favorable subset is admissible.
 - If an event is stale or bound to the wrong actor/subject, then the tl-syntax
   Rust admission adapter shall set its `DecisionEventAdmission` to `refused`.
 - If current events are ambiguous or contradictory, then the tl-syntax Rust
@@ -61,6 +69,12 @@ configuration after the required independent reviews and limitation inspection.
   preserve `conditional` until a new authorized decision is recorded.
 - If a condition expires, then the tl-syntax Rust admission adapter shall mark
   the prior conditional decision stale and set the current disposition `open`.
+  Expiry occurs exactly when a verified evaluation instant is equal to or later
+  than the bound expiry under the released contract's canonical ordering.
+- If the evaluation instant, clock/time authority or canonical ordering cannot
+  be verified, then the tl-syntax Rust admission adapter shall preserve the
+  historical event and keep the current disposition `open` rather than guess
+  whether it expired.
 - The tl-syntax Rust admission adapter shall require a new decision when the candidate,
   configuration, applicable profile, material limitation, required review or
   shared-contract identity changes.
@@ -99,12 +113,12 @@ configuration after the required independent reviews and limitation inspection.
 | ID | Criteria | Verification |
 |---|---|---|
 | FR-017-AC-1 | Accepted/rejected/deferred/conditional/open/conflict remain distinct exact-subject dispositions; event-backed states retain identity/rationale/exception/expiry, `open` requires no absent event fields, and `conflict` retains the complete event set. | Test (TC-062) |
-| FR-017-AC-2 | An absent required review/decision leaves the disposition `open`; a stale or wrong-actor/subject event is `refused` while the disposition stays `open`; an ambiguous/contradictory current set produces `conflict`, and none is inferred as accepted. | Test (TC-063) |
+| FR-017-AC-2 | An absent required review/decision or an incomplete, cross-snapshot, changed-cursor or over-bound event enumeration leaves the disposition `open`; a stale or wrong-actor/subject event is `refused` while the disposition stays `open`; an ambiguous/contradictory complete current set produces `conflict`, and none is inferred as accepted. | Test (TC-063) |
 | FR-017-AC-3 | Every material candidate/configuration/profile/limitation/shared-contract change requires a new review/decision relation and preserves the historical disposition. | Test (TC-063) |
 | FR-017-AC-4 | A source-release acceptance grants neither publication nor integrator/system/monitor qualification. | Test (TC-066) |
 | FR-017-AC-5 | Each required review binds an attributable independent reviewer, exact head/base/configuration/evidence set, finding dispositions and accepted limitations; self-review or any bound-identity change leaves the review requirement open. | Test (TC-073) |
 | FR-017-AC-6 | Independence and authority are evaluated against an exact policy/version, author/contributor set, conflicts, delegations, revocations and quorum; an unverifiable event is `refused`, and an insufficient quorum leaves the disposition `open`. | Test (TC-073) |
-| FR-017-AC-7 | Conditional decisions retain condition owner/evidence/expiry; unresolved and satisfied conditions stay `conditional` until a new authorized decision, expiry reopens the disposition, deferred decisions retain owner/resume/expiry until a new authorized decision, and concurrent/contradictory successors produce `conflict` until explicitly resolved. | Test (TC-070) |
+| FR-017-AC-7 | Conditional decisions retain condition owner/evidence/expiry; unresolved and satisfied conditions stay `conditional` until a new authorized decision; expiry reopens the disposition only at a verified equal-or-later instant under the bound clock/time authority and canonical ordering; deferred decisions retain owner/resume/expiry until a new authorized decision; and concurrent/contradictory successors produce `conflict` until explicitly resolved. | Test (TC-070) |
 
 ## Dependencies
 
