@@ -390,7 +390,7 @@ fn git_files(root: &Path, arguments: &[&str]) -> CensusResult<BTreeSet<String>> 
         .collect())
 }
 
-const EXPECTED_LIVE_TRACKED: [&str; 123] = [
+const EXPECTED_LIVE_TRACKED: [&str; 127] = [
     ".agent/rules/writing_rust.md",
     ".github/CODEOWNERS",
     ".github/workflows/ci.yml",
@@ -491,6 +491,10 @@ const EXPECTED_LIVE_TRACKED: [&str; 123] = [
     "spec/requirements/StR-001-embedded-consumers.md",
     "spec/requirements/StR-002-temporal-interoperability.md",
     "spec/requirements/StR-003-formal-temporal-frontends.md",
+    "spec/reviews/SR-063-strict-owner-readers-code-review.md",
+    "spec/reviews/SR-064-strict-owner-readers-rust-review.md",
+    "spec/reviews/SR-065-strict-owner-readers-gap-analysis.md",
+    "spec/signal-catalog-v1.schema.json",
     "spec/spec.md",
     "spec/test-matrix.md",
     "src/bounded_string.rs",

@@ -2,12 +2,19 @@ use alloc::{string::String, vec, vec::Vec};
 #[cfg(feature = "serde")]
 use core::{fmt, marker::PhantomData};
 
+#[cfg(feature = "serde")]
+use crate::{
+    document::{read_strict_document, StrictDocumentReadError},
+    MAX_SIGNAL_CATALOG_BINDINGS, MAX_SIGNAL_CATALOG_SIGNALS,
+};
 use crate::{
     PropositionBinding, SignalCatalog, SignalCatalogError, SignalDeclaration, SignalDomain,
     SignalId,
 };
+
+/// Exact checked-in Draft 7 schema bytes for `tl-syntax.signal-catalog/v1`.
 #[cfg(feature = "serde")]
-use crate::{MAX_SIGNAL_CATALOG_BINDINGS, MAX_SIGNAL_CATALOG_SIGNALS};
+pub const SIGNAL_CATALOG_V1_SCHEMA: &str = include_str!("../spec/signal-catalog-v1.schema.json");
 
 /// Version of the serialized signal-catalog document.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -95,6 +102,15 @@ impl SignalCatalogDocument {
         bindings: Vec<PropositionBinding>,
     ) -> Result<Self, SignalCatalogError> {
         Self::from_parts(SignalCatalogSchemaVersion::V1, signals, bindings)
+    }
+
+    /// Reads exactly one bounded closed v1 JSON document through the owner type.
+    ///
+    /// Duplicate members, trailing JSON, unknown fields and versions, excess
+    /// population, and semantic validation failures are refused.
+    #[cfg(feature = "serde")]
+    pub fn from_json_bytes(bytes: &[u8]) -> Result<Self, StrictDocumentReadError> {
+        read_strict_document(bytes)
     }
 
     fn from_parts(

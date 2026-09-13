@@ -33,6 +33,11 @@ interpreting either one.
   context usable without allocation.
 - Owned strict-wire documents under `alloc`/`serde` with identities
   `tl-syntax.signal-catalog/v1` and `tl-syntax.requirement-context/v1`.
+- A checked-in Draft 7 schema and a bounded public byte reader for
+  `tl-syntax.signal-catalog/v1`; the reader rejects duplicate members, trailing
+  data, closed-shape violations, invalid domains, excess populations, and
+  documents larger than 64 MiB or nested beyond 64 JSON containers before
+  returning a validated document.
 - Typed deterministic validation errors with no partially validated output.
 
 ## Signal model
@@ -84,6 +89,10 @@ interpreting either one.
   decode with the same results. Their APIs and closed schemas remain unchanged.
   The new schemas are separate documents, not optional fields smuggled into
   either v1 format.
+- The existing proposition-map schema and the new signal-catalog schema are
+  available as exact embedded UTF-8 bytes. Both document types expose the same
+  bounded public byte-reader boundary so downstream bridges can pin and invoke
+  owner-published contracts instead of mirroring their wire vocabulary.
 - The default feature exposes borrowed identities, domains, declarations,
   bindings, catalog validation, and source-context validation without `alloc`.
   Owned strings/documents require `alloc`; wire encoding requires `serde`.
@@ -99,7 +108,7 @@ interpreting either one.
 | FR-007-AC-2 | Checked domain construction or wire decoding rejects inverted numeric bounds and scale above 18; catalog validation rejects insufficient name-order scratch, duplicate or non-increasing signal/binding identities, duplicate or empty/oversized names, missing signal targets, non-Boolean direct bindings, and over-limit populations, using distinct typed errors. | Test (TC-029) |
 | FR-007-AC-3 | Formula binding checks proposition occurrences in formula-node order, accepts a catalog's already-validated Boolean bindings as a borrowed bound-formula view, and rejects the first missing binding without fabricating a mapping. | Test (TC-030) |
 | FR-007-AC-4 | Complete caller context round-trips exactly, consumer APIs accept explicit absence without fabricating context, and every missing, empty, oversized, inverted-span, or unknown-field present form is rejected. | Test (TC-031) |
-| FR-007-AC-5 | Existing checked-in formula-v1 and proposition-map-v1 fixture bytes remain unchanged and decode with their prior schema identities and validation outcomes; no new field is accepted in either closed v1 document. | Test (TC-032) |
+| FR-007-AC-5 | Existing checked-in formula-v1 and proposition-map-v1 fixture bytes remain unchanged and decode with their prior schema identities and validation outcomes; no new field is accepted in either closed v1 document. The signal-catalog and proposition-map schemas are exposed as exact owner bytes, and their bounded public byte readers reject duplicate members, trailing data, over-limit documents/populations, and every invalid closed document without partial output. | Test (TC-032) |
 
 ## Dependencies
 

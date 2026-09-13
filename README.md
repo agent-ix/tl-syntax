@@ -54,8 +54,10 @@ formula-v2 adds the closed `tl-syntax.past-operators/v1` node catalog and
 down-conversion refuses a past profile. Unknown versions and fields are rejected. The existing
 formula/proposition JSON Schemas, fixtures, and expected horizon/closed-trace
 results live in [`corpus/`](corpus/README.md); that v1 corpus is unchanged by
-the new separate documents. Downstream temporal crates must pin and report
-`tl-syntax-corpus/v1`.
+the new separate documents. The signal-catalog schema is the separately pinned
+[`spec/signal-catalog-v1.schema.json`](spec/signal-catalog-v1.schema.json)
+artifact exposed by the `serde` API. Downstream temporal crates must pin and
+report `tl-syntax-corpus/v1`.
 
 ## Build
 

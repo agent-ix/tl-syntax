@@ -2,7 +2,7 @@
 id: Task-006
 title: "Implement native predicate projection"
 type: Task
-status: blocked
+status: in_progress
 track: B
 priority: P0
 relationships:
@@ -25,6 +25,8 @@ Deliver `quire-contract-ir#70` after PR #67: the complete FR-025 strict total-Bo
 
 - [x] Merge the accepted FR-025 specification (`quire-contract-ir#67`,
   `39bffb40f41b7caceaf026f438546b15bf140ce4`).
+- [ ] Publish the missing strict signal-catalog/proposition-map owner reader
+  surface in `tl-syntax#61` and consume its exact merged revision.
 - [ ] Write TC-038 red cases for every value, non-value, contract, identity, completeness, correction, and resource dimension.
 - [ ] Implement strict readers, projection, canonical identity, and typed decisions.
 - [ ] Run all owning repository gates/reviews.
