@@ -390,7 +390,7 @@ fn git_files(root: &Path, arguments: &[&str]) -> CensusResult<BTreeSet<String>> 
         .collect())
 }
 
-const EXPECTED_LIVE_TRACKED: [&str; 96] = [
+const EXPECTED_LIVE_TRACKED: [&str; 119] = [
     ".agent/rules/writing_rust.md",
     ".github/CODEOWNERS",
     ".github/workflows/ci.yml",
@@ -415,6 +415,26 @@ const EXPECTED_LIVE_TRACKED: [&str; 96] = [
     "corpus/formulas/nested-not-future.json",
     "corpus/formulas/primitive-true.json",
     "corpus/formulas/short-trace-future.json",
+    "corpus/future-operators/README.md",
+    "corpus/future-operators/SHA256SUMS",
+    "corpus/future-operators/cases.json",
+    "corpus/future-operators/expected/compound-operands.json",
+    "corpus/future-operators/expected/left-associative-chain.json",
+    "corpus/future-operators/expected/primitive-until-or-globally.json",
+    "corpus/future-operators/expected/right-nested-release.json",
+    "corpus/future-operators/expected/strong-release-closed.json",
+    "corpus/future-operators/expected/strong-release-max-singleton-closed.json",
+    "corpus/future-operators/expected/strong-release-max-singleton-online.json",
+    "corpus/future-operators/expected/strong-release-online.json",
+    "corpus/future-operators/expected/strong-release-zero-singleton-closed.json",
+    "corpus/future-operators/expected/strong-release-zero-singleton-online.json",
+    "corpus/future-operators/expected/weak-until-closed.json",
+    "corpus/future-operators/expected/weak-until-max-singleton-closed.json",
+    "corpus/future-operators/expected/weak-until-max-singleton-online.json",
+    "corpus/future-operators/expected/weak-until-online.json",
+    "corpus/future-operators/expected/weak-until-zero-singleton-closed.json",
+    "corpus/future-operators/expected/weak-until-zero-singleton-online.json",
+    "corpus/future-operators/manifest.json",
     "corpus/malformed/forward-reference.json",
     "corpus/malformed/inverted-interval.json",
     "corpus/malformed/unknown-profile.json",
@@ -475,6 +495,7 @@ const EXPECTED_LIVE_TRACKED: [&str; 96] = [
     "src/context.rs",
     "src/context_document.rs",
     "src/document.rs",
+    "src/future.rs",
     "src/lib.rs",
     "src/signal.rs",
     "src/signal_document.rs",
@@ -484,6 +505,8 @@ const EXPECTED_LIVE_TRACKED: [&str; 96] = [
     "tests/fixtures/invalid-partial-context.json",
     "tests/fixtures/valid-requirement-context.json",
     "tests/fixtures/valid-signal-catalog.json",
+    "tests/future_lowering.rs",
+    "tests/future_operator_corpus.rs",
     "tests/integration.rs",
     "tests/props_fr_007.rs",
     "tests/typed_signal_context.rs",
@@ -879,15 +902,18 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         (".agent", 1),
         (".github", 2),
         ("assurance", 3),
-        ("corpus", 14),
+        // Issue #41 adds the twenty-file paired W/M corpus.
+        ("corpus", 34),
         ("examples", 1),
         ("fuzz", 4),
         ("scripts", 7),
-        // Issues #32 and #33 add twelve reviewed post-v0.1 profile artifacts;
-        // SpecReviews remain archival and outside the live-source population.
+        // Issue #33 adds six reviewed past-profile artifacts; SpecReviews
+        // remain archival and outside the live-source population.
         ("spec", 33),
-        ("src", 8),
-        ("tests", 8),
+        // Issue #40 adds the future-lowering module and its traced tests.
+        ("src", 9),
+        // Issue #41 adds the paired-corpus replay.
+        ("tests", 10),
     ]
     .into_iter()
     .map(|(area, count)| (area.to_owned(), count))

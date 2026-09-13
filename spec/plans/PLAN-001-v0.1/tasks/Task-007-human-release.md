@@ -15,8 +15,11 @@ relationships:
 
 ## Scope
 
-Review the exact candidate, conformance evidence, residual limitations, and downstream impact before
-recording the v0.1 source-release decision.
+Review the exact candidate, conformance evidence, residual limitations, and
+downstream impact before recording the v0.1 source-release decision.
+`make spec-release` must pass for that candidate; `make spec` is the authoring
+gate and deliberately reports accepted but not-yet-implemented roadmap rows
+without treating them as release evidence.
 
 ## Guard
 

@@ -56,6 +56,9 @@ jobs:
         run: |
           npm install --global '@agent-ix/quire-cli@0.31.0' '@agent-ix/quoin@0.23.1' '@agent-ix/ix-flow@0.0.4'
           quoin module ensure-defaults
+          # quoin 0.23.1 still pins spec-artifacts-process d605caa; the single
+          # Status matrix column (spec-artifacts-process#87, quoin#371) needs 375fc2a.
+          quoin module install 'github:agent-ix/spec-artifacts-process//spec_artifacts_process@375fc2a9c49c37cce0f43384878b8ede16b162a3'
 
       - name: Install cargo-deny
         uses: taiki-e/install-action@v2

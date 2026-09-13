@@ -1,5 +1,11 @@
 use core::fmt;
 
+/// Maximum node count accepted by the v1 JSON wire decoder.
+///
+/// This bounds allocation for both wire decoding and programmatic construction,
+/// and bounds the node budget of allocation-free future-operator lowering.
+pub const MAX_FORMULA_DOCUMENT_NODES: usize = 100_000;
+
 /// A discrete-time inclusive interval `[start, end]`.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Interval {
@@ -154,6 +160,9 @@ pub enum SemanticProfile {
 }
 
 impl SemanticProfile {
+    /// Every profile; `as_str`'s exhaustive match below names the same set.
+    pub(crate) const ALL: [Self; 2] = [Self::ClosedTraceV1, Self::OnlinePrefixV1];
+
     /// Returns the stable wire identifier.
     pub const fn as_str(self) -> &'static str {
         match self {
