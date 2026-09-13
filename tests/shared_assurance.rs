@@ -390,7 +390,7 @@ fn git_files(root: &Path, arguments: &[&str]) -> CensusResult<BTreeSet<String>> 
         .collect())
 }
 
-const EXPECTED_LIVE_TRACKED: [&str; 121] = [
+const EXPECTED_LIVE_TRACKED: [&str; 123] = [
     ".agent/rules/writing_rust.md",
     ".github/CODEOWNERS",
     ".github/workflows/ci.yml",
@@ -510,6 +510,8 @@ const EXPECTED_LIVE_TRACKED: [&str; 121] = [
     "tests/future_lowering.rs",
     "tests/future_operator_corpus.rs",
     "tests/integration.rs",
+    "tests/past_formula_v2.rs",
+    "tests/past_profile_manifest.rs",
     "tests/props_fr_007.rs",
     "tests/typed_signal_context.rs",
 ];
@@ -915,7 +917,8 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         // Issue #40 adds the future-lowering module and its traced tests.
         ("src", 9),
         // Issue #41 adds the paired-corpus replay.
-        ("tests", 10),
+        // Issue #53 adds formula-v2/profile and dependency-manifest gates.
+        ("tests", 12),
     ]
     .into_iter()
     .map(|(area, count)| (area.to_owned(), count))

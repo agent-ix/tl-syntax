@@ -27,8 +27,9 @@ pub use context::{
 pub use context_document::{RequirementContextDocument, RequirementContextSchemaVersion};
 #[cfg(feature = "alloc")]
 pub use document::{
-    FormulaDocument, FormulaSchemaVersion, PropositionEntry, PropositionMapDocument,
-    PropositionMapError, PropositionMapSchemaVersion, SemanticFormulaDocument,
+    FormulaConversionError, FormulaDocument, FormulaSchemaVersion, PropositionEntry,
+    PropositionMapDocument, PropositionMapError, PropositionMapSchemaVersion,
+    SemanticFormulaDocument,
 };
 pub use future::{
     FutureKind, FutureLowering, FutureLoweringAxis, FutureLoweringOperand, FutureLoweringRefusal,
@@ -48,8 +49,9 @@ pub use signal_document::{
     OwnedSignalDeclaration, SignalCatalogDocument, SignalCatalogSchemaVersion,
 };
 pub use syntax::{
-    Formula, FormulaError, Interval, IntervalError, Node, NodeId, NodeKind, PropositionId,
-    SemanticProfile, SourceSpan, SourceSpanError, MAX_FORMULA_DOCUMENT_NODES,
+    Formula, FormulaError, Interval, IntervalError, Node, NodeId, NodeKind, OperatorArity,
+    PastOperatorKind, PropositionId, SemanticProfile, SourceSpan, SourceSpanError, TemporalFamily,
+    MAX_FORMULA_DOCUMENT_DEPTH, MAX_FORMULA_DOCUMENT_NODES, PAST_OPERATORS_V1,
 };
 
 /// Stable revision identifier for the checked-in shared temporal corpus.

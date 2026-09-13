@@ -746,10 +746,13 @@ fn admit_semantic_profile(supplied: &[u8]) -> Result<SemanticProfile, FutureLowe
             len: supplied.len(),
         });
     }
-    SemanticProfile::ALL
-        .into_iter()
-        .find(|profile| supplied == profile.as_str().as_bytes())
-        .ok_or(FutureLoweringRefusal::UnknownSemanticProfile)
+    [
+        SemanticProfile::ClosedTraceV1,
+        SemanticProfile::OnlinePrefixV1,
+    ]
+    .into_iter()
+    .find(|profile| supplied == profile.as_str().as_bytes())
+    .ok_or(FutureLoweringRefusal::UnknownSemanticProfile)
 }
 
 fn admit_interval(supplied: Option<RawBounds>) -> Result<Interval, FutureLoweringRefusal> {

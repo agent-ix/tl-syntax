@@ -102,7 +102,7 @@ B1 -----------------/
 
 | Task | Track | Owns (references) | Verified by (verifies) | Status |
 | --- | --- | --- | --- | --- |
-| Task-001 | A | FR-011, FR-013 | TC-054, TC-057 | not_started |
+| Task-001 | A | FR-011, FR-013 | TC-054, TC-057 | completed |
 | Task-002 | A | FR-013 | TC-055, TC-057 | not_started |
 | Task-003 | A | FR-011, FR-012 | TC-048..TC-053, TC-056 | not_started |
 | Task-004 | A | FR-011, FR-013 | TC-056 | not_started |

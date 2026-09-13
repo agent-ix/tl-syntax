@@ -6,6 +6,14 @@ use core::fmt;
 /// and bounds the node budget of allocation-free future-operator lowering.
 pub const MAX_FORMULA_DOCUMENT_NODES: usize = 100_000;
 
+/// Maximum root-to-leaf depth accepted by an owned formula-v2 document.
+///
+/// Formula-v1 retains its original node-count-only admission behavior.
+pub const MAX_FORMULA_DOCUMENT_DEPTH: usize = 4_096;
+
+/// Closed past-time operator-profile identity.
+pub const PAST_OPERATORS_V1: &str = "tl-syntax.past-operators/v1";
+
 /// A discrete-time inclusive interval `[start, end]`.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Interval {
@@ -157,17 +165,88 @@ pub enum SemanticProfile {
     /// Online prefix semantics that remain pending until the prefix decides the formula.
     #[cfg_attr(feature = "serde", serde(rename = "mltl.online-prefix/v1"))]
     OnlinePrefixV1,
+    /// Origin-complete past-time semantics over a discrete position history.
+    #[cfg_attr(feature = "serde", serde(rename = "mltl.origin-complete-history/v1"))]
+    OriginCompleteHistoryV1,
 }
 
 impl SemanticProfile {
     /// Every profile; `as_str`'s exhaustive match below names the same set.
-    pub(crate) const ALL: [Self; 2] = [Self::ClosedTraceV1, Self::OnlinePrefixV1];
+    pub const ALL: [Self; 3] = [
+        Self::ClosedTraceV1,
+        Self::OnlinePrefixV1,
+        Self::OriginCompleteHistoryV1,
+    ];
 
     /// Returns the stable wire identifier.
     pub const fn as_str(self) -> &'static str {
         match self {
             Self::ClosedTraceV1 => "mltl.closed-trace/v1",
             Self::OnlinePrefixV1 => "mltl.online-prefix/v1",
+            Self::OriginCompleteHistoryV1 => "mltl.origin-complete-history/v1",
+        }
+    }
+}
+
+/// Temporal direction owned by a primitive node.
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub enum TemporalFamily {
+    /// Future-time F/G/U/R primitive.
+    Future,
+    /// Past-time O/H/Y/S/T primitive.
+    Past,
+}
+
+/// Operand count of a temporal operator.
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub enum OperatorArity {
+    /// One formula operand.
+    Unary,
+    /// Two formula operands.
+    Binary,
+}
+
+/// Closed semantic catalog for [`PAST_OPERATORS_V1`].
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub enum PastOperatorKind {
+    /// Bounded Once.
+    Once,
+    /// Bounded Historically.
+    Historically,
+    /// Strong Previous, with the truth relation of `Once[1,1]`.
+    StrongPrevious,
+    /// Bounded Since.
+    Since,
+    /// Bounded Triggered.
+    Triggered,
+}
+
+impl PastOperatorKind {
+    /// Every operator in the closed v1 catalog.
+    pub const ALL: [Self; 5] = [
+        Self::Once,
+        Self::Historically,
+        Self::StrongPrevious,
+        Self::Since,
+        Self::Triggered,
+    ];
+
+    /// Returns the stable semantic node name, not a parser spelling.
+    pub const fn semantic_name(self) -> &'static str {
+        match self {
+            Self::Once => "Once",
+            Self::Historically => "Historically",
+            Self::StrongPrevious => "StrongPrevious",
+            Self::Since => "Since",
+            Self::Triggered => "Triggered",
+        }
+    }
+
+    /// Returns the operator's fixed operand count.
+    pub const fn arity(self) -> OperatorArity {
+        match self {
+            Self::Once | Self::Historically | Self::StrongPrevious => OperatorArity::Unary,
+            Self::Since | Self::Triggered => OperatorArity::Binary,
         }
     }
 }
@@ -284,21 +363,98 @@ pub enum NodeKind {
         /// Right operand.
         right: NodeId,
     },
+    /// Bounded Once.
+    Once {
+        /// Inclusive backward offset interval.
+        interval: Interval,
+        /// Operand node.
+        operand: NodeId,
+    },
+    /// Bounded Historically.
+    Historically {
+        /// Inclusive backward offset interval.
+        interval: Interval,
+        /// Operand node.
+        operand: NodeId,
+    },
+    /// Strong Previous, exactly equivalent in truth to `Once[1,1]`.
+    StrongPrevious {
+        /// Operand node.
+        operand: NodeId,
+    },
+    /// Bounded Since.
+    Since {
+        /// Inclusive backward witness interval.
+        interval: Interval,
+        /// Left operand.
+        left: NodeId,
+        /// Right operand.
+        right: NodeId,
+    },
+    /// Bounded Triggered.
+    Triggered {
+        /// Inclusive backward witness interval.
+        interval: Interval,
+        /// Left operand.
+        left: NodeId,
+        /// Right operand.
+        right: NodeId,
+    },
 }
 
 impl NodeKind {
-    const fn operands(self) -> [Option<NodeId>; 2] {
+    /// Returns this node's temporal direction, or `None` for a Boolean node.
+    pub const fn temporal_family(self) -> Option<TemporalFamily> {
+        match self {
+            Self::False
+            | Self::True
+            | Self::Proposition { .. }
+            | Self::Not { .. }
+            | Self::And { .. }
+            | Self::Or { .. }
+            | Self::Implies { .. }
+            | Self::Equivalent { .. } => None,
+            Self::Future { .. }
+            | Self::Globally { .. }
+            | Self::Until { .. }
+            | Self::Release { .. } => Some(TemporalFamily::Future),
+            Self::Once { .. }
+            | Self::Historically { .. }
+            | Self::StrongPrevious { .. }
+            | Self::Since { .. }
+            | Self::Triggered { .. } => Some(TemporalFamily::Past),
+        }
+    }
+
+    /// Returns the closed past catalog value represented by this node.
+    pub const fn past_operator(self) -> Option<PastOperatorKind> {
+        match self {
+            Self::Once { .. } => Some(PastOperatorKind::Once),
+            Self::Historically { .. } => Some(PastOperatorKind::Historically),
+            Self::StrongPrevious { .. } => Some(PastOperatorKind::StrongPrevious),
+            Self::Since { .. } => Some(PastOperatorKind::Since),
+            Self::Triggered { .. } => Some(PastOperatorKind::Triggered),
+            _ => None,
+        }
+    }
+
+    pub(crate) const fn operands(self) -> [Option<NodeId>; 2] {
         match self {
             Self::False | Self::True | Self::Proposition { .. } => [None, None],
             Self::Not { operand }
             | Self::Future { operand, .. }
-            | Self::Globally { operand, .. } => [Some(operand), None],
+            | Self::Globally { operand, .. }
+            | Self::Once { operand, .. }
+            | Self::Historically { operand, .. }
+            | Self::StrongPrevious { operand } => [Some(operand), None],
             Self::And { left, right }
             | Self::Or { left, right }
             | Self::Implies { left, right }
             | Self::Equivalent { left, right }
             | Self::Until { left, right, .. }
-            | Self::Release { left, right, .. } => [Some(left), Some(right)],
+            | Self::Release { left, right, .. }
+            | Self::Since { left, right, .. }
+            | Self::Triggered { left, right, .. } => [Some(left), Some(right)],
         }
     }
 }
@@ -354,6 +510,27 @@ impl<'a> Formula<'a> {
                     return Err(FormulaError::OperandNotPreceding { node, operand });
                 }
             }
+
+            if let Some(family) = node.kind.temporal_family() {
+                let compatible = match profile {
+                    SemanticProfile::ClosedTraceV1 | SemanticProfile::OnlinePrefixV1 => {
+                        family == TemporalFamily::Future
+                    }
+                    SemanticProfile::OriginCompleteHistoryV1 => family == TemporalFamily::Past,
+                };
+                if !compatible {
+                    let node = u32::try_from(index).map(NodeId).map_err(|_| {
+                        FormulaError::TooManyNodes {
+                            node_count: nodes.len(),
+                        }
+                    })?;
+                    return Err(FormulaError::ProfileIncompatibleNode {
+                        profile,
+                        node,
+                        family,
+                    });
+                }
+            }
         }
 
         Ok(Self {
@@ -407,12 +584,42 @@ pub enum FormulaError {
         /// Maximum supported document node count.
         limit: usize,
     },
+    /// An owned document exceeds the bounded graph depth.
+    DocumentDepthLimitExceeded {
+        /// First node whose depth exceeds the limit.
+        node: NodeId,
+        /// Observed root-to-leaf depth at that node.
+        depth: usize,
+        /// Maximum supported document depth.
+        limit: usize,
+    },
     /// An operand is a self-reference, forward reference, or absent reference.
     OperandNotPreceding {
         /// Node containing the operand.
         node: NodeId,
         /// Rejected operand.
         operand: NodeId,
+    },
+    /// A temporal node is not admitted by the selected semantic profile.
+    ProfileIncompatibleNode {
+        /// Selected profile.
+        profile: SemanticProfile,
+        /// First incompatible node in topological order.
+        node: NodeId,
+        /// Direction owned by that node.
+        family: TemporalFamily,
+    },
+    /// Formula-v1 cannot carry the origin-complete history profile.
+    FormulaV1ProfileUnsupported {
+        /// Rejected profile.
+        profile: SemanticProfile,
+    },
+    /// Formula-v1 cannot carry a past-time node.
+    FormulaV1NodeUnsupported {
+        /// First rejected node in topological order.
+        node: NodeId,
+        /// Past operator found there.
+        operator: PastOperatorKind,
     },
 }
 
@@ -433,10 +640,36 @@ impl fmt::Display for FormulaError {
                 formatter,
                 "formula document node table length {node_count} exceeds the {limit}-node limit"
             ),
+            Self::DocumentDepthLimitExceeded { node, depth, limit } => write!(
+                formatter,
+                "formula document node {} has depth {depth}, exceeding the {limit}-node depth limit",
+                node.0
+            ),
             Self::OperandNotPreceding { node, operand } => write!(
                 formatter,
                 "node {} operand {} must identify a preceding node",
                 node.0, operand.0
+            ),
+            Self::ProfileIncompatibleNode {
+                profile,
+                node,
+                family,
+            } => write!(
+                formatter,
+                "formula node {} has {family:?} temporal direction incompatible with {}",
+                node.0,
+                profile.as_str()
+            ),
+            Self::FormulaV1ProfileUnsupported { profile } => write!(
+                formatter,
+                "formula-v1 does not admit semantic profile {}",
+                profile.as_str()
+            ),
+            Self::FormulaV1NodeUnsupported { node, operator } => write!(
+                formatter,
+                "formula-v1 does not admit {} at node {}",
+                operator.semantic_name(),
+                node.0
             ),
         }
     }
@@ -526,6 +759,37 @@ mod serde_checked_values {
             #[serde(default)]
             span: Option<SourceSpan>,
         },
+        Once {
+            interval: Interval,
+            operand: NodeId,
+            #[serde(default)]
+            span: Option<SourceSpan>,
+        },
+        Historically {
+            interval: Interval,
+            operand: NodeId,
+            #[serde(default)]
+            span: Option<SourceSpan>,
+        },
+        StrongPrevious {
+            operand: NodeId,
+            #[serde(default)]
+            span: Option<SourceSpan>,
+        },
+        Since {
+            interval: Interval,
+            left: NodeId,
+            right: NodeId,
+            #[serde(default)]
+            span: Option<SourceSpan>,
+        },
+        Triggered {
+            interval: Interval,
+            left: NodeId,
+            right: NodeId,
+            #[serde(default)]
+            span: Option<SourceSpan>,
+        },
     }
 
     impl<'de> Deserialize<'de> for Node {
@@ -578,6 +842,45 @@ mod serde_checked_values {
                     span,
                 } => (
                     NodeKind::Release {
+                        interval,
+                        left,
+                        right,
+                    },
+                    span,
+                ),
+                NodeWire::Once {
+                    interval,
+                    operand,
+                    span,
+                } => (NodeKind::Once { interval, operand }, span),
+                NodeWire::Historically {
+                    interval,
+                    operand,
+                    span,
+                } => (NodeKind::Historically { interval, operand }, span),
+                NodeWire::StrongPrevious { operand, span } => {
+                    (NodeKind::StrongPrevious { operand }, span)
+                }
+                NodeWire::Since {
+                    interval,
+                    left,
+                    right,
+                    span,
+                } => (
+                    NodeKind::Since {
+                        interval,
+                        left,
+                        right,
+                    },
+                    span,
+                ),
+                NodeWire::Triggered {
+                    interval,
+                    left,
+                    right,
+                    span,
+                } => (
+                    NodeKind::Triggered {
                         interval,
                         left,
                         right,

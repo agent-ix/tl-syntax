@@ -2,7 +2,7 @@
 id: Task-001
 title: "Implement formula-v2 and past syntax"
 type: Task
-status: not_started
+status: completed
 track: A
 priority: P0
 relationships:
@@ -23,11 +23,11 @@ Deliver `tl-syntax#53`: formula-v2 nodes/documents, closed past identities, prof
 
 ## Subtasks
 
-- [ ] Write TC-054/TC-057 red cases for every node, profile, wire, conversion, malformed, depth, and count boundary.
-- [ ] Add O/H/Y/S/T borrowed and owned nodes under formula-v2 without changing formula-v1.
-- [ ] Add strict v2 read/write and fail-closed pure-future/pure-past profile validation.
-- [ ] Add lossless v1 upgrade and guarded v2 down-conversion.
-- [ ] Run the owning repository gates and close every Rust/code/gap review finding.
+- [x] Write TC-054/TC-057 red cases for every node, profile, wire, conversion, malformed, depth, and count boundary.
+- [x] Add O/H/Y/S/T borrowed and owned nodes under formula-v2 without changing formula-v1.
+- [x] Add strict v2 read/write and fail-closed pure-future/pure-past profile validation.
+- [x] Add lossless v1 upgrade and guarded v2 down-conversion.
+- [x] Run the owning repository gates and close every Rust/code/gap review finding.
 
 ## Deliverables
 
