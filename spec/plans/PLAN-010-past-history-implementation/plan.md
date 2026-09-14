@@ -246,11 +246,11 @@ accepted FR-025/026 ---/     F1 ----+-> B1 -> C1 -> G1
 | Task-004 | A | FR-011, FR-013 | TC-056 | completed |
 | Task-005 | A | FR-013 | TC-056, TC-058 | completed |
 | Task-006 | B | FR-012, FR-013, Contract-IR FR-025 | TC-053, TC-056 | completed at Contract-IR `202210cf` |
-| Task-007 | C | FR-012, FR-013, Contract-IR FR-026 | TC-056 | in progress; QSL FR-052 owner gate complete, corrected result join is next |
+| Task-007 | C | FR-012, FR-013, Contract-IR FR-026 | TC-056 | completed at Contract-IR `69ec82bf` (#78); TC-039 and PLAN-006 complete |
 | Task-008 | Architecture | MRS-003, FR-011..FR-013, Contract-IR FR-025..FR-026 | composite spec/object/architecture reviews | completed |
 | Task-009 | Core | Task-001..Task-005 accepted behavior | TC-048..TC-058 | completed; all four TL allocations merged |
 | Task-010 | Owners | Contract-IR FR-025..FR-026 owner inputs | owner contract tests | completed; final QSL owner merged at `c2915338` |
-| Task-011 | Integration | complete epic #52 ecosystem | TC-053, TC-056 and cross-owner integration | blocked on Task-007 |
+| Task-011 | Integration | complete epic #52 ecosystem | TC-053, TC-056 and cross-owner integration | not started; all declared implementation predecessors merged |
 | Task-012 | Architecture | Contract-IR FR-028 | TC-041 | completed at `53cc03c` |
 
 ## Coordination Rules
