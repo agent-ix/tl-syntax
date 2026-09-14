@@ -2,7 +2,7 @@
 id: Task-010
 title: "Publish the complete Quire owner contract set"
 type: Task
-status: in_progress
+status: completed
 track: Owners
 priority: P0
 relationships:
@@ -26,7 +26,7 @@ native-owner/bridge Cargo graph acyclic.
 
 ## Subtasks
 
-- [ ] In `quire-specification`, accept the remaining shared temporal,
+- [x] In `quire-specification`, accept the remaining shared temporal,
   observation and protocol object rulings needed by FR-025/FR-026, while
   importing the already resolved canonical-result identity and vocabulary set.
 - [x] In `quire-spec-language`, publish source-bound checked predicate leaves
@@ -45,10 +45,10 @@ native-owner/bridge Cargo graph acyclic.
   mapping contract/view that binds the applicable predicate or temporal subject
   and correspondence so Contract IR never interprets owner bytes or assumes
   normalized Boolean labels are native wire labels.
-- [ ] Provide closed version selection, canonical schemas, exact digests,
+- [x] Provide closed version selection, canonical schemas, exact digests,
   duplicate/trailing/unknown-field refusal, byte/depth/count/string limits,
   and no partial output at every owner boundary.
-- [ ] Run code review, Rust review, and gap analysis in every owner repository
+- [x] Run code review, Rust review, and gap analysis in every owner repository
   and fix all findings before dependency pins advance.
 
 ## Deliverables
@@ -59,6 +59,9 @@ native-owner/bridge Cargo graph acyclic.
 
 ## Notes
 
+- Shared semantic authority merged through `quire-specification#44` at
+  `983b0b28c479241fb066cbe4db3fc0980362de36`; it is a normative specification
+  owner and intentionally publishes no runtime parser or duplicate wire crate.
 - Existing tickets include `quire-specification#31/#40`, `quire-spec-language#90`,
   completed `quire-observation#15`, and `quire-protocol#8`; the FR-042 portion
   of the last merged through `quire-protocol#51` at `36af8d7b`, while #8 stays
