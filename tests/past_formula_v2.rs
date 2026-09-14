@@ -268,12 +268,19 @@ proptest! {
     // Trace: TC-057, FR-013-AC-1
     #[test]
     fn arbitrary_bounded_input_never_unwinds_or_defaults_to_v2(bytes in prop::collection::vec(any::<u8>(), 0..8192)) {
-        if let Ok(document) = serde_json::from_slice::<FormulaDocument>(&bytes) {
-            assert!(document.validate().is_ok());
-            if document.schema_version() == FormulaSchemaVersion::V1 {
-                assert_ne!(document.semantic_profile(), SemanticProfile::OriginCompleteHistoryV1);
-                assert!(document.nodes().iter().all(|node| node.kind.temporal_family() != Some(TemporalFamily::Past)));
-            }
-        }
+        let decoded = serde_json::from_slice::<FormulaDocument>(&bytes);
+        let accepted_document_is_valid = decoded
+            .as_ref()
+            .map_or(true, |document| document.validate().is_ok());
+        let v1_never_defaults_to_past = decoded.as_ref().map_or(true, |document| {
+            document.schema_version() != FormulaSchemaVersion::V1
+                || (document.semantic_profile() != SemanticProfile::OriginCompleteHistoryV1
+                    && document
+                        .nodes()
+                        .iter()
+                        .all(|node| node.kind.temporal_family() != Some(TemporalFamily::Past)))
+        });
+        prop_assert!(accepted_document_is_valid);
+        prop_assert!(v1_never_defaults_to_past);
     }
 }

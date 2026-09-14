@@ -2,7 +2,7 @@
 id: Plan-010
 title: "Origin-complete past/history implementation"
 type: Plan
-status: active
+status: done
 relationships:
   - target: ix://agent-ix/tl-syntax/FR-011
     type: references
@@ -28,14 +28,14 @@ relationships:
   executable owners must implement.
 - [x] **Task-012**: Split the existing Contract IR substrate into a cycle-free
   model package with compatibility re-exports before the bridge imports QSL.
-- [ ] **Task-011**: Close end-to-end integration and publish a non-authoritative
+- [x] **Task-011**: Close end-to-end integration and publish a non-authoritative
   machine-readable ecosystem model for later self-analysis.
 
 ### Functional Requirements
 
-- [ ] **FR-011**: Implement bounded O/H/Y/S/T semantics under one closed past operator profile.
-- [ ] **FR-012**: Bind evaluation to an exact origin-complete history, anchor, clock, limits, and immutable correction relation.
-- [ ] **FR-013**: Preserve versioned formula, parser, evaluator, rewrite, corpus, and native-bridge compatibility.
+- [x] **FR-011**: Implement bounded O/H/Y/S/T semantics under one closed past operator profile.
+- [x] **FR-012**: Bind evaluation to an exact origin-complete history, anchor, clock, limits, and immutable correction relation.
+- [x] **FR-013**: Preserve versioned formula, parser, evaluator, rewrite, corpus, and native-bridge compatibility.
 
 ## Dependency Graph
 
@@ -125,9 +125,9 @@ relationships:
 
 ### Cross-repository behavior
 
-- [ ] **TC-056**: Replay corpus, rewrite, correction, target-disposition, and native-bridge scenarios against exact public contracts.
+- [x] **TC-056**: Replay corpus, rewrite, correction, target-disposition, and native-bridge scenarios against exact public contracts.
 
-## Remaining Work
+## Completion Record
 
 ### Architecture and formal-model gate
 
@@ -138,25 +138,25 @@ relationships:
 
 ### Specification correction inventory
 
-- **S1 — Shared authority**: close the `quire-specification` gaps that block
+- **S1 — Shared authority (completed)**: close the `quire-specification` gaps that block
   temporal execution: input-completeness membership, admitted-observation
   identity, inclusive-native/half-open-observation boundary conversion,
   activation under missing/refused trigger evidence, and claim-kind/admitted-
   fragment/backend identities. Reuse the accepted FR-240/242/243/284/285/286
   rulings without local alternatives.
-- **S2 — Contract IR**: amend FR-025/FR-026 together so every owner input names
+- **S2 — Contract IR (completed)**: amend FR-025/FR-026 together so every owner input names
   an exact public reader and mapping contract, the four progress/closure axes
   use `open`/`closed`, completeness remains independent, and native
   `satisfied`/`violated` versus TL Boolean output is normalized only by selected
   owner mappings.
-- **S3 — Executable owners**: author QSL checked-leaf/temporal-subject, QObs
+- **S3 — Executable owners (completed)**: author QSL checked-leaf/temporal-subject, QObs
   position/clock/capture/progress/closure/completeness/availability, QProtocol
   result/lineage/mapping, and TL formula/history/trace/request/report/mapping
   interfaces as one cross-referenced design set.
-- **S4 — Structure**: specify compatibility-preserving module boundaries and
+- **S4 — Structure (completed)**: specify compatibility-preserving module boundaries and
   public re-exports for each implementation that currently mixes contract,
   canonicalization, domain state and decision logic.
-- **S5 — One review gate**: after S1–S4 are all authored, run the base review,
+- **S5 — One review gate (completed)**: after S1–S4 are all authored, run the base review,
   all seven lenses, object review and architecture evaluation over the complete
   nine-repository design; fix every finding before any implementation wave.
 
@@ -168,7 +168,7 @@ relationships:
 
 ### Quire owner contracts
 
-- **F1 = Task-010** native/result/observation owners — Hard; exit: every
+- **F1 = Task-010 (completed)** native/result/observation owners — Hard; exit: every
   FR-025/FR-026 input is a constructor-private validated owner value with a
   canonical schema, strict reader, immutable revision/digest, and typed limits.
 
@@ -200,7 +200,7 @@ relationships:
 | `tl-rewrite` | Catalog/engine/replay architecture and corpus compatibility | #38/#41 completed |
 | `quire-spec-language` | Checked predicate/temporal subject plus formula-wide native evaluation request/result owner | #90 and #95 |
 | `quire-observation` | Position/clock/capture/progress/closure/completeness/availability owner | #15 completed at `9ac80e9` |
-| `quire-protocol` | Canonical result, lineage and native result mappings | #8, expanded before code |
+| `quire-protocol` | Canonical result, lineage and native result mappings | #51 completed; broader Plan-001 #8 remains downstream |
 | `quire-contract-ir` | Cycle-free model package, predicate projection/valuation, temporal projection/result join, and bounded ecosystem-model export | #73, #70, #71, then #74 |
 
 ### Track A: TL critical path
@@ -221,7 +221,7 @@ relationships:
 
 ### Ecosystem closure
 
-- **G1 = Task-011** integrated closure and model export — Hard; exit: the exact
+- **G1 = Task-011 (completed)** integrated closure and model export — Hard; exit: the exact
   owner-reader path executes end to end, every non-success state remains typed,
   the machine-readable ecosystem graph is bounded and non-authoritative, and
   every ticket/matrix/epic status matches merged evidence.
@@ -250,7 +250,7 @@ accepted FR-025/026 ---/     F1 ----+-> B1 -> C1 -> G1
 | Task-008 | Architecture | MRS-003, FR-011..FR-013, Contract-IR FR-025..FR-026 | composite spec/object/architecture reviews | completed |
 | Task-009 | Core | Task-001..Task-005 accepted behavior | TC-048..TC-058 | completed; all four TL allocations merged |
 | Task-010 | Owners | Contract-IR FR-025..FR-026 owner inputs | owner contract tests | completed; final QSL owner merged at `c2915338` |
-| Task-011 | Integration | complete epic #52 ecosystem | TC-053, TC-056 and cross-owner integration | not started; all declared implementation predecessors merged |
+| Task-011 | Integration | complete epic #52 ecosystem | TC-053, TC-056 and cross-owner integration | completed through QCI #79/#80 at `4d139309`; SR-538/SR-539/SR-540 pass |
 | Task-012 | Architecture | Contract-IR FR-028 | TC-041 | completed at `53cc03c` |
 
 ## Coordination Rules
