@@ -21,7 +21,7 @@ relationships:
   temporal-assurance ecosystem, formalize its objects and interfaces, review
   the current code/spec architecture, and fix every composite review finding
   before additional feature implementation.
-- [ ] **Task-009**: Reconcile already-landed TL core code with that reviewed
+- [x] **Task-009**: Reconcile already-landed TL core code with that reviewed
   architecture while preserving public compatibility.
 - [x] **Task-010**: Publish the complete Quire owner contract set consumed by
   FR-025 and FR-026, including the shared `quire-specification` rulings those
@@ -118,7 +118,7 @@ relationships:
 - [x] **TC-050**: Prove T duality and strong Previous equality with O[1,1].
 - [x] **TC-051**: Validate histories, clocks, anchors, digests, ordering, and immutable result attribution.
 - [x] **TC-052**: Compare evaluation and checked required-history analysis at semantic/resource boundaries.
-- [ ] **TC-053**: The tl-mltl history/clock/profile/non-value allocation is complete; native predicate-projection refusal remains with Task-006.
+- [x] **TC-053**: The tl-mltl history/clock/profile/non-value allocation and the native predicate-projection non-value path are complete; Contract-IR TC-038 supplies the traced native allocation.
 
 ### Cross-repository behavior
 
@@ -159,7 +159,7 @@ relationships:
 
 ### Core reconciliation
 
-- **E1 = Task-009** TL core reconciliation — Hard; exit: every architecture
+- **E1 = Task-009 (completed)** TL core reconciliation — Hard; exit: every architecture
   finding against Tasks 001–005 is fixed without changing an accepted wire or
   semantic identity, and all four crates replay the complete corpus.
 
@@ -191,10 +191,10 @@ relationships:
 | Repository | Planned campaign responsibility | Tracking |
 | --- | --- | --- |
 | `quire-specification` | Shared temporal/observation/result object rulings | #31 and scoped epic-52 ticket #40 |
-| `tl-syntax` | Umbrella architecture and formula/signal owner contracts | #52, #64; #53/#54/#61 completed; #65 |
-| `tl-parse` | Dialect architecture and complete corpus compatibility | #35 completed; #38 |
-| `tl-mltl` | History/trace/request/report readers and TL result mapping | #63 completed; #66 |
-| `tl-rewrite` | Catalog/engine/replay architecture and corpus compatibility | #38 completed; #41 |
+| `tl-syntax` | Umbrella architecture and formula/signal owner contracts | #52, #64; #53/#54/#61/#65 completed |
+| `tl-parse` | Dialect architecture and complete corpus compatibility | #35/#38 completed |
+| `tl-mltl` | History/trace/request/report readers and TL result mapping | #63/#66 completed |
+| `tl-rewrite` | Catalog/engine/replay architecture and corpus compatibility | #38/#41 completed |
 | `quire-spec-language` | Checked predicate and complete temporal subject owner | #90 |
 | `quire-observation` | Position/clock/capture/progress/closure/completeness/availability owner | #15 completed at `9ac80e9` |
 | `quire-protocol` | Canonical result, lineage and native result mappings | #8, expanded before code |
@@ -242,12 +242,12 @@ accepted FR-025/026 ---/     F1 ----+-> B1 -> C1 -> G1
 | Task-003 | A | FR-011, FR-012 | TC-048..TC-053, TC-056 | completed |
 | Task-004 | A | FR-011, FR-013 | TC-056 | completed |
 | Task-005 | A | FR-013 | TC-056, TC-058 | completed |
-| Task-006 | B | FR-012, FR-013, Contract-IR FR-025 | TC-053, TC-056 | blocked on Tasks 008–010 |
-| Task-007 | C | FR-012, FR-013, Contract-IR FR-026 | TC-056 | blocked on Tasks 006, 008–010 |
+| Task-006 | B | FR-012, FR-013, Contract-IR FR-025 | TC-053, TC-056 | completed at Contract-IR `202210cf` |
+| Task-007 | C | FR-012, FR-013, Contract-IR FR-026 | TC-056 | in progress; all predecessors complete |
 | Task-008 | Architecture | MRS-003, FR-011..FR-013, Contract-IR FR-025..FR-026 | composite spec/object/architecture reviews | completed |
-| Task-009 | Core | Task-001..Task-005 accepted behavior | TC-048..TC-058 | not started |
+| Task-009 | Core | Task-001..Task-005 accepted behavior | TC-048..TC-058 | completed; all four TL allocations merged |
 | Task-010 | Owners | Contract-IR FR-025..FR-026 owner inputs | owner contract tests | completed; shared, QSL, QObs and QProtocol allocations merged |
-| Task-011 | Integration | complete epic #52 ecosystem | TC-053, TC-056 and cross-owner integration | blocked on Tasks 006–007, 009–010 |
+| Task-011 | Integration | complete epic #52 ecosystem | TC-053, TC-056 and cross-owner integration | blocked on Tasks 006–007 |
 | Task-012 | Architecture | Contract-IR FR-028 | TC-041 | completed at `53cc03c` |
 
 ## Coordination Rules
