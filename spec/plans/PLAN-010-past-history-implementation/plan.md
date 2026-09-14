@@ -246,7 +246,7 @@ accepted FR-025/026 ---/     F1 ----+-> B1 -> C1 -> G1
 | Task-007 | C | FR-012, FR-013, Contract-IR FR-026 | TC-056 | blocked on Tasks 006, 008–010 |
 | Task-008 | Architecture | MRS-003, FR-011..FR-013, Contract-IR FR-025..FR-026 | composite spec/object/architecture reviews | completed |
 | Task-009 | Core | Task-001..Task-005 accepted behavior | TC-048..TC-058 | not started |
-| Task-010 | Owners | Contract-IR FR-025..FR-026 owner inputs | owner contract tests | in progress; QSL and QObs allocations completed |
+| Task-010 | Owners | Contract-IR FR-025..FR-026 owner inputs | owner contract tests | in progress; QSL, QObs and QProtocol allocations completed; shared allocation remains |
 | Task-011 | Integration | complete epic #52 ecosystem | TC-053, TC-056 and cross-owner integration | blocked on Tasks 006–007, 009–010 |
 | Task-012 | Architecture | Contract-IR FR-028 | TC-041 | completed at `53cc03c` |
 

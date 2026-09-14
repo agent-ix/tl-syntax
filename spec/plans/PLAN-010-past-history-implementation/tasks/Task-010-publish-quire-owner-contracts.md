@@ -37,11 +37,11 @@ native-owner/bridge Cargo graph acyclic.
   clock, capture, progress, closure, completeness, and result-availability
   assertions derived from qualified immutable observation state; retain trigger
   facts without deriving protocol activation.
-- [ ] In `quire-protocol`, publish the complete canonical native result and
+- [x] In `quire-protocol`, publish the complete canonical native result and
   direct-predecessor contract with independent execution, truth, settlement,
   decision-scope/execution progress and closure, decision premises, completeness, and
   embedded owner selections.
-- [ ] In `quire-protocol`, publish one exact selected Contract-IR result
+- [x] In `quire-protocol`, publish one exact selected Contract-IR result
   mapping contract/view that binds the applicable predicate or temporal subject
   and correspondence so Contract IR never interprets owner bytes or assumes
   normalized Boolean labels are native wire labels.
@@ -60,7 +60,15 @@ native-owner/bridge Cargo graph acyclic.
 ## Notes
 
 - Existing tickets include `quire-specification#31/#40`, `quire-spec-language#90`,
-  completed `quire-observation#15`, and `quire-protocol#8`; Task-008 may split
-  additional repository tickets where ownership requires separate merge order.
+  completed `quire-observation#15`, and `quire-protocol#8`; the FR-042 portion
+  of the last merged through `quire-protocol#51` at `36af8d7b`, while #8 stays
+  open for broader Plan-001 acceptance. Task-008 may split additional repository
+  tickets where ownership requires separate merge order.
+- QProtocol handoff: result contract `quire.protocol.result/v1-draft.1`, schema
+  SHA-256 `8825d5b05edf7aef9e53dd117b4f344b824e1c6fb2757071f6dd14a268079dd2`;
+  mapping contract `quire.protocol.contract-ir-result-map/v1`, schema SHA-256
+  `c1df7b18d0e93c70a3b1d67c6a71de8d5ff8b9780510265ebdad69cdd14b79bd`;
+  bounded public entry points `result::{produce,produce_bounded,read,read_bounded}`
+  and `result::contract_ir::{map,map_bounded,read,read_bounded}`.
 - No owner imports Contract-IR wire vocabulary or calls an evaluator through a
   callback.
