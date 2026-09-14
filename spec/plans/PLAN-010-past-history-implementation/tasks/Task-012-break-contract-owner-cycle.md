@@ -2,7 +2,7 @@
 id: Task-012
 title: "Break the Contract IR and native-owner dependency cycle"
 type: Task
-status: blocked
+status: in_progress
 track: Architecture
 priority: P0
 relationships:
@@ -21,14 +21,14 @@ without changing any existing public API, wire identity or QSL Rust import.
 
 ## Subtasks
 
-- [ ] Convert the Contract IR repository to the reviewed two-package workspace
+- [x] Convert the Contract IR repository to the reviewed two-package workspace
   and move only the existing substrate into `quire-contract-model`.
-- [ ] Re-export the complete existing model API from `quire-contract-ir`.
-- [ ] Point QSL's existing `quire-contract-ir` dependency key at the pinned
+- [x] Re-export the complete existing model API from `quire-contract-ir`.
+- [x] Point QSL's existing `quire-contract-ir` dependency key at the pinned
   `quire-contract-model` package so its source imports remain unchanged.
-- [ ] Prove the default/all/minimum-feature production graphs are acyclic and
+- [x] Prove the default/all/minimum-feature production graphs are acyclic and
   the model package reaches no owner or TL crate.
-- [ ] Replay the full Contract IR and QSL baseline corpora and verify exact
+- [x] Replay the full Contract IR and QSL baseline corpora and verify exact
   schema, byte, identity, diagnostic and outcome compatibility.
 - [ ] Run code review, Rust review and gap analysis on unchanged heads and fix
   all findings before owner pins advance.

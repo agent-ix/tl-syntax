@@ -2,7 +2,7 @@
 id: Task-009
 title: "Reconcile the TL core with the subsystem architecture"
 type: Task
-status: blocked
+status: not_started
 track: Core
 priority: P0
 relationships:

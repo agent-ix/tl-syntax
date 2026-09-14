@@ -17,7 +17,7 @@ relationships:
 
 ### Ecosystem architecture gate
 
-- [ ] **Task-008 / tl-syntax#64**: Specify the entire epic as one bounded
+- [x] **Task-008 / tl-syntax#64**: Specify the entire epic as one bounded
   temporal-assurance ecosystem, formalize its objects and interfaces, review
   the current code/spec architecture, and fix every composite review finding
   before additional feature implementation.
@@ -128,7 +128,7 @@ relationships:
 
 ### Architecture and formal-model gate
 
-- **D1 = Task-008** whole-ecosystem architecture — Hard; exit: one reviewed
+- **D1 = Task-008 (completed)** whole-ecosystem architecture — Hard; exit: one reviewed
   bounded context, formal object/interface model, dependency DAG, state model,
   repository/module topology, and complete owner contract set with all ten
   review passes resolved.
@@ -244,11 +244,11 @@ accepted FR-025/026 ---/     F1 ----+-> B1 -> C1 -> G1
 | Task-005 | A | FR-013 | TC-056, TC-058 | completed |
 | Task-006 | B | FR-012, FR-013, Contract-IR FR-025 | TC-053, TC-056 | blocked on Tasks 008–010 |
 | Task-007 | C | FR-012, FR-013, Contract-IR FR-026 | TC-056 | blocked on Tasks 006, 008–010 |
-| Task-008 | Architecture | MRS-003, FR-011..FR-013, Contract-IR FR-025..FR-026 | composite spec/object/architecture reviews | in progress |
-| Task-009 | Core | Task-001..Task-005 accepted behavior | TC-048..TC-058 | blocked on Task-008 |
+| Task-008 | Architecture | MRS-003, FR-011..FR-013, Contract-IR FR-025..FR-026 | composite spec/object/architecture reviews | completed |
+| Task-009 | Core | Task-001..Task-005 accepted behavior | TC-048..TC-058 | not started |
 | Task-010 | Owners | Contract-IR FR-025..FR-026 owner inputs | owner contract tests | blocked on Task-008 |
 | Task-011 | Integration | complete epic #52 ecosystem | TC-053, TC-056 and cross-owner integration | blocked on Tasks 006–007, 009–010 |
-| Task-012 | Architecture | Contract-IR FR-028 | TC-041 | blocked on Task-008 |
+| Task-012 | Architecture | Contract-IR FR-028 | TC-041 | in progress |
 
 ## Coordination Rules
 

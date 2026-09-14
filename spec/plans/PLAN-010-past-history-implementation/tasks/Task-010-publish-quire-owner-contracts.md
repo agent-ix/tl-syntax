@@ -29,7 +29,7 @@ native-owner/bridge Cargo graph acyclic.
 - [ ] In `quire-specification`, accept the remaining shared temporal,
   observation and protocol object rulings needed by FR-025/FR-026, while
   importing the already resolved canonical-result identity and vocabulary set.
-- [ ] In `quire-spec-language`, publish source-bound checked predicate leaves
+- [x] In `quire-spec-language`, publish source-bound checked predicate leaves
   and complete native temporal subjects derived from admitted compiled
   protocol packages, including clock, activation, capture, node, span, type,
   model, and definition identities.
