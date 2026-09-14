@@ -3,11 +3,13 @@ use core::fmt;
 
 use serde::Deserialize;
 
+use super::limits::OWNER_MANIFEST_BYTES;
+
 /// Closed identity of the authorized past-profile implementation manifest.
 pub const PAST_PROFILE_IMPLEMENTATION_V1: &str = "tl-syntax.past-profile-implementation/v1";
 
 /// Maximum accepted manifest size before parsing.
-pub const PAST_PROFILE_MANIFEST_MAX_BYTES: usize = 64 * 1024;
+pub const PAST_PROFILE_MANIFEST_MAX_BYTES: usize = OWNER_MANIFEST_BYTES;
 
 const OWNER_EPIC: &str = "agent-ix/tl-syntax#52";
 const M0: &str = "26b801d6567645b637be20bef5c256d0ea4ed45c";

@@ -1,119 +1,52 @@
-use alloc::{collections::BTreeMap, string::String, vec::Vec};
+use alloc::{string::String, vec::Vec};
 use core::{
     cmp::Ordering,
     fmt,
     hash::{Hash, Hasher},
 };
 
+#[cfg(feature = "serde")]
 use crate::{
-    Formula, FormulaError, Node, NodeId, PastOperatorKind, PropositionId, SemanticProfile,
+    contracts::{
+        identity::canonical_json,
+        reader::{array_field_population, read_strict_document, StrictDocument},
+    },
+    SyntaxArtifactLimits,
+};
+use crate::{
+    Formula, FormulaError, Node, NodeId, PastOperatorKind, SemanticProfile,
     MAX_FORMULA_DOCUMENT_DEPTH, MAX_FORMULA_DOCUMENT_NODES,
 };
 
-/// Maximum accepted size of an owner document passed to a strict byte reader.
 #[cfg(feature = "serde")]
-pub const MAX_TL_DOCUMENT_BYTES: usize = 64 * 1024 * 1024;
-/// Maximum JSON array/object nesting accepted by strict owner readers.
+pub use crate::contracts::reader::{
+    StrictDocumentReadError, MAX_TL_DOCUMENT_BYTES, MAX_TL_DOCUMENT_DEPTH,
+};
+/// Exact checked-in Draft 7 schema text for `tl-syntax.formula/v1`.
 #[cfg(feature = "serde")]
-pub const MAX_TL_DOCUMENT_DEPTH: usize = 64;
-/// Maximum proposition entries accepted by the v1 proposition-map reader.
-#[cfg(feature = "serde")]
-pub const MAX_PROPOSITION_MAP_ENTRIES: usize = 100_000;
+pub const FORMULA_V1_SCHEMA: &str = include_str!("../../corpus/schema/formula-v1.schema.json");
 
-/// Exact checked-in Draft 7 schema bytes for `tl-syntax.proposition-map/v1`.
+/// Exact checked-in Draft 7 schema text for `tl-syntax.formula/v2`.
 #[cfg(feature = "serde")]
-pub const PROPOSITION_MAP_V1_SCHEMA: &str =
-    include_str!("../corpus/schema/proposition-map-v1.schema.json");
+pub const FORMULA_V2_SCHEMA: &str = include_str!("../../corpus/schema/formula-v2.schema.json");
 
-/// Failure to read one complete bounded owner document.
+/// Exact checked-in Draft 7 schema bytes for `tl-syntax.formula/v1`.
 #[cfg(feature = "serde")]
-#[derive(Debug)]
-#[non_exhaustive]
-pub enum StrictDocumentReadError {
-    /// The caller supplied more bytes than the public reader permits.
-    DocumentTooLarge {
-        /// Supplied byte count.
-        actual: usize,
-        /// Stable byte ceiling.
-        limit: usize,
-    },
-    /// JSON container nesting exceeded the public reader ceiling.
-    DepthLimitExceeded {
-        /// First rejected nesting depth.
-        actual: usize,
-        /// Stable nesting ceiling.
-        limit: usize,
-    },
-    /// JSON shape, version, duplicate-member, trailing-data, or semantic validation failed.
-    InvalidDocument(serde_json::Error),
-}
+pub const FORMULA_V1_SCHEMA_BYTES: &[u8] =
+    include_bytes!("../../corpus/schema/formula-v1.schema.json");
+/// Lowercase SHA-256 of [`FORMULA_V1_SCHEMA_BYTES`].
+#[cfg(feature = "serde")]
+pub const FORMULA_V1_SCHEMA_SHA256: &str =
+    "780c70055eb979a7913dc224e752d56f057793a0ef60af0e7270f53a4f973393";
 
+/// Exact checked-in Draft 7 schema bytes for `tl-syntax.formula/v2`.
 #[cfg(feature = "serde")]
-impl fmt::Display for StrictDocumentReadError {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::DocumentTooLarge { actual, limit } => {
-                write!(formatter, "document has {actual} bytes; limit is {limit}")
-            }
-            Self::DepthLimitExceeded { actual, limit } => {
-                write!(
-                    formatter,
-                    "document nesting depth is {actual}; limit is {limit}"
-                )
-            }
-            Self::InvalidDocument(error) => write!(formatter, "invalid document: {error}"),
-        }
-    }
-}
-
+pub const FORMULA_V2_SCHEMA_BYTES: &[u8] =
+    include_bytes!("../../corpus/schema/formula-v2.schema.json");
+/// Lowercase SHA-256 of [`FORMULA_V2_SCHEMA_BYTES`].
 #[cfg(feature = "serde")]
-pub(crate) fn read_strict_document<T>(bytes: &[u8]) -> Result<T, StrictDocumentReadError>
-where
-    T: serde::de::DeserializeOwned,
-{
-    if bytes.len() > MAX_TL_DOCUMENT_BYTES {
-        return Err(StrictDocumentReadError::DocumentTooLarge {
-            actual: bytes.len(),
-            limit: MAX_TL_DOCUMENT_BYTES,
-        });
-    }
-    preflight_document_depth(bytes)?;
-    serde_json::from_slice(bytes).map_err(StrictDocumentReadError::InvalidDocument)
-}
-
-#[cfg(feature = "serde")]
-fn preflight_document_depth(bytes: &[u8]) -> Result<(), StrictDocumentReadError> {
-    let mut depth = 0_usize;
-    let mut in_string = false;
-    let mut escaped = false;
-    for byte in bytes {
-        if in_string {
-            if escaped {
-                escaped = false;
-            } else if *byte == b'\\' {
-                escaped = true;
-            } else if *byte == b'"' {
-                in_string = false;
-            }
-            continue;
-        }
-        match *byte {
-            b'"' => in_string = true,
-            b'{' | b'[' => {
-                depth = depth.saturating_add(1);
-                if depth > MAX_TL_DOCUMENT_DEPTH {
-                    return Err(StrictDocumentReadError::DepthLimitExceeded {
-                        actual: depth,
-                        limit: MAX_TL_DOCUMENT_DEPTH,
-                    });
-                }
-            }
-            b'}' | b']' => depth = depth.saturating_sub(1),
-            _ => {}
-        }
-    }
-    Ok(())
-}
+pub const FORMULA_V2_SCHEMA_SHA256: &str =
+    "a78889a4ed04dabd271bfd68953a8ddf642b14e8609d2268421b23fa4540c7c4";
 
 /// Version of the serialized formula document.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -406,6 +339,31 @@ impl FormulaDocument {
         Ok(document)
     }
 
+    /// Reads exactly one bounded canonical formula document through the owner type.
+    #[cfg(feature = "serde")]
+    pub fn from_json_bytes(
+        bytes: &[u8],
+        limits: SyntaxArtifactLimits,
+    ) -> Result<Self, StrictDocumentReadError> {
+        read_strict_document(bytes, limits)
+    }
+
+    /// Serializes the validated document to its one canonical owner encoding.
+    #[cfg(feature = "serde")]
+    pub fn canonical_json_bytes(&self) -> Result<Vec<u8>, serde_json::Error> {
+        canonical_json(self)
+    }
+
+    /// Returns the domain-separated lowercase SHA-256 content identity.
+    #[cfg(feature = "serde")]
+    pub fn content_identity(&self) -> Result<String, serde_json::Error> {
+        let bytes = self.canonical_json_bytes()?;
+        Ok(crate::contracts::identity::content_identity(
+            self.schema_version.as_str(),
+            &bytes,
+        ))
+    }
+
     /// Validates this document and returns its allocation-free view.
     pub fn validate(&self) -> Result<Formula<'_>, FormulaError> {
         self.validate_schema_compatibility()?;
@@ -489,7 +447,7 @@ impl FormulaDocument {
     }
 
     fn validate_schema_compatibility(&self) -> Result<(), FormulaError> {
-        if self.schema_version != FormulaSchemaVersion::V1 {
+        if self.schema_version == FormulaSchemaVersion::V2 {
             return Ok(());
         }
         if self.semantic_profile == SemanticProfile::OriginCompleteHistoryV1 {
@@ -540,216 +498,65 @@ impl FormulaDocument {
         }
         Ok(())
     }
-}
 
-/// Version of the serialized proposition-map document.
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-pub enum PropositionMapSchemaVersion {
-    /// Initial tl-syntax proposition-map schema.
-    #[cfg_attr(feature = "serde", serde(rename = "tl-syntax.proposition-map/v1"))]
-    V1,
-}
-
-impl PropositionMapSchemaVersion {
-    /// Returns the stable wire identifier.
-    pub const fn as_str(self) -> &'static str {
-        match self {
-            Self::V1 => "tl-syntax.proposition-map/v1",
-        }
-    }
-}
-
-/// One proposition identity-to-name mapping.
-#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-#[cfg_attr(feature = "serde", serde(deny_unknown_fields))]
-pub struct PropositionEntry {
-    /// Stable proposition identity referenced by formula nodes.
-    pub id: PropositionId,
-    /// Application-defined proposition name.
-    pub name: String,
-}
-
-/// Owned, versioned proposition-map exchange document.
-#[derive(Clone, Debug, Eq, PartialEq)]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-#[cfg_attr(feature = "serde", serde(try_from = "PropositionMapDocumentWire"))]
-pub struct PropositionMapDocument {
-    /// Wire schema identity.
-    schema_version: PropositionMapSchemaVersion,
-    /// Entries ordered by strictly increasing proposition identity.
-    propositions: Vec<PropositionEntry>,
-}
-
-#[cfg(feature = "serde")]
-#[derive(serde::Deserialize)]
-#[serde(deny_unknown_fields)]
-struct PropositionMapDocumentWire {
-    schema_version: PropositionMapSchemaVersion,
-    #[serde(deserialize_with = "deserialize_propositions")]
-    propositions: Vec<PropositionEntry>,
-}
-
-#[cfg(feature = "serde")]
-fn deserialize_propositions<'de, D>(deserializer: D) -> Result<Vec<PropositionEntry>, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    struct PropositionVisitor;
-    impl<'de> serde::de::Visitor<'de> for PropositionVisitor {
-        type Value = Vec<PropositionEntry>;
-
-        fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-            formatter.write_str("at most 100000 proposition entries")
-        }
-
-        fn visit_seq<A>(self, mut sequence: A) -> Result<Self::Value, A::Error>
-        where
-            A: serde::de::SeqAccess<'de>,
-        {
-            if sequence
-                .size_hint()
-                .is_some_and(|size| size > MAX_PROPOSITION_MAP_ENTRIES)
-            {
-                return Err(serde::de::Error::custom(
-                    "propositions exceed the 100000-item wire limit",
-                ));
-            }
-            let mut values = Vec::with_capacity(
-                sequence
-                    .size_hint()
-                    .unwrap_or(0)
-                    .min(MAX_PROPOSITION_MAP_ENTRIES),
-            );
-            while let Some(value) = sequence.next_element()? {
-                if values.len() == MAX_PROPOSITION_MAP_ENTRIES {
-                    return Err(serde::de::Error::custom(
-                        "propositions exceed the 100000-item wire limit",
-                    ));
-                }
-                values.push(value);
-            }
-            Ok(values)
-        }
-    }
-
-    deserializer.deserialize_seq(PropositionVisitor)
-}
-
-#[cfg(feature = "serde")]
-impl TryFrom<PropositionMapDocumentWire> for PropositionMapDocument {
-    type Error = PropositionMapError;
-
-    fn try_from(wire: PropositionMapDocumentWire) -> Result<Self, Self::Error> {
-        let document = Self {
-            schema_version: wire.schema_version,
-            propositions: wire.propositions,
-        };
-        document.validate()?;
-        Ok(document)
-    }
-}
-
-impl PropositionMapDocument {
-    /// Constructs and validates a v1 proposition map.
-    pub fn new(propositions: Vec<PropositionEntry>) -> Result<Self, PropositionMapError> {
-        let document = Self {
-            schema_version: PropositionMapSchemaVersion::V1,
-            propositions,
-        };
-        document.validate()?;
-        Ok(document)
-    }
-
-    /// Reads exactly one bounded closed v1 JSON document through the owner type.
-    ///
-    /// Duplicate members, trailing JSON, unknown fields and versions, excess
-    /// population, and semantic validation failures are refused.
     #[cfg(feature = "serde")]
-    pub fn from_json_bytes(bytes: &[u8]) -> Result<Self, StrictDocumentReadError> {
-        read_strict_document(bytes)
+    fn maximum_depth(&self) -> usize {
+        let mut depths: Vec<usize> = Vec::with_capacity(self.nodes.len());
+        let mut maximum = 0_usize;
+        for node in &self.nodes {
+            let mut depth = 1_usize;
+            for operand in node.kind.operands().into_iter().flatten() {
+                let operand_depth = usize::try_from(operand.0)
+                    .ok()
+                    .and_then(|index| depths.get(index))
+                    .copied()
+                    .unwrap_or(0);
+                depth = depth.max(operand_depth.saturating_add(1));
+            }
+            maximum = maximum.max(depth);
+            depths.push(depth);
+        }
+        maximum
+    }
+}
+
+#[cfg(feature = "serde")]
+impl StrictDocument for FormulaDocument {
+    fn preflight_resource_limits(
+        bytes: &[u8],
+        limits: SyntaxArtifactLimits,
+    ) -> Result<usize, StrictDocumentReadError> {
+        let nodes = array_field_population(bytes, b"nodes");
+        if nodes > limits.formula_nodes {
+            return Err(StrictDocumentReadError::ResourceLimitExceeded {
+                resource: "formula nodes",
+                actual: nodes,
+                limit: limits.formula_nodes,
+            });
+        }
+        Ok(nodes)
     }
 
-    /// Checks identity ordering, uniqueness, and non-empty unique names.
-    pub fn validate(&self) -> Result<(), PropositionMapError> {
-        let mut names = BTreeMap::new();
-        for (index, entry) in self.propositions.iter().enumerate() {
-            if entry.name.is_empty() {
-                return Err(PropositionMapError::EmptyName { id: entry.id });
-            }
-            if let Some(previous) = index
-                .checked_sub(1)
-                .and_then(|previous| self.propositions.get(previous))
-            {
-                if previous.id >= entry.id {
-                    return Err(PropositionMapError::IdentityNotIncreasing {
-                        previous: previous.id,
-                        current: entry.id,
-                    });
-                }
-            }
-            if let Some(first) = names.insert(entry.name.as_str(), entry.id) {
-                return Err(PropositionMapError::DuplicateName {
-                    first,
-                    second: entry.id,
-                });
-            }
+    fn validate_resource_limits(
+        &self,
+        limits: SyntaxArtifactLimits,
+    ) -> Result<(), StrictDocumentReadError> {
+        if self.nodes.len() > limits.formula_nodes {
+            return Err(StrictDocumentReadError::ResourceLimitExceeded {
+                resource: "formula nodes",
+                actual: self.nodes.len(),
+                limit: limits.formula_nodes,
+            });
+        }
+        let depth = self.maximum_depth();
+        if depth > limits.formula_depth {
+            return Err(StrictDocumentReadError::ResourceLimitExceeded {
+                resource: "formula depth",
+                actual: depth,
+                limit: limits.formula_depth,
+            });
         }
         Ok(())
-    }
-
-    /// Returns the wire schema version.
-    pub const fn schema_version(&self) -> PropositionMapSchemaVersion {
-        self.schema_version
-    }
-
-    /// Returns proposition entries in strictly increasing identity order.
-    pub fn propositions(&self) -> &[PropositionEntry] {
-        &self.propositions
-    }
-}
-
-/// Validation failure for a proposition-map document.
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-#[non_exhaustive]
-pub enum PropositionMapError {
-    /// A proposition name is empty.
-    EmptyName {
-        /// Identity associated with the empty name.
-        id: PropositionId,
-    },
-    /// Proposition identities are duplicated or not strictly increasing.
-    IdentityNotIncreasing {
-        /// Previous identity.
-        previous: PropositionId,
-        /// Current rejected identity.
-        current: PropositionId,
-    },
-    /// Two identities use the same proposition name.
-    DuplicateName {
-        /// First identity using the name.
-        first: PropositionId,
-        /// Second identity using the name.
-        second: PropositionId,
-    },
-}
-
-impl fmt::Display for PropositionMapError {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::EmptyName { id } => write!(formatter, "proposition {} has an empty name", id.0),
-            Self::IdentityNotIncreasing { previous, current } => write!(
-                formatter,
-                "proposition identity {} does not follow {}",
-                current.0, previous.0
-            ),
-            Self::DuplicateName { first, second } => write!(
-                formatter,
-                "propositions {} and {} have the same name",
-                first.0, second.0
-            ),
-        }
     }
 }
 
@@ -758,7 +565,9 @@ mod tests {
     use alloc::{string::ToString, vec};
 
     use super::*;
-    use crate::NodeKind;
+    use crate::{
+        NodeKind, PropositionEntry, PropositionId, PropositionMapDocument, PropositionMapError,
+    };
 
     // Trace: TC-011, FR-004-AC-3
     #[test]

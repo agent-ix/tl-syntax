@@ -16,7 +16,7 @@ relationships:
 | FR-011 | FR-011-AC-1 through FR-011-AC-5 | TC-048, TC-049, TC-050, TC-052, TC-053 | 🚧 planned |
 | FR-012 | FR-012-AC-1 through FR-012-AC-5 | TC-051, TC-052, TC-053, TC-056 | 🚧 planned |
 | FR-013 | FR-013-AC-1 through FR-013-AC-5 | TC-052, TC-054 through TC-058 | 🚧 planned |
-| FR-014 | FR-014-AC-1 through FR-014-AC-5 | TC-075 | 🚧 planned |
+| FR-014 | FR-014-AC-1 through FR-014-AC-5 | TC-075 | ✅ covered |
 
 ## Profile evidence allocation
 
@@ -42,4 +42,4 @@ relationships:
 | TC-056 | Replay the paired corpus, every mutation, late-data/anchor/closure identity, rewrite rule, and external-target state | Integration | P0 | FR-012-AC-3, FR-012-AC-4, FR-012-AC-5, FR-013-AC-3, FR-013-AC-4 | 🚧 TL corpus/rewrite allocation implemented; Tasks 006–007 native bridge allocation remains |
 | TC-057 | Exercise bounded arbitrary formula-v2 decoding and v3-dialect parsing without unwind or profile misattribution | Property | P1 | FR-013-AC-1, FR-013-AC-2 | ✅ implemented |
 | TC-058 | Run the dependency-manifest gate over every implementation ticket owner, predecessor, M0 gate, and MRS acceptance prerequisite | Integration | P0 | FR-013-AC-5 | ✅ implemented |
-| TC-075 | Strict-read and compatibility-check every syntax owner artifact | Integration | P0 | FR-014-AC-1, FR-014-AC-2, FR-014-AC-3, FR-014-AC-4, FR-014-AC-5 | 🚧 planned |
+| TC-075 | Strict-read and compatibility-check every syntax owner artifact | Integration | P0 | FR-014-AC-1, FR-014-AC-2, FR-014-AC-3, FR-014-AC-4, FR-014-AC-5 | ✅ implemented in `tests/strict_syntax_artifacts.rs` |

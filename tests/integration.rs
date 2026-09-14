@@ -3,7 +3,7 @@
 use tl_syntax::{
     Formula, FormulaDocument, FormulaSchemaVersion, Interval, Node, NodeId, NodeKind,
     PropositionEntry, PropositionId, PropositionMapDocument, SemanticProfile, SourceSpan,
-    PROPOSITION_MAP_V1_SCHEMA,
+    SyntaxArtifactLimits, PROPOSITION_MAP_V1_SCHEMA,
 };
 
 use proptest::prelude::*;
@@ -404,7 +404,7 @@ fn formula_wire_decode_stops_at_the_document_node_limit() {
     )));
 }
 
-// Trace: TC-011, TC-032, FR-004-AC-3, FR-007-AC-5
+// Trace: TC-011, TC-032, TC-075, FR-004-AC-3, FR-007-AC-5, FR-014-AC-1, FR-014-AC-2, FR-014-AC-3
 #[test]
 fn unknown_node_fields_and_invalid_proposition_maps_are_rejected_on_decode() {
     let unknown_formula_document_field = r#"{
@@ -504,7 +504,8 @@ fn proposition_map_round_trips_in_stable_order() {
 #[test]
 fn public_proposition_map_reader_and_schema_are_strict_owner_artifacts() {
     let bytes = br#"{"schema_version":"tl-syntax.proposition-map/v1","propositions":[{"id":0,"name":"request"}]}"#;
-    let document = PropositionMapDocument::from_json_bytes(bytes).unwrap();
+    let document =
+        PropositionMapDocument::from_json_bytes(bytes, SyntaxArtifactLimits::default()).unwrap();
     assert_eq!(document.propositions()[0].name, "request");
 
     let schema: serde_json::Value = serde_json::from_str(PROPOSITION_MAP_V1_SCHEMA).unwrap();
@@ -514,10 +515,16 @@ fn public_proposition_map_reader_and_schema_are_strict_owner_artifacts() {
     );
 
     let duplicate = br#"{"schema_version":"tl-syntax.proposition-map/v1","propositions":[{"id":0,"name":"request","name":"response"}]}"#;
-    assert!(PropositionMapDocument::from_json_bytes(duplicate).is_err());
+    assert!(
+        PropositionMapDocument::from_json_bytes(duplicate, SyntaxArtifactLimits::default())
+            .is_err()
+    );
     let mut trailing = bytes.to_vec();
     trailing.extend_from_slice(b" []");
-    assert!(PropositionMapDocument::from_json_bytes(&trailing).is_err());
+    assert!(
+        PropositionMapDocument::from_json_bytes(&trailing, SyntaxArtifactLimits::default())
+            .is_err()
+    );
 
     let mut oversized_population =
         String::from(r#"{"schema_version":"tl-syntax.proposition-map/v1","propositions":["#);
@@ -528,9 +535,19 @@ fn public_proposition_map_reader_and_schema_are_strict_owner_artifacts() {
         oversized_population.push_str(&format!(r#"{{"id":{id},"name":"p{id}"}}"#));
     }
     oversized_population.push_str("]}");
-    let error =
-        PropositionMapDocument::from_json_bytes(oversized_population.as_bytes()).unwrap_err();
-    assert!(error.to_string().contains("100000-item wire limit"));
+    let error = PropositionMapDocument::from_json_bytes(
+        oversized_population.as_bytes(),
+        SyntaxArtifactLimits::default(),
+    )
+    .unwrap_err();
+    assert!(matches!(
+        error,
+        tl_syntax::StrictDocumentReadError::ResourceLimitExceeded {
+            resource: "propositions",
+            actual: 100_001,
+            limit: 100_000,
+        }
+    ));
 }
 
 // Trace: TC-012, TC-013, TC-014, TC-032, FR-005-AC-1, FR-005-AC-2, FR-005-AC-3, FR-007-AC-5, NFR-002-AC-2, StR-002-VC-2

@@ -1,6 +1,6 @@
 use core::fmt;
 
-use crate::syntax::{
+use crate::formula::graph::{
     Formula, Interval, Node, NodeId, NodeKind, SemanticProfile, SourceSpan,
     MAX_FORMULA_DOCUMENT_NODES,
 };
