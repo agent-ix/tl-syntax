@@ -23,7 +23,7 @@ relationships:
   before additional feature implementation.
 - [x] **Task-009**: Reconcile already-landed TL core code with that reviewed
   architecture while preserving public compatibility.
-- [x] **Task-010**: Publish the complete Quire owner contract set consumed by
+- [ ] **Task-010**: Publish the complete Quire owner contract set consumed by
   FR-025 and FR-026, including the shared `quire-specification` rulings those
   executable owners must implement.
 - [x] **Task-012**: Split the existing Contract IR substrate into a cycle-free
@@ -71,8 +71,9 @@ relationships:
 - Formula-v2 node/profile identities and typed refusals are authored once in `tl-syntax` and imported everywhere else.
 - Position-history and past-result identities are authored once in `tl-mltl`; the bridge constructs those public types rather than mirroring them.
 - Canonical corpus identity is authored once in `tl-syntax`; consumers pin and replay it without alternate expected semantics.
-- Native checked predicates/subjects are authored once in
-  `quire-spec-language`; observations, position/progress/completeness and
+- Native checked predicates/subjects and canonical formula-wide native
+  evaluation requests/results are authored once in `quire-spec-language`;
+  observations, position/progress/completeness and
   availability assertions once in `quire-observation`; canonical native
   protocol results once in `quire-protocol`; Contract IR owns only mappings,
   derived artifacts, and joins.
@@ -80,9 +81,11 @@ relationships:
   `quire-specification`. This is a normative reference edge, not a Cargo or
   wire-type dependency; executable schemas and validated types remain with
   their unique runtime owners.
-- Native and TL results retain their owner vocabularies. Each result owner
-  publishes a selected total mapping view; Contract IR compares those views
-  and never parses owner bytes or normalizes labels by display text.
+- Native and TL results retain their owner vocabularies. QSL publishes the
+  formula-wide native result, TL-MLTL publishes the TL result mapping, and
+  Contract IR compares those views without parsing owner bytes or normalizing
+  labels by display text. QProtocol's separate predicate-result mapping supplies
+  FR-025 leaf valuations and cannot substitute for a formula result.
 - The ecosystem model describes these owner edges and may drive later analysis,
   but cannot authorize its own contract revision or certify its own output.
 
@@ -195,7 +198,7 @@ relationships:
 | `tl-parse` | Dialect architecture and complete corpus compatibility | #35/#38 completed |
 | `tl-mltl` | History/trace/request/report readers and TL result mapping | #63/#66 completed |
 | `tl-rewrite` | Catalog/engine/replay architecture and corpus compatibility | #38/#41 completed |
-| `quire-spec-language` | Checked predicate and complete temporal subject owner | #90 |
+| `quire-spec-language` | Checked predicate/temporal subject plus formula-wide native evaluation request/result owner | #90 and #95 |
 | `quire-observation` | Position/clock/capture/progress/closure/completeness/availability owner | #15 completed at `9ac80e9` |
 | `quire-protocol` | Canonical result, lineage and native result mappings | #8, expanded before code |
 | `quire-contract-ir` | Cycle-free model package, predicate projection/valuation, temporal projection/result join, and bounded ecosystem-model export | #73, #70, #71, then #74 |
@@ -243,10 +246,10 @@ accepted FR-025/026 ---/     F1 ----+-> B1 -> C1 -> G1
 | Task-004 | A | FR-011, FR-013 | TC-056 | completed |
 | Task-005 | A | FR-013 | TC-056, TC-058 | completed |
 | Task-006 | B | FR-012, FR-013, Contract-IR FR-025 | TC-053, TC-056 | completed at Contract-IR `202210cf` |
-| Task-007 | C | FR-012, FR-013, Contract-IR FR-026 | TC-056 | in progress; all predecessors complete |
+| Task-007 | C | FR-012, FR-013, Contract-IR FR-026 | TC-056 | in progress; projection underway, result join sequenced after Task-010 FR-052 |
 | Task-008 | Architecture | MRS-003, FR-011..FR-013, Contract-IR FR-025..FR-026 | composite spec/object/architecture reviews | completed |
 | Task-009 | Core | Task-001..Task-005 accepted behavior | TC-048..TC-058 | completed; all four TL allocations merged |
-| Task-010 | Owners | Contract-IR FR-025..FR-026 owner inputs | owner contract tests | completed; shared, QSL, QObs and QProtocol allocations merged |
+| Task-010 | Owners | Contract-IR FR-025..FR-026 owner inputs | owner contract tests | in progress; prior owner set preserved, QSL FR-052 formula-wide result boundary added |
 | Task-011 | Integration | complete epic #52 ecosystem | TC-053, TC-056 and cross-owner integration | blocked on Tasks 006–007 |
 | Task-012 | Architecture | Contract-IR FR-028 | TC-041 | completed at `53cc03c` |
 

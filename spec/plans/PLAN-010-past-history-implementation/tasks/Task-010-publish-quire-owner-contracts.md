@@ -2,7 +2,7 @@
 id: Task-010
 title: "Publish the complete Quire owner contract set"
 type: Task
-status: completed
+status: in_progress
 track: Owners
 priority: P0
 relationships:
@@ -33,6 +33,9 @@ native-owner/bridge Cargo graph acyclic.
   and complete native temporal subjects derived from admitted compiled
   protocol packages, including clock, activation, capture, node, span, type,
   model, and definition identities.
+- [ ] In `quire-spec-language`, publish canonical formula-wide native temporal
+  request/result contracts whose strict result reader re-evaluates an admitted
+  request and whose public view exposes complete FR-026 join fields.
 - [x] In `quire-observation`, publish observation, population, position,
   clock, capture, progress, closure, completeness, and result-availability
   assertions derived from qualified immutable observation state; retain trigger
@@ -41,15 +44,15 @@ native-owner/bridge Cargo graph acyclic.
   direct-predecessor contract with independent execution, truth, settlement,
   decision-scope/execution progress and closure, decision premises, completeness, and
   embedded owner selections.
-- [x] In `quire-protocol`, publish one exact selected Contract-IR result
-  mapping contract/view that binds the applicable predicate or temporal subject
-  and correspondence so Contract IR never interprets owner bytes or assumes
-  normalized Boolean labels are native wire labels.
+- [x] In `quire-protocol`, publish the exact selected Contract-IR
+  predicate-result mapping contract/view used by FR-025 leaf valuations so
+  Contract IR never interprets owner bytes or assumes normalized Boolean labels
+  are native wire labels.
 - [x] Provide closed version selection, canonical schemas, exact digests,
   duplicate/trailing/unknown-field refusal, byte/depth/count/string limits,
   and no partial output at every owner boundary.
-- [x] Run code review, Rust review, and gap analysis in every owner repository
-  and fix all findings before dependency pins advance.
+- [ ] Run code review, Rust review, and gap analysis for the added native
+  temporal owner surface and fix all findings before dependency pins advance.
 
 ## Deliverables
 
@@ -73,5 +76,12 @@ native-owner/bridge Cargo graph acyclic.
   `c1df7b18d0e93c70a3b1d67c6a71de8d5ff8b9780510265ebdad69cdd14b79bd`;
   bounded public entry points `result::{produce,produce_bounded,read,read_bounded}`
   and `result::contract_ir::{map,map_bounded,read,read_bounded}`.
+- FR-026 implementation proved that the QProtocol mapping above is
+  checked-predicate-bound and correctly supplies FR-025 valuations, but cannot
+  substitute for a formula-wide native evaluator result. QSL FR-052 and
+  IF-009/VO-009 own that missing result boundary without changing the completed
+  Protocol contract or introducing a dependency cycle.
+- The corrective owner implementation is tracked by
+  `agent-ix/quire-spec-language#95`.
 - No owner imports Contract-IR wire vocabulary or calls an evaluator through a
   callback.

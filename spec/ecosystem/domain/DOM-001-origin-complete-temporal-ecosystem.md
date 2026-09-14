@@ -11,6 +11,7 @@ relationships:
   - { target: ix://agent-ix/tl-syntax/VO-006, type: contains }
   - { target: ix://agent-ix/tl-syntax/VO-007, type: contains }
   - { target: ix://agent-ix/tl-syntax/VO-008, type: contains }
+  - { target: ix://agent-ix/tl-syntax/VO-009, type: contains }
   - { target: ix://agent-ix/tl-syntax/ENUM-001, type: contains }
   - { target: ix://agent-ix/tl-syntax/SM-001, type: contains }
   - { target: ix://agent-ix/tl-syntax/PROC-001, type: contains }
@@ -41,7 +42,8 @@ closed vocabularies; `tl-syntax` owns the
 canonical TL graph, profile and signal/proposition contracts; `tl-parse` owns
 only internal text dialects; `tl-mltl` owns history, request and evaluator
 semantics; `tl-rewrite` owns declared equivalence-preserving rewrites;
-`quire-spec-language` owns checked native definitions and temporal subjects;
+`quire-spec-language` owns checked native definitions, temporal subjects and
+canonical native temporal evaluation requests/results;
 `quire-observation` owns observation, clock/capture, progress, completeness and
 availability assertions; `quire-protocol` owns canonical native assessment
 results; and the Contract IR repository owns a dependency-free model-foundation
@@ -67,7 +69,8 @@ or certify the system that emitted it.
 - **AuthorityArtifact** — immutable owner bytes plus identity, revision and digest.
 - **NativeDefinition** — checked predicate leaf or temporal subject and its complete source/model/profile binding.
 - **ObservationContext** — immutable position, clock, capture, progress, completeness and availability assertions.
-- **AssessmentResult** — canonical independent execution/truth/settlement/support/correction record.
+- **NativeTemporalResult** — canonical formula-wide native evaluator result bound to one checked subject and request.
+- **AssessmentResult** — canonical protocol execution/truth/settlement/support/correction record; predicate-bound results supply bridge valuations and never substitute for a formula result.
 - **TLArtifactSet** — formula, catalog/map, history/trace/request/report artifacts under their target contracts.
 - **Correspondence** — immutable projection or join binding owner artifacts without replacing their identities.
 - **EcosystemDecision** — closed admitted/non-value/refusal/conflict vocabulary and precedence.
@@ -82,10 +85,12 @@ erDiagram
     SEMANTIC_CONTRACT ||--o{ AUTHORITY_ARTIFACT : types
     NATIVE_DEFINITION ||--o{ AUTHORITY_ARTIFACT : retains
     OBSERVATION_CONTEXT ||--o{ AUTHORITY_ARTIFACT : retains
+    NATIVE_TEMPORAL_RESULT ||--o{ AUTHORITY_ARTIFACT : retains
     ASSESSMENT_RESULT ||--o{ AUTHORITY_ARTIFACT : retains
     NATIVE_DEFINITION ||--o{ CORRESPONDENCE : projects
     OBSERVATION_CONTEXT ||--o{ CORRESPONDENCE : binds
-    ASSESSMENT_RESULT ||--o{ CORRESPONDENCE : joins
+    NATIVE_TEMPORAL_RESULT ||--o{ CORRESPONDENCE : joins
+    ASSESSMENT_RESULT ||--o{ CORRESPONDENCE : supplies_leaf_values
     TL_ARTIFACT_SET ||--o{ CORRESPONDENCE : realizes
     CORRESPONDENCE ||--|| ECOSYSTEM_DECISION : yields
 ```

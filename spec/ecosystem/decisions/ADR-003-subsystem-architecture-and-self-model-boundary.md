@@ -67,7 +67,7 @@ accepted wire/profile identity:
 | `tl-parse` | `dialect::{v1,v2,v3}`, `lexer`, `parser`, `formatter`, `diagnostic`, with shared traversal separated from dialect policy |
 | `tl-mltl` | `future`, `past::{history,requirement,evaluate,result}`, `wire::{trace,request,report}`, `clock`, `mapping` |
 | `tl-rewrite` | `catalog`, `engine::{future,past}`, `equivalence`, `report`, `replay` |
-| `quire-spec-language` | existing compiler/runtime subsystems plus `protocol_artifact::{checked_predicate,temporal_subject}` derived only from admitted v2 packages |
+| `quire-spec-language` | existing compiler/runtime subsystems plus `protocol_artifact::{checked_predicate,temporal_subject,native_temporal::{request,result}}`; checked definitions derive only from admitted v2 packages and native result truth derives only from its evaluator |
 | `quire-observation` | `authority::{observation,population,position,clock,capture,progress,closure,completeness,availability}` over qualified immutable observation state |
 | `quire-protocol` | `result::{record,reader,global,lineage,contract_ir}` plus the existing separate refusal subsystem |
 | `quire-contract-ir` repository | cycle-free `quire-contract-model` package containing the existing shared substrate; compatibility-reexporting `quire-contract-ir` package with `predicate::{admission,definition,artifacts,valuation,decision,reader}`, `temporal::{admission,formula,valuation,request,correspondence,join,decision,reader}`, and observational `ecosystem_model::{manifest,graph,document,reader}` |
@@ -120,9 +120,14 @@ predicate and temporal bridges become sibling subsystems over shared contract,
 canonicalization, limit and diagnostic foundations.
 
 Where valid owner result vocabularies differ, Contract IR consumes
-owner-published normalized mapping views selected by exact contract. It does
-not require an owner to adopt Contract-IR labels and does not normalize by
-display text.
+owner-published constructor-private result/mapping views selected by exact
+contract. The QProtocol mapping consumed by FR-025 is predicate-leaf-bound and
+supplies explicit valuation cells. It is not a native temporal result and is
+never compared to a TL formula result. QSL therefore owns a canonical
+formula-wide native request/result sibling to the TL request/result; Contract IR
+constructs both inputs from the same admitted observations and compares the two
+formula-wide results without invoking either evaluator. It does not require an
+owner to adopt Contract-IR labels and does not normalize by display text.
 
 This reorganization increases short-term cross-repository work but makes
 ownership, versioning, generated models and future self-analysis explicit. It
