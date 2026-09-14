@@ -20,7 +20,7 @@ relationships:
 | FR-005 | FR-005-AC-1, FR-005-AC-2, FR-005-AC-3 | TC-012, TC-013, TC-014 | ✅ covered |
 | FR-006 | FR-006-AC-1, FR-006-AC-2, FR-006-AC-3, FR-006-AC-5, FR-006-AC-6, FR-006-AC-7, FR-006-AC-8 | TC-021, TC-022, TC-023, TC-025, TC-026, TC-034, TC-035 | ✅ covered |
 | FR-007 | FR-007-AC-1, FR-007-AC-2, FR-007-AC-3, FR-007-AC-4, FR-007-AC-5 | TC-027, TC-028, TC-029, TC-030, TC-031, TC-032 | ✅ covered |
-| FR-014 | FR-014-AC-1 through FR-014-AC-5 | TC-075 | 🚧 planned |
+| FR-014 | FR-014-AC-1 through FR-014-AC-5 | TC-075 | ✅ covered |
 
 ## Stakeholder Requirement Coverage
 
@@ -79,4 +79,4 @@ relationships:
 | TC-037 | Exclude diagnostic source spans from semantic identity and serialization | Integration | P0 | FR-003-AC-4 | ✅ implemented |
 | TC-038 | Bind the local SUITE-008 identity and keep it outside Quoin proof claims | Integration | P0 | NFR-003-AC-2 | ✅ implemented |
 | TC-039 | Bind hosted CI to the released scoped ix-flow package while retaining its executable version and manual-only trigger | Integration | P0 | NFR-003-AC-6 | ✅ implemented |
-| TC-075 | Strict-read and compatibility-check every syntax owner artifact | Integration | P0 | FR-014-AC-1, FR-014-AC-2, FR-014-AC-3, FR-014-AC-4, FR-014-AC-5 | 🚧 planned |
+| TC-075 | Strict-read and compatibility-check every syntax owner artifact | Integration | P0 | FR-014-AC-1, FR-014-AC-2, FR-014-AC-3, FR-014-AC-4, FR-014-AC-5 | ✅ implemented in `tests/strict_syntax_artifacts.rs` |

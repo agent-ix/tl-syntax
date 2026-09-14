@@ -13,6 +13,11 @@ catalogs are borrowed views, so the default API needs neither `std` nor a heap
 allocator. Optional owned and serde layers provide strict versioned exchange
 documents.
 
+The public semantic modules are `formula::{graph, profile, document}`,
+`signal::{domain, catalog, binding, document}`, and
+`contracts::{limits, manifest}`. Crate-root re-exports preserve the original
+paths.
+
 ## Features
 
 | Feature | Default | Adds |
@@ -58,6 +63,13 @@ the new separate documents. The signal-catalog schema is the separately pinned
 [`spec/signal-catalog-v1.schema.json`](spec/signal-catalog-v1.schema.json)
 artifact exposed by the `serde` API. Downstream temporal crates must pin and
 report `tl-syntax-corpus/v1`.
+
+Each formula, signal-catalog, and proposition-map owner document exposes
+`from_json_bytes(bytes, SyntaxArtifactLimits)`. These readers intersect caller
+limits with immutable owner maxima, reject noncanonical or trailing JSON, and
+return only fully validated values. The same API publishes exact schema bytes
+and lowercase SHA-256 digest constants. Validated documents can emit canonical
+bytes and a contract-domain-separated content identity.
 
 ## Build
 

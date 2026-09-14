@@ -4,8 +4,22 @@ use core::{fmt, marker::PhantomData};
 
 #[cfg(feature = "serde")]
 use crate::{
-    document::{read_strict_document, StrictDocumentReadError},
-    MAX_SIGNAL_CATALOG_BINDINGS, MAX_SIGNAL_CATALOG_SIGNALS,
+    contracts::{
+        identity::canonical_json,
+        reader::{
+            array_field_population, read_strict_document, StrictDocument, StrictDocumentReadError,
+        },
+    },
+    SyntaxArtifactLimits, MAX_SIGNAL_CATALOG_BINDINGS, MAX_SIGNAL_CATALOG_SIGNALS,
+};
+
+pub use super::proposition::{
+    PropositionEntry, PropositionMapDocument, PropositionMapError, PropositionMapSchemaVersion,
+};
+#[cfg(feature = "serde")]
+pub use super::proposition::{
+    MAX_PROPOSITION_MAP_ENTRIES, PROPOSITION_MAP_V1_SCHEMA, PROPOSITION_MAP_V1_SCHEMA_BYTES,
+    PROPOSITION_MAP_V1_SCHEMA_SHA256,
 };
 use crate::{
     PropositionBinding, SignalCatalog, SignalCatalogError, SignalDeclaration, SignalDomain,
@@ -14,7 +28,16 @@ use crate::{
 
 /// Exact checked-in Draft 7 schema bytes for `tl-syntax.signal-catalog/v1`.
 #[cfg(feature = "serde")]
-pub const SIGNAL_CATALOG_V1_SCHEMA: &str = include_str!("../spec/signal-catalog-v1.schema.json");
+pub const SIGNAL_CATALOG_V1_SCHEMA: &str = include_str!("../../spec/signal-catalog-v1.schema.json");
+
+/// Exact checked-in Draft 7 schema bytes for `tl-syntax.signal-catalog/v1`.
+#[cfg(feature = "serde")]
+pub const SIGNAL_CATALOG_V1_SCHEMA_BYTES: &[u8] =
+    include_bytes!("../../spec/signal-catalog-v1.schema.json");
+/// Lowercase SHA-256 of [`SIGNAL_CATALOG_V1_SCHEMA_BYTES`].
+#[cfg(feature = "serde")]
+pub const SIGNAL_CATALOG_V1_SCHEMA_SHA256: &str =
+    "24fe7ccc26918e9a52dfa49a0e670ef932d0bfcd155d5d73dfd0be23dd276df8";
 
 /// Version of the serialized signal-catalog document.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -109,8 +132,27 @@ impl SignalCatalogDocument {
     /// Duplicate members, trailing JSON, unknown fields and versions, excess
     /// population, and semantic validation failures are refused.
     #[cfg(feature = "serde")]
-    pub fn from_json_bytes(bytes: &[u8]) -> Result<Self, StrictDocumentReadError> {
-        read_strict_document(bytes)
+    pub fn from_json_bytes(
+        bytes: &[u8],
+        limits: SyntaxArtifactLimits,
+    ) -> Result<Self, StrictDocumentReadError> {
+        read_strict_document(bytes, limits)
+    }
+
+    /// Serializes the validated document to its one canonical owner encoding.
+    #[cfg(feature = "serde")]
+    pub fn canonical_json_bytes(&self) -> Result<Vec<u8>, serde_json::Error> {
+        canonical_json(self)
+    }
+
+    /// Returns the domain-separated lowercase SHA-256 content identity.
+    #[cfg(feature = "serde")]
+    pub fn content_identity(&self) -> Result<String, serde_json::Error> {
+        let bytes = self.canonical_json_bytes()?;
+        Ok(crate::contracts::identity::content_identity(
+            self.schema_version.as_str(),
+            &bytes,
+        ))
     }
 
     fn from_parts(
@@ -159,6 +201,53 @@ impl SignalCatalogDocument {
     /// Returns direct proposition bindings in strictly increasing identity order.
     pub fn bindings(&self) -> &[PropositionBinding] {
         &self.bindings
+    }
+}
+
+#[cfg(feature = "serde")]
+impl StrictDocument for SignalCatalogDocument {
+    fn preflight_resource_limits(
+        bytes: &[u8],
+        limits: SyntaxArtifactLimits,
+    ) -> Result<usize, StrictDocumentReadError> {
+        let signals = array_field_population(bytes, b"signals");
+        if signals > limits.signals {
+            return Err(StrictDocumentReadError::ResourceLimitExceeded {
+                resource: "signals",
+                actual: signals,
+                limit: limits.signals,
+            });
+        }
+        let bindings = array_field_population(bytes, b"bindings");
+        if bindings > limits.bindings {
+            return Err(StrictDocumentReadError::ResourceLimitExceeded {
+                resource: "bindings",
+                actual: bindings,
+                limit: limits.bindings,
+            });
+        }
+        Ok(signals.saturating_add(bindings))
+    }
+
+    fn validate_resource_limits(
+        &self,
+        limits: SyntaxArtifactLimits,
+    ) -> Result<(), StrictDocumentReadError> {
+        if self.signals.len() > limits.signals {
+            return Err(StrictDocumentReadError::ResourceLimitExceeded {
+                resource: "signals",
+                actual: self.signals.len(),
+                limit: limits.signals,
+            });
+        }
+        if self.bindings.len() > limits.bindings {
+            return Err(StrictDocumentReadError::ResourceLimitExceeded {
+                resource: "bindings",
+                actual: self.bindings.len(),
+                limit: limits.bindings,
+            });
+        }
+        Ok(())
     }
 }
 

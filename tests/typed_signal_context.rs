@@ -7,9 +7,9 @@ use tl_syntax::{
     RequirementContextError, RequirementContextField, RequirementContextSchemaVersion,
     SemanticProfile, SignalCatalog, SignalCatalogDocument, SignalCatalogError,
     SignalCatalogSchemaVersion, SignalDeclaration, SignalDomain, SignalDomainError, SignalId,
-    SourceSpan, MAX_REQUIREMENT_CONTEXT_FIELD_BYTES, MAX_SIGNAL_CATALOG_BINDINGS,
-    MAX_SIGNAL_CATALOG_SIGNALS, MAX_SIGNAL_NAME_BYTES, MAX_TL_DOCUMENT_BYTES,
-    MAX_TL_DOCUMENT_DEPTH, SIGNAL_CATALOG_V1_SCHEMA,
+    SourceSpan, SyntaxArtifactLimits, MAX_REQUIREMENT_CONTEXT_FIELD_BYTES,
+    MAX_SIGNAL_CATALOG_BINDINGS, MAX_SIGNAL_CATALOG_SIGNALS, MAX_SIGNAL_NAME_BYTES,
+    MAX_TL_DOCUMENT_BYTES, MAX_TL_DOCUMENT_DEPTH, SIGNAL_CATALOG_V1_SCHEMA,
 };
 
 fn boolean_signal(id: u32, name: &str) -> SignalDeclaration<'_> {
@@ -90,12 +90,14 @@ fn borrowed_and_owned_catalogs_round_trip_with_distinct_identities() {
     );
 }
 
-// Trace: TC-028, TC-029, TC-032, FR-007-AC-1, FR-007-AC-2, FR-007-AC-5
+// Trace: TC-028, TC-029, TC-032, TC-075, FR-007-AC-1, FR-007-AC-2, FR-007-AC-5, FR-014-AC-1, FR-014-AC-2, FR-014-AC-3
 #[test]
 fn public_signal_catalog_reader_and_schema_are_strict_owner_artifacts() {
-    let valid = include_bytes!("fixtures/valid-signal-catalog.json");
+    let valid_document: SignalCatalogDocument =
+        serde_json::from_slice(include_bytes!("fixtures/valid-signal-catalog.json")).unwrap();
+    let valid = serde_json::to_vec(&valid_document).unwrap();
     assert_eq!(
-        SignalCatalogDocument::from_json_bytes(valid)
+        SignalCatalogDocument::from_json_bytes(&valid, SyntaxArtifactLimits::default())
             .unwrap()
             .schema_version(),
         SignalCatalogSchemaVersion::V1
@@ -110,17 +112,27 @@ fn public_signal_catalog_reader_and_schema_are_strict_owner_artifacts() {
     assert_eq!(schema["properties"]["bindings"]["maxItems"], 100_000);
 
     let duplicate_root = br#"{"schema_version":"tl-syntax.signal-catalog/v1","schema_version":"tl-syntax.signal-catalog/v1","signals":[],"bindings":[]}"#;
-    assert!(SignalCatalogDocument::from_json_bytes(duplicate_root).is_err());
+    assert!(SignalCatalogDocument::from_json_bytes(
+        duplicate_root,
+        SyntaxArtifactLimits::default()
+    )
+    .is_err());
     let duplicate_nested = br#"{"schema_version":"tl-syntax.signal-catalog/v1","signals":[{"id":0,"id":1,"name":"ready","domain":{"kind":"boolean"}}],"bindings":[]}"#;
-    assert!(SignalCatalogDocument::from_json_bytes(duplicate_nested).is_err());
+    assert!(SignalCatalogDocument::from_json_bytes(
+        duplicate_nested,
+        SyntaxArtifactLimits::default()
+    )
+    .is_err());
 
     let mut trailing = valid.to_vec();
     trailing.extend_from_slice(b" null");
-    assert!(SignalCatalogDocument::from_json_bytes(&trailing).is_err());
+    assert!(
+        SignalCatalogDocument::from_json_bytes(&trailing, SyntaxArtifactLimits::default()).is_err()
+    );
 
     let oversized = vec![b' '; MAX_TL_DOCUMENT_BYTES + 1];
     assert!(matches!(
-        SignalCatalogDocument::from_json_bytes(&oversized),
+        SignalCatalogDocument::from_json_bytes(&oversized, SyntaxArtifactLimits::default()),
         Err(tl_syntax::StrictDocumentReadError::DocumentTooLarge {
             actual,
             limit: MAX_TL_DOCUMENT_BYTES,
@@ -133,7 +145,7 @@ fn public_signal_catalog_reader_and_schema_are_strict_owner_artifacts() {
         "]".repeat(MAX_TL_DOCUMENT_DEPTH)
     );
     assert!(matches!(
-        SignalCatalogDocument::from_json_bytes(deeply_nested.as_bytes()),
+        SignalCatalogDocument::from_json_bytes(deeply_nested.as_bytes(), SyntaxArtifactLimits::default()),
         Err(tl_syntax::StrictDocumentReadError::DepthLimitExceeded {
             actual,
             limit: MAX_TL_DOCUMENT_DEPTH,

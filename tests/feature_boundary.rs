@@ -36,7 +36,7 @@ impl Drop for TargetDir {
     }
 }
 
-// Trace: TC-019, TC-033, NFR-001-AC-1, NFR-001-AC-2
+// Trace: TC-019, TC-033, TC-075, NFR-001-AC-1, NFR-001-AC-2, FR-014-AC-5
 #[test]
 fn no_std_feature_matrix_and_default_dependency_gate_execute() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));

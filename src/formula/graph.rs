@@ -1,18 +1,20 @@
 use core::fmt;
 
+pub use super::profile::{
+    OperatorArity, PastOperatorKind, SemanticProfile, TemporalFamily, PAST_OPERATORS_V1,
+};
+use crate::contracts::limits::{OWNER_FORMULA_DEPTH, OWNER_FORMULA_NODES};
+
 /// Maximum node count accepted by the v1 JSON wire decoder.
 ///
 /// This bounds allocation for both wire decoding and programmatic construction,
 /// and bounds the node budget of allocation-free future-operator lowering.
-pub const MAX_FORMULA_DOCUMENT_NODES: usize = 100_000;
+pub const MAX_FORMULA_DOCUMENT_NODES: usize = OWNER_FORMULA_NODES;
 
 /// Maximum root-to-leaf depth accepted by an owned formula-v2 document.
 ///
 /// Formula-v1 retains its original node-count-only admission behavior.
-pub const MAX_FORMULA_DOCUMENT_DEPTH: usize = 4_096;
-
-/// Closed past-time operator-profile identity.
-pub const PAST_OPERATORS_V1: &str = "tl-syntax.past-operators/v1";
+pub const MAX_FORMULA_DOCUMENT_DEPTH: usize = OWNER_FORMULA_DEPTH;
 
 /// A discrete-time inclusive interval `[start, end]`.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -152,102 +154,6 @@ pub struct NodeId(pub u32);
 impl NodeId {
     fn as_usize(self) -> Option<usize> {
         usize::try_from(self.0).ok()
-    }
-}
-
-/// Finite-trace semantic profile attached to an exchanged formula.
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-pub enum SemanticProfile {
-    /// Boolean semantics over a complete finite trace.
-    #[cfg_attr(feature = "serde", serde(rename = "mltl.closed-trace/v1"))]
-    ClosedTraceV1,
-    /// Online prefix semantics that remain pending until the prefix decides the formula.
-    #[cfg_attr(feature = "serde", serde(rename = "mltl.online-prefix/v1"))]
-    OnlinePrefixV1,
-    /// Origin-complete past-time semantics over a discrete position history.
-    #[cfg_attr(feature = "serde", serde(rename = "mltl.origin-complete-history/v1"))]
-    OriginCompleteHistoryV1,
-}
-
-impl SemanticProfile {
-    /// Every profile; `as_str`'s exhaustive match below names the same set.
-    pub const ALL: [Self; 3] = [
-        Self::ClosedTraceV1,
-        Self::OnlinePrefixV1,
-        Self::OriginCompleteHistoryV1,
-    ];
-
-    /// Returns the stable wire identifier.
-    pub const fn as_str(self) -> &'static str {
-        match self {
-            Self::ClosedTraceV1 => "mltl.closed-trace/v1",
-            Self::OnlinePrefixV1 => "mltl.online-prefix/v1",
-            Self::OriginCompleteHistoryV1 => "mltl.origin-complete-history/v1",
-        }
-    }
-}
-
-/// Temporal direction owned by a primitive node.
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub enum TemporalFamily {
-    /// Future-time F/G/U/R primitive.
-    Future,
-    /// Past-time O/H/Y/S/T primitive.
-    Past,
-}
-
-/// Operand count of a temporal operator.
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub enum OperatorArity {
-    /// One formula operand.
-    Unary,
-    /// Two formula operands.
-    Binary,
-}
-
-/// Closed semantic catalog for [`PAST_OPERATORS_V1`].
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub enum PastOperatorKind {
-    /// Bounded Once.
-    Once,
-    /// Bounded Historically.
-    Historically,
-    /// Strong Previous, with the truth relation of `Once[1,1]`.
-    StrongPrevious,
-    /// Bounded Since.
-    Since,
-    /// Bounded Triggered.
-    Triggered,
-}
-
-impl PastOperatorKind {
-    /// Every operator in the closed v1 catalog.
-    pub const ALL: [Self; 5] = [
-        Self::Once,
-        Self::Historically,
-        Self::StrongPrevious,
-        Self::Since,
-        Self::Triggered,
-    ];
-
-    /// Returns the stable semantic node name, not a parser spelling.
-    pub const fn semantic_name(self) -> &'static str {
-        match self {
-            Self::Once => "Once",
-            Self::Historically => "Historically",
-            Self::StrongPrevious => "StrongPrevious",
-            Self::Since => "Since",
-            Self::Triggered => "Triggered",
-        }
-    }
-
-    /// Returns the operator's fixed operand count.
-    pub const fn arity(self) -> OperatorArity {
-        match self {
-            Self::Once | Self::Historically | Self::StrongPrevious => OperatorArity::Unary,
-            Self::Since | Self::Triggered => OperatorArity::Binary,
-        }
     }
 }
 
