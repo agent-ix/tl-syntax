@@ -250,7 +250,7 @@ accepted FR-025/026 ---/     F1 ----+-> B1 -> C1 -> G1
 | Task-008 | Architecture | MRS-003, FR-011..FR-013, Contract-IR FR-025..FR-026 | composite spec/object/architecture reviews | completed |
 | Task-009 | Core | Task-001..Task-005 accepted behavior | TC-048..TC-058 | completed; all four TL allocations merged |
 | Task-010 | Owners | Contract-IR FR-025..FR-026 owner inputs | owner contract tests | completed; final QSL owner merged at `c2915338` |
-| Task-011 | Integration | complete epic #52 ecosystem | TC-053, TC-056 and cross-owner integration | completed through QCI #79/#80 at `4d139309`; SR-538/SR-539/SR-540 pass |
+| Task-011 | Integration | complete epic #52 ecosystem | TC-053, TC-056 and cross-owner integration | completed through QCI #79/#80 at `4d139309`; SR-538..SR-540 and SR-070..SR-072 pass |
 | Task-012 | Architecture | Contract-IR FR-028 | TC-041 | completed at `53cc03c` |
 
 ## Coordination Rules
