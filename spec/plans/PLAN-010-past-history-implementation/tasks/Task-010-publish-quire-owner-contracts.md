@@ -2,7 +2,7 @@
 id: Task-010
 title: "Publish the complete Quire owner contract set"
 type: Task
-status: in_progress
+status: completed
 track: Owners
 priority: P0
 relationships:
@@ -33,7 +33,7 @@ native-owner/bridge Cargo graph acyclic.
   and complete native temporal subjects derived from admitted compiled
   protocol packages, including clock, activation, capture, node, span, type,
   model, and definition identities.
-- [ ] In `quire-spec-language`, publish canonical formula-wide native temporal
+- [x] In `quire-spec-language`, publish canonical formula-wide native temporal
   request/result contracts whose strict result reader re-evaluates an admitted
   request and whose public view exposes complete FR-026 join fields.
 - [x] In `quire-observation`, publish observation, population, position,
@@ -51,7 +51,7 @@ native-owner/bridge Cargo graph acyclic.
 - [x] Provide closed version selection, canonical schemas, exact digests,
   duplicate/trailing/unknown-field refusal, byte/depth/count/string limits,
   and no partial output at every owner boundary.
-- [ ] Run code review, Rust review, and gap analysis for the added native
+- [x] Run code review, Rust review, and gap analysis for the added native
   temporal owner surface and fix all findings before dependency pins advance.
 
 ## Deliverables
@@ -82,6 +82,16 @@ native-owner/bridge Cargo graph acyclic.
   IF-009/VO-009 own that missing result boundary without changing the completed
   Protocol contract or introducing a dependency cycle.
 - The corrective owner implementation is tracked by
-  `agent-ix/quire-spec-language#95`.
+  `agent-ix/quire-spec-language#95` and merged through
+  `agent-ix/quire-spec-language#96` at
+  `c29153388b4f06d464f9a1daf949c5dc950fd832`.
+- QSL native temporal handoff: request contract
+  `quire.native-temporal-request/v1`, schema SHA-256
+  `2539140ff1f6fb5e481e5ae658b81c325a284bfcd85cc5c048ea1d49c4dfdebe`;
+  result contract `quire.native-temporal-result/v1`, schema SHA-256
+  `e55e15cc852f0145244d233ca5c88381e0969daf25f644e45a4da3362b611e28`;
+  public entry points `request::{produce,read}` and
+  `result::{evaluate,read}`. TC-140 passes 11/11, all eight FR-052 criteria are
+  backed, and SR-424/SR-425 pass after every finding was fixed.
 - No owner imports Contract-IR wire vocabulary or calls an evaluator through a
   callback.

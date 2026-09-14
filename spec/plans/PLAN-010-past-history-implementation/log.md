@@ -7,6 +7,20 @@ description: "Chronological history of the past/history implementation plan."
 
 ## History
 
+* **2026-09-14** — Completed the corrected Task-010 owner gate by merging QSL
+  FR-052 through `quire-spec-language#96` at
+  `c29153388b4f06d464f9a1daf949c5dc950fd832`. QSL now owns canonical
+  `quire.native-temporal-request/v1` and `quire.native-temporal-result/v1`
+  documents, constructor-private bounded strict readers, formula-wide native
+  evaluation and direct immutable correction lineage. Request schema SHA-256 is
+  `2539140ff1f6fb5e481e5ae658b81c325a284bfcd85cc5c048ea1d49c4dfdebe`;
+  result schema SHA-256 is
+  `e55e15cc852f0145244d233ca5c88381e0969daf25f644e45a4da3362b611e28`.
+  TC-140 passes 11/11, all eight FR-052 criteria are backed, and code/Rust
+  review SR-424 plus gap analysis SR-425 pass after all findings were fixed.
+  Task-007 is unblocked to repin QSL and finish the corrected FR-026 join. This
+  remains implementation and integration work, not qualification.
+
 * **2026-09-14** — Reopened Task-010 after Task-007 implementation exposed a
   semantic boundary defect: the merged QProtocol FR-042 mapping is correctly
   bound to one checked predicate and supplies an FR-025 valuation, so comparing
