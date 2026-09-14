@@ -2,7 +2,7 @@
 id: Task-007
 title: "Implement native temporal correspondence"
 type: Task
-status: blocked
+status: in_progress
 track: C
 priority: P0
 relationships:
@@ -48,5 +48,7 @@ Deliver `quire-contract-ir#71` after PR #68: the complete FR-026 formula/history
 ## Notes
 
 - GitHub owner: `agent-ix/quire-contract-ir#71`; downstream `quire-protocol#12/#14`.
-- Blocked on the Task-008 architecture review gate, Task-009 TL core
-  reconciliation, Task-010 owner contract set, and Task-006/#70.
+- Task-008 architecture, Task-009 TL core, Task-010 owner contracts and
+  Task-006/#70 are complete. Implementation starts from Contract-IR merge
+  `202210cf6339208740299ae4050d6f16908d557e` and the exact promoted owner
+  revisions; no predecessor remains blocked.
