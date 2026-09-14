@@ -73,6 +73,7 @@ inspection evidence.
 - [Typed signal and source-context child](https://github.com/agent-ix/tl-syntax/issues/15).
 - [Post-v0.1 future operator-profile specification](./future-profile.md).
 - [Post-v0.1 past/history profile specification](./past-profile.md).
+- [Strict owner artifact contracts](./requirements/FR-014-publish-strict-syntax-artifacts.md).
 - [PGM-01 governance gate](https://github.com/agent-ix/quire-contract-ir/issues/3),
   identified as `ix://agent-ix/quire-contract-ir/PGM-01`.
 - Cargo package manifest and repository contribution policy.

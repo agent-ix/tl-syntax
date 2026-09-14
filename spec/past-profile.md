@@ -13,6 +13,10 @@ relationships:
     type: depends_on
   - target: ix://agent-ix/tl-syntax/issues/33
     type: references
+  - target: ix://agent-ix/tl-syntax/DOM-001
+    type: references
+  - target: ix://agent-ix/tl-syntax/ADR-003
+    type: references
 ---
 
 # Finite-trace past/history semantic profile
@@ -62,6 +66,14 @@ wire compatibility, ecosystem ownership, and evidence.
 [ADR-002](./assurance/ADR-002-origin-complete-past-profile.md) records the
 separate-profile architecture; [TM-003](./past-profile-test-matrix.md) allocates
 all planned evidence.
+
+[DOM-001](./ecosystem/domain/DOM-001-origin-complete-temporal-ecosystem.md)
+defines the whole application bounded context and formal object vocabulary;
+[ADR-003](./ecosystem/decisions/ADR-003-subsystem-architecture-and-self-model-boundary.md)
+defines repository/module ownership, production dependency direction, and the
+non-authoritative self-model boundary. Their owner interfaces and end-to-end
+process cover all seven epic tasks together and govern any architecture-driven
+reconciliation of already-landed work.
 
 ## Dependencies
 
