@@ -7,6 +7,21 @@ description: "Chronological history of the past/history implementation plan."
 
 ## History
 
+* **2026-09-14** — Completed Task-011 and PLAN-010 after Contract IR PR #79
+  promoted the complete FR-027 ecosystem implementation and PR #80 reconciled
+  its required-rebase self-pin. Final QCI main is
+  `4d139309bc86b3d698cc73404356900e904d43be`; the exact selected implementation
+  revision is `0c450731626f40fd90c99e787cc0f7f5e053904c`. Public
+  `ecosystem_model::{manifest::read, export, read}` executes the selected
+  nine-repository owner path, exports/re-reads the bounded non-authoritative
+  model, and preserves typed non-success/correction states. TC-038, TC-039 and
+  TC-040 close the remaining native and integrated allocations; SR-538,
+  SR-539 and SR-540 pass with every finding fixed. All campaign child tickets
+  are closed. The broader `quire-protocol#8` Plan-001 engine remains explicitly
+  downstream; its exact campaign-owned result/mapping surface was completed in
+  QProtocol #51. Removed eleven redundant clean agent-b worktrees (about 5.7
+  GiB) while retaining their branch refs and leaving agent-e worktrees intact.
+
 * **2026-09-14** — Completed Task-007 through `quire-contract-ir#78` at `69ec82bf4da1bdbee710544a4570c2042dc781a5`; issue #71 is closed. The complete FR-026 bridge pins QSL `f1700a9264d6d3bcdd07e0f77b70f3dae9ed4c07`, Quire Observation `9ac80e93f4b68a2c7d5a337f9a448ad10de798fc`, Quire Protocol `34d1752e6c5f789a52ccf115b0694eedd96cdd46`, tl-syntax `842d82553f045eb69a7f38745756d968254fc25e`, and tl-mltl `22862189ac4eb515ab84928faec25b2eac47d835`. PLAN-006 and SR-536/SR-537 record all TC-039/FR-026 coverage and resolved code/Rust/gap findings. Task-011 is now available for its architecture/spec owner; it has not been started or completed by this tracking update.
 
 * **2026-09-14** — Completed the corrected Task-010 owner gate by merging QSL
