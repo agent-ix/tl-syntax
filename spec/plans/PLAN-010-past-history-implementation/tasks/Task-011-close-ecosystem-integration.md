@@ -2,7 +2,7 @@
 id: Task-011
 title: "Close the integrated ecosystem and model export"
 type: Task
-status: blocked
+status: not_started
 track: Integration
 priority: P0
 relationships:
@@ -57,3 +57,6 @@ epic #52 only when every planned feature and architecture repair is merged.
 - This is implementation integration and model export, not an external
   qualification campaign or self-certification claim.
 - Model-export tracker: `quire-contract-ir#74`.
+- All declared implementation predecessors are merged; this task is available
+  for the architecture/spec owner to schedule, but it is not started or
+  discharged by Task-007's completion.
