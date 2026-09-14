@@ -2,7 +2,7 @@
 id: Task-012
 title: "Break the Contract IR and native-owner dependency cycle"
 type: Task
-status: in_progress
+status: completed
 track: Architecture
 priority: P0
 relationships:
@@ -30,7 +30,7 @@ without changing any existing public API, wire identity or QSL Rust import.
   the model package reaches no owner or TL crate.
 - [x] Replay the full Contract IR and QSL baseline corpora and verify exact
   schema, byte, identity, diagnostic and outcome compatibility.
-- [ ] Run code review, Rust review and gap analysis on unchanged heads and fix
+- [x] Run code review, Rust review and gap analysis on unchanged heads and fix
   all findings before owner pins advance.
 
 ## Deliverables
@@ -43,3 +43,6 @@ without changing any existing public API, wire identity or QSL Rust import.
 - This is architecture-required implementation, not a semantic rewrite.
 - No copied owner type, trust flag, callback or local owner parser is allowed.
 - GitHub tracker: `quire-contract-ir#73`.
+- Merged by `quire-contract-ir#76` at
+  `53cc03c639e2e26528132d34d96dc56449df78e8`; SR-534 and SR-535 record the
+  passing code/Rust and gap reviews.

@@ -26,7 +26,7 @@ relationships:
 - [ ] **Task-010**: Publish the complete Quire owner contract set consumed by
   FR-025 and FR-026, including the shared `quire-specification` rulings those
   executable owners must implement.
-- [ ] **Task-012**: Split the existing Contract IR substrate into a cycle-free
+- [x] **Task-012**: Split the existing Contract IR substrate into a cycle-free
   model package with compatibility re-exports before the bridge imports QSL.
 - [ ] **Task-011**: Close end-to-end integration and publish a non-authoritative
   machine-readable ecosystem model for later self-analysis.
@@ -196,7 +196,7 @@ relationships:
 | `tl-mltl` | History/trace/request/report readers and TL result mapping | #63 completed; #66 |
 | `tl-rewrite` | Catalog/engine/replay architecture and corpus compatibility | #38 completed; #41 |
 | `quire-spec-language` | Checked predicate and complete temporal subject owner | #90 |
-| `quire-observation` | Position/clock/capture/progress/closure/completeness/availability owner | #15, expanded before code |
+| `quire-observation` | Position/clock/capture/progress/closure/completeness/availability owner | #15 completed at `9ac80e9` |
 | `quire-protocol` | Canonical result, lineage and native result mappings | #8, expanded before code |
 | `quire-contract-ir` | Cycle-free model package, predicate projection/valuation, temporal projection/result join, and bounded ecosystem-model export | #73, #70, #71, then #74 |
 
@@ -246,9 +246,9 @@ accepted FR-025/026 ---/     F1 ----+-> B1 -> C1 -> G1
 | Task-007 | C | FR-012, FR-013, Contract-IR FR-026 | TC-056 | blocked on Tasks 006, 008–010 |
 | Task-008 | Architecture | MRS-003, FR-011..FR-013, Contract-IR FR-025..FR-026 | composite spec/object/architecture reviews | completed |
 | Task-009 | Core | Task-001..Task-005 accepted behavior | TC-048..TC-058 | not started |
-| Task-010 | Owners | Contract-IR FR-025..FR-026 owner inputs | owner contract tests | blocked on Task-008 |
+| Task-010 | Owners | Contract-IR FR-025..FR-026 owner inputs | owner contract tests | in progress; QSL and QObs allocations completed |
 | Task-011 | Integration | complete epic #52 ecosystem | TC-053, TC-056 and cross-owner integration | blocked on Tasks 006–007, 009–010 |
-| Task-012 | Architecture | Contract-IR FR-028 | TC-041 | in progress |
+| Task-012 | Architecture | Contract-IR FR-028 | TC-041 | completed at `53cc03c` |
 
 ## Coordination Rules
 

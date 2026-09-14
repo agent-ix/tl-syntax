@@ -2,7 +2,7 @@
 id: Task-010
 title: "Publish the complete Quire owner contract set"
 type: Task
-status: blocked
+status: in_progress
 track: Owners
 priority: P0
 relationships:
@@ -33,7 +33,7 @@ native-owner/bridge Cargo graph acyclic.
   and complete native temporal subjects derived from admitted compiled
   protocol packages, including clock, activation, capture, node, span, type,
   model, and definition identities.
-- [ ] In `quire-observation`, publish observation, population, position,
+- [x] In `quire-observation`, publish observation, population, position,
   clock, capture, progress, closure, completeness, and result-availability
   assertions derived from qualified immutable observation state; retain trigger
   facts without deriving protocol activation.
@@ -60,7 +60,7 @@ native-owner/bridge Cargo graph acyclic.
 ## Notes
 
 - Existing tickets include `quire-specification#31/#40`, `quire-spec-language#90`,
-  `quire-observation#15`, and `quire-protocol#8`; Task-008 may split additional
-  repository tickets where ownership requires separate merge order.
+  completed `quire-observation#15`, and `quire-protocol#8`; Task-008 may split
+  additional repository tickets where ownership requires separate merge order.
 - No owner imports Contract-IR wire vocabulary or calls an evaluator through a
   callback.
