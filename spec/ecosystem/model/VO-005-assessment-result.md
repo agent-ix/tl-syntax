@@ -10,7 +10,7 @@ relationships:
 ## Properties
 
 - **identity** — the derived `sha256-jcs` result identity over the complete closed canonical result with only `resultId` omitted; an enclosing artifact digest is computed separately over the complete canonical bytes.
-- **subject_and_correspondence** — exact native subject, formula, trace, evaluator request, observation and correspondence identities applicable to the producer.
+- **subject_and_correspondence** — exact native temporal subject and checked-predicate correspondence applicable to the protocol assessment; TL formula/trace/request identities belong to the bridge and TL owner, not this artifact.
 - **assessment_execution** — `completed`, `resource-incomplete`, `unsupported`, `failed`, or `refused`.
 - **decision_scope_progress** — owner assertion selection/ref/revision/digest and independently supplied `open` or `closed` state.
 - **decision_scope_closure** — exact scope/closure-authority/boundary identities and independently supplied `open` or `closed` state.
@@ -34,3 +34,7 @@ truth requires its exact decisive support; non-completed execution uses
 unavailable truth/basis; a completed closed decision scope cannot be pending. Embedded
 progress/completeness assertions remain owner artifacts and are never
 restamped by the result producer or a downstream join.
+
+The Contract IR FR-025 mapping of this result is checked-predicate-bound and
+supplies one explicit temporal valuation. It is not proof of a formula-wide
+native temporal evaluation and cannot substitute for VO-009 in FR-026.

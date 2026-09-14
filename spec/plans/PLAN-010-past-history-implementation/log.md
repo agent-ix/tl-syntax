@@ -7,6 +7,31 @@ description: "Chronological history of the past/history implementation plan."
 
 ## History
 
+* **2026-09-14** — Completed the corrected Task-010 owner gate by merging QSL
+  FR-052 through `quire-spec-language#96` at
+  `c29153388b4f06d464f9a1daf949c5dc950fd832`. QSL now owns canonical
+  `quire.native-temporal-request/v1` and `quire.native-temporal-result/v1`
+  documents, constructor-private bounded strict readers, formula-wide native
+  evaluation and direct immutable correction lineage. Request schema SHA-256 is
+  `2539140ff1f6fb5e481e5ae658b81c325a284bfcd85cc5c048ea1d49c4dfdebe`;
+  result schema SHA-256 is
+  `e55e15cc852f0145244d233ca5c88381e0969daf25f644e45a4da3362b611e28`.
+  TC-140 passes 11/11, all eight FR-052 criteria are backed, and code/Rust
+  review SR-424 plus gap analysis SR-425 pass after all findings were fixed.
+  Task-007 is unblocked to repin QSL and finish the corrected FR-026 join. This
+  remains implementation and integration work, not qualification.
+
+* **2026-09-14** — Reopened Task-010 after Task-007 implementation exposed a
+  semantic boundary defect: the merged QProtocol FR-042 mapping is correctly
+  bound to one checked predicate and supplies an FR-025 valuation, so comparing
+  its Boolean to a multi-leaf TL formula result would be a leaf/formula type
+  error. The unified architecture now assigns canonical formula-wide native
+  request/result contracts to QSL FR-052 (IF-009/VO-009), keeps QProtocol as the
+  predicate-result owner, and requires QCI to construct sibling native/TL
+  requests and compare only formula-wide owner results. Existing implementation
+  is preserved; seven-lens review and FR-052 implementation precede the corrected
+  join. Owner implementation is tracked by `quire-spec-language#95`.
+
 * **2026-09-14** — Completed Task-006 by merging the complete FR-025 implementation through `quire-contract-ir#77` at `202210cf6339208740299ae4050d6f16908d557e`; issue #70 is closed. The cohesive bridge/predicate subsystems project constructor-private checked QSL predicates into strict-read tl-syntax Boolean signal/proposition artifacts and value them only from constructor-private Quire Observation availability and Quire Protocol mapped-result views. Public APIs are `predicate::project`, `predicate::read_projection`, `predicate::value`, and `predicate::read_valuation`. Exact owner revisions and all six consumed schema digests are pinned and test-enforced. The locked workspace suite passes 67 tests; SR-061/SR-062 pass after all nine scoped findings were fixed; FR-025 is 8/8 backed by 16 TC-038 symbols. No parser, evaluator, mirrored owner vocabulary, trust flag or Boolean coercion was introduced. Task-007 is now in progress with every predecessor complete; this is implementation and source merge, not qualification or publication.
 
 * **2026-09-14** — Completed Task-009 after promoting all four architecture-reconciliation allocations: `tl-syntax#67` at `842d82553f045eb69a7f38745756d968254fc25e`, `tl-parse#39` at `2bc030dae8fdb30c9ddc967434c6c9902a3905dc`, `tl-mltl#67` at `22862189ac4eb515ab84928faec25b2eac47d835`, and `tl-rewrite#42` at `c416951281c34e2b9d30187d401605f30f34a18b`. The reconciled ecosystem now has cohesive syntax/signal, versioned dialect, temporal owner, profile rewrite, report/replay and mapping subsystems; exact production pins; bounded canonical strict readers; stable compatibility re-exports; and owner-backed tests/reviews with every finding fixed. Task-006 is unblocked and resumes at `quire-contract-ir#70`; this completion records implementation and promotion only, not qualification.

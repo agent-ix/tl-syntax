@@ -25,14 +25,15 @@ operations:
     inputs: [finite complete result population, ResultLimits]
     output: valid immutable lineage or ResultRefusal
     semantics: reject missing predecessor self-reference cycles branches invented independence and revision regression
-  - name: map_contract_ir_result
-    inputs: [ValidatedResult, expected native subject correspondence and observation identities, ResultMappingSelection, ResultLimits]
+  - name: map_contract_ir_predicate_result
+    inputs: [ValidatedResult, expected checked predicate and temporal subject identities, ResultMappingSelection, ResultLimits]
     output: constructor-private MappedResultView or ResultRefusal
-    semantics: total deterministic extraction of all independent result axes decision premises and predecessor fields under the selected mapping revision without adopting bridge wire vocabulary
+    semantics: total deterministic extraction of a checked-predicate Boolean or typed non-value plus all independent result axes decision premises and predecessor fields under the selected mapping revision without adopting bridge wire vocabulary
 invariants:
   - producer-owned source model configuration and assertion identities are retained in their original domains
   - decision-scope and surrounding-execution progress and closure remain independent
   - only a valid completed final result can carry a Boolean
+  - a predicate-bound mapping supplies an FR-025 valuation and cannot substitute for the formula-wide QSL result in FR-026
   - refusal identity is independent of rendering and no failed operation returns partial canonical bytes
 dispatch: exact result ContractSelection
 ```
