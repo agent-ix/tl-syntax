@@ -13,6 +13,10 @@ relationships:
     type: depends_on
   - target: ix://agent-ix/tl-syntax/FR-012
     type: depends_on
+  - target: ix://agent-ix/tl-syntax/DOM-001
+    type: references
+  - target: ix://agent-ix/tl-syntax/PROC-001
+    type: references
 ---
 
 # FR-013: Version and verify the past/history profile
@@ -121,6 +125,13 @@ acceptance are:
 No repository adds its own alternate past semantics. Neither the internal text
 dialect nor formula wire is an editable formal-clause language; native Quire
 remains the sole source authority.
+
+The eight repositories collectively implement DOM-001 and PROC-001. Their
+public contract metadata, owner/consumer edges and evidence links shall be
+exportable as the bounded model defined by IF-006. The exported model is
+descriptive output only: it cannot authorize a prerequisite, amend a selected
+revision, execute an evaluator, or record acceptance of itself. Any improvement
+it proposes must enter the ordinary owner specification/review/merge process.
 
 The machine-readable routing record is
 `spec/past-profile-implementation.json`, with format identity
