@@ -11,6 +11,8 @@ relationships:
     type: depends_on
   - target: ix://agent-ix/tl-syntax/FR-008
     type: depends_on
+  - target: ix://agent-ix/tl-syntax/FR-289
+    type: references
 ---
 
 # FR-009: Version the future operator profile compatibly
@@ -44,6 +46,7 @@ The compatibility axes are orthogonal:
 | lowering request/report/refusal | `tl-syntax.future-lowering-request/v1`, `tl-syntax.future-lowering-report/v1`, and `tl-syntax.future-lowering-refusal/v1` are non-wire Rust API contracts owned by tl-syntax |
 | internal text dialect | old `tl-parse.clean-ascii/v1` stays closed; `tl-parse.clean-ascii/v2` admits W/M input |
 | formula wire | `tl-syntax.formula/v1` remains primitive-only and unchanged |
+| unbounded interval grammar | a co-existing `tl-syntax.formula-unbounded/v1` edition, defined by [FR-289](./FR-289-infinite-trace-interval-grammar.md), admits an open upper bound on F/G/U/R and, by inherited lowering, W/M, only under the `quire.temporal.infinite-trace/v1` facet; it is a new edition, not a successor of `tl-syntax.formula/v1` |
 | evaluation | the selected closed-trace or online-prefix v1 profile is preserved, never inferred from spelling |
 
 The `tl-parse.clean-ascii/v2` internal ASCII dialect may use only case-sensitive `W[a,b]` and
@@ -78,11 +81,14 @@ Neither expression is a sound general encoding of the usual finite strong- or
 weak-next boundary. A later closure-aware profile must define successor
 existence before either spelling is admitted.
 
-The v1 profile also refuses past/history and mixed-time operators, unbounded or
-open intervals, dense or timestamped time, unit-bearing durations,
-window-relative closure, a derived node in formula-v1, and every unknown
-operator, dialect, wire, or semantic-profile identity. Each refusal occurs
-before a formula document is produced and identifies the mismatched axis.
+The v1 profile also refuses past/history and mixed-time operators, dense or
+timestamped time, unit-bearing durations, window-relative closure, a derived
+node in formula-v1, and every unknown operator, dialect, wire, or
+semantic-profile identity. Each refusal occurs before a formula document is
+produced and identifies the mismatched axis. An open upper bound is admitted
+only under the separate `tl-syntax.formula-unbounded/v1` edition and the
+`quire.temporal.infinite-trace/v1` facet identity ([FR-289](./FR-289-infinite-trace-interval-grammar.md));
+`tl-syntax.formula/v1` itself never carries one.
 
 ## Acceptance Criteria
 
