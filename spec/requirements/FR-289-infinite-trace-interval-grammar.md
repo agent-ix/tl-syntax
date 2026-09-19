@@ -48,10 +48,9 @@ addition to the existing closed `[a,b]` form from FR-001.
 
 The admitted grammar is `[a,)`: a checked lower bound followed by a comma and
 an explicit open upper position, with no numeric upper token. `[a,)` and
-`[a,b]` are the only two interval forms an infinite-trace-facet document
-admits; every other spelling, including a bare `[a,` without the closing
-paren, an omitted lower bound, or an upper bound spelled as a sentinel value,
-is refused as malformed rather than accepted as unbounded.
+`[a,b]` are the two interval forms an infinite-trace-facet document admits,
+and that admission is closed: a spelling outside those two forms is refused
+before construction and identifies the mismatched axis.
 
 `F[a,)` and `G[a,)` are primitive: "eventually from `a`" and "always from `a`"
 over the infinite suffix beginning at offset `a`. `U[a,)` and `R[a,)` retain

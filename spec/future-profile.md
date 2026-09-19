@@ -16,7 +16,10 @@ relationships:
 This specification defines the first post-v0.1 evolution of the internal,
 parser-independent future-time MLTL operator profile. It adds a small derived
 surface without changing the canonical formula graph, interval meaning, or the
-two existing evaluator profiles.
+two existing evaluator profiles. It also admits an unbounded interval under
+the `quire.temporal.infinite-trace/v1` facet as a separate, co-existing
+formula edition, leaving the closed `tl-syntax.formula/v1` schema exactly as
+it stands.
 
 Native Quire is the only editable formal-clause language. TL text and formula
 documents are derived interchange and evaluator inputs. Nothing in this

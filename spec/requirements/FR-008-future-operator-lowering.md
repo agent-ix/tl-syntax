@@ -9,6 +9,8 @@ relationships:
     type: depends_on
   - target: ix://agent-ix/tl-syntax/FR-002
     type: depends_on
+  - target: ix://agent-ix/tl-syntax/FR-289
+    type: references
 ---
 
 # FR-008: Lower derived future-time operators
@@ -49,6 +51,11 @@ Successful admission produces a private typed request containing the exact
 `SemanticProfile`, the borrowed validated formula, operand roots proven present
 in its node table, checked `[a,b]`, checked paired spans, and preflighted counts.
 The total lowerer accepts only that typed value.
+
+Under the `quire.temporal.infinite-trace/v1` facet the checked interval in that
+typed request, and in the report it produces, is either `[a,b]` or the
+[FR-289](./FR-289-infinite-trace-interval-grammar.md) `UnboundedInterval`. The
+lowering equations below apply unchanged to both.
 
 ## Outputs
 
