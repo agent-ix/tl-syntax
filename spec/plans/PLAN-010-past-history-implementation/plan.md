@@ -172,37 +172,6 @@ relationships:
   FR-025/FR-026 input is a constructor-private validated owner value with a
   canonical schema, strict reader, immutable revision/digest, and typed limits.
 
-## Implementation Waves After the One Design Gate
-
-1. **Wave 0 — shared authority:** merge the blocking `quire-specification`
-   rulings and pin their immutable revision in every dependent spec.
-2. **Wave 1 — cycle break, executable owners and TL core:** split the Contract
-   IR model package first, then implement QSL, QObs, QProtocol, `tl-syntax`
-   and `tl-mltl` owner readers/mappings; apply only architecture-
-   justified compatibility-preserving reorganizations in all four TL crates.
-   Independent repositories may proceed concurrently, but no feature is
-   removed from the campaign.
-3. **Wave 2 — bridge:** replace the preserved temporary Contract-IR seams with
-   the merged owner APIs; implement the complete predicate and temporal
-   subsystems under corrected FR-025/FR-026.
-4. **Wave 3 — integration:** pin exact revisions, replay the full corpus and
-   owner-result path, publish the bounded descriptive ecosystem model, fix all
-   code/Rust/gap/architecture findings, update tickets and close epic #52.
-
-## Repository Ticket Map
-
-| Repository | Planned campaign responsibility | Tracking |
-| --- | --- | --- |
-| `quire-specification` | Shared temporal/observation/result object rulings | #31 and scoped epic-52 ticket #40 |
-| `tl-syntax` | Umbrella architecture and formula/signal owner contracts | #52, #64; #53/#54/#61/#65 completed |
-| `tl-parse` | Dialect architecture and complete corpus compatibility | #35/#38 completed |
-| `tl-mltl` | History/trace/request/report readers and TL result mapping | #63/#66 completed |
-| `tl-rewrite` | Catalog/engine/replay architecture and corpus compatibility | #38/#41 completed |
-| `quire-spec-language` | Checked predicate/temporal subject plus formula-wide native evaluation request/result owner | #90 and #95 |
-| `quire-observation` | Position/clock/capture/progress/closure/completeness/availability owner | #15 completed at `9ac80e9` |
-| `quire-protocol` | Canonical result, lineage and native result mappings | #51 completed; broader Plan-001 #8 remains downstream |
-| `quire-contract-ir` | Cycle-free model package, predicate projection/valuation, temporal projection/result join, and bounded ecosystem-model export | #73, #70, #71, then #74 |
-
 ### Track A: TL critical path
 
 - **A1 = Task-001** Formula-v2 and past syntax — Hard; exit: strict public graph/wire/profile types admit every pure past graph and preserve every v1 behavior.
