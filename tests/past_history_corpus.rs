@@ -16,7 +16,7 @@ use tl_syntax::{
 };
 
 const DIRECTORY: &str = "corpus/past-history";
-const MANIFEST_SHA256: &str = "59186a3c64dd1bd371a1b61e9546d48aa333a62872179b421711ee24f6fecf32";
+const MANIFEST_SHA256: &str = "0bb497481a08d82ae74db794657eb6e7c57e6d1e5b5a8471b3559f82f405afd1";
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
