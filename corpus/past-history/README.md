@@ -12,9 +12,11 @@ every record boundary. `manifest.json` pins the exact implementation revisions
 and every replay file; `SHA256SUMS` provides the same file-integrity boundary to
 non-Rust consumers.
 
-The parser, evaluator, and rewrite repositories retain byte-identical copies
-and pin the manifest digest. Their native replay tests consume only the fields
-owned by that component and still validate the complete closed corpus shape.
+Consumers read this corpus in place through `tl_syntax::CORPUS_DIR` and pin
+the manifest digest in their own replay evidence rather than copying the
+files. `tl-mltl` is confirmed to consume it this way; its native replay tests
+consume only the fields owned by that component and still validate the
+complete closed corpus shape.
 
 FRET remains output-only. R2U2 and C2PO remain unavailable until an exact
 reviewed past-profile correspondence exists. Isabelle/HOL remains an
