@@ -75,3 +75,10 @@ pub const CORPUS_REVISION: &str = "tl-syntax-corpus/v1";
 
 /// Stable identity of the immutable paired past/history corpus.
 pub const PAST_HISTORY_CORPUS_V1: &str = "tl-syntax.past-history-corpus/v1";
+
+/// Filesystem path to this crate's own `corpus/` directory, resolved at this
+/// crate's compile time via its own `CARGO_MANIFEST_DIR`. A git or path
+/// dependency's checkout carries the full repository tree, so a dependent
+/// crate can join a corpus-relative path onto this constant and read the
+/// shared corpus directly, instead of vendoring a copy of it.
+pub const CORPUS_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/corpus");
