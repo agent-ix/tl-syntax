@@ -390,12 +390,14 @@ fn git_files(root: &Path, arguments: &[&str]) -> CensusResult<BTreeSet<String>> 
         .collect())
 }
 
-const EXPECTED_LIVE_TRACKED: [&str; 127] = [
+const EXPECTED_LIVE_TRACKED: [&str; 188] = [
     ".agent/rules/writing_rust.md",
     ".github/CODEOWNERS",
     ".github/workflows/ci.yml",
+    ".github/workflows/cla.yml",
     ".gitignore",
     "AGENTS.md",
+    "CLA.md",
     "CLAUDE.md",
     "CONTRIBUTING.md",
     "Cargo.lock",
@@ -439,8 +441,14 @@ const EXPECTED_LIVE_TRACKED: [&str; 127] = [
     "corpus/malformed/inverted-interval.json",
     "corpus/malformed/unknown-profile.json",
     "corpus/manifest.json",
+    "corpus/past-history/README.md",
+    "corpus/past-history/SHA256SUMS",
+    "corpus/past-history/cases.json",
+    "corpus/past-history/manifest.json",
+    "corpus/past-history/schema.json",
     "corpus/propositions.json",
     "corpus/schema/formula-v1.schema.json",
+    "corpus/schema/formula-v2.schema.json",
     "corpus/schema/proposition-map-v1.schema.json",
     "deny.toml",
     "examples/corpus_conformance.rs",
@@ -460,17 +468,46 @@ const EXPECTED_LIVE_TRACKED: [&str; 127] = [
     "scripts/validate_corpus.py",
     "spec/assurance/AA-001.md",
     "spec/assurance/AD-001.md",
+    "spec/assurance/AD-002-source-readiness-boundary.md",
+    "spec/assurance/AD-003.md",
     "spec/assurance/ADR-001-future-operator-profile.md",
     "spec/assurance/ADR-002-origin-complete-past-profile.md",
     "spec/assurance/AP-001.md",
+    "spec/assurance/AP-002-progressive-source-readiness.md",
     "spec/assurance/CAC-001.md",
     "spec/assurance/MP-001.md",
+    "spec/assurance/MP-002-source-readiness-obligation-state.md",
+    "spec/ecosystem/decisions/ADR-003-subsystem-architecture-and-self-model-boundary.md",
+    "spec/ecosystem/domain/DOM-001-origin-complete-temporal-ecosystem.md",
+    "spec/ecosystem/interfaces/IF-001-native-definition-authority.md",
+    "spec/ecosystem/interfaces/IF-002-observation-authority.md",
+    "spec/ecosystem/interfaces/IF-003-protocol-result-authority.md",
+    "spec/ecosystem/interfaces/IF-004-tl-core.md",
+    "spec/ecosystem/interfaces/IF-005-contract-ir-temporal-bridge.md",
+    "spec/ecosystem/interfaces/IF-006-ecosystem-model-export.md",
+    "spec/ecosystem/interfaces/IF-007-shared-specification-authority.md",
+    "spec/ecosystem/interfaces/IF-008-cycle-free-contract-model.md",
+    "spec/ecosystem/interfaces/IF-009-native-temporal-evaluation.md",
+    "spec/ecosystem/model/ENUM-001-ecosystem-decision-vocabulary.md",
+    "spec/ecosystem/model/SM-001-temporal-assessment-lifecycle.md",
+    "spec/ecosystem/model/VO-001-contract-selection.md",
+    "spec/ecosystem/model/VO-002-authority-artifact.md",
+    "spec/ecosystem/model/VO-003-native-definition.md",
+    "spec/ecosystem/model/VO-004-observation-context.md",
+    "spec/ecosystem/model/VO-005-assessment-result.md",
+    "spec/ecosystem/model/VO-006-tl-artifact-set.md",
+    "spec/ecosystem/model/VO-007-temporal-correspondence.md",
+    "spec/ecosystem/model/VO-008-shared-semantic-contract.md",
+    "spec/ecosystem/model/VO-009-native-temporal-result.md",
+    "spec/ecosystem/process/PROC-001-native-temporal-assessment.md",
     "spec/evidence/suites.md",
     "spec/future-profile-test-matrix.md",
     "spec/future-profile.md",
-    "spec/past-profile-test-matrix.md",
+    "spec/integration/IT-001-shared-source-readiness-handoff.md",
+    "spec/integration/IT-002-integrator-package-handoff.md",
     "spec/past-profile-implementation.json",
     "spec/past-profile-implementation.schema.json",
+    "spec/past-profile-test-matrix.md",
     "spec/past-profile.md",
     "spec/requirements/FR-001-inclusive-intervals.md",
     "spec/requirements/FR-002-validated-formula.md",
@@ -485,27 +522,49 @@ const EXPECTED_LIVE_TRACKED: [&str; 127] = [
     "spec/requirements/FR-011-past-operator-semantics.md",
     "spec/requirements/FR-012-history-anchor-progress.md",
     "spec/requirements/FR-013-past-profile-compatibility-evidence.md",
+    "spec/requirements/FR-014-publish-strict-syntax-artifacts.md",
+    "spec/requirements/FR-015-bind-source-readiness-candidate.md",
+    "spec/requirements/FR-016-preserve-readiness-stages.md",
+    "spec/requirements/FR-017-emit-integrator-readiness-package.md",
+    "spec/requirements/FR-018-require-human-source-release-decision.md",
+    "spec/requirements/FR-019-classify-qualification-execution-paths.md",
+    "spec/requirements/FR-289-infinite-trace-interval-grammar.md",
+    "spec/requirements/FR-290-liveness-capability-registration.md",
+    "spec/requirements/FR-291-infinite-trace-downstream-evidence.md",
     "spec/requirements/NFR-001-no-std-feature-boundary.md",
     "spec/requirements/NFR-002-determinism-and-integrity.md",
     "spec/requirements/NFR-003-qualification-integrity.md",
+    "spec/requirements/NFR-004-reproduce-source-readiness-observations.md",
+    "spec/requirements/NFR-005-preserve-readiness-authority-and-retention.md",
     "spec/requirements/StR-001-embedded-consumers.md",
     "spec/requirements/StR-002-temporal-interoperability.md",
     "spec/requirements/StR-003-formal-temporal-frontends.md",
-    "spec/reviews/SR-063-strict-owner-readers-code-review.md",
-    "spec/reviews/SR-064-strict-owner-readers-rust-review.md",
-    "spec/reviews/SR-065-strict-owner-readers-gap-analysis.md",
+    "spec/requirements/StR-004-progressive-source-readiness.md",
     "spec/signal-catalog-v1.schema.json",
+    "spec/source-readiness-test-matrix.md",
+    "spec/source-readiness.md",
     "spec/spec.md",
     "spec/test-matrix.md",
     "src/bounded_string.rs",
     "src/context.rs",
     "src/context_document.rs",
-    "src/document.rs",
+    "src/contracts/identity.rs",
+    "src/contracts/limits.rs",
+    "src/contracts/manifest_impl.rs",
+    "src/contracts/mod.rs",
+    "src/contracts/reader.rs",
+    "src/formula/document.rs",
+    "src/formula/graph.rs",
+    "src/formula/mod.rs",
+    "src/formula/profile.rs",
     "src/future.rs",
     "src/lib.rs",
-    "src/signal.rs",
-    "src/signal_document.rs",
-    "src/syntax.rs",
+    "src/signal/binding.rs",
+    "src/signal/catalog.rs",
+    "src/signal/document.rs",
+    "src/signal/domain.rs",
+    "src/signal/mod.rs",
+    "src/signal/proposition.rs",
     "tests/feature_boundary.rs",
     "tests/fixtures/invalid-nonboolean-binding.json",
     "tests/fixtures/invalid-partial-context.json",
@@ -515,8 +574,10 @@ const EXPECTED_LIVE_TRACKED: [&str; 127] = [
     "tests/future_operator_corpus.rs",
     "tests/integration.rs",
     "tests/past_formula_v2.rs",
+    "tests/past_history_corpus.rs",
     "tests/past_profile_manifest.rs",
     "tests/props_fr_007.rs",
+    "tests/strict_syntax_artifacts.rs",
     "tests/typed_signal_context.rs",
 ];
 
@@ -531,8 +592,10 @@ const FORBIDDEN: [&str; 5] = [
 fn is_archival_record(relative: &str) -> bool {
     relative == "tests/shared_assurance.rs"
         || relative == "spec/.gitkeep"
-        || relative.starts_with("spec/reviews/")
-        || relative.starts_with("spec/plans/")
+        || (relative.ends_with(".md")
+            && (relative.starts_with("spec/reviews/")
+                || relative.starts_with("spec/plans/")
+                || relative.starts_with("plan/")))
 }
 
 fn source_sets(root: &Path) -> CensusResult<(BTreeSet<String>, BTreeSet<String>)> {
@@ -822,6 +885,7 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         std::env::temp_dir().join(format!("tl-syntax-source-census-fixture-{process}")),
     );
     fs::create_dir_all(fixture.path().join("src")).expect("create tracked fixture area");
+    fs::create_dir_all(fixture.path().join("plan")).expect("create plan fixture area");
     fs::create_dir_all(fixture.path().join("tests/proptest-regressions"))
         .expect("create ignored fixture area");
     fs::write(fixture.path().join(".gitignore"), "proptest-regressions/\n")
@@ -831,6 +895,13 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         "pub const TRACKED: bool = true;\n",
     )
     .expect("write tracked fixture");
+    fs::write(
+        fixture.path().join("plan/record.md"),
+        "# Inert plan record\n",
+    )
+    .expect("write archival plan fixture");
+    fs::write(fixture.path().join("plan/run"), "#!/bin/sh\nexit 0\n")
+        .expect("write executable plan fixture");
     fs::write(
         fixture.path().join("tests/untracked.rs"),
         "pub const FORBIDDEN_REFERENCE: &str = \"legacy_evidence_view\";\n",
@@ -850,7 +921,13 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         .expect("initialize source-census fixture repository");
     assert!(initialized.success(), "fixture git init failed");
     let staged = Command::new("git")
-        .args(["add", ".gitignore", "src/tracked.rs"])
+        .args([
+            "add",
+            ".gitignore",
+            "src/tracked.rs",
+            "plan/record.md",
+            "plan/run",
+        ])
         .current_dir(fixture.path())
         .status()
         .expect("stage source-census fixture");
@@ -860,12 +937,18 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         source_sets(fixture.path()).expect("enumerate source-census fixture");
     assert_eq!(
         fixture_tracked,
-        BTreeSet::from([".gitignore".to_owned(), "src/tracked.rs".to_owned()])
+        BTreeSet::from([
+            ".gitignore".to_owned(),
+            "plan/run".to_owned(),
+            "src/tracked.rs".to_owned(),
+        ]),
+        "Markdown plan records are archival, but a tracked executable under plan/ must remain live"
     );
     assert_eq!(
         fixture_scanned,
         BTreeSet::from([
             ".gitignore".to_owned(),
+            "plan/run".to_owned(),
             "src/tracked.rs".to_owned(),
             "tests/untracked.rs".to_owned(),
         ]),
@@ -906,23 +989,25 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         .collect();
 
     let expected_areas: BTreeMap<String, usize> = [
-        ("<root>", 15),
+        ("<root>", 16),
         (".agent", 1),
-        (".github", 2),
+        (".github", 3),
         ("assurance", 3),
         // Issue #41 adds the twenty-file paired W/M corpus.
-        ("corpus", 34),
+        ("corpus", 40),
         ("examples", 1),
         ("fuzz", 4),
         ("scripts", 7),
         // Issue #33 adds the reviewed past-profile artifacts and routing manifest; SpecReviews
         // remain archival and outside the live-source population.
-        ("spec", 35),
+        // Issue #34 adds live source-readiness specification and assurance
+        // artifacts; SpecReviews/plans remain archival exclusions.
+        ("spec", 79),
         // Issue #40 adds the future-lowering module and its traced tests.
-        ("src", 9),
+        ("src", 20),
         // Issue #41 adds the paired-corpus replay.
         // Issue #53 adds formula-v2/profile and dependency-manifest gates.
-        ("tests", 12),
+        ("tests", 14),
     ]
     .into_iter()
     .map(|(area, count)| (area.to_owned(), count))
