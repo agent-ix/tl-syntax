@@ -135,11 +135,13 @@ check-corpus:
 spec:
 	$(QUIRE) validate --scope . 'spec/**/*.md' --strict --summary
 	$(PYTHON) scripts/check_spec_id_uniqueness.py
+	$(PYTHON) scripts/test_check_spec_id_uniqueness.py
 	$(QUIRE) coverage --scope .
 
 spec-release:
 	$(QUIRE) validate --scope . 'spec/**/*.md' --strict --summary
 	$(PYTHON) scripts/check_spec_id_uniqueness.py
+	$(PYTHON) scripts/test_check_spec_id_uniqueness.py
 	$(QUIRE) coverage --scope . --strict
 
 .PHONY: build

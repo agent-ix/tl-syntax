@@ -25,34 +25,84 @@ prefix (FR, NFR, StR, SR, PLAN, ADR, IF, VO, ...) is a single flat namespace
 and is checked globally.
 
 Exit status: 0 when every id is unique in its namespace, 1 when a collision is
-found (every collision is printed, not just the first), 2 on a usage error.
+found (every collision is printed, not just the first), 2 on a usage error, 3
+on an unexpected internal error (distinct from a genuine collision, which is
+always 1).
+
+A file that cannot be read or decoded as UTF-8 is excluded from the id
+comparison -- it may still hold a real collision that goes unchecked -- but
+that exclusion is never silent: it is printed as a warning, not swallowed.
 """
 
 from __future__ import annotations
 
 import re
 import sys
+import traceback
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SPEC_DIR = ROOT / "spec"
 
-FRONTMATTER_ID_RE = re.compile(r"^id:\s*(\S+)\s*$", re.MULTILINE)
+# Capture everything after `id:` on its own top-level line, comment and all --
+# the comment and any surrounding quotes are stripped in `_clean_id_value`,
+# not by the regex, so that `id: FR-010  # renumbered` and `id: "FR-010"` are
+# both recognized as the same id `FR-010`.
+FRONTMATTER_ID_RE = re.compile(r"^id:(.*)$", re.MULTILINE)
 TASK_ID_RE = re.compile(r"^Task-\d+$")
+
+# An unquoted `#` only starts a YAML comment when it is at the start of the
+# scalar or preceded by whitespace; `FR#010` (no preceding space) is not a
+# comment. This mirrors that rule closely enough for id values, which never
+# legitimately contain a `#`.
+_INLINE_COMMENT_RE = re.compile(r"(?:^|\s)#")
+
+
+def _clean_id_value(raw: str) -> str | None:
+    """Strip an inline YAML comment and/or surrounding quotes from a raw
+    `id:` line tail. Returns None if nothing but whitespace/comment remains.
+    """
+    raw = raw.strip()
+    if not raw:
+        return None
+    if raw[0] in "\"'":
+        quote = raw[0]
+        end = raw.find(quote, 1)
+        value = raw[1:end] if end != -1 else raw[1:]
+        value = value.strip()
+        return value or None
+    match = _INLINE_COMMENT_RE.search(raw)
+    if match is not None:
+        raw = raw[: match.start()].rstrip()
+    return raw or None
 
 
 def extract_id(path: Path) -> str | None:
-    """Return the frontmatter `id:` value, or None if the doc declares none."""
+    """Return the frontmatter `id:` value, or None if the doc declares none.
+
+    A file that cannot be opened or decoded is also None, but that case is
+    never silent -- a warning naming the file is printed to stderr first, so
+    an unreadable file is visible rather than invisibly excluded from the
+    uniqueness check.
+    """
     try:
         text = path.read_text(encoding="utf-8")
-    except (OSError, UnicodeDecodeError):
+    except (OSError, UnicodeDecodeError) as exc:
+        try:
+            rel = path.relative_to(ROOT)
+        except ValueError:
+            rel = path
+        print(
+            f"warning: could not read {rel} ({exc}); excluded from id uniqueness check",
+            file=sys.stderr,
+        )
         return None
     if not text.startswith("---\n"):
         return None
     end = text.find("\n---", 4)
     frontmatter = text[4:end] if end != -1 else text[4:]
     match = FRONTMATTER_ID_RE.search(frontmatter)
-    return match.group(1) if match else None
+    return _clean_id_value(match.group(1)) if match else None
 
 
 def namespace_key(path: Path, doc_id: str) -> tuple[str, str]:
@@ -106,4 +156,11 @@ def main(argv: list[str]) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main(sys.argv))
+    try:
+        _exit_code = main(sys.argv)
+    except Exception:  # noqa: BLE001 -- deliberately broad: distinguish a
+        # script defect (exit 3) from a genuine collision (exit 1) so the
+        # two failure classes aren't indistinguishable by exit code alone.
+        traceback.print_exc()
+        raise SystemExit(3)
+    raise SystemExit(_exit_code)
