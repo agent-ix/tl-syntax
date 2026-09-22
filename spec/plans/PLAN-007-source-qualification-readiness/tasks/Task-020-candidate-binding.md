@@ -1,5 +1,5 @@
 ---
-id: Task-012
+id: Task-020
 title: "Bind immutable candidates and fresh producer results"
 type: Task
 status: blocked
@@ -11,9 +11,9 @@ evidence_method: property-and-integration-test
 github_issue: ix://agent-ix/tl-syntax/issues/47
 resume_conditions: [ix://agent-ix/tl-syntax/issues/34, ix://agent-ix/tl-syntax/issues/45, ix://agent-ix/tl-syntax/issues/46]
 relationships:
-  - target: ix://agent-ix/tl-syntax/Task-010
+  - target: ix://agent-ix/tl-syntax/Task-018
     type: depends_on
-  - target: ix://agent-ix/tl-syntax/Task-011
+  - target: ix://agent-ix/tl-syntax/Task-019
     type: depends_on
   - target: ix://agent-ix/tl-syntax/FR-015
     type: references
@@ -28,7 +28,7 @@ relationships:
   - target: ix://agent-ix/tl-syntax/TC-069
     type: verifies
 ---
-# Task-012: Bind immutable candidates and fresh producer results
+# Task-020: Bind immutable candidates and fresh producer results
 
 ## Scope
 

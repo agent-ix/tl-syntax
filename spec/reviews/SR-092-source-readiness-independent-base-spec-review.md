@@ -23,4 +23,4 @@ grammar-clean. All M6 implementation rows remain planned or explicitly blocked.
 | ID | Severity | Summary | Refs | Escape Cause |
 | --- | --- | --- | --- | --- |
 | FND-6601 | medium | PLAN-007 originally reused Task-001..Task-008, had no task tickets, and did not expose owner, consumer, evidence-method or resume metadata. It now uses repository-unique Task-009..Task-016 and maps #34 plus #45..#51. | PLAN-007 | missing-requirement |
-| FND-6602 | low | No M6 implementation or source-release completion is present; accepting this specification may close #34 but cannot advance Task-010..Task-016 or any TM-004 row. | TM-004, PLAN-007 | correct-requirement-no-evidence |
+| FND-6602 | low | No M6 implementation or source-release completion is present; accepting this specification may close #34 but cannot advance Task-018..Task-020 or Task-013..Task-016, or any TM-004 row. | TM-004, PLAN-007 | correct-requirement-no-evidence |

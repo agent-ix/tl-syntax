@@ -29,9 +29,9 @@ prevents any source-qualification or release claim.
 
 | ID | Severity | Summary | Refs |
 | --- | --- | --- | --- |
-| FND-7601 | high | Task-010 through Task-016 are blocked, so PLAN-007 is incomplete. The blockers include released source-grounding and LR08 contracts, retention/operator selection, authoritative decision events, real integration and human final assurance. | PLAN-007; Task-010 through Task-016 |
+| FND-7601 | high | Task-018 through Task-020 and Task-013 through Task-016 are blocked, so PLAN-007 is incomplete. The blockers include released source-grounding and LR08 contracts, retention/operator selection, authoritative decision events, real integration and human final assurance. | PLAN-007; Task-018 through Task-020, Task-013 through Task-016 |
 | FND-7602 | high | TM-004 has 0/17 rows backed. No planned M6 test or integration row is marked implemented, yielding 99/165 repository-wide backing. | TM-004; TC-059 through TC-073; IT-001; IT-002 |
-| FND-7603 | medium | Engineering Assurance #34 is merged but no admitted immutable compatible release carries it; LR08 and retention/event/integrator-package contracts remain unresolved. Local substitutes are explicitly forbidden. | Task-010; FR-019; AD-002; quire-research#64 |
+| FND-7603 | medium | Engineering Assurance #34 is merged but no admitted immutable compatible release carries it; LR08 and retention/event/integrator-package contracts remain unresolved. Local substitutes are explicitly forbidden. | Task-018; FR-019; AD-002; quire-research#64 |
 
 ## Coverage
 
@@ -49,6 +49,6 @@ prevents any source-qualification or release claim.
 
 ## Disposition
 
-The specification is ready for its human acceptance gate. Keep Task-010 through
-Task-016 and their GitHub issues blocked until each named resume condition is
-actually satisfied.
+The specification is ready for its human acceptance gate. Keep Task-018 through
+Task-020, Task-013 through Task-016 and their GitHub issues blocked until each
+named resume condition is actually satisfied.

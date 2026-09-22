@@ -11,9 +11,9 @@ evidence_method: real-shared-contract-integration-test
 github_issue: ix://agent-ix/tl-syntax/issues/49
 resume_conditions: [ix://agent-ix/tl-syntax/issues/16, ix://agent-ix/tl-syntax/issues/45, ix://agent-ix/tl-syntax/issues/47, ix://agent-ix/tl-syntax/issues/48]
 relationships:
-  - target: ix://agent-ix/tl-syntax/Task-010
+  - target: ix://agent-ix/tl-syntax/Task-018
     type: depends_on
-  - target: ix://agent-ix/tl-syntax/Task-012
+  - target: ix://agent-ix/tl-syntax/Task-020
     type: depends_on
   - target: ix://agent-ix/tl-syntax/Task-013
     type: depends_on
@@ -69,4 +69,4 @@ contracts with no mock reader or local substitute.
 ## Notes
 
 - Blocked on the tl-syntax#16 accepted release set and completion of Tasks
-  012–013.
+  020 and 013.

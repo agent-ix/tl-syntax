@@ -112,16 +112,16 @@ copies are outside every seam.
 
 ### Track S: Specification gate
 
-- **S1 = Task-009** M6 specification and composite review — Done; exit: the exact snapshot is strict-valid with no review-owned finding.
+- **S1 = Task-017** M6 specification and composite review — Done; exit: the exact snapshot is strict-valid with no review-owned finding.
 
 ### Track G: External admission gate
 
-- **G1 = Task-010** prerequisite ledger and no-workaround gate — Blocked; exit: each consumed release, policy, authority and backend has an immutable compatible identity.
+- **G1 = Task-018** prerequisite ledger and no-workaround gate — Blocked; exit: each consumed release, policy, authority and backend has an immutable compatible identity.
 
 ### Track A: Critical path (serial)
 
-- **A1 = Task-011** executable-path inventory and Rust/shared parity — Hard; exit: every entry point has one reviewed class and every stable-required legacy behavior has parity.
-- **A2 = Task-012** candidate binding and producer freshness — Hard; exit: identity races, stale output and path escapes fail closed.
+- **A1 = Task-019** executable-path inventory and Rust/shared parity — Hard; exit: every entry point has one reviewed class and every stable-required legacy behavior has parity.
+- **A2 = Task-020** candidate binding and producer freshness — Hard; exit: identity races, stale output and path escapes fail closed.
 - **A3 = Task-013** lifecycle, retention and human decision admission — Hard; exit: state/history/authority transitions are total and non-promoting.
 - **Gate = Task-014** real source-grounding integration — Hard; measures lossless shared handoff; pass: every IT-001 subcase and load-bearing negative mutation succeeds at the exact candidate.
 
@@ -136,9 +136,9 @@ copies are outside every seam.
 ## Parallel Execution Summary
 
 ```text
-Track S: Task-009 (done)
-Track G:          Task-010 [external prerequisites]
-Track A:                    Task-011 -> Task-012 -> Task-013 -> Task-014
+Track S: Task-017 (done)
+Track G:          Task-018 [external prerequisites]
+Track A:                    Task-019 -> Task-020 -> Task-013 -> Task-014
 Track C:                                                               Task-015
 Track J:                                                                        Task-016
 ```
@@ -147,10 +147,10 @@ Track J:                                                                        
 
 | Task | Track | Owns (references) | Verified by (verifies) | Status |
 | --- | --- | --- | --- | --- |
-| Task-009 | S | StR-004, FR-015..FR-019, NFR-004..NFR-005 | TC-066 | done |
-| Task-010 | G | FR-015..FR-019, NFR-005 | TC-066, TC-067, TC-073 | blocked |
-| Task-011 | A | FR-019 | TC-064..TC-066 | blocked |
-| Task-012 | A | FR-015, NFR-004 | TC-059, TC-060, TC-068, TC-069 | blocked |
+| Task-017 | S | StR-004, FR-015..FR-019, NFR-004..NFR-005 | TC-066 | done |
+| Task-018 | G | FR-015..FR-019, NFR-005 | TC-066, TC-067, TC-073 | blocked |
+| Task-019 | A | FR-019 | TC-064..TC-066 | blocked |
+| Task-020 | A | FR-015, NFR-004 | TC-059, TC-060, TC-068, TC-069 | blocked |
 | Task-013 | A | FR-016, FR-018, NFR-005 | TC-062, TC-063, TC-067, TC-070, TC-073 | blocked |
 | Task-014 | A | IT-001, FR-015, FR-016, FR-018, FR-019 | TC-059, TC-060, TC-062, TC-063, TC-066..TC-070, TC-073 | blocked |
 | Task-015 | C | FR-017, IT-002 | TC-061, TC-063, TC-066, TC-068, TC-070..TC-072 | blocked |
@@ -160,7 +160,7 @@ Track J:                                                                        
 
 - Freeze MRS-004, TM-004 and the closed vocabularies after merge; a semantic
   change requires a new specification review before downstream code.
-- Task-010 is an admission gate, not permission to vendor, mirror, branch-pin or
+- Task-018 is an admission gate, not permission to vendor, mirror, branch-pin or
   locally emulate missing shared capabilities.
 - Keep one writer for shared census, state and fixture files; downstream tasks
   rebase after each predecessor merges.

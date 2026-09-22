@@ -24,3 +24,10 @@ description: "Chronological log of the progressive source-qualification-readines
   Rust tests and one doctest, Quire validates 163 specification and 11 plan
   documents, and all 48 M6 obligations classify without an assurance mismatch.
   TM-004 remains truthfully planned at 0 of 17 rows.
+* **2026-09-21** — Rebase review found the repository-unique Task-009 through
+  Task-012 ids now collide with PLAN-010-past-history-implementation's own
+  Task-009 through Task-012, independently landed on main after this bundle
+  was renumbered on 2026-09-13. Renumbered this plan's Task-009..012 to
+  Task-017..020 (files, `id:` frontmatter and every internal cross-reference);
+  PLAN-010's Task-009..012 are untouched. No requirement, test-matrix row or
+  external issue mapping changed.

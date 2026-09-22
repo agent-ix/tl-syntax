@@ -1,5 +1,5 @@
 ---
-id: Task-010
+id: Task-018
 title: "Admit external prerequisites without local substitutes"
 type: Task
 status: blocked
@@ -11,7 +11,7 @@ evidence_method: released-contract-admission
 github_issue: ix://agent-ix/tl-syntax/issues/45
 resume_conditions: [ix://agent-ix/tl-syntax/issues/16, ix://agent-ix/quire-research/issues/64, ix://agent-ix/engineering-assurance/issues/11]
 relationships:
-  - target: ix://agent-ix/tl-syntax/Task-009
+  - target: ix://agent-ix/tl-syntax/Task-017
     type: depends_on
   - target: ix://agent-ix/tl-syntax/FR-015
     type: references
@@ -32,7 +32,7 @@ relationships:
   - target: ix://agent-ix/tl-syntax/TC-073
     type: verifies
 ---
-# Task-010: Admit external prerequisites without local substitutes
+# Task-018: Admit external prerequisites without local substitutes
 
 ## Scope
 

@@ -11,9 +11,9 @@ evidence_method: state-machine-and-integration-test
 github_issue: ix://agent-ix/tl-syntax/issues/48
 resume_conditions: [ix://agent-ix/tl-syntax/issues/45, ix://agent-ix/tl-syntax/issues/47]
 relationships:
-  - target: ix://agent-ix/tl-syntax/Task-010
+  - target: ix://agent-ix/tl-syntax/Task-018
     type: depends_on
-  - target: ix://agent-ix/tl-syntax/Task-012
+  - target: ix://agent-ix/tl-syntax/Task-020
     type: depends_on
   - target: ix://agent-ix/tl-syntax/FR-016
     type: references
@@ -55,5 +55,5 @@ supersession and policy-backed decision admission without automated promotion.
 
 ## Notes
 
-- Blocked until Task-010 selects the retention backend/operator and
+- Blocked until Task-018 selects the retention backend/operator and
   authoritative policy/event source.

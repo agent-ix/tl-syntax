@@ -11,7 +11,7 @@ evidence_method: real-writer-reader-integration-and-analysis
 github_issue: ix://agent-ix/tl-syntax/issues/50
 resume_conditions: [ix://agent-ix/tl-syntax/issues/45, ix://agent-ix/tl-syntax/issues/49, ix://agent-ix/engineering-assurance/issues/11]
 relationships:
-  - target: ix://agent-ix/tl-syntax/Task-010
+  - target: ix://agent-ix/tl-syntax/Task-018
     type: depends_on
   - target: ix://agent-ix/tl-syntax/Task-014
     type: depends_on

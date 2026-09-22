@@ -1,5 +1,5 @@
 ---
-id: Task-009
+id: Task-017
 title: "M6 source-readiness specification and composite review"
 type: Task
 status: done
@@ -30,7 +30,7 @@ relationships:
   - target: ix://agent-ix/tl-syntax/TC-066
     type: verifies
 ---
-# Task-009: M6 source-readiness specification and composite review
+# Task-017: M6 source-readiness specification and composite review
 
 ## Scope
 
