@@ -66,7 +66,7 @@ help:
 	@echo "  make conformance      - replay the shared temporal corpus through the crate"
 	@echo "  make spec             - validate specs and report implementation coverage"
 	@echo "  make spec-release     - require every active specification row to be backed"
-	@echo "  make msrv             - test all targets and features with Rust 1.75"
+	@echo "  make msrv             - test all targets and features with Rust 1.98.1"
 	@echo "  make rustdoc          - build warning-free public documentation"
 	@echo "  make build            - Release build"
 	@echo "  make clean            - cargo clean and drop the assurance environment"
@@ -173,7 +173,7 @@ audit-unsafe:
 
 .PHONY: msrv
 msrv:
-	rustup run 1.75.0 $(CARGO) test --all-features
+	rustup run 1.98.1 $(CARGO) test --all-features
 
 .PHONY: rustdoc
 rustdoc:
@@ -201,7 +201,7 @@ assurance-inputs: assurance-env
 	$(PYTHON) scripts/validate_corpus.py --json > $(ORACLE_RESULT)
 	$(PYTHON) scripts/check_default_dependencies.py --json > $(FEATURE_RESULT)
 	$(QUIRE) coverage --scope . --json > $(QUIRE_EXPORT)
-	rustup run 1.75.0 $(CARGO) check --locked --all-targets --all-features \
+	rustup run 1.98.1 $(CARGO) check --locked --all-targets --all-features \
 		--message-format=json > $(MSRV_RESULT)
 
 .PHONY: pins
