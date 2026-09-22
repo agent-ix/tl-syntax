@@ -71,7 +71,7 @@ epic #52 only when every planned feature and architecture repair is merged.
   correction/non-success, and exact model paths against public owner APIs.
   The closing workspace run passed 82 Rust tests and two compile-fail doctests;
   SR-538, SR-539, and SR-540 pass with every finding fixed. The final tracker
-  handoff is independently closed by SR-070, SR-071, and SR-072.
+  handoff is independently closed by SR-107, SR-108, and SR-109.
 - All implementation child tickets are closed. `quire-protocol#8` remains a
   truthful downstream Plan-001 gap for the broader assessment/refusal engine;
   the exact QProtocol result/mapping owner allocation consumed by this campaign

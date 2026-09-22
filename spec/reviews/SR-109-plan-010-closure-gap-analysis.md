@@ -1,5 +1,5 @@
 ---
-id: SR-072
+id: SR-109
 title: "Gap analysis — PLAN-010 ecosystem closure"
 type: SpecReview
 analysis: gap-analysis
@@ -40,7 +40,7 @@ architecture, review, cleanup, or tracking gap remains.
 | Four TL owner implementations and architecture reconciliation | closed tl-syntax #53/#54/#61/#64/#65, tl-parse #35/#38, tl-mltl #63/#66, tl-rewrite #38/#41 | complete |
 | Predicate and temporal bridges | QCI #70/#71; TC-038/TC-039; Tasks 006/007 | complete |
 | Exact ecosystem model and end-to-end path | QCI #74, PR #79/#80, TC-040, final main `4d139309bc86b3d698cc73404356900e904d43be` | complete |
-| Code/Rust/architecture/gap review | SR-538/SR-539/SR-540 plus SR-070/SR-071/SR-072 | complete |
+| Code/Rust/architecture/gap review | SR-538/SR-539/SR-540 plus SR-107/SR-108/SR-109 | complete |
 | Preserve work and free redundant space | eleven exact agent-b worktrees removed; all branch refs retained; agent-e worktrees untouched | complete |
 | Tracking truth | PLAN-010/Task-011 updated; TM-003 distinguishes local and federated evidence; epic #52 closes after this PR merges | complete pending promotion of this tracker-only handoff |
 

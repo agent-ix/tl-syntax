@@ -1,5 +1,5 @@
 ---
-id: SR-066
+id: SR-103
 title: "Base specification review — syntax owner reconciliation"
 type: SpecReview
 analysis: base
