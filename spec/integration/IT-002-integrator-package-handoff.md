@@ -3,9 +3,9 @@ id: IT-002
 title: Preserve source facts through the real integrator-package contract
 type: IT
 relationships:
-  - target: ix://agent-ix/tl-syntax/FR-016
-    type: verifies
   - target: ix://agent-ix/tl-syntax/FR-017
+    type: verifies
+  - target: ix://agent-ix/tl-syntax/FR-018
     type: verifies
 ---
 

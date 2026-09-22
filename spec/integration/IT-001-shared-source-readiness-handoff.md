@@ -3,15 +3,15 @@ id: IT-001
 title: Hand source-readiness inputs through the released shared stack
 type: IT
 relationships:
-  - target: ix://agent-ix/tl-syntax/FR-014
-    type: verifies
   - target: ix://agent-ix/tl-syntax/FR-015
+    type: verifies
+  - target: ix://agent-ix/tl-syntax/FR-016
     type: verifies
   - target: ix://agent-ix/tl-syntax/NFR-004
     type: verifies
   - target: ix://agent-ix/tl-syntax/NFR-005
     type: verifies
-  - target: ix://agent-ix/tl-syntax/FR-017
+  - target: ix://agent-ix/tl-syntax/FR-018
     type: verifies
 ---
 
@@ -78,7 +78,7 @@ producer input.
 9. Submit acyclic, dangling, cyclic, cross-subject, forked and contradictory
    supersession relations plus unresolved, satisfied and expired conditional
    decision states.
-   - IT-001-SC-09: graph and decision transitions match FR-015/FR-017 exactly and never choose a favorable branch or auto-accept a satisfied condition.
+   - IT-001-SC-09: graph and decision transitions match FR-016/FR-018 exactly and never choose a favorable branch or auto-accept a satisfied condition.
 
 ## Expected Results
 

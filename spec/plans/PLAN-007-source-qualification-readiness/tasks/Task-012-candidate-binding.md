@@ -1,0 +1,54 @@
+---
+id: Task-012
+title: "Bind immutable candidates and fresh producer results"
+type: Task
+status: blocked
+track: A
+priority: P0
+owner_repository: agent-ix/tl-syntax
+consumer_repositories: [agent-ix/tl-syntax]
+evidence_method: property-and-integration-test
+github_issue: ix://agent-ix/tl-syntax/issues/47
+resume_conditions: [ix://agent-ix/tl-syntax/issues/34, ix://agent-ix/tl-syntax/issues/45, ix://agent-ix/tl-syntax/issues/46]
+relationships:
+  - target: ix://agent-ix/tl-syntax/Task-010
+    type: depends_on
+  - target: ix://agent-ix/tl-syntax/Task-011
+    type: depends_on
+  - target: ix://agent-ix/tl-syntax/FR-015
+    type: references
+  - target: ix://agent-ix/tl-syntax/NFR-004
+    type: references
+  - target: ix://agent-ix/tl-syntax/TC-059
+    type: verifies
+  - target: ix://agent-ix/tl-syntax/TC-060
+    type: verifies
+  - target: ix://agent-ix/tl-syntax/TC-068
+    type: verifies
+  - target: ix://agent-ix/tl-syntax/TC-069
+    type: verifies
+---
+# Task-012: Bind immutable candidates and fresh producer results
+
+## Scope
+
+Implement candidate/configuration identity, source traversal and producer-
+freshness projection through released source-grounding contracts.
+
+## Subtasks
+
+- [ ] Write property tests for every identity axis and source-walk boundary.
+- [ ] Implement immutable-root binding and bounded symlink traversal in Rust.
+- [ ] Consume the same descriptor-backed snapshots used for identity; refuse
+  pathname reopen and change-then-restore races.
+- [ ] Implement total execution/decode mappings and stale-output quarantine.
+- [ ] Prove deterministic equality and one-axis isolation.
+
+## Deliverables
+
+- Rust candidate/source binding and producer adapter
+- TC-059, TC-060, TC-068 and TC-069 evidence
+
+## Notes
+
+- No Markdown parser, branch-head contract or repository-local compatibility map is admissible.

@@ -13,11 +13,11 @@ relationships:
 
 | Functional Req | Acceptance Criteria | Test Cases | Status |
 |---|---|---|---|
-| FR-014 | FR-014-AC-1 through FR-014-AC-6 | TC-059, TC-060, TC-066, TC-068, TC-069 | 🚧 planned |
-| FR-015 | FR-015-AC-1 through FR-015-AC-7 | TC-062, TC-063, TC-066, TC-067, TC-070 | 🚧 planned |
-| FR-016 | FR-016-AC-1 through FR-016-AC-7 | TC-061, TC-063, TC-066, TC-068, TC-071, TC-072, IT-002 | 🚧 planned |
-| FR-017 | FR-017-AC-1 through FR-017-AC-7 | TC-062, TC-063, TC-066, TC-070, TC-073 | 🚧 planned |
-| FR-018 | FR-018-AC-1 through FR-018-AC-4 | TC-064, TC-065, TC-066 | 🚧 planned |
+| FR-015 | FR-015-AC-1 through FR-015-AC-6 | TC-059, TC-060, TC-066, TC-068, TC-069 | 🚧 planned |
+| FR-016 | FR-016-AC-1 through FR-016-AC-7 | TC-062, TC-063, TC-066, TC-067, TC-070 | 🚧 planned |
+| FR-017 | FR-017-AC-1 through FR-017-AC-7 | TC-061, TC-063, TC-066, TC-068, TC-071, TC-072, IT-002 | 🚧 planned |
+| FR-018 | FR-018-AC-1 through FR-018-AC-7 | TC-062, TC-063, TC-066, TC-070, TC-073 | 🚧 planned |
+| FR-019 | FR-019-AC-1 through FR-019-AC-4 | TC-064, TC-065, TC-066 | 🚧 planned |
 
 ## Stakeholder Requirement Coverage
 
@@ -36,21 +36,21 @@ relationships:
 
 | Test ID | Title | Type | Priority | Traces To | Status |
 |---|---|---|---|---|---|
-| TC-059 | Repeat the complete source-readiness population at one exact candidate/configuration | Integration | P0 | FR-014-AC-1, NFR-004-AC-1, NFR-004-AC-5, StR-004-VC-1 | 🚧 planned |
-| TC-060 | Mutate every candidate, source, configuration, environment and shared-contract identity | Property | P0 | FR-014-AC-2, FR-014-AC-3, NFR-004-AC-2 | 🚧 planned |
-| TC-061 | Round-trip source facts and two distinct open adopter subjects through the real shared package | Integration | P0 | FR-016-AC-1, FR-016-AC-2, StR-004-VC-2, IT-002 | 🚧 blocked on shared contract |
-| TC-062 | Preserve developer, release-input, human-decision and adopter stages and all six decision dispositions | Integration | P0 | FR-015-AC-1, FR-017-AC-1, NFR-004-AC-3, StR-004-VC-1 | 🚧 planned |
-| TC-063 | Refuse promotion, limitation omission, stale decisions and unknown-value coercion | Integration | P0 | FR-015-AC-2, FR-015-AC-3, FR-015-AC-7, FR-016-AC-3, FR-017-AC-2, FR-017-AC-3, NFR-004-AC-3, NFR-005-AC-3 | 🚧 planned |
-| TC-064 | Census and classify every executable readiness path and new-path mutation | Integration | P0 | FR-018-AC-1, FR-018-AC-2, NFR-004-AC-4 | 🚧 blocked on LR08 disposition |
-| TC-065 | Demonstrate positive and forced-failure parity for each replaced executable path | Integration | P0 | FR-018-AC-3 | 🚧 blocked on reviewed replacements |
-| TC-066 | Prove authority, language, certification and no-local-substitute boundaries | Integration | P0 | FR-014-AC-4, FR-015-AC-4, FR-016-AC-4, FR-017-AC-4, FR-018-AC-4, NFR-004-AC-4, NFR-005-AC-4, StR-004-VC-3 | 🚧 planned |
-| TC-067 | Mutate evidence lifecycle/content binding and exercise durable-handle retrieval after disposable workspace deletion | Integration | P0 | FR-015-AC-5, NFR-005-AC-1 | 🚧 blocked on selected shared retention contract |
-| TC-068 | Quarantine stale outputs; force skipped, crashed, timed-out, malformed and partial producer/package executions; and reject change-then-restore input mutation | Integration | P0 | FR-014-AC-5, FR-016-AC-5 | 🚧 planned |
-| TC-069 | Mutate repository/Git/materialized/admitted-root/path/mount identities and probe symlink escape/cycle/race/special/mount/bound cases | Property | P0 | FR-014-AC-6 | 🚧 planned |
-| TC-070 | Mutate supersession topology/bounds, conditional/deferred transitions and concurrent review/decision successors | Property | P0 | FR-015-AC-6, FR-017-AC-7 | 🚧 planned |
-| TC-071 | Race non-identical package writers and retry identical/different attempt identities | Integration | P0 | FR-016-AC-6 | 🚧 blocked on accepted shared contract |
-| TC-072 | An independent rights reviewer reconciles the exact candidate's tracked source, package contents, dependency closure and generated/embedded third-party material against identity-bound authoritative license and reuse-right sources | Analysis | P0 | FR-016-AC-7, IT-002-SC-07 | 🚧 planned |
-| TC-073 | Mutate reviewer/decision policy, actor, contributor, conflict, delegation, revocation, quorum, event snapshot/cursor/completeness, evaluation time authority, head/base/configuration and evidence bindings | Property | P0 | FR-017-AC-2, FR-017-AC-5, FR-017-AC-6, FR-017-AC-7, NFR-005-AC-2 | 🚧 blocked on authoritative policy/event source |
+| TC-059 | Repeat the complete source-readiness population at one exact candidate/configuration | Integration | P0 | FR-015-AC-1, NFR-004-AC-1, NFR-004-AC-5, StR-004-VC-1 | 🚧 planned |
+| TC-060 | Mutate every candidate, source, configuration, environment and shared-contract identity | Property | P0 | FR-015-AC-2, FR-015-AC-3, NFR-004-AC-2 | 🚧 planned |
+| TC-061 | Round-trip source facts and two distinct open adopter subjects through the real shared package | Integration | P0 | FR-017-AC-1, FR-017-AC-2, StR-004-VC-2, IT-002 | 🚧 blocked on shared contract |
+| TC-062 | Preserve developer, release-input, human-decision and adopter stages and all six decision dispositions | Integration | P0 | FR-016-AC-1, FR-018-AC-1, NFR-004-AC-3, StR-004-VC-1 | 🚧 planned |
+| TC-063 | Refuse promotion, limitation omission, stale decisions and unknown-value coercion | Integration | P0 | FR-016-AC-2, FR-016-AC-3, FR-016-AC-7, FR-017-AC-3, FR-018-AC-2, FR-018-AC-3, NFR-004-AC-3, NFR-005-AC-3 | 🚧 planned |
+| TC-064 | Census and classify every executable readiness path and new-path mutation | Integration | P0 | FR-019-AC-1, FR-019-AC-2, NFR-004-AC-4 | 🚧 blocked on LR08 disposition |
+| TC-065 | Demonstrate positive and forced-failure parity for each replaced executable path | Integration | P0 | FR-019-AC-3 | 🚧 blocked on reviewed replacements |
+| TC-066 | Prove authority, language, certification and no-local-substitute boundaries | Integration | P0 | FR-015-AC-4, FR-016-AC-4, FR-017-AC-4, FR-018-AC-4, FR-019-AC-4, NFR-004-AC-4, NFR-005-AC-4, StR-004-VC-3 | 🚧 planned |
+| TC-067 | Mutate evidence lifecycle/content binding and exercise durable-handle retrieval after disposable workspace deletion | Integration | P0 | FR-016-AC-5, NFR-005-AC-1 | 🚧 blocked on selected shared retention contract |
+| TC-068 | Quarantine stale outputs; force skipped, crashed, timed-out, malformed and partial producer/package executions; and reject change-then-restore input mutation | Integration | P0 | FR-015-AC-5, FR-017-AC-5 | 🚧 planned |
+| TC-069 | Mutate repository/Git/materialized/admitted-root/path/mount identities and probe symlink escape/cycle/race/special/mount/bound cases | Property | P0 | FR-015-AC-6 | 🚧 planned |
+| TC-070 | Mutate supersession topology/bounds, conditional/deferred transitions and concurrent review/decision successors | Property | P0 | FR-016-AC-6, FR-018-AC-7 | 🚧 planned |
+| TC-071 | Race non-identical package writers and retry identical/different attempt identities | Integration | P0 | FR-017-AC-6 | 🚧 blocked on accepted shared contract |
+| TC-072 | An independent rights reviewer reconciles the exact candidate's tracked source, package contents, dependency closure and generated/embedded third-party material against identity-bound authoritative license and reuse-right sources | Analysis | P0 | FR-017-AC-7, IT-002-SC-07 | 🚧 planned |
+| TC-073 | Mutate reviewer/decision policy, actor, contributor, conflict, delegation, revocation, quorum, event snapshot/cursor/completeness, evaluation time authority, head/base/configuration and evidence bindings | Property | P0 | FR-018-AC-2, FR-018-AC-5, FR-018-AC-6, FR-018-AC-7, NFR-005-AC-2 | 🚧 blocked on authoritative policy/event source |
 
 ## Planned Suite Allocation
 

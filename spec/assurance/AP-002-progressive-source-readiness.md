@@ -16,7 +16,7 @@ impact_assessments:
       stochastic_dependency: none
     detect_before_harm:
       expected: true
-      control_ref: ix://agent-ix/tl-syntax/FR-014
+      control_ref: ix://agent-ix/tl-syntax/FR-015
   - id: impact-automated-authority-promotion
     scenario: a local gate, receipt or package is treated as human release or adopter authority
     severity: material
@@ -25,7 +25,7 @@ impact_assessments:
       stochastic_dependency: none
     detect_before_harm:
       expected: true
-      control_ref: ix://agent-ix/tl-syntax/FR-017
+      control_ref: ix://agent-ix/tl-syntax/FR-018
   - id: impact-limitation-loss
     scenario: a limitation, exception, negative result or open adopter obligation is omitted from a favorable readiness view
     severity: material
@@ -34,7 +34,7 @@ impact_assessments:
       stochastic_dependency: none
     detect_before_harm:
       expected: true
-      control_ref: ix://agent-ix/tl-syntax/FR-015
+      control_ref: ix://agent-ix/tl-syntax/FR-016
   - id: impact-local-assurance-substitute
     scenario: an unavailable shared capability is replaced by repository-local qualification logic
     severity: material
@@ -43,7 +43,7 @@ impact_assessments:
       stochastic_dependency: none
     detect_before_harm:
       expected: true
-      control_ref: ix://agent-ix/tl-syntax/FR-018
+      control_ref: ix://agent-ix/tl-syntax/FR-019
 review_policy:
   mode: require
   operations: [spec-review, code-review, gap-analysis]
@@ -107,7 +107,7 @@ schema has no acceptance-criterion criticality column.
   authoritative-source query snapshot. Pagination may not mix snapshot/cursor
   identities, omit or duplicate an event, or select a favorable prefix.
 - A value at a bound is admitted; the first value above it produces the typed
-  non-success required by FR-014 or FR-015 without exposing a partial result.
+  non-success required by FR-015 or FR-016 without exposing a partial result.
 
 ## Exceptions
 

@@ -3,8 +3,6 @@ id: StR-004
 title: Release owners and integrators need bounded source-readiness facts
 type: StR
 relationships:
-  - target: ix://agent-ix/tl-syntax/FR-014
-    type: satisfied_by
   - target: ix://agent-ix/tl-syntax/FR-015
     type: satisfied_by
   - target: ix://agent-ix/tl-syntax/FR-016
@@ -12,6 +10,8 @@ relationships:
   - target: ix://agent-ix/tl-syntax/FR-017
     type: satisfied_by
   - target: ix://agent-ix/tl-syntax/FR-018
+    type: satisfied_by
+  - target: ix://agent-ix/tl-syntax/FR-019
     type: satisfied_by
 ---
 
@@ -64,8 +64,8 @@ reported unavailable and must not replace that capability locally.
 
 Upstream policy comes from `ix://agent-ix/quire-contract-ir/PGM-01`, the native-
 language owner ruling and the released shared-assurance contracts. Downstream
-realization is allocated to [FR-014](./FR-014-bind-source-readiness-candidate.md)
-through [FR-018](./FR-018-classify-qualification-execution-paths.md),
+realization is allocated to [FR-015](./FR-015-bind-source-readiness-candidate.md)
+through [FR-019](./FR-019-classify-qualification-execution-paths.md),
 [NFR-004](./NFR-004-reproduce-source-readiness-observations.md) and
 [NFR-005](./NFR-005-preserve-readiness-authority-and-retention.md).
 

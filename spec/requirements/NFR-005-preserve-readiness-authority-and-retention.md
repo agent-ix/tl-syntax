@@ -4,11 +4,11 @@ title: Preserve source-readiness authority and retention truth
 type: NFR
 quality_attribute: reliability
 relationships:
-  - target: ix://agent-ix/tl-syntax/FR-015
-    type: constrains
   - target: ix://agent-ix/tl-syntax/FR-016
     type: constrains
   - target: ix://agent-ix/tl-syntax/FR-017
+    type: constrains
+  - target: ix://agent-ix/tl-syntax/FR-018
     type: constrains
 ---
 

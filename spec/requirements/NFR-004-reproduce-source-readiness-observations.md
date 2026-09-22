@@ -4,8 +4,6 @@ title: Reproduce source-readiness observations without authority drift
 type: NFR
 quality_attribute: reliability
 relationships:
-  - target: ix://agent-ix/tl-syntax/FR-014
-    type: constrains
   - target: ix://agent-ix/tl-syntax/FR-015
     type: constrains
   - target: ix://agent-ix/tl-syntax/FR-016
@@ -13,6 +11,8 @@ relationships:
   - target: ix://agent-ix/tl-syntax/FR-017
     type: constrains
   - target: ix://agent-ix/tl-syntax/FR-018
+    type: constrains
+  - target: ix://agent-ix/tl-syntax/FR-019
     type: constrains
 ---
 

@@ -79,12 +79,12 @@ missing, the guarantee remains unavailable rather than falling back locally.
 |---|---|---|
 | PGM-01 and native-language ruling | Assumed | Governance/source-language authority; bind exact immutable identity before implementation. |
 | Git repository/object/materialization | Guaranteed boundary; Git correctness/provenance assumed | TC-059/060/069 bind/refuse identities; Git implementation and repository provenance remain external assumptions. |
-| Rust/Cargo toolchain and public package delivery | Guaranteed identity; semantics/provenance assumed | FR-014 identity mutations; no compiler or registry certification claim. |
+| Rust/Cargo toolchain and public package delivery | Guaranteed identity; semantics/provenance assumed | FR-015 identity mutations; no compiler or registry certification claim. |
 | Released Quire source export and Engineering Assurance classifier | Guaranteed when available | IT-001; unavailable until the `tl-syntax#16` accepted release set exists. |
 | Released Quoin record/attestation/intake/receipt | Guaranteed when available | IT-001 real interfaces; Quoin does not execute producers or decide sufficiency. |
 | Retention backend/operator | Guaranteed when selected | TC-067 verifies handle/content/lifecycle after workspace deletion; currently unselected/unavailable. |
 | GitHub review/event facts | Assumed input, guaranteed binding | TC-073 checks exact policy/actor/subject binding; authenticated event semantics remain external. |
-| Reviewer-independence and human-release policy | Assumed authority, guaranteed admission | FR-017/TC-073; currently unavailable until an immutable policy/event source and actor set are selected. |
+| Reviewer-independence and human-release policy | Assumed authority, guaranteed admission | FR-018/TC-073; currently unavailable until an immutable policy/event source and actor set are selected. |
 | LR08 cross-repository language policy | Assumed | `quire-research#64`; tl-syntax guarantees only its local census/classification under TC-064/065. |
 | Future Engineering Assurance integrator package | Guaranteed when available | IT-002; currently no accepted compatible contract. |
 | Downstream intended-use/deployment facts | Assumed input, guaranteed separation | IT-002 preserves adopter attribution and non-transfer of acceptance. |

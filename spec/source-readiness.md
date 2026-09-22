@@ -119,14 +119,14 @@ input is `refused`, and an unknown enum value is `unsupported`.
 ## Requirements Architecture
 
 [StR-004](./requirements/StR-004-progressive-source-readiness.md) states the
-stakeholder need. [FR-014](./requirements/FR-014-bind-source-readiness-candidate.md)
+stakeholder need. [FR-015](./requirements/FR-015-bind-source-readiness-candidate.md)
 binds the candidate/configuration;
-[FR-015](./requirements/FR-015-preserve-readiness-stages.md) separates evidence
-stages; [FR-016](./requirements/FR-016-emit-integrator-readiness-package.md)
+[FR-016](./requirements/FR-016-preserve-readiness-stages.md) separates evidence
+stages; [FR-017](./requirements/FR-017-emit-integrator-readiness-package.md)
 defines the deferred package boundary;
-[FR-017](./requirements/FR-017-require-human-source-release-decision.md) keeps
+[FR-018](./requirements/FR-018-require-human-source-release-decision.md) keeps
 human authority exact; and
-[FR-018](./requirements/FR-018-classify-qualification-execution-paths.md)
+[FR-019](./requirements/FR-019-classify-qualification-execution-paths.md)
 governs executable-path ownership. [NFR-004](./requirements/NFR-004-reproduce-source-readiness-observations.md)
 constrains reproducibility, while
 [NFR-005](./requirements/NFR-005-preserve-readiness-authority-and-retention.md)
@@ -140,14 +140,14 @@ The internal hard-prerequisite graph is acyclic:
 
 ```text
 MRS-001 + PGM-01 + NFR-003 + FR-006
-  -> FR-018 executable-path classification
-  -> FR-014 candidate/configuration binding
-  -> FR-015 stage and lifecycle preservation
-  -> FR-017 review and human-decision relation
-  -> FR-016 deferred integrator package
+  -> FR-019 executable-path classification
+  -> FR-015 candidate/configuration binding
+  -> FR-016 stage and lifecycle preservation
+  -> FR-018 review and human-decision relation
+  -> FR-017 deferred integrator package
 ```
 
-NFR-004 and NFR-005 are cross-cutting controls designed with FR-018 and gate
+NFR-004 and NFR-005 are cross-cutting controls designed with FR-019 and gate
 completion of every functional requirement they constrain. AP-002 selects the
 review boundary; MP-002 operationalizes the NFR observations and does not
 precede or redefine either NFR. Specification/review can finish while an
