@@ -64,7 +64,7 @@ help:
 	@echo "  make check-features   - check no-default, alloc, serde, and all features"
 	@echo "  make check-corpus     - verify corpus digests, schemas, and derived oracles"
 	@echo "  make conformance      - replay the shared temporal corpus through the crate"
-	@echo "  make spec             - validate specs and report implementation coverage"
+	@echo "  make spec             - validate specs, check id: uniqueness, and report coverage"
 	@echo "  make spec-release     - require every active specification row to be backed"
 	@echo "  make msrv             - test all targets and features with Rust 1.98.1"
 	@echo "  make rustdoc          - build warning-free public documentation"
@@ -134,10 +134,14 @@ check-corpus:
 .PHONY: spec spec-release
 spec:
 	$(QUIRE) validate --scope . 'spec/**/*.md' --strict --summary
+	$(PYTHON) scripts/check_spec_id_uniqueness.py
+	$(PYTHON) scripts/test_check_spec_id_uniqueness.py
 	$(QUIRE) coverage --scope .
 
 spec-release:
 	$(QUIRE) validate --scope . 'spec/**/*.md' --strict --summary
+	$(PYTHON) scripts/check_spec_id_uniqueness.py
+	$(PYTHON) scripts/test_check_spec_id_uniqueness.py
 	$(QUIRE) coverage --scope . --strict
 
 .PHONY: build
