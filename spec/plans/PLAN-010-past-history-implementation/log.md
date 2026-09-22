@@ -16,8 +16,8 @@ description: "Chronological history of the past/history implementation plan."
   nine-repository owner path, exports/re-reads the bounded non-authoritative
   model, and preserves typed non-success/correction states. TC-038, TC-039 and
   TC-040 close the remaining native and integrated allocations; SR-538,
-  SR-539 and SR-540 pass with every finding fixed. Final handoff reviews SR-070,
-  SR-071 and SR-072 also pass after correcting federated-status claims and the
+  SR-539 and SR-540 pass with every finding fixed. Final handoff reviews SR-107,
+  SR-108 and SR-109 also pass after correcting federated-status claims and the
   TC-057 arbitrary-input oracle. All campaign child tickets are closed. The
   broader `quire-protocol#8` Plan-001 engine remains explicitly downstream; its
   exact campaign-owned result/mapping surface was completed in QProtocol #51.

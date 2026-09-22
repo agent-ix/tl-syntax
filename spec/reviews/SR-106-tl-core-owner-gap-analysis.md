@@ -1,5 +1,5 @@
 ---
-id: SR-069
+id: SR-106
 title: "Gap analysis — syntax owner reconciliation"
 type: SpecReview
 analysis: gap-analysis
