@@ -88,8 +88,8 @@ Backported from `agent-ix/ecaz`:
 - `scripts/check_unsafe_comments.sh` runs in CI and locally via `make audit-unsafe`. Every `unsafe {` block must have a `// SAFETY:` comment within the 3 preceding lines, or be listed in `scripts/unsafe_comment_baseline.txt`. Update the baseline with `bash scripts/check_unsafe_comments.sh --update-baseline`.
 - `rustfmt.toml` uses only stable 100-character-width settings.
 - `Cargo.toml` declares Rust 1.98.1 as the MSRV; `make msrv` checks every target
-  and feature at that version while `rust-toolchain.toml` selects stable rustfmt
-  and clippy.
+  and feature at that version while `rust-toolchain.toml` pins the same exact
+  version for rustfmt and clippy.
 
 ## Layout
 
