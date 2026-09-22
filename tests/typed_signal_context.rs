@@ -338,8 +338,7 @@ fn catalog_wire_refuses_unknown_and_over_limit_forms() {
     }
 
     let repeated_signal = r#"{"id":1,"name":"ready","domain":{"kind":"boolean"}}"#;
-    let signals = std::iter::repeat(repeated_signal)
-        .take(MAX_SIGNAL_CATALOG_SIGNALS + 1)
+    let signals = std::iter::repeat_n(repeated_signal, MAX_SIGNAL_CATALOG_SIGNALS + 1)
         .collect::<Vec<_>>()
         .join(",");
     let oversized = format!(
@@ -363,8 +362,7 @@ fn catalog_wire_refuses_unknown_and_over_limit_forms() {
     assert!(error.to_string().contains("signal name"));
 
     let repeated_binding = r#"{"proposition":1,"signal":1}"#;
-    let bindings = std::iter::repeat(repeated_binding)
-        .take(MAX_SIGNAL_CATALOG_BINDINGS + 1)
+    let bindings = std::iter::repeat_n(repeated_binding, MAX_SIGNAL_CATALOG_BINDINGS + 1)
         .collect::<Vec<_>>()
         .join(",");
     let oversized = format!(

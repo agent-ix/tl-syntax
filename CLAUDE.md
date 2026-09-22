@@ -16,7 +16,7 @@ make audit-unsafe     # enforce the unsafe-code policy guard
 make check-corpus     # corpus digests, schemas, derived oracles, and their mutation probe
 make conformance      # replay the shared temporal corpus through the crate
 make spec             # validate the specification with Quire
-make msrv             # test every target and feature at Rust 1.75
+make msrv             # test every target and feature at Rust 1.98.1
 make assurance-env    # build the pinned shared-assurance interpreter
 make assurance-inputs # run the producers and write their structured results
 make assurance        # pins + the Quoin chain
@@ -83,11 +83,11 @@ before the first stable release candidate—is tracked in
 
 Backported from `agent-ix/ecaz`:
 
-- `clippy.toml` pins MSRV to `1.75` and caps cognitive complexity / arg count
+- `clippy.toml` pins MSRV to `1.98.1` and caps cognitive complexity / arg count
 - `deny.toml` allow-lists licenses and denies unknown registries/git sources
 - `scripts/check_unsafe_comments.sh` runs in CI and locally via `make audit-unsafe`. Every `unsafe {` block must have a `// SAFETY:` comment within the 3 preceding lines, or be listed in `scripts/unsafe_comment_baseline.txt`. Update the baseline with `bash scripts/check_unsafe_comments.sh --update-baseline`.
 - `rustfmt.toml` uses only stable 100-character-width settings.
-- `Cargo.toml` declares Rust 1.75 as the MSRV; `make msrv` checks every target
+- `Cargo.toml` declares Rust 1.98.1 as the MSRV; `make msrv` checks every target
   and feature at that version while `rust-toolchain.toml` selects stable rustfmt
   and clippy.
 
