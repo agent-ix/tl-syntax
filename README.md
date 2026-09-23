@@ -87,7 +87,14 @@ manual-only and is not part of `make ci` or hosted CI:
 
 ```bash
 cargo +nightly fuzz run wire_decode -- -runs=100
+cargo +nightly fuzz run infinite_wire_decode -- -runs=100
 ```
+
+`infinite_wire_decode` drives the strict unbounded-formula, lasso, and partial
+valuation readers through canonical serialization and identity computation.
+Its digest-pinned corpus includes valid inputs for all three paths and a
+malformed refusal. `tests/infinite_fuzz_seeds.rs` checks that the seeds reach
+the intended paths before a campaign starts.
 
 Successful decodes must still pass public validation; malformed bytes are
 expected to be rejected. The checked-in conformance corpus remains the
