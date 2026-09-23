@@ -445,6 +445,36 @@ fn strict_unbounded_reader_honors_lowered_node_and_depth_limits() {
             ..
         })
     ));
+
+    let exact_depth = SyntaxArtifactLimits {
+        formula_nodes: 2,
+        formula_depth: 2,
+        ..SyntaxArtifactLimits::default()
+    };
+    assert_eq!(
+        InfiniteFormulaDocument::from_json_bytes(&bytes, exact_depth).unwrap(),
+        doc
+    );
+
+    // Strict admission counts the two retained nodes as work before decoding.
+    let expected_work = bytes.len() * 3 + 2;
+    let insufficient_work = SyntaxArtifactLimits {
+        work: expected_work - 1,
+        ..SyntaxArtifactLimits::default()
+    };
+    assert!(matches!(
+        InfiniteFormulaDocument::from_json_bytes(&bytes, insufficient_work),
+        Err(tl_syntax::StrictDocumentReadError::WorkLimitExceeded { actual, limit })
+            if actual == expected_work && limit == expected_work - 1
+    ));
+    let exact_work = SyntaxArtifactLimits {
+        work: expected_work,
+        ..SyntaxArtifactLimits::default()
+    };
+    assert_eq!(
+        InfiniteFormulaDocument::from_json_bytes(&bytes, exact_work).unwrap(),
+        doc
+    );
 }
 
 proptest::proptest! {

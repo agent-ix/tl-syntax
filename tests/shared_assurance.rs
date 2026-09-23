@@ -390,7 +390,7 @@ fn git_files(root: &Path, arguments: &[&str]) -> CensusResult<BTreeSet<String>> 
         .collect())
 }
 
-const EXPECTED_LIVE_TRACKED: [&str; 230] = [
+const EXPECTED_LIVE_TRACKED: [&str; 231] = [
     ".agent/rules/writing_rust.md",
     ".github/CODEOWNERS",
     ".github/workflows/ci.yml",
@@ -621,6 +621,7 @@ const EXPECTED_LIVE_TRACKED: [&str; 230] = [
     "tests/strict_syntax_artifacts.rs",
     "tests/typed_signal_context.rs",
     "tests/v1_spec_stubs.rs",
+    "verification/kani-interval.md",
 ];
 
 const FORBIDDEN: [&str; 5] = [
@@ -1055,6 +1056,7 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         // Issue #53 adds formula-v2/profile and dependency-manifest gates.
         // TL-207 adds the corpus pin test and named implementation stubs.
         ("tests", 19),
+        ("verification", 1),
     ]
     .into_iter()
     .map(|(area, count)| (area.to_owned(), count))
