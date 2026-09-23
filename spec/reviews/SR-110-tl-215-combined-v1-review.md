@@ -22,7 +22,7 @@ they are not implementation evidence.
 
 | ID | Severity | Summary | Refs |
 |---|---|---|---|
-| FND-001 | high | TL-212 promises an all-tree depth-three local gate that cannot finish at the stated domain size. FR-044 reports exact visited and unvisited counts and grants exhaustive credit only to fully visited declared finite partitions. The owner must disposition the ticket/spec mismatch before acceptance. | TL-212, FR-044 |
+| FND-001 | high | Initial TL-212 wording promised an all-tree depth-three local gate that cannot finish at the stated domain size. The ticket was corrected to match FR-044: only fully visited declared finite partitions earn exhaustive credit. Resolved on re-review. | TL-212, FR-044 |
 | FND-002 | medium | R2U2 past-origin equivalence depends on a reviewed target version. FR-039 refuses export without that contract; FR-052 reports live differential outcomes separately. | FR-039, FR-052 |
 | FND-003 | low | The independent `tl-oracle` repository is an enablement dependency, still unscaffolded. The TL-210 first-lap lasso scaffold is not a qualified repeated-loop oracle. | TL-245, TL-221, FR-053 |
 
@@ -39,7 +39,12 @@ they are not implementation evidence.
 
 ## Acceptance state
 
+FND-001 was re-reviewed after the TL-212 description adopted the FR-044 finite
+partition rule. The formula-depth-three target remains explicit and incomplete
+until its entire declared population is visited; the local gate cannot claim
+that target from samples. The ticket and requirement now agree.
+
 The selected reviews are validated in ix-flow run
 `f0833bf5-4584-4ea1-8de8-65dcfdb8d197`. The run is at `validated` and awaits
-human acceptance. FND-001 remains open; Stage 1 production implementation is
-still gated by TL-215.
+human acceptance. No high finding remains open; Stage 1 production
+implementation is still gated by TL-215.
