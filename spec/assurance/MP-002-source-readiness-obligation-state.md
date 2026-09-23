@@ -62,6 +62,15 @@ owns.
 
 ## Interpretation
 
+The `count` estimate is the number of required obligations whose result is
+non-success or lacks current attributable evidence, taken over both
+repetitions together. An obligation whose repetitions disagree counts. The
+decision rule `eq 0` therefore blocks a source-readiness claim when any
+required obligation is non-success or lacks current attributable evidence. The
+count is a blocking tally, not a weighted or aggregate qualification score. It
+never replaces the per-obligation categorical results, and a zero count never
+approves release or adopter use.
+
 Report each categorical result and discrepancy. A missing, failed, skipped,
 unsupported, stale, suspect, vacuous, tampered or nondeterministic result blocks
 only the claim that requires it and remains visible. Do not compute a score that
