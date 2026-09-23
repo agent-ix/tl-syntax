@@ -122,7 +122,7 @@ python3 fuzz/run_v4_campaign.py --output fuzz/evidence/v4-2026-09-23 \
 ```
 
 The runner verifies every `SHA256SUMS` entry, copies the seeds to scratch,
-and retains the engine's raw streams, exact source/tool/lock identities,
+and retains the engine's raw streams as lossless gzip files, exact source/tool/lock identities,
 requested budget, observed execution count, stop reason, and artifact digests.
 A nonzero engine exit, short run, or crash artifact remains incomplete until
 the artifact is minimized and replayed on the same source revision. A clean
