@@ -7,7 +7,7 @@ Two files and no evidence.
 claims to meet, the things it promises not to break, the proofs it offers, and
 the questions it cannot answer. `pins.json` is the Engineering Assurance
 release it adopts and the artifacts it actually reads from that
-release. The v0.3.2 candidate uses the native EA compatibility CLI; its
+release. The v0.4.1 candidate uses the native EA compatibility CLI; its
 matrix gate remains withheld until an attributed human acceptance is recorded.
 
 ## Why there is no evidence in here

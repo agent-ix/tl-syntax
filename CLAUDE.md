@@ -42,7 +42,7 @@ lock, retention store, audit store, anchor file, or aggregate verdict. See
 [`spec/requirements/FR-006-shared-assurance-intake.md`](./spec/requirements/FR-006-shared-assurance-intake.md).
 
 The shared compatibility classifier is the native Engineering Assurance CLI
-at the exact `v0.3.2` tag. Quoin installs its Quire module from the same tag.
+at the exact `v0.4.1` tag. Quoin installs its Quire module from the same tag.
 The corpus gate continues to use its separate Draft 7 Python dependency.
 
 This repository retains no evidence. The 23 `quire.derivation-evidence/v1`
