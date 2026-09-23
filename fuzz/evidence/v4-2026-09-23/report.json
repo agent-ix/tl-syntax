@@ -12,30 +12,30 @@
     "--sanitizer",
     "address",
     "infinite_wire_decode",
-    "/private/tmp/tl-v4-fuzz-wk1v_do0/corpus",
+    "/private/tmp/tl-v4-fuzz-zj5gf0t1/corpus",
     "--",
     "-runs=1000",
     "-seed=181",
     "-max_total_time=30",
     "-max_len=4096",
-    "-artifact_prefix=/private/tmp/tl-syntax-v4-fuzz/fuzz/evidence/v4-2026-09-23/artifacts/"
+    "-artifact_prefix=/private/tmp/tl-v4-final-syntax-run-fed/artifacts/"
   ],
   "crash_artifacts_sha256": {},
   "crate": "tl-syntax",
   "engine": "libFuzzer",
   "fuzz_lock_sha256": "b005aa503b16f84c7d97a67ed47545b0cc0d7ecc5afd91c3de259eb615f8fa6b",
   "observed": {
-    "elapsed_seconds": 10.708,
+    "elapsed_seconds": 30.473,
     "executions": 1000,
     "exit_code": 0,
     "stop_reason": "run_budget"
   },
   "raw_output_sha256": {
-    "stderr.log.gz": "fd7467fb29e9963489a81bfecb8eb6b78dcaa7178005c0e30d1d0022b017e5c7",
+    "stderr.log.gz": "7931b831de6ab2a05049c7ba470576971f47859f84d1b3959842f0426c61a0b8",
     "stdout.log.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
   },
   "raw_stream_sha256": {
-    "stderr": "231cd5b877abfe41da0553ad37f5a8212e72e3feaa29e00df1ed0e5a9c0a9319",
+    "stderr": "8ad69217c048dc5f73497736e1304f66c77c4dbbd815f09108a7f5fd654a66de",
     "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   },
   "replay": {
@@ -53,7 +53,7 @@
     "malformed.json": "e6a8a2a1a9a3619053614d5c9b23a0853d8e4a5231bd38dba238fb4341086954",
     "valuation.json": "aa382179699faacae8839c8b203c834b63db142739921f0305b0c7c185735b9f"
   },
-  "source_revision": "cd201420e50e79561ab9e520861c919b6f410dd6",
+  "source_revision": "fed48a2fab3f5277131a7012e1a8d10993330cb1",
   "starting_corpus_sha256": "ee169c5cc1ff13182b543101e473631d39db1bb63d9cdf7fc308477a31d3d248",
   "status": "bounded_no_crash",
   "target": "infinite_wire_decode",
