@@ -390,13 +390,14 @@ fn git_files(root: &Path, arguments: &[&str]) -> CensusResult<BTreeSet<String>> 
         .collect())
 }
 
-const EXPECTED_LIVE_TRACKED: [&str; 188] = [
+const EXPECTED_LIVE_TRACKED: [&str; 191] = [
     ".agent/rules/writing_rust.md",
     ".github/CODEOWNERS",
     ".github/workflows/ci.yml",
     ".github/workflows/cla.yml",
     ".gitignore",
     "AGENTS.md",
+    "CHANGELOG.md",
     "CLA.md",
     "CLAUDE.md",
     "CONTRIBUTING.md",
@@ -462,7 +463,9 @@ const EXPECTED_LIVE_TRACKED: [&str; 188] = [
     "scripts/assurance_chain.py",
     "scripts/check_default_dependencies.py",
     "scripts/check_shared_pins.py",
+    "scripts/check_spec_id_uniqueness.py",
     "scripts/check_unsafe_comments.sh",
+    "scripts/test_check_spec_id_uniqueness.py",
     "scripts/test_corpus_gate.py",
     "scripts/unsafe_comment_baseline.txt",
     "scripts/validate_corpus.py",
@@ -989,7 +992,8 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         .collect();
 
     let expected_areas: BTreeMap<String, usize> = [
-        ("<root>", 16),
+        // 0.3.0 adds CHANGELOG.md.
+        ("<root>", 17),
         (".agent", 1),
         (".github", 3),
         ("assurance", 3),
@@ -997,7 +1001,8 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         ("corpus", 40),
         ("examples", 1),
         ("fuzz", 4),
-        ("scripts", 7),
+        // TL-199 adds the spec id: uniqueness check and its test.
+        ("scripts", 9),
         // Issue #33 adds the reviewed past-profile artifacts and routing manifest; SpecReviews
         // remain archival and outside the live-source population.
         // Issue #34 adds live source-readiness specification and assurance
