@@ -76,7 +76,7 @@ CI ran, or authorize a release.
 | NFR-003-AC-3 | The candidate source identity covers every non-archival tracked path, refuses every ordinary-untracked live path and mutable ignore policy, and scans arbitrary tracked bytes without allowing a forbidden deleted identity to hide. | Test (TC-026, TC-034, TC-035) |
 | NFR-003-AC-4 | Every attested proof result is derived from a declared producer's structured bytes, with absent, empty, unreadable, or foreign-protocol input refused, and neither Quire nor Quoin executes a producer. | Test (TC-022) |
 | NFR-003-AC-5 | Pass, fail, unavailable, unsupported, inconclusive, not-computed, malformed, partial, stale, suspect, vacuous, and tampered remain distinguishable, and no non-success outcome is reported as passing. | Test (TC-025) |
-| NFR-003-AC-6 | The hosted CI workflow installs the released public npm package `@agent-ix/ix-flow@0.0.4`, the installed `ix-flow` executable reports version `0.0.4`, and `workflow_dispatch` remains the workflow's only trigger; local verification claims neither a hosted run nor a human release decision. | Test (TC-039) |
+| NFR-003-AC-6 | The hosted CI workflow installs the released public npm package `@agent-ix/ix-flow@0.2.3`, the installed `ix-flow` executable reports version `0.2.3`, and `workflow_dispatch` remains the workflow's only trigger; local verification claims neither a hosted run nor a human release decision. | Test (TC-039) |
 
 ## Qualification Boundary
 

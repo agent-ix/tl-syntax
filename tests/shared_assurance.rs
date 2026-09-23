@@ -86,7 +86,7 @@ fn hosted_ci_uses_the_released_scoped_ix_flow_package_and_stays_manual_only() {
         .collect();
     assert_eq!(
         ix_flow_packages,
-        ["@agent-ix/ix-flow@0.0.4"],
+        ["@agent-ix/ix-flow@0.2.3"],
         "hosted CI must install the released scoped package exactly once"
     );
 
@@ -102,7 +102,7 @@ fn hosted_ci_uses_the_released_scoped_ix_flow_package_and_stays_manual_only() {
     );
     assert_eq!(
         String::from_utf8_lossy(&output.stdout).trim(),
-        "0.0.4",
+        "0.2.3",
         "the local gate must exercise the same released version installed by hosted CI"
     );
 }
@@ -390,13 +390,14 @@ fn git_files(root: &Path, arguments: &[&str]) -> CensusResult<BTreeSet<String>> 
         .collect())
 }
 
-const EXPECTED_LIVE_TRACKED: [&str; 188] = [
+const EXPECTED_LIVE_TRACKED: [&str; 191] = [
     ".agent/rules/writing_rust.md",
     ".github/CODEOWNERS",
     ".github/workflows/ci.yml",
     ".github/workflows/cla.yml",
     ".gitignore",
     "AGENTS.md",
+    "CHANGELOG.md",
     "CLA.md",
     "CLAUDE.md",
     "CONTRIBUTING.md",
@@ -462,7 +463,9 @@ const EXPECTED_LIVE_TRACKED: [&str; 188] = [
     "scripts/assurance_chain.py",
     "scripts/check_default_dependencies.py",
     "scripts/check_shared_pins.py",
+    "scripts/check_spec_id_uniqueness.py",
     "scripts/check_unsafe_comments.sh",
+    "scripts/test_check_spec_id_uniqueness.py",
     "scripts/test_corpus_gate.py",
     "scripts/unsafe_comment_baseline.txt",
     "scripts/validate_corpus.py",
@@ -989,7 +992,8 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         .collect();
 
     let expected_areas: BTreeMap<String, usize> = [
-        ("<root>", 16),
+        // 0.3.0 adds CHANGELOG.md.
+        ("<root>", 17),
         (".agent", 1),
         (".github", 3),
         ("assurance", 3),
@@ -997,7 +1001,8 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         ("corpus", 40),
         ("examples", 1),
         ("fuzz", 4),
-        ("scripts", 7),
+        // TL-199 adds the spec id: uniqueness check and its test.
+        ("scripts", 9),
         // Issue #33 adds the reviewed past-profile artifacts and routing manifest; SpecReviews
         // remain archival and outside the live-source population.
         // Issue #34 adds live source-readiness specification and assurance
@@ -1222,9 +1227,21 @@ fn no_local_evidence_framework_remains_and_nothing_still_reads_the_dropped_tree(
 
     // The Makefile is orchestration, not a trust root, and carries no gate that
     // polices its own execution, nor the compatibility view it used to run.
+    // Compare exact directory entry names: on a case-insensitive filesystem
+    // (macOS default) `Path::exists("makefile")` would match `Makefile` itself.
+    let root_entries: BTreeSet<String> = fs::read_dir(&root)
+        .expect("list the repository root")
+        .map(|entry| {
+            entry
+                .expect("read a repository root entry")
+                .file_name()
+                .to_string_lossy()
+                .into_owned()
+        })
+        .collect();
     for higher_precedence in ["GNUmakefile", "makefile"] {
         assert!(
-            !root.join(higher_precedence).exists() && !tracked.contains(higher_precedence),
+            !root_entries.contains(higher_precedence) && !tracked.contains(higher_precedence),
             "{higher_precedence} would take precedence over the reviewed Makefile"
         );
     }
