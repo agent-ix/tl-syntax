@@ -378,7 +378,7 @@ fn git_files(root: &Path, arguments: &[&str]) -> CensusResult<BTreeSet<String>> 
         .collect())
 }
 
-const EXPECTED_LIVE_TRACKED: [&str; 235] = [
+const EXPECTED_LIVE_TRACKED: [&str; 236] = [
     ".agent/rules/writing_rust.md",
     ".github/CODEOWNERS",
     ".github/workflows/ci.yml",
@@ -464,6 +464,7 @@ const EXPECTED_LIVE_TRACKED: [&str; 235] = [
     "release-gate/Cargo.lock",
     "release-gate/Cargo.toml",
     "release-gate/README.md",
+    "release-gate/smoke.rs",
     "release-gate/src/lib.rs",
     "release-gate/src/main.rs",
     "release-gate/tests/candidate_graph.rs",
@@ -1025,7 +1026,7 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
 
     let expected_areas: BTreeMap<String, usize> = [
         // 0.3.0 adds CHANGELOG.md.
-        ("<root>", 16),
+        ("<root>", 15),
         (".agent", 1),
         (".github", 3),
         ("assurance", 3),
@@ -1035,7 +1036,7 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         // V4 adds a bounded libFuzzer producer and its false-credit controls.
         // The measured V4 report and both raw output streams add three files.
         ("fuzz", 15),
-        ("release-gate", 6),
+        ("release-gate", 7),
         // TL-199 adds the spec id: uniqueness check and its test.
         ("scripts", 9),
         // Issue #33 adds the reviewed past-profile artifacts and routing manifest; SpecReviews
