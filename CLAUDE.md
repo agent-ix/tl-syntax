@@ -42,14 +42,12 @@ lock, retention store, audit store, anchor file, or aggregate verdict. See
 [`assurance/README.md`](./assurance/README.md) and
 [`spec/requirements/FR-006-shared-assurance-intake.md`](./spec/requirements/FR-006-shared-assurance-intake.md).
 
-Two Python lanes, deliberately:
+The EA module remains in its isolated Python environment while its compatibility classifier is a separately installed native CLI:
 
-- `.venv-assurance` holds `engineering-assurance` at the `v0.2.1` tag, which
-  declares `jsonschema>=4.23`. Build it with `make assurance-env`.
+- `.venv-assurance` holds the EA module from the exact `v0.3.2` tag. Build it with `make assurance-env`; install the native CLI from that tag with Cargo.
 - The corpus gate's Draft 7 lane pins `jsonschema==3.2.0`.
 
-Both are right for their own job and neither may be bent to fit the other, so
-they get one environment each.
+The corpus gate continues to use a separate Python environment. The EA compatibility gate also requires the matrix owner’s recorded acceptance.
 
 This repository retains no evidence. The 23 `quire.derivation-evidence/v1`
 records its pre-migration collector wrote, the two schemas frozen because those

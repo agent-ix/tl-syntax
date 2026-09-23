@@ -6,8 +6,9 @@ Two files and no evidence.
 [issue #12](https://github.com/agent-ix/tl-syntax/issues/12): the requirements it
 claims to meet, the things it promises not to break, the proofs it offers, and
 the questions it cannot answer. `pins.json` is the Engineering Assurance
-release it adopts and the digests of the artifacts it actually reads from that
-release.
+release it adopts and the artifacts it actually reads from that
+release. The v0.3.2 candidate uses the native EA compatibility CLI; its
+matrix gate remains withheld until an attributed human acceptance is recorded.
 
 ## Why there is no evidence in here
 

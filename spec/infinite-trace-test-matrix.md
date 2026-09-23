@@ -11,7 +11,7 @@ relationships:
 
 ## Functional Requirement Coverage
 
-| Functional Req | Acceptance Criteria | Test Cases | Coverage Status |
+| Functional Req | Acceptance Criteria | Test Cases | Status |
 |---|---|---|---|
 | FR-020 | FR-020-AC-1 through FR-020-AC-3 | TC-148 through TC-150 | 🚧 planned |
 | FR-021 | FR-021-AC-1 through FR-021-AC-3 | TC-151 through TC-153 | ✅ implemented |

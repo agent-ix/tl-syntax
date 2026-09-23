@@ -35,8 +35,8 @@ framework.
 
 ## Behavior
 
-- `engineering_assurance.compatibility` shall classify every observed component
-  version.
+- `engineering-assurance compatibility` shall classify every observed component
+  version and report its human-acceptance gate.
 - tl-syntax shall observe its own toolchain without restating the compatibility
   matrix.
 - Quire shall export static specification, obligation, and coverage facts
@@ -71,7 +71,7 @@ framework.
 
 | ID | Criteria | Verification |
 |---|---|---|
-| FR-006-AC-1 | Every declared component version and consumed artifact digest is supplied to the packaged compatibility classifier, and the repository supplies neither a local compatibility mapping nor an internal mirror registry. | Test (TC-021) |
+| FR-006-AC-1 | Every observed component version is supplied to the exact native Engineering Assurance compatibility classifier, its human-acceptance gate is honored, and the repository supplies neither a local compatibility mapping nor an internal mirror registry. Any separately consumed artifact with a recorded digest is checked locally. | Test (TC-021) |
 | FR-006-AC-2 | The corpus conformance, corpus oracle, and feature-boundary results are structured, are produced by this repository's tools, and reach Quoin through the declared adapter without Quoin or Quire executing a producer. | Test (TC-022) |
 | FR-006-AC-3 | Static specification, obligation, and coverage facts for a candidate revision come from the Quire export named by the sealed record's impact snapshot. | Test (TC-023) |
 | FR-006-AC-5 | Each of the twelve verification outcomes is demonstrated by a case that produced it, and each negative case is paired with a positive control that was observed to be accepted. | Test (TC-025) |
