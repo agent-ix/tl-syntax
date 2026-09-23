@@ -573,7 +573,10 @@ impl StrictDocument for FormulaDocument {
 
 #[cfg(test)]
 mod tests {
-    use alloc::{string::ToString, vec};
+    use alloc::{
+        string::{String, ToString},
+        vec,
+    };
 
     use super::*;
     use crate::{
