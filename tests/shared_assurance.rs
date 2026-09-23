@@ -390,7 +390,7 @@ fn git_files(root: &Path, arguments: &[&str]) -> CensusResult<BTreeSet<String>> 
         .collect())
 }
 
-const EXPECTED_LIVE_TRACKED: [&str; 236] = [
+const EXPECTED_LIVE_TRACKED: [&str; 235] = [
     ".agent/rules/writing_rust.md",
     ".github/CODEOWNERS",
     ".github/workflows/ci.yml",
@@ -403,8 +403,7 @@ const EXPECTED_LIVE_TRACKED: [&str; 236] = [
     "CONTRIBUTING.md",
     "Cargo.lock",
     "Cargo.toml",
-    "LICENSE-APACHE",
-    "LICENSE-MIT",
+    "LICENSE",
     "Makefile",
     "README.md",
     "assurance/README.md",

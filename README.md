@@ -149,5 +149,4 @@ authority.
 
 ## License
 
-Licensed under either of Apache License, Version 2.0 or MIT license at your
-option.
+Licensed under the MIT license. See [LICENSE](LICENSE).
