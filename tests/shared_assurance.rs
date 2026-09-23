@@ -86,7 +86,7 @@ fn hosted_ci_uses_the_released_scoped_ix_flow_package_and_stays_manual_only() {
         .collect();
     assert_eq!(
         ix_flow_packages,
-        ["@agent-ix/ix-flow@0.0.4"],
+        ["@agent-ix/ix-flow@0.2.3"],
         "hosted CI must install the released scoped package exactly once"
     );
 
@@ -102,7 +102,7 @@ fn hosted_ci_uses_the_released_scoped_ix_flow_package_and_stays_manual_only() {
     );
     assert_eq!(
         String::from_utf8_lossy(&output.stdout).trim(),
-        "0.0.4",
+        "0.2.3",
         "the local gate must exercise the same released version installed by hosted CI"
     );
 }

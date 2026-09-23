@@ -54,7 +54,7 @@ jobs:
       # registry. quoin 0.22.5 is named incompatible by the compatibility matrix.
       - name: Install specification tools and modules
         run: |
-          npm install --global '@agent-ix/quire-cli@0.31.0' '@agent-ix/quoin@0.23.1' '@agent-ix/ix-flow@0.0.4'
+          npm install --global '@agent-ix/quire-cli@0.31.0' '@agent-ix/quoin@0.23.1' '@agent-ix/ix-flow@0.2.3'
           quoin module ensure-defaults
           # quoin 0.23.1 still pins spec-artifacts-process d605caa; the single
           # Status matrix column (spec-artifacts-process#87, quoin#371) needs 375fc2a.

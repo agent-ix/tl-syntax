@@ -44,7 +44,7 @@ lock, retention store, audit store, anchor file, or aggregate verdict. See
 
 Two Python lanes, deliberately:
 
-- `.venv-assurance` holds `engineering-assurance` at the `v0.2.0` tag, which
+- `.venv-assurance` holds `engineering-assurance` at the `v0.2.1` tag, which
   declares `jsonschema>=4.23`. Build it with `make assurance-env`.
 - The corpus gate's Draft 7 lane pins `jsonschema==3.2.0`.
 
