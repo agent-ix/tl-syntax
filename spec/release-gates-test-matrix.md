@@ -12,6 +12,10 @@ relationships:
 These gates apply after the released 0.3.0 baseline. TC-170 through TC-179
 are planned until their assertions execute on a candidate using the real
 four-crate graph. Ignored test-first stubs are not implementation coverage.
+The standalone `release-gate/` checker has executable TC-170 through TC-172
+mutation probes and a syntax-owner TC-176 byte comparison. The current
+four-crate graph still has stale cross-crate revisions and no later tags, so
+the rows below remain planned for release-candidate qualification.
 
 ## Functional Requirement Coverage
 

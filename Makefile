@@ -97,6 +97,12 @@ fmt-check:
 lint:
 	$(CARGO) clippy --all-targets --all-features -- -D warnings
 
+.PHONY: release-gate-test
+release-gate-test:
+	$(CARGO) fmt --manifest-path release-gate/Cargo.toml -- --check
+	$(CARGO) clippy --manifest-path release-gate/Cargo.toml --all-targets -- -D warnings
+	$(CARGO) test --manifest-path release-gate/Cargo.toml --locked
+
 # The traced tests invoke the assurance gates, so the producers must already have
 # run. They are a prerequisite rather than something a test creates for itself: a
 # test that can produce its own inputs can produce a green run out of nothing.
@@ -250,5 +256,5 @@ assurance-record: assurance-inputs
 # `ci` is the development composite. A release candidate additionally runs
 # `spec-release` under Task-007 after planned roadmap rows have backing.
 .PHONY: ci
-ci: fmt-check check-features check-default-dependencies lint test check-corpus \
+ci: fmt-check release-gate-test check-features check-default-dependencies lint test check-corpus \
 	conformance deny fuzz-check audit-unsafe spec msrv rustdoc assurance
