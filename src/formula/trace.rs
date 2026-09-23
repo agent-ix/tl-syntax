@@ -1,11 +1,22 @@
 //! Versioned infinite-trace observations and fairness premises.
 
-use alloc::{string::String, vec::Vec};
+use alloc::{collections::BTreeSet, string::String, vec::Vec};
 use core::fmt;
 
 #[cfg(feature = "serde")]
-use crate::contracts::identity::canonical_json;
-use crate::{InfiniteClock, InfiniteFormulaDocument, NodeId, PropositionId, SemanticProfile};
+use crate::{
+    contracts::{
+        identity::canonical_json,
+        reader::{
+            array_field_population, read_strict_document, StrictDocument, StrictDocumentReadError,
+        },
+    },
+    SyntaxArtifactLimits,
+};
+use crate::{
+    select_infinite_profile, InfiniteClock, InfiniteFormulaDocument, NodeId, PropositionId,
+    SemanticProfile,
+};
 
 /// Wire identity for one four-state valuation.
 pub const PARTIAL_VALUATION_V1: &str = "tl-syntax.partial-valuation/v1";
@@ -132,6 +143,13 @@ impl PartialValuation {
         if propositions.windows(2).any(|pair| pair[0] >= pair[1]) {
             return Err(PartialValuationError::MapOrder);
         }
+        for entry in &value.entries {
+            if propositions.binary_search(&entry.proposition).is_err() {
+                return Err(PartialValuationError::ForeignProposition {
+                    proposition: entry.proposition,
+                });
+            }
+        }
         for (index, proposition) in propositions.iter().enumerate() {
             match value.entries.get(index) {
                 None => {
@@ -170,12 +188,15 @@ impl PartialValuation {
         if entries.len() > crate::contracts::limits::OWNER_PROPOSITIONS {
             return Err(PartialValuationError::ResourceLimit);
         }
-        for pair in entries.windows(2) {
-            if pair[0].proposition == pair[1].proposition {
+        let mut seen = BTreeSet::new();
+        for entry in &entries {
+            if !seen.insert(entry.proposition) {
                 return Err(PartialValuationError::DuplicateProposition {
-                    proposition: pair[1].proposition,
+                    proposition: entry.proposition,
                 });
             }
+        }
+        for pair in entries.windows(2) {
             if pair[0].proposition > pair[1].proposition {
                 return Err(PartialValuationError::UnorderedProposition {
                     proposition: pair[1].proposition,
@@ -219,6 +240,45 @@ impl PartialValuation {
         self.canonical_json_bytes()
             .map(|bytes| crate::contracts::identity::content_identity(PARTIAL_VALUATION_V1, &bytes))
     }
+    /// Reads one exact bounded canonical valuation document.
+    #[cfg(feature = "serde")]
+    pub fn from_json_bytes(
+        bytes: &[u8],
+        limits: SyntaxArtifactLimits,
+    ) -> Result<Self, StrictDocumentReadError> {
+        read_strict_document(bytes, limits)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl StrictDocument for PartialValuation {
+    fn preflight_resource_limits(
+        bytes: &[u8],
+        limits: SyntaxArtifactLimits,
+    ) -> Result<usize, StrictDocumentReadError> {
+        let entries = array_field_population(bytes, b"entries");
+        if entries > limits.propositions {
+            return Err(StrictDocumentReadError::ResourceLimitExceeded {
+                resource: "valuation entries",
+                actual: entries,
+                limit: limits.propositions,
+            });
+        }
+        Ok(entries)
+    }
+    fn validate_resource_limits(
+        &self,
+        limits: SyntaxArtifactLimits,
+    ) -> Result<(), StrictDocumentReadError> {
+        if self.entries.len() > limits.propositions {
+            return Err(StrictDocumentReadError::ResourceLimitExceeded {
+                resource: "valuation entries",
+                actual: self.entries.len(),
+                limit: limits.propositions,
+            });
+        }
+        Ok(())
+    }
 }
 
 /// One position of the materialized prefix or loop.
@@ -241,6 +301,8 @@ pub enum LassoTraceError {
         /// Rejected profile.
         actual: SemanticProfile,
     },
+    /// The raw TL profile identity is missing or unknown.
+    ProfileIdentity,
     /// A non-event-position clock was selected.
     Clock,
     /// The loop is empty.
@@ -319,6 +381,27 @@ impl TryFrom<LassoTraceWire> for LassoTraceDocument {
 }
 
 impl LassoTraceDocument {
+    /// Selects raw profile and clock identities before constructing the lasso.
+    pub fn from_selected_identities(
+        profile_identity: Option<&str>,
+        clock_identity: &str,
+        map_identity: String,
+        propositions: Vec<PropositionId>,
+        prefix: Vec<TraceObservation>,
+        loop_observations: Vec<TraceObservation>,
+    ) -> Result<Self, LassoTraceError> {
+        let profile = select_infinite_profile(profile_identity)
+            .map_err(|_| LassoTraceError::ProfileIdentity)?;
+        let clock = InfiniteClock::try_from(clock_identity).map_err(|_| LassoTraceError::Clock)?;
+        Self::new(
+            profile,
+            clock,
+            map_identity,
+            propositions,
+            prefix,
+            loop_observations,
+        )
+    }
     /// Constructs a lasso and validates every position and valuation.
     pub fn new(
         profile: SemanticProfile,
@@ -402,12 +485,13 @@ impl LassoTraceDocument {
     }
     /// Returns observation at an arbitrary infinite position.
     pub fn observation_at(&self, position: u64) -> &TraceObservation {
-        let prefix_len = u64::try_from(self.prefix.len()).unwrap_or(u64::MAX);
+        // Construction bounds each materialized population to 100,000.
+        let prefix_len = self.prefix.len() as u64;
         if position < prefix_len {
-            return &self.prefix[usize::try_from(position).unwrap_or(0)];
+            return &self.prefix[position as usize];
         }
-        let loop_len = u64::try_from(self.loop_observations.len()).unwrap_or(u64::MAX);
-        let index = usize::try_from((position - prefix_len) % loop_len).unwrap_or(0);
+        let loop_len = self.loop_observations.len() as u64;
+        let index = ((position - prefix_len) % loop_len) as usize;
         &self.loop_observations[index]
     }
     /// Returns canonical JSON bytes.
@@ -420,6 +504,56 @@ impl LassoTraceDocument {
     pub fn content_identity(&self) -> Result<String, serde_json::Error> {
         self.canonical_json_bytes()
             .map(|bytes| crate::contracts::identity::content_identity(LASSO_TRACE_V1, &bytes))
+    }
+    /// Reads one exact bounded canonical lasso document.
+    #[cfg(feature = "serde")]
+    pub fn from_json_bytes(
+        bytes: &[u8],
+        limits: SyntaxArtifactLimits,
+    ) -> Result<Self, StrictDocumentReadError> {
+        read_strict_document(bytes, limits)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl StrictDocument for LassoTraceDocument {
+    fn preflight_resource_limits(
+        bytes: &[u8],
+        limits: SyntaxArtifactLimits,
+    ) -> Result<usize, StrictDocumentReadError> {
+        let propositions = array_field_population(bytes, b"propositions");
+        if propositions > limits.propositions {
+            return Err(StrictDocumentReadError::ResourceLimitExceeded {
+                resource: "trace propositions",
+                actual: propositions,
+                limit: limits.propositions,
+            });
+        }
+        Ok(bytes.len())
+    }
+    fn validate_resource_limits(
+        &self,
+        limits: SyntaxArtifactLimits,
+    ) -> Result<(), StrictDocumentReadError> {
+        if self.propositions.len() > limits.propositions {
+            return Err(StrictDocumentReadError::ResourceLimitExceeded {
+                resource: "trace propositions",
+                actual: self.propositions.len(),
+                limit: limits.propositions,
+            });
+        }
+        let positions = self
+            .prefix
+            .len()
+            .saturating_add(self.loop_observations.len());
+        if positions > limits.formula_nodes {
+            return Err(StrictDocumentReadError::ResourceLimitExceeded {
+                resource: "trace positions",
+                actual: positions,
+                limit: limits.formula_nodes,
+            });
+        }
+        Ok(())
     }
 }
 
@@ -457,6 +591,26 @@ pub enum FairnessPremisesError {
 impl fmt::Display for FairnessPremisesError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "fairness premises admission: {self:?}")
+    }
+}
+
+/// Error reading and binding one fairness document to its formula graph.
+#[cfg(feature = "serde")]
+#[derive(Debug)]
+pub enum FairnessReadError {
+    /// Strict JSON or resource admission failed.
+    Document(StrictDocumentReadError),
+    /// Graph, clock, or root binding failed.
+    Binding(FairnessPremisesError),
+}
+
+#[cfg(feature = "serde")]
+impl fmt::Display for FairnessReadError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Document(error) => error.fmt(formatter),
+            Self::Binding(error) => error.fmt(formatter),
+        }
     }
 }
 
@@ -505,6 +659,19 @@ impl TryFrom<FairnessPremisesWire> for FairnessPremisesDocument {
 }
 
 impl FairnessPremisesDocument {
+    /// Selects raw identities and binds roots to the exact canonical formula.
+    pub fn from_selected_identities(
+        formula: &InfiniteFormulaDocument,
+        graph_identity: String,
+        profile_identity: Option<&str>,
+        clock_identity: &str,
+        roots: Vec<NodeId>,
+    ) -> Result<Self, FairnessPremisesError> {
+        select_infinite_profile(profile_identity).map_err(|_| FairnessPremisesError::Profile)?;
+        let clock =
+            InfiniteClock::try_from(clock_identity).map_err(|_| FairnessPremisesError::Clock)?;
+        Self::new(formula, graph_identity, clock, roots)
+    }
     /// Constructs premise roots and binds them to the exact formula document.
     pub fn new(
         formula: &InfiniteFormulaDocument,
@@ -550,10 +717,13 @@ impl FairnessPremisesDocument {
         if roots.len() > crate::MAX_FORMULA_DOCUMENT_NODES {
             return Err(FairnessPremisesError::ResourceLimit);
         }
-        for pair in roots.windows(2) {
-            if pair[0] == pair[1] {
-                return Err(FairnessPremisesError::DuplicateRoot { root: pair[1] });
+        let mut seen = BTreeSet::new();
+        for root in &roots {
+            if !seen.insert(*root) {
+                return Err(FairnessPremisesError::DuplicateRoot { root: *root });
             }
+        }
+        for pair in roots.windows(2) {
             if pair[0] > pair[1] {
                 return Err(FairnessPremisesError::UnorderedRoot { root: pair[1] });
             }
@@ -588,5 +758,48 @@ impl FairnessPremisesDocument {
     pub fn content_identity(&self) -> Result<String, serde_json::Error> {
         self.canonical_json_bytes()
             .map(|bytes| crate::contracts::identity::content_identity(FAIRNESS_PREMISES_V1, &bytes))
+    }
+    /// Reads canonical fairness bytes and validates their exact formula binding.
+    #[cfg(feature = "serde")]
+    pub fn from_json_bytes(
+        bytes: &[u8],
+        limits: SyntaxArtifactLimits,
+        formula: &InfiniteFormulaDocument,
+    ) -> Result<Self, FairnessReadError> {
+        let parsed: Self =
+            read_strict_document(bytes, limits).map_err(FairnessReadError::Document)?;
+        Self::new(formula, parsed.graph_identity, parsed.clock, parsed.roots)
+            .map_err(FairnessReadError::Binding)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl StrictDocument for FairnessPremisesDocument {
+    fn preflight_resource_limits(
+        bytes: &[u8],
+        limits: SyntaxArtifactLimits,
+    ) -> Result<usize, StrictDocumentReadError> {
+        let roots = array_field_population(bytes, b"roots");
+        if roots > limits.formula_nodes {
+            return Err(StrictDocumentReadError::ResourceLimitExceeded {
+                resource: "fairness roots",
+                actual: roots,
+                limit: limits.formula_nodes,
+            });
+        }
+        Ok(roots)
+    }
+    fn validate_resource_limits(
+        &self,
+        limits: SyntaxArtifactLimits,
+    ) -> Result<(), StrictDocumentReadError> {
+        if self.roots.len() > limits.formula_nodes {
+            return Err(StrictDocumentReadError::ResourceLimitExceeded {
+                resource: "fairness roots",
+                actual: self.roots.len(),
+                limit: limits.formula_nodes,
+            });
+        }
+        Ok(())
     }
 }

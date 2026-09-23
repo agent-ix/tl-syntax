@@ -106,3 +106,238 @@ fn tc_160_owner_corpus_manifest_is_pinned_and_cases_are_distinct() {
     assert!(axes.contains("fairness"));
     assert!(axes.contains("operator"));
 }
+
+// Trace: TC-160, FR-024-AC-1 (owner formula reader over every corpus case)
+#[test]
+fn tc_160_formula_cases_reach_the_owner_unbounded_decoder() {
+    let bytes = fs::read(Path::new(CORPUS_DIR).join("infinite-trace/cases.json")).unwrap();
+    let corpus: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+    for case in corpus["cases"].as_array().unwrap() {
+        let id = case["id"].as_str().unwrap();
+        let result =
+            serde_json::from_value::<tl_syntax::InfiniteFormulaDocument>(case["formula"].clone());
+        let formula_refusal = matches!(
+            id,
+            "finite-profile-refuses-unbounded" | "previous-with-unbounded-interval-refuses"
+        );
+        assert_eq!(
+            result.is_err(),
+            formula_refusal,
+            "owner formula admission differs for {id}: {result:?}"
+        );
+    }
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct CorpusTrace {
+    schema_version: String,
+    semantic_profile: String,
+    clock: String,
+    proposition_map: Vec<tl_syntax::PropositionEntry>,
+    prefix: Vec<CorpusObservation>,
+    #[serde(rename = "loop")]
+    loop_observations: Vec<CorpusObservation>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct CorpusObservation {
+    position: u32,
+    valuation: Vec<CorpusValue>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct CorpusValue {
+    proposition: tl_syntax::PropositionId,
+    state: tl_syntax::PartialValue,
+}
+
+fn expected_case(id: &str) -> Option<(&'static str, &'static str, Option<&'static str>)> {
+    Some(match id {
+        "globally-true-empty-prefix" => ("lasso", "proved", None),
+        "eventual-witness-after-prefix" => ("lasso", "proved", None),
+        "globally-refuted-by-loop" => ("lasso", "refuted", None),
+        "unbounded-once-reaches-origin" => ("past", "proved", None),
+        "missing-value-is-inconclusive" => ("partial", "inconclusive", None),
+        "conflicting-value-is-failed" => ("partial", "failed", None),
+        "fair-loop-satisfies-premise" => ("fairness", "proved", None),
+        "finite-profile-refuses-unbounded" => (
+            "negative",
+            "unbounded_requires_infinite_profile",
+            Some("profile"),
+        ),
+        "clock-mismatch-refuses" => ("negative", "clock_identity_mismatch", Some("clock")),
+        "bounded-globally-in-infinite-profile" => ("lasso", "proved", None),
+        "bounded-historically-in-infinite-profile" => ("past", "proved", None),
+        "fairness-on-non-lasso-refuses" => {
+            ("negative", "fairness_requires_lasso", Some("fairness"))
+        }
+        "previous-with-unbounded-interval-refuses" => {
+            ("negative", "previous_has_no_interval", Some("operator"))
+        }
+        _ => return None,
+    })
+}
+
+fn admit_case(case: &serde_json::Value) -> Result<(), &'static str> {
+    use tl_syntax::{
+        FairnessPremisesDocument, InfiniteClock, InfiniteFormulaDocument, LassoTraceDocument,
+        PartialValuation, TraceObservation, ValuationEntry,
+    };
+    let formula_json = &case["formula"];
+    if formula_json["semantic_profile"] != "mltl.infinite-trace/v1" {
+        return Err("profile");
+    }
+    if formula_json["nodes"].as_array().is_some_and(|nodes| {
+        nodes
+            .iter()
+            .any(|node| node["kind"] == "strong_previous" && node.get("interval").is_some())
+    }) {
+        return Err("operator");
+    }
+    let formula: InfiniteFormulaDocument =
+        serde_json::from_value(formula_json.clone()).map_err(|_| "schema")?;
+    let trace: CorpusTrace = serde_json::from_value(case["trace"].clone()).map_err(|_| "schema")?;
+    if trace.schema_version != tl_syntax::LASSO_TRACE_V1 {
+        return Err("schema");
+    }
+    if trace.semantic_profile != "mltl.infinite-trace/v1" {
+        return Err("profile");
+    }
+    if trace.clock != "event_position" {
+        return Err("clock");
+    }
+    let fairness = &case["fairness"];
+    if fairness["schema_version"] != tl_syntax::FAIRNESS_PREMISES_V1 {
+        return Err("schema");
+    }
+    if fairness["semantic_profile"] != "mltl.infinite-trace/v1" {
+        return Err("profile");
+    }
+    if fairness["clock"] != "event_position" {
+        return Err("clock");
+    }
+    let roots: Vec<tl_syntax::NodeId> =
+        serde_json::from_value(fairness["roots"].clone()).map_err(|_| "fairness")?;
+    if trace.loop_observations.is_empty() && !roots.is_empty() {
+        return Err("fairness");
+    }
+    let map =
+        tl_syntax::PropositionMapDocument::new(trace.proposition_map).map_err(|_| "valuation")?;
+    let map_identity = map.content_identity().map_err(|_| "valuation")?;
+    let propositions: Vec<_> = map.propositions().iter().map(|entry| entry.id).collect();
+    let convert =
+        |observations: Vec<CorpusObservation>| -> Result<Vec<TraceObservation>, &'static str> {
+            observations
+                .into_iter()
+                .map(|observation| {
+                    let entries = observation
+                        .valuation
+                        .into_iter()
+                        .map(|value| ValuationEntry {
+                            proposition: value.proposition,
+                            value: value.state,
+                        })
+                        .collect();
+                    let valuation =
+                        PartialValuation::new(map_identity.clone(), &propositions, entries)
+                            .map_err(|_| "valuation")?;
+                    Ok(TraceObservation {
+                        position: observation.position,
+                        valuation,
+                    })
+                })
+                .collect()
+        };
+    let prefix = convert(trace.prefix)?;
+    let loop_observations = convert(trace.loop_observations)?;
+    let _trace = LassoTraceDocument::new(
+        tl_syntax::SemanticProfile::InfiniteTraceV1,
+        InfiniteClock::EventPosition,
+        map_identity,
+        propositions,
+        prefix,
+        loop_observations,
+    )
+    .map_err(|_| "lasso")?;
+    let graph_id = formula.content_identity().map_err(|_| "schema")?;
+    let _fairness =
+        FairnessPremisesDocument::new(&formula, graph_id, InfiniteClock::EventPosition, roots)
+            .map_err(|_| "fairness")?;
+    Ok(())
+}
+
+fn verify_case(case: &serde_json::Value) -> Result<(), String> {
+    let id = case["id"].as_str().ok_or("case id absent")?;
+    let (family, value, axis) = expected_case(id).ok_or("unknown case id")?;
+    if case["family"] != family || case["expected"]["value"] != value {
+        return Err(format!("{id}: expected family/verdict changed"));
+    }
+    if let Some(axis) = axis {
+        if case["expected"]["kind"] != "refusal" || case["expected"]["axis"] != axis {
+            return Err(format!("{id}: expected refusal changed"));
+        }
+        if admit_case(case) != Err(axis) {
+            return Err(format!("{id}: refusal axis not reproduced"));
+        }
+    } else {
+        if case["expected"]["kind"] != "settlement" {
+            return Err(format!("{id}: settlement kind changed"));
+        }
+        admit_case(case).map_err(|actual| format!("{id}: unexpected {actual} refusal"))?;
+    }
+    Ok(())
+}
+
+// Trace: TC-161, FR-024-AC-2
+#[test]
+fn tc_161_every_owner_case_reaches_typed_admission_and_frozen_oracle() {
+    let bytes = fs::read(Path::new(CORPUS_DIR).join("infinite-trace/cases.json")).unwrap();
+    let corpus: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+    for case in corpus["cases"].as_array().unwrap() {
+        verify_case(case).unwrap();
+    }
+}
+
+// Trace: TC-161, FR-024-AC-2
+#[test]
+fn tc_161_input_expected_axis_and_verdict_mutations_fail() {
+    let bytes = fs::read(Path::new(CORPUS_DIR).join("infinite-trace/cases.json")).unwrap();
+    let corpus: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+    let mut positive = corpus["cases"][0].clone();
+    positive["trace"]["clock"] = "fixed_sample".into();
+    assert!(verify_case(&positive).is_err());
+    let mut positive = corpus["cases"][0].clone();
+    positive["expected"]["value"] = "refuted".into();
+    assert!(verify_case(&positive).is_err());
+    let mut negative = corpus["cases"][7].clone();
+    negative["expected"]["axis"] = "clock".into();
+    assert!(verify_case(&negative).is_err());
+}
+
+fn verify_manifest_pins(root: &Path, manifest: &serde_json::Value) -> Result<(), String> {
+    let pins = manifest["files"].as_array().ok_or("files absent")?;
+    for pin in pins {
+        let path = pin["path"].as_str().ok_or("pin path absent")?;
+        let expected = pin["sha256"].as_str().ok_or("digest absent")?;
+        let actual = digest(&fs::read(root.join(path)).map_err(|error| error.to_string())?);
+        if actual != expected {
+            return Err(format!("{path}: digest mismatch"));
+        }
+    }
+    Ok(())
+}
+
+// Trace: TC-161, FR-024-AC-2
+#[test]
+fn tc_161_pinned_digest_mutation_fails() {
+    let root = Path::new(CORPUS_DIR).join("infinite-trace");
+    let mut manifest: serde_json::Value =
+        serde_json::from_slice(&fs::read(root.join("manifest.json")).unwrap()).unwrap();
+    assert!(verify_manifest_pins(&root, &manifest).is_ok());
+    manifest["files"][0]["sha256"] =
+        "0000000000000000000000000000000000000000000000000000000000000000".into();
+    assert!(verify_manifest_pins(&root, &manifest).is_err());
+}
