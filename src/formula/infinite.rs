@@ -38,7 +38,7 @@ pub const FORMULA_UNBOUNDED_V1_SCHEMA_BYTES: &[u8] =
 /// SHA-256 of [`FORMULA_UNBOUNDED_V1_SCHEMA_BYTES`].
 #[cfg(feature = "serde")]
 pub const FORMULA_UNBOUNDED_V1_SCHEMA_SHA256: &str =
-    "c4b4eccd4037a47ca81c4fff37efc02fc1f09cd17f5916883d6ee6b399641341";
+    "eae3e9d733fe288ad53fd321c67ad0da1cae3bbecad67df16bcd266ddcc10224";
 
 /// Wire schema of the infinite formula edition.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -71,7 +71,7 @@ impl UnboundedInterval {
 /// Closed or unbounded temporal interval in the infinite formula edition.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
-#[cfg_attr(feature = "serde", serde(untagged))]
+#[cfg_attr(feature = "serde", serde(tag = "kind", rename_all = "snake_case"))]
 pub enum TemporalInterval {
     /// Existing inclusive closed interval `[a,b]`.
     Closed(Interval),
@@ -531,6 +531,83 @@ impl InfiniteClock {
     }
 }
 
+/// Refusal selecting the infinite-trace clock identity.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum InfiniteClockError {
+    /// No clock identity was supplied.
+    Missing,
+    /// A clock other than exact event positions was selected.
+    Unsupported,
+}
+
+impl fmt::Display for InfiniteClockError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Missing => formatter.write_str("infinite-trace clock identity is missing"),
+            Self::Unsupported => {
+                formatter.write_str("infinite-trace clock requires event_position")
+            }
+        }
+    }
+}
+
+impl TryFrom<&str> for InfiniteClock {
+    type Error = InfiniteClockError;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        if value.is_empty() {
+            Err(Self::Error::Missing)
+        } else if value == EVENT_POSITION_CLOCK {
+            Ok(Self::EventPosition)
+        } else {
+            Err(Self::Error::Unsupported)
+        }
+    }
+}
+
+/// Refusal selecting the exact TL infinite-trace profile.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum InfiniteProfileError {
+    /// No TL profile identity was supplied.
+    Missing,
+    /// A different known TL profile was supplied.
+    Mismatched(SemanticProfile),
+    /// The spelling names no known TL profile.
+    Unknown,
+}
+
+impl fmt::Display for InfiniteProfileError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Missing => formatter.write_str("infinite-trace TL profile identity is missing"),
+            Self::Mismatched(profile) => write!(
+                formatter,
+                "TL profile {} is not infinite trace",
+                profile.as_str()
+            ),
+            Self::Unknown => formatter.write_str("unknown TL profile identity"),
+        }
+    }
+}
+
+/// Selects the exact TL infinite-trace profile without inferring one from syntax.
+pub fn select_infinite_profile(
+    identity: Option<&str>,
+) -> Result<SemanticProfile, InfiniteProfileError> {
+    let identity = identity.ok_or(InfiniteProfileError::Missing)?;
+    if identity.is_empty() {
+        return Err(InfiniteProfileError::Missing);
+    }
+    match SemanticProfile::ALL
+        .into_iter()
+        .find(|profile| profile.as_str() == identity)
+    {
+        Some(SemanticProfile::InfiniteTraceV1) => Ok(SemanticProfile::InfiniteTraceV1),
+        Some(profile) => Err(InfiniteProfileError::Mismatched(profile)),
+        None => Err(InfiniteProfileError::Unknown),
+    }
+}
+
 /// Typed admission error for an infinite formula graph.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[non_exhaustive]
@@ -617,10 +694,9 @@ pub fn lower_infinite_future(
         .checked_add(1)
         .map(NodeId)
         .ok_or(InfiniteFormulaError::GeneratedIdentityOverflow)?;
-    let third = first_generated
+    first_generated
         .0
         .checked_add(2)
-        .map(NodeId)
         .ok_or(InfiniteFormulaError::GeneratedIdentityOverflow)?;
     let kinds = match kind {
         FutureKind::WeakUntil => [
@@ -654,7 +730,6 @@ pub fn lower_infinite_future(
             },
         ],
     };
-    let _ = third;
     Ok(kinds.map(|kind| InfiniteNode { kind, span }))
 }
 
@@ -799,6 +874,22 @@ impl InfiniteFormulaDocument {
     pub fn nodes(&self) -> &[InfiniteNode] {
         &self.nodes
     }
+    #[cfg(feature = "serde")]
+    fn maximum_depth(&self) -> usize {
+        let mut depths = Vec::<usize>::with_capacity(self.nodes.len());
+        let mut maximum = 0;
+        for node in &self.nodes {
+            let mut depth = 1_usize;
+            for operand in node.kind.operands().into_iter().flatten() {
+                let index = usize::try_from(operand.0).unwrap_or(usize::MAX);
+                let operand_depth = depths.get(index).copied().unwrap_or(0);
+                depth = depth.max(operand_depth.saturating_add(1));
+            }
+            maximum = maximum.max(depth);
+            depths.push(depth);
+        }
+        maximum
+    }
     /// Serializes to canonical JSON.
     #[cfg(feature = "serde")]
     pub fn canonical_json_bytes(&self) -> Result<Vec<u8>, serde_json::Error> {
@@ -845,6 +936,14 @@ impl StrictDocument for InfiniteFormulaDocument {
                 resource: "formula nodes",
                 actual: self.nodes.len(),
                 limit: limits.formula_nodes,
+            });
+        }
+        let depth = self.maximum_depth();
+        if depth > limits.formula_depth {
+            return Err(StrictDocumentReadError::ResourceLimitExceeded {
+                resource: "formula depth",
+                actual: depth,
+                limit: limits.formula_depth,
             });
         }
         Ok(())

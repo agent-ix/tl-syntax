@@ -27,16 +27,20 @@
       "oneOf": [
         {
           "type": "object", "additionalProperties": false,
-          "required": ["start", "end"],
+          "required": ["kind", "start", "end"],
           "properties": {
+            "kind": { "const": "closed" },
             "start": { "$ref": "#/$defs/id" },
             "end": { "$ref": "#/$defs/id" }
           }
         },
         {
           "type": "object", "additionalProperties": false,
-          "required": ["start"],
-          "properties": { "start": { "$ref": "#/$defs/id" } }
+          "required": ["kind", "start"],
+          "properties": {
+            "kind": { "const": "unbounded" },
+            "start": { "$ref": "#/$defs/id" }
+          }
         }
       ]
     },

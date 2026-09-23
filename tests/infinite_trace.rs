@@ -116,8 +116,8 @@ fn partial_valuation_refuses_each_bad_population() {
             &ids,
             vec![mk(ids[0]), mk(ids[1]), mk(ids[2]), mk(PropositionId(9))]
         ),
-        Err(PartialValuationError::OmittedProposition {
-            proposition: ids[3]
+        Err(PartialValuationError::ForeignProposition {
+            proposition: PropositionId(9)
         })
     );
 }
@@ -209,6 +209,32 @@ fn lasso_refuses_empty_loop_bad_position_and_map_identity() {
         ),
         Err(LassoTraceError::MapIdentityMismatch)
     );
+    let foreign_ids = [
+        PropositionId(1),
+        PropositionId(3),
+        PropositionId(5),
+        PropositionId(9),
+    ];
+    let foreign = PartialValuation::new(
+        "map/v1".into(),
+        &foreign_ids,
+        foreign_ids
+            .into_iter()
+            .map(|proposition| ValuationEntry {
+                proposition,
+                value: PartialValue::True,
+            })
+            .collect(),
+    )
+    .unwrap();
+    assert_eq!(
+        make(vec![], vec![observation(0, foreign)]),
+        Err(LassoTraceError::Valuation(
+            PartialValuationError::ForeignProposition {
+                proposition: PropositionId(9)
+            }
+        ))
+    );
     assert!(LassoTraceDocument::new(
         SemanticProfile::ClosedTraceV1,
         InfiniteClock::EventPosition,
@@ -292,5 +318,175 @@ fn fairness_refuses_graph_identity_duplicate_and_foreign_root() {
     assert_eq!(
         FairnessPremisesDocument::new(&graph, id, InfiniteClock::EventPosition, vec![NodeId(3)]),
         Err(FairnessPremisesError::ForeignRoot { root: NodeId(3) })
+    );
+}
+
+// Trace: TC-151, TC-154, TC-157, FR-021-AC-1, FR-022-AC-1, FR-023-AC-1
+#[test]
+fn strict_trace_and_fairness_readers_bind_canonical_bytes() {
+    let graph = formula();
+    let id = graph.content_identity().unwrap();
+    let value = valuation([PartialValue::Missing; 4]);
+    let value_bytes = value.canonical_json_bytes().unwrap();
+    assert_eq!(
+        PartialValuation::from_json_bytes(&value_bytes, tl_syntax::SyntaxArtifactLimits::default())
+            .unwrap(),
+        value
+    );
+    let trace = LassoTraceDocument::new(
+        SemanticProfile::InfiniteTraceV1,
+        InfiniteClock::EventPosition,
+        "map/v1".into(),
+        propositions(),
+        vec![],
+        vec![observation(0, value)],
+    )
+    .unwrap();
+    let trace_bytes = trace.canonical_json_bytes().unwrap();
+    assert_eq!(
+        LassoTraceDocument::from_json_bytes(
+            &trace_bytes,
+            tl_syntax::SyntaxArtifactLimits::default()
+        )
+        .unwrap(),
+        trace
+    );
+    let fairness =
+        FairnessPremisesDocument::new(&graph, id, InfiniteClock::EventPosition, vec![NodeId(0)])
+            .unwrap();
+    let fairness_bytes = fairness.canonical_json_bytes().unwrap();
+    assert_eq!(
+        FairnessPremisesDocument::from_json_bytes(
+            &fairness_bytes,
+            tl_syntax::SyntaxArtifactLimits::default(),
+            &graph
+        )
+        .unwrap(),
+        fairness
+    );
+    let foreign = InfiniteFormulaDocument::new(
+        SemanticProfile::InfiniteTraceV1,
+        InfiniteClock::EventPosition,
+        NodeId(0),
+        vec![InfiniteNode::new(InfiniteNodeKind::False)],
+    )
+    .unwrap();
+    assert!(matches!(
+        FairnessPremisesDocument::from_json_bytes(
+            &fairness_bytes,
+            tl_syntax::SyntaxArtifactLimits::default(),
+            &foreign
+        ),
+        Err(tl_syntax::FairnessReadError::Binding(
+            FairnessPremisesError::GraphIdentityMismatch
+        ))
+    ));
+}
+
+// Trace: TC-149, FR-020-AC-2
+#[test]
+fn formula_trace_fairness_and_settlement_keep_event_position_identity() {
+    use tl_syntax::{settle_liveness, LivenessSubject, LivenessSubjectKind};
+    let graph = formula();
+    let trace = LassoTraceDocument::new(
+        SemanticProfile::InfiniteTraceV1,
+        InfiniteClock::EventPosition,
+        "map/v1".into(),
+        propositions(),
+        vec![],
+        vec![observation(0, valuation([PartialValue::True; 4]))],
+    )
+    .unwrap();
+    let fairness = FairnessPremisesDocument::new(
+        &graph,
+        graph.content_identity().unwrap(),
+        InfiniteClock::EventPosition,
+        vec![NodeId(0)],
+    )
+    .unwrap();
+    let trace_id = trace.content_identity().unwrap();
+    let subject = LivenessSubject {
+        kind: LivenessSubjectKind::LassoTrace,
+        identity: &trace_id,
+    };
+    let settlement = settle_liveness(&graph, subject, None);
+    assert_eq!(graph.clock(), InfiniteClock::EventPosition);
+    assert_eq!(trace.clock(), graph.clock());
+    assert_eq!(fairness.clock(), graph.clock());
+    assert_eq!(settlement.formula.clock(), graph.clock());
+    assert_eq!(settlement.subject.identity, trace_id);
+}
+
+// Trace: TC-152, TC-155, FR-021-AC-2, FR-022-AC-2
+#[test]
+fn raw_trace_and_fairness_identities_refuse_on_their_own_axes() {
+    let graph = formula();
+    let id = graph.content_identity().unwrap();
+    let value = valuation([PartialValue::True; 4]);
+    let trace = |profile, clock| {
+        LassoTraceDocument::from_selected_identities(
+            profile,
+            clock,
+            "map/v1".into(),
+            propositions(),
+            vec![],
+            vec![observation(0, value.clone())],
+        )
+    };
+    assert_eq!(
+        trace(None, "event_position"),
+        Err(LassoTraceError::ProfileIdentity)
+    );
+    assert_eq!(
+        trace(Some("mltl.infinite-trace/v1"), "fixed_sample"),
+        Err(LassoTraceError::Clock)
+    );
+    assert!(trace(Some("mltl.infinite-trace/v1"), "event_position").is_ok());
+    assert_eq!(
+        FairnessPremisesDocument::from_selected_identities(
+            &graph,
+            id.clone(),
+            Some("mltl.closed-trace/v1"),
+            "event_position",
+            vec![]
+        ),
+        Err(FairnessPremisesError::Profile)
+    );
+    assert_eq!(
+        FairnessPremisesDocument::from_selected_identities(
+            &graph,
+            id,
+            Some("mltl.infinite-trace/v1"),
+            "fixed_sample",
+            vec![]
+        ),
+        Err(FairnessPremisesError::Clock)
+    );
+}
+
+// Trace: TC-152, TC-158, FR-021-AC-2, FR-023-AC-2
+#[test]
+fn nonadjacent_duplicates_are_classified_as_duplicates() {
+    let ids = propositions();
+    let entries = [ids[0], ids[1], ids[0], ids[3]].map(|proposition| ValuationEntry {
+        proposition,
+        value: PartialValue::True,
+    });
+    assert_eq!(
+        PartialValuation::new("map/v1".into(), &ids, entries.to_vec()),
+        Err(PartialValuationError::DuplicateProposition {
+            proposition: ids[0]
+        })
+    );
+    let graph = formula();
+    let id = graph.content_identity().unwrap();
+    assert_eq!(
+        FairnessPremisesDocument::new(
+            &graph,
+            id,
+            InfiniteClock::EventPosition,
+            vec![NodeId(0), NodeId(1), NodeId(0)]
+        ),
+        Err(FairnessPremisesError::DuplicateRoot { root: NodeId(0) })
     );
 }

@@ -41,9 +41,11 @@ pub enum LivenessDisposition {
 
 /// Settlement returned by the owner capability router.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct LivenessSettlement<'a> {
+pub struct LivenessSettlement<'formula, 'subject> {
+    /// Exact canonical formula document supplied to the capability router.
+    pub formula: &'formula InfiniteFormulaDocument,
     /// The selected subject, never widened by routing.
-    pub subject: LivenessSubject<'a>,
+    pub subject: LivenessSubject<'subject>,
     /// The provider disposition or absent-backend `Unsupported`.
     pub disposition: LivenessDisposition,
     /// Capability named by the absence warning, if no backend was registered.
@@ -64,13 +66,14 @@ pub trait LivenessBackend {
 ///
 /// A missing provider settles `Unsupported` immediately. A finite prefix
 /// cannot yield `Proved` for an unbounded liveness claim.
-pub fn settle_liveness<'a>(
-    formula: &InfiniteFormulaDocument,
-    subject: LivenessSubject<'a>,
+pub fn settle_liveness<'formula, 'subject>(
+    formula: &'formula InfiniteFormulaDocument,
+    subject: LivenessSubject<'subject>,
     backend: Option<&dyn LivenessBackend>,
-) -> LivenessSettlement<'a> {
+) -> LivenessSettlement<'formula, 'subject> {
     let Some(backend) = backend else {
         return LivenessSettlement {
+            formula,
             subject,
             disposition: LivenessDisposition::Unsupported,
             warning: Some(LIVENESS_CAPABILITY_V1),
@@ -85,6 +88,7 @@ pub fn settle_liveness<'a>(
         disposition
     };
     LivenessSettlement {
+        formula,
         subject,
         disposition,
         warning: None,

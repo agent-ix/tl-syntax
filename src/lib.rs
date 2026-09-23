@@ -48,10 +48,11 @@ pub use formula::graph::{
 #[cfg(feature = "alloc")]
 pub use formula::infinite::InfiniteFormulaDocument;
 pub use formula::infinite::{
-    lower_infinite_future, InfiniteClock, InfiniteFormula, InfiniteFormulaError,
-    InfiniteFormulaSchemaVersion, InfiniteNode, InfiniteNodeKind, TemporalInterval,
-    TemporalIntervalParseError, UnboundedInterval, EVENT_POSITION_CLOCK, FORMULA_UNBOUNDED_V1,
-    INFINITE_TRACE_PROFILE, LIVENESS_CAPABILITY_V1,
+    lower_infinite_future, select_infinite_profile, InfiniteClock, InfiniteClockError,
+    InfiniteFormula, InfiniteFormulaError, InfiniteFormulaSchemaVersion, InfiniteNode,
+    InfiniteNodeKind, InfiniteProfileError, TemporalInterval, TemporalIntervalParseError,
+    UnboundedInterval, EVENT_POSITION_CLOCK, FORMULA_UNBOUNDED_V1, INFINITE_TRACE_PROFILE,
+    LIVENESS_CAPABILITY_V1,
 };
 #[cfg(feature = "serde")]
 pub use formula::infinite::{
@@ -63,6 +64,8 @@ pub use formula::liveness::{
     settle_liveness, LivenessBackend, LivenessDisposition, LivenessSettlement, LivenessSubject,
     LivenessSubjectKind,
 };
+#[cfg(feature = "serde")]
+pub use formula::trace::FairnessReadError;
 #[cfg(feature = "alloc")]
 pub use formula::trace::{
     FairnessPremisesDocument, FairnessPremisesError, LassoTraceDocument, LassoTraceError,
