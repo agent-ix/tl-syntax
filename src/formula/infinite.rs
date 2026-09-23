@@ -746,6 +746,43 @@ pub struct InfiniteFormulaDocument {
     nodes: Vec<InfiniteNode>,
 }
 
+/// Semantic identity view retaining graph topology while omitting source loci.
+#[cfg(feature = "serde")]
+struct InfiniteSemanticIdentity<'a>(&'a InfiniteFormulaDocument);
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for InfiniteSemanticIdentity<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::{SerializeSeq, SerializeStruct};
+
+        struct NodeKinds<'a>(&'a [InfiniteNode]);
+
+        impl serde::Serialize for NodeKinds<'_> {
+            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+            where
+                S: serde::Serializer,
+            {
+                let mut nodes = serializer.serialize_seq(Some(self.0.len()))?;
+                for node in self.0 {
+                    nodes.serialize_element(&node.kind)?;
+                }
+                nodes.end()
+            }
+        }
+
+        let mut document = serializer.serialize_struct("InfiniteFormulaDocument", 5)?;
+        document.serialize_field("schema_version", &self.0.schema_version)?;
+        document.serialize_field("semantic_profile", &self.0.semantic_profile)?;
+        document.serialize_field("clock", &self.0.clock)?;
+        document.serialize_field("root", &self.0.root)?;
+        document.serialize_field("nodes", &NodeKinds(&self.0.nodes))?;
+        document.end()
+    }
+}
+
 #[cfg(feature = "serde")]
 #[derive(serde::Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -903,10 +940,11 @@ impl InfiniteFormulaDocument {
     ) -> Result<Self, StrictDocumentReadError> {
         read_strict_document(bytes, limits)
     }
-    /// Returns the domain-separated SHA-256 content identity.
+    /// Returns the domain-separated SHA-256 semantic content identity.
+    /// Diagnostic source spans remain on the wire but do not affect this identity.
     #[cfg(feature = "serde")]
     pub fn content_identity(&self) -> Result<String, serde_json::Error> {
-        self.canonical_json_bytes()
+        canonical_json(&InfiniteSemanticIdentity(self))
             .map(|bytes| crate::contracts::identity::content_identity(FORMULA_UNBOUNDED_V1, &bytes))
     }
 }
