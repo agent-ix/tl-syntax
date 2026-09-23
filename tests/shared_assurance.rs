@@ -390,7 +390,7 @@ fn git_files(root: &Path, arguments: &[&str]) -> CensusResult<BTreeSet<String>> 
         .collect())
 }
 
-const EXPECTED_LIVE_TRACKED: [&str; 204] = [
+const EXPECTED_LIVE_TRACKED: [&str; 211] = [
     ".agent/rules/writing_rust.md",
     ".github/CODEOWNERS",
     ".github/workflows/ci.yml",
@@ -518,6 +518,7 @@ const EXPECTED_LIVE_TRACKED: [&str; 204] = [
     "spec/past-profile-implementation.schema.json",
     "spec/past-profile-test-matrix.md",
     "spec/past-profile.md",
+    "spec/release-gates-test-matrix.md",
     "spec/requirements/FR-001-inclusive-intervals.md",
     "spec/requirements/FR-002-validated-formula.md",
     "spec/requirements/FR-003-identities-and-profiles.md",
@@ -542,6 +543,11 @@ const EXPECTED_LIVE_TRACKED: [&str; 204] = [
     "spec/requirements/FR-022-lasso-trace-document.md",
     "spec/requirements/FR-023-partial-valuation-document.md",
     "spec/requirements/FR-024-infinite-trace-corpus-and-refusals.md",
+    "spec/requirements/FR-029-release-pin-and-msrv-consistency.md",
+    "spec/requirements/FR-030-release-cross-crate-corpus.md",
+    "spec/requirements/FR-031-release-api-and-wire-compatibility.md",
+    "spec/requirements/FR-032-release-consumer-smoke.md",
+    "spec/requirements/FR-033-release-decision-and-tags.md",
     "spec/requirements/FR-289-infinite-trace-interval-grammar.md",
     "spec/requirements/FR-290-liveness-capability-registration.md",
     "spec/requirements/FR-291-infinite-trace-downstream-evidence.md",
@@ -550,6 +556,7 @@ const EXPECTED_LIVE_TRACKED: [&str; 204] = [
     "spec/requirements/NFR-003-qualification-integrity.md",
     "spec/requirements/NFR-004-reproduce-source-readiness-observations.md",
     "spec/requirements/NFR-005-preserve-readiness-authority-and-retention.md",
+    "spec/requirements/NFR-007-reproducible-release-evidence.md",
     "spec/requirements/StR-001-embedded-consumers.md",
     "spec/requirements/StR-002-temporal-interoperability.md",
     "spec/requirements/StR-003-formal-temporal-frontends.md",
@@ -1021,7 +1028,7 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         // Issue #34 adds live source-readiness specification and assurance
         // artifacts; SpecReviews/plans remain archival exclusions.
         // TL-207 adds five requirements and one matrix.
-        ("spec", 85),
+        ("spec", 92),
         // Issue #40 adds the future-lowering module and its traced tests.
         ("src", 20),
         // Issue #41 adds the paired-corpus replay.
