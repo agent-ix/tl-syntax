@@ -3,8 +3,8 @@
 use tl_syntax::{
     FairnessPremisesDocument, FairnessPremisesError, InfiniteClock, InfiniteFormulaDocument,
     InfiniteNode, InfiniteNodeKind, LassoTraceDocument, LassoTraceError, NodeId, PartialValuation,
-    PartialValuationError, PartialValue, PropositionId, SemanticProfile, TraceObservation,
-    ValuationEntry,
+    PartialValuationError, PartialValue, PropositionId, SemanticProfile, SourceSpan,
+    TraceObservation, ValuationEntry,
 };
 
 fn propositions() -> Vec<PropositionId> {
@@ -51,6 +51,97 @@ fn formula() -> InfiniteFormulaDocument {
         ],
     )
     .unwrap()
+}
+
+// Trace: TC-149, TC-151; FR-020-AC-2, FR-021-AC-1
+#[test]
+fn diagnostic_spans_do_not_change_infinite_graph_or_fairness_identity() {
+    let graph_at = |start: u32| {
+        InfiniteFormulaDocument::new(
+            SemanticProfile::InfiniteTraceV1,
+            InfiniteClock::EventPosition,
+            NodeId(1),
+            vec![
+                InfiniteNode::with_span(
+                    InfiniteNodeKind::Proposition {
+                        proposition: PropositionId(7),
+                    },
+                    SourceSpan::new(start, start + 2).unwrap(),
+                ),
+                InfiniteNode::with_span(
+                    InfiniteNodeKind::Not { operand: NodeId(0) },
+                    SourceSpan::new(start, start + 3).unwrap(),
+                ),
+            ],
+        )
+        .unwrap()
+    };
+    let compact = graph_at(0);
+    let padded = graph_at(8);
+    assert_ne!(
+        compact.canonical_json_bytes().unwrap(),
+        padded.canonical_json_bytes().unwrap()
+    );
+    assert_eq!(
+        compact.content_identity().unwrap(),
+        padded.content_identity().unwrap()
+    );
+    let span_free = InfiniteFormulaDocument::new(
+        SemanticProfile::InfiniteTraceV1,
+        InfiniteClock::EventPosition,
+        NodeId(1),
+        compact
+            .nodes()
+            .iter()
+            .map(|node| InfiniteNode::new(node.kind))
+            .collect(),
+    )
+    .unwrap();
+    assert_eq!(
+        compact.content_identity().unwrap(),
+        span_free.content_identity().unwrap()
+    );
+    let strict = InfiniteFormulaDocument::from_json_bytes(
+        &padded.canonical_json_bytes().unwrap(),
+        tl_syntax::SyntaxArtifactLimits::default(),
+    )
+    .unwrap();
+    assert_eq!(
+        strict.canonical_json_bytes().unwrap(),
+        padded.canonical_json_bytes().unwrap()
+    );
+    assert_eq!(
+        strict.content_identity().unwrap(),
+        compact.content_identity().unwrap()
+    );
+    let identity = compact.content_identity().unwrap();
+    let roots = vec![NodeId(1)];
+    let first = FairnessPremisesDocument::new(
+        &compact,
+        identity.clone(),
+        InfiniteClock::EventPosition,
+        roots.clone(),
+    )
+    .unwrap();
+    let second =
+        FairnessPremisesDocument::new(&padded, identity, InfiniteClock::EventPosition, roots)
+            .unwrap();
+    assert_eq!(
+        first.content_identity().unwrap(),
+        second.content_identity().unwrap()
+    );
+    assert_ne!(
+        compact.content_identity().unwrap(),
+        InfiniteFormulaDocument::new(
+            SemanticProfile::InfiniteTraceV1,
+            InfiniteClock::EventPosition,
+            NodeId(0),
+            compact.nodes().to_vec(),
+        )
+        .unwrap()
+        .content_identity()
+        .unwrap()
+    );
 }
 
 // Trace: TC-157, FR-023-AC-1
