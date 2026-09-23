@@ -127,6 +127,12 @@ fn infinite_graph_rejects_invalid_boundaries_before_exposing_a_document() {
     let clock = InfiniteClock::EventPosition;
     let atom = InfiniteNode::new(InfiniteNodeKind::True);
     assert_eq!(
+        InfiniteFormulaDocument::new(SemanticProfile::ClosedTraceV1, clock, NodeId(0), vec![atom]),
+        Err(InfiniteFormulaError::Profile {
+            actual: SemanticProfile::ClosedTraceV1
+        })
+    );
+    assert_eq!(
         InfiniteFormulaDocument::new(profile, clock, NodeId(1), vec![atom]),
         Err(InfiniteFormulaError::Root { root: NodeId(1) })
     );
