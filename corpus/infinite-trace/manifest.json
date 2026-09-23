@@ -1,0 +1,17 @@
+{
+  "corpus": "tl-syntax.infinite-trace-corpus/v1",
+  "revision": 1,
+  "role": "evidence-input",
+  "formula_schema": "tl-syntax.formula-unbounded/v1",
+  "lasso_schema": "tl-syntax.lasso-trace/v1",
+  "valuation_schema": "tl-syntax.partial-valuation/v1",
+  "fairness_schema": "tl-syntax.fairness-premises/v1",
+  "semantic_profile": "mltl.infinite-trace/v1",
+  "clock": "event_position",
+  "case_count": 13,
+  "files": [
+    {"path": "README.md", "sha256": "2d6002cca5fa49d9c2616eaf1144da7c6065cddd00e3c5b7326ce9598caf3386"},
+    {"path": "cases.json", "sha256": "cb0d0daeb7d00908d8df2614512f7eb089c73c1d3127ff1be7d1fdebc6e0401d"},
+    {"path": "schema.json", "sha256": "65eedd38814a544c17b4c82193d5e80d6027df623b0113bc1d93d29702874c18"}
+  ]
+}

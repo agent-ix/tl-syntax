@@ -29,8 +29,8 @@ rather than a hold, block, or refusal error.
 
 ## Outputs
 
-- Either the registered backend's settlement (proved, refuted, inconclusive,
-  or failed, per quire-specification FR-161's disposition vocabulary), or,
+- Either the registered backend's settlement (`proved`, `refuted`,
+  `inconclusive`, `unsupported`, or `failed` per quire-specification FR-341), or,
   absent a registration, an `unsupported` settlement carrying a warning that
   names `tl-syntax.liveness/v1`.
 - No mutation of a prior settlement and no partial or silently-downgraded
@@ -46,6 +46,11 @@ FR-008 lowering request/report/refusal identities: a registered backend
 implements the typed settlement interface this capability names; an
 unregistered caller never receives a silently-downgraded or partial result in
 its place.
+
+Only the registered infinite-trace provider may emit `proved`. A bounded or
+finite-prefix evaluator cannot construct that claim for an unbounded liveness
+formula. The provider retains `resource-incomplete` separately from other
+failure reasons even when both map to the external `failed` label.
 
 Absence of a registered backend is never a hold, never a blocker, and never a
 refusal error: this is the solver-absence path QSL establishes, and tl-syntax's
@@ -68,7 +73,7 @@ nothing to that path.
 |---|---|---|
 | FR-290-AC-1 | With no backend registered for `tl-syntax.liveness/v1`, every `tl-syntax.formula-unbounded/v1` document settles `unsupported` with a warning naming `tl-syntax.liveness/v1`, before evaluation is attempted. | Test (TC-146) |
 | FR-290-AC-2 | With a backend registered for `tl-syntax.liveness/v1`, settlement is routed to that backend's disposition and the `unsupported` warning is not produced. | Test (TC-146) |
-| FR-290-AC-3 | The absence settlement is never a hold, block, or refusal error, and a bounded `tl-syntax.formula/v1` document never consults this capability. | Test (TC-146) |
+| FR-290-AC-3 | The absence settlement is never a hold, block, or refusal error; bounded documents never consult this capability; only a registered infinite-trace provider may emit `proved`. | Test (TC-146) |
 
 ## Dependencies
 

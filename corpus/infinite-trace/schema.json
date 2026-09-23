@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-ix.github.io/tl-syntax/schema/infinite-trace-corpus-v1.schema.json",
+  "title": "tl-syntax infinite-trace corpus v1 envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["corpus", "formula_schema", "lasso_schema", "valuation_schema", "fairness_schema", "cases"],
+  "properties": {
+    "corpus": {"const": "tl-syntax.infinite-trace-corpus/v1"},
+    "formula_schema": {"const": "tl-syntax.formula-unbounded/v1"},
+    "lasso_schema": {"const": "tl-syntax.lasso-trace/v1"},
+    "valuation_schema": {"const": "tl-syntax.partial-valuation/v1"},
+    "fairness_schema": {"const": "tl-syntax.fairness-premises/v1"},
+    "cases": {"type": "array", "minItems": 8, "items": {"$ref": "#/$defs/case"}}
+  },
+  "$defs": {
+    "case": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "family", "source", "formula", "trace", "fairness", "anchor", "expected", "derivation"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "family": {"enum": ["lasso", "past", "partial", "fairness", "negative"]},
+        "source": {"type": "string", "minLength": 1},
+        "formula": {"$ref": "#/$defs/formula"},
+        "trace": {"$ref": "#/$defs/trace"},
+        "fairness": {"$ref": "#/$defs/fairness"},
+        "anchor": {"type": "integer", "minimum": 0},
+        "expected": {"$ref": "#/$defs/expected"},
+        "derivation": {"type": "string", "minLength": 20}
+      }
+    },
+    "formula": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "semantic_profile", "clock", "root", "nodes"],
+      "properties": {
+        "schema_version": {"const": "tl-syntax.formula-unbounded/v1"},
+        "semantic_profile": {"type": "string", "minLength": 1},
+        "clock": {"type": "string", "minLength": 1},
+        "root": {"type": "integer", "minimum": 0},
+        "nodes": {"type": "array", "minItems": 1, "items": {"type": "object"}}
+      }
+    },
+    "trace": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "semantic_profile", "clock", "proposition_map", "prefix", "loop"],
+      "properties": {
+        "schema_version": {"const": "tl-syntax.lasso-trace/v1"},
+        "semantic_profile": {"type": "string", "minLength": 1},
+        "clock": {"type": "string", "minLength": 1},
+        "proposition_map": {"type": "array", "items": {"type": "object", "required": ["id", "name"], "additionalProperties": false, "properties": {"id": {"type": "integer", "minimum": 0}, "name": {"type": "string", "minLength": 1}}}},
+        "prefix": {"type": "array", "items": {"$ref": "#/$defs/observation"}},
+        "loop": {"type": "array", "items": {"$ref": "#/$defs/observation"}}
+      }
+    },
+    "observation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["position", "valuation"],
+      "properties": {"position": {"type": "integer", "minimum": 0}, "valuation": {"type": "array", "items": {"$ref": "#/$defs/entry"}}}
+    },
+    "entry": {
+      "type": "object", "additionalProperties": false,
+      "required": ["proposition", "state"],
+      "properties": {"proposition": {"type": "integer", "minimum": 0}, "state": {"enum": ["true", "false", "missing", "conflicting"]}}
+    },
+    "fairness": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "semantic_profile", "clock", "roots"],
+      "properties": {"schema_version": {"const": "tl-syntax.fairness-premises/v1"}, "semantic_profile": {"type": "string", "minLength": 1}, "clock": {"type": "string", "minLength": 1}, "roots": {"type": "array", "uniqueItems": true, "items": {"type": "integer", "minimum": 0}}}
+    },
+    "expected": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "value"],
+      "properties": {"kind": {"enum": ["settlement", "refusal"]}, "value": {"type": "string", "minLength": 1}, "axis": {"enum": ["profile", "schema", "operator", "interval", "fairness", "clock", "lasso", "valuation", "resource"]}}
+    }
+  }
+}
