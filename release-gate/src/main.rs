@@ -7,8 +7,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use tl_release_gate::{
     check, compare_legacy_goldens, consumer_lock_differences, consumer_manifest,
     duplicated_owner_blobs, test_target_has_executed_cases, BuildFact, Candidate, CandidateFact,
-    CandidateInput, CandidateSet, CorpusLaneFact, CorpusOwnershipFact, CrateWireFact, SmokeFact,
-    WireFact,
+    CandidateInput, CandidateSet, CorpusLaneFact, CorpusOwnershipFact, CrateWireFact,
+    LegacyDecoderFact, SmokeFact, WireFact,
 };
 
 fn git_bytes(path: &Path, args: &[&str]) -> Result<Vec<u8>, String> {
@@ -59,6 +59,9 @@ fn golden_files(
         args.extend(GOLDEN_PATHS);
     } else {
         args.push("corpus");
+        if candidate.name == "tl-mltl" {
+            args.push("schemas");
+        }
     }
     let listing = git(&candidate.path, &args)?;
     let mut files = BTreeMap::new();
@@ -241,6 +244,217 @@ fn run_consumer_smoke(candidates: &[CandidateFact], msrv: &str) -> Result<SmokeF
     })
 }
 
+fn run_legacy_decoder_replay(set: &CandidateSet, msrv: &str) -> Result<LegacyDecoderFact, String> {
+    let mut previous = Vec::new();
+    for candidate in &set.candidates {
+        let revision = git(
+            &candidate.path,
+            &[
+                "rev-parse",
+                "--verify",
+                &format!("refs/tags/{}^{{commit}}", candidate.previous_tag),
+            ],
+        )?;
+        let prior = Candidate {
+            commit: revision,
+            proposed_tag: None,
+            ..candidate.clone()
+        };
+        previous.push(observe(&prior)?.fact);
+    }
+    let current: Vec<_> = set
+        .candidates
+        .iter()
+        .map(observe)
+        .collect::<Result<Vec<_>, _>>()?
+        .into_iter()
+        .map(|input| input.fact)
+        .collect();
+    let nonce = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_err(|error| error.to_string())?
+        .as_nanos();
+    let root =
+        std::env::temp_dir().join(format!("tl-legacy-replay-{}-{nonce}", std::process::id()));
+    let fixtures = root.join("fixtures");
+    fs::create_dir_all(&fixtures).map_err(|error| format!("{}: {error}", fixtures.display()))?;
+    for (name, facts, source) in [
+        ("baseline", &previous, include_str!("../legacy-baseline.rs")),
+        (
+            "candidate",
+            &current,
+            include_str!("../legacy-candidate.rs"),
+        ),
+    ] {
+        let project = root.join(name);
+        fs::create_dir_all(project.join("src"))
+            .map_err(|error| format!("{}: {error}", project.display()))?;
+        fs::write(
+            project.join("Cargo.toml"),
+            format!("{}serde_json = \"1\"\n", consumer_manifest(facts)?),
+        )
+        .map_err(|error| format!("{}: {error}", project.display()))?;
+        fs::write(project.join("src/main.rs"), source)
+            .map_err(|error| format!("{}: {error}", project.display()))?;
+        rustup_run(&project, msrv, &["generate-lockfile"])?;
+        let lock = fs::read_to_string(project.join("Cargo.lock"))
+            .map_err(|error| format!("{}: {error}", project.display()))?;
+        let lock: toml::Value = lock
+            .parse()
+            .map_err(|error| format!("{}: {error}", project.display()))?;
+        let differences = consumer_lock_differences(&lock, facts);
+        if !differences.is_empty() {
+            return Err(format!("{name} legacy lock: {}", differences.join("; ")));
+        }
+        let cargo = toolchain_binary(msrv, "cargo")?;
+        let rustc = toolchain_binary(msrv, "rustc")?;
+        let output = Command::new(cargo)
+            .env("RUSTC", rustc)
+            .env("TL_LEGACY_DIR", &fixtures)
+            .args(["run", "--locked", "--quiet"])
+            .current_dir(&project)
+            .output()
+            .map_err(|error| format!("{name} legacy replay: {error}"))?;
+        if !output.status.success() {
+            return Err(format!(
+                "{name} legacy replay failed: {}",
+                String::from_utf8_lossy(&output.stderr)
+            ));
+        }
+    }
+    Ok(LegacyDecoderFact {
+        previous_revisions: previous.into_iter().map(|fact| fact.commit).collect(),
+        candidate_revisions: current.into_iter().map(|fact| fact.commit).collect(),
+        result: "passed".to_owned(),
+    })
+}
+
+fn breaking_version_advanced(previous: &str, current: &str) -> bool {
+    let parse = |text: &str| -> Option<(u64, u64, u64)> {
+        let mut parts = text.split('.').map(str::parse::<u64>);
+        let value = (
+            parts.next()?.ok()?,
+            parts.next()?.ok()?,
+            parts.next()?.ok()?,
+        );
+        parts.next().is_none().then_some(value)
+    };
+    let (Some(old), Some(new)) = (parse(previous), parse(current)) else {
+        return false;
+    };
+    if old.0 == 0 {
+        new.0 > 0 || (new.0 == 0 && new.1 > old.1)
+    } else {
+        new.0 > old.0
+    }
+}
+
+fn run_api_compatibility(
+    candidate: &Candidate,
+    fact: &CandidateFact,
+) -> Result<tl_release_gate::ApiCompatibilityFact, String> {
+    let previous_manifest: toml::Value = git(
+        &candidate.path,
+        &["show", &format!("{}:Cargo.toml", candidate.previous_tag)],
+    )?
+    .parse()
+    .map_err(|error| format!("{} previous Cargo.toml: {error}", candidate.name))?;
+    let previous_version = previous_manifest
+        .get("package")
+        .and_then(|table| table.get("version"))
+        .and_then(toml::Value::as_str)
+        .ok_or_else(|| format!("{}: previous package version absent", candidate.name))?;
+    let binary =
+        std::env::var_os("TL_SEMVER_CHECKS").unwrap_or_else(|| "cargo-semver-checks".into());
+    let version = Command::new(&binary)
+        .arg("--version")
+        .output()
+        .map_err(|error| {
+            format!(
+                "{}: cargo-semver-checks unavailable: {error}",
+                candidate.name
+            )
+        })?;
+    if !version.status.success() {
+        return Err(format!(
+            "{}: cargo-semver-checks --version failed",
+            candidate.name
+        ));
+    }
+    let tool_version = String::from_utf8_lossy(&version.stdout).trim().to_owned();
+    if tool_version != "cargo-semver-checks 0.50.0" {
+        return Err(format!(
+            "{}: expected cargo-semver-checks 0.50.0, got {tool_version}",
+            candidate.name
+        ));
+    }
+    let rustc = toolchain_binary(&fact.msrv, "rustc")?;
+    let tool_dir = Path::new(&rustc)
+        .parent()
+        .ok_or_else(|| format!("{}: rustc has no bin directory", candidate.name))?;
+    let mut paths = vec![tool_dir.to_path_buf()];
+    paths.extend(std::env::split_paths(
+        &std::env::var_os("PATH").unwrap_or_default(),
+    ));
+    let path = std::env::join_paths(paths).map_err(|error| error.to_string())?;
+    let output = Command::new(binary)
+        .env("PATH", path)
+        .env("RUSTC", rustc)
+        .args([
+            "check-release",
+            "--manifest-path",
+            "Cargo.toml",
+            "--baseline-rev",
+        ])
+        .arg(&candidate.previous_tag)
+        .args([
+            "--release-type",
+            "minor",
+            "--all-features",
+            "--color",
+            "never",
+        ])
+        .current_dir(&candidate.path)
+        .output()
+        .map_err(|error| format!("{}: cargo-semver-checks: {error}", candidate.name))?;
+    if !matches!(output.status.code(), Some(0 | 100)) {
+        return Err(format!(
+            "{}: cargo-semver-checks could not compare APIs (exit {:?}): {}",
+            candidate.name,
+            output.status.code(),
+            String::from_utf8_lossy(&output.stderr)
+        ));
+    }
+    let stdout = String::from_utf8(output.stdout)
+        .map_err(|error| format!("{}: semver output is not UTF-8: {error}", candidate.name))?;
+    let findings = tl_release_gate::parse_semver_findings(&stdout)?;
+    if output.status.code() == Some(100) && findings.is_empty() {
+        return Err(format!(
+            "{}: semver found breaks but emitted no parseable findings",
+            candidate.name
+        ));
+    }
+    let changelog = tracked(candidate, "CHANGELOG.md")?;
+    let mut failures =
+        tl_release_gate::reconcile_api_migrations(&changelog, &fact.version, &findings);
+    if !findings.is_empty() && !breaking_version_advanced(previous_version, &fact.version) {
+        failures.push(format!(
+            "{}: API breaks require a new breaking release version after {previous_version}",
+            candidate.name
+        ));
+    }
+    if !failures.is_empty() {
+        return Err(format!("{}: {}", candidate.name, failures.join("; ")));
+    }
+    Ok(tl_release_gate::ApiCompatibilityFact {
+        name: candidate.name.clone(),
+        previous_tag: candidate.previous_tag.clone(),
+        tool_version,
+        findings,
+        result: "passed".to_owned(),
+    })
+}
+
 fn run(path: &Path) -> Result<bool, String> {
     let raw = fs::read_to_string(path).map_err(|error| format!("{}: {error}", path.display()))?;
     let set: CandidateSet =
@@ -400,6 +614,31 @@ fn run(path: &Path) -> Result<bool, String> {
     if report.failures.is_empty() {
         let msrv = &report.candidates[0].msrv;
         for candidate in &set.candidates {
+            let Some(fact) = report
+                .candidates
+                .iter()
+                .find(|fact| fact.name == candidate.name)
+            else {
+                report
+                    .failures
+                    .push(format!("{}: API candidate fact absent", candidate.name));
+                continue;
+            };
+            match run_api_compatibility(candidate, fact) {
+                Ok(compatibility) => report.api_compatibility.push(compatibility),
+                Err(error) => report.failures.push(format!("API compatibility: {error}")),
+            }
+        }
+        if !report.failures.is_empty() {
+            report.failures.sort();
+            report.accepted = false;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&report).map_err(|error| error.to_string())?
+            );
+            return Ok(false);
+        }
+        for candidate in &set.candidates {
             match rustup_run(
                 &candidate.path,
                 msrv,
@@ -488,6 +727,14 @@ fn run(path: &Path) -> Result<bool, String> {
                     .push(format!("external consumer smoke: {error}")),
             }
         }
+        if report.failures.is_empty() {
+            match run_legacy_decoder_replay(&set, msrv) {
+                Ok(replay) => report.legacy_decoder_replay = Some(replay),
+                Err(error) => report
+                    .failures
+                    .push(format!("legacy decoder replay: {error}")),
+            }
+        }
     } else {
         for candidate in &set.candidates {
             report.msrv_builds.push(BuildFact {
@@ -523,5 +770,33 @@ fn main() -> ExitCode {
             eprintln!("{error}");
             ExitCode::from(2)
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// TC-176 manual preflight lane: final admission executes this unconditionally
+    /// after the exact candidate graph is fixed.
+    #[test]
+    #[ignore = "requires four immutable Git revisions and Cargo network access"]
+    fn tagged_legacy_decoder_replay_probe() {
+        let path = std::env::var("TL_LEGACY_CANDIDATE_SET").expect("candidate set path");
+        let bytes = fs::read(path).unwrap();
+        let set: CandidateSet = serde_json::from_slice(&bytes).unwrap();
+        let fact = run_legacy_decoder_replay(&set, "1.98.1").unwrap();
+        assert_eq!(fact.previous_revisions.len(), 4);
+        assert_eq!(fact.candidate_revisions.len(), 4);
+        assert_eq!(fact.result, "passed");
+    }
+
+    #[test]
+    fn breaking_api_release_requires_new_breaking_version() {
+        assert!(!breaking_version_advanced("0.3.0", "0.3.0"));
+        assert!(!breaking_version_advanced("0.3.0", "0.3.1"));
+        assert!(breaking_version_advanced("0.3.0", "0.4.0"));
+        assert!(!breaking_version_advanced("1.2.0", "1.3.0"));
+        assert!(breaking_version_advanced("1.2.0", "2.0.0"));
     }
 }

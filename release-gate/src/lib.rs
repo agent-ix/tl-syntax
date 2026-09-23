@@ -103,6 +103,10 @@ pub struct GateReport {
     pub consumer_smoke: Option<SmokeFact>,
     /// Owner-corpus replay targets run from each exact downstream candidate.
     pub corpus_lanes: Vec<CorpusLaneFact>,
+    /// Old tagged public wire producers replayed through candidate readers.
+    pub legacy_decoder_replay: Option<LegacyDecoderFact>,
+    /// Public API comparison against each immutable preceding tag.
+    pub api_compatibility: Vec<ApiCompatibilityFact>,
     pub accepted: bool,
 }
 
@@ -134,6 +138,132 @@ pub struct CorpusLaneFact {
     pub name: String,
     pub target: &'static str,
     pub result: String,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct LegacyDecoderFact {
+    pub previous_revisions: Vec<String>,
+    pub candidate_revisions: Vec<String>,
+    pub result: String,
+}
+
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Serialize)]
+pub struct ApiFinding {
+    pub lint: String,
+    pub symbol: String,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct ApiCompatibilityFact {
+    pub name: String,
+    pub previous_tag: String,
+    pub tool_version: String,
+    pub findings: Vec<ApiFinding>,
+    pub result: String,
+}
+
+/// Parse the stable lint headings and affected symbols in cargo-semver-checks
+/// 0.50 output. Duplicate findings from multiple rustdoc paths collapse.
+pub fn parse_semver_findings(output: &str) -> Result<Vec<ApiFinding>, String> {
+    let mut findings = BTreeSet::new();
+    let mut lint = None;
+    let mut in_findings = false;
+    for line in output.lines() {
+        if let Some(rest) = line
+            .strip_prefix("--- failure ")
+            .or_else(|| line.strip_prefix("--- warning "))
+        {
+            let (id, _) = rest.split_once(':').ok_or("semver heading lacks lint id")?;
+            if id.is_empty()
+                || !id.chars().all(|character| {
+                    character.is_ascii_lowercase() || character.is_ascii_digit() || character == '_'
+                })
+            {
+                return Err(format!("semver heading has invalid lint id: {id}"));
+            }
+            lint = Some(id.to_owned());
+            in_findings = false;
+        } else if line == "Failed in:" {
+            if lint.is_none() {
+                return Err("semver finding has no lint heading".to_owned());
+            }
+            in_findings = true;
+        } else if in_findings && line.starts_with("  ") {
+            let text = line.trim();
+            let text = text.strip_prefix("variant ").unwrap_or(text);
+            let symbol = text
+                .split_whitespace()
+                .next()
+                .ok_or("empty semver finding")?;
+            if symbol.is_empty() || symbol.contains('/') {
+                return Err(format!("semver finding has invalid symbol: {symbol}"));
+            }
+            findings.insert(ApiFinding {
+                lint: lint.clone().ok_or("semver finding has no lint")?,
+                symbol: symbol.to_owned(),
+            });
+        } else if !line.is_empty() {
+            in_findings = false;
+        }
+    }
+    Ok(findings.into_iter().collect())
+}
+
+/// Match every observed API break to exactly one migration entry in this
+/// candidate's version section. Stale entries are also refused.
+pub fn reconcile_api_migrations(
+    changelog: &str,
+    version: &str,
+    findings: &[ApiFinding],
+) -> Vec<String> {
+    let mut failures = Vec::new();
+    let heading = format!("## {version}");
+    let Some(section) = changelog.split(&heading).nth(1) else {
+        return vec![format!("CHANGELOG lacks {heading} release section")];
+    };
+    let section = section.split("\n## ").next().unwrap_or(section);
+    let Some(inventory) = section.split("### API migration inventory").nth(1) else {
+        return vec![format!("CHANGELOG {heading} lacks API migration inventory")];
+    };
+    let inventory = inventory.split("\n### ").next().unwrap_or(inventory);
+    let mut documented = BTreeSet::new();
+    for line in inventory.lines().filter(|line| line.starts_with("- `")) {
+        let Some((lint, rest)) = line[3..].split_once("` `") else {
+            failures.push(format!("malformed API migration entry: {line}"));
+            continue;
+        };
+        let Some((symbol, migration)) = rest.split_once("`: Migration: ") else {
+            failures.push(format!("API migration entry lacks a migration: {line}"));
+            continue;
+        };
+        if migration.trim().is_empty() {
+            failures.push(format!("API migration entry has empty migration: {line}"));
+        }
+        let finding = ApiFinding {
+            lint: lint.to_owned(),
+            symbol: symbol.to_owned(),
+        };
+        if !documented.insert(finding.clone()) {
+            failures.push(format!(
+                "duplicate API migration: {} {}",
+                finding.lint, finding.symbol
+            ));
+        }
+    }
+    let observed: BTreeSet<_> = findings.iter().cloned().collect();
+    for missing in observed.difference(&documented) {
+        failures.push(format!(
+            "unmapped API finding: {} {}",
+            missing.lint, missing.symbol
+        ));
+    }
+    for stale in documented.difference(&observed) {
+        failures.push(format!(
+            "stale API migration entry: {} {}",
+            stale.lint, stale.symbol
+        ));
+    }
+    failures
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -479,6 +609,8 @@ pub fn check(set: &CandidateSet, inputs: &[CandidateInput]) -> GateReport {
         corpus_ownership: Vec::new(),
         consumer_smoke: None,
         corpus_lanes: Vec::new(),
+        legacy_decoder_replay: None,
+        api_compatibility: Vec::new(),
         accepted: failures.is_empty(),
         failures,
     }

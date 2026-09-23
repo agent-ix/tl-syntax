@@ -3,8 +3,9 @@ use std::path::PathBuf;
 
 use tl_release_gate::{
     authorized_tag_plan, check, compare_legacy_goldens, consumer_lock_differences,
-    consumer_manifest, duplicated_owner_blobs, test_target_has_executed_cases, Candidate,
-    CandidateFact, CandidateInput, CandidateSet, HistoricalLane, HumanReleaseDecision, CRATES,
+    consumer_manifest, duplicated_owner_blobs, parse_semver_findings, reconcile_api_migrations,
+    test_target_has_executed_cases, ApiFinding, Candidate, CandidateFact, CandidateInput,
+    CandidateSet, HistoricalLane, HumanReleaseDecision, CRATES,
 };
 
 fn sha(digit: char) -> String {
@@ -259,6 +260,58 @@ fn all_crates_legacy_wire_goldens_are_immutable() {
         );
         assert_eq!(compare_legacy_goldens(&previous, &current).len(), 1);
     }
+}
+
+/// TC-175: duplicate rustdoc paths collapse, while unlisted breaks and stale
+/// migration entries both refuse the exact version section.
+#[test]
+fn api_findings_require_matching_migration_entries() {
+    let output = "--- failure enum_variant_added: new enum variant ---\nFailed in:\n  variant SemanticProfile:InfiniteTraceV1 in /tmp/src/profile.rs:21\n  variant SemanticProfile:InfiniteTraceV1 in /tmp/src/profile.rs:21\n\n--- warning partial_ord_enum_variants_reordered: order changed ---\nFailed in:\n  FormulaError::Old moved from position 7 to 8, in /tmp/src/graph.rs:5\n";
+    let findings = parse_semver_findings(output).unwrap();
+    assert_eq!(findings.len(), 2);
+    let changelog = "## 0.4.0\n### API migration inventory\n- `enum_variant_added` `SemanticProfile:InfiniteTraceV1`: Migration: handle the new profile explicitly.\n- `partial_ord_enum_variants_reordered` `FormulaError::Old`: Migration: choose an explicit sort key.\n\n## 0.3.0\n";
+    assert!(reconcile_api_migrations(changelog, "0.4.0", &findings).is_empty());
+    let missing = changelog.replace("- `enum_variant_added` `SemanticProfile:InfiniteTraceV1`: Migration: handle the new profile explicitly.\n", "");
+    assert!(reconcile_api_migrations(&missing, "0.4.0", &findings)
+        .iter()
+        .any(|failure| failure.contains("unmapped API finding")));
+    let stale = changelog.replace(
+        "## 0.3.0",
+        "- `enum_variant_added` `Extra::Variant`: Migration: handle it.\n## 0.3.0",
+    );
+    assert!(reconcile_api_migrations(&stale, "0.4.0", &findings)
+        .iter()
+        .any(|failure| failure.contains("stale API migration entry")));
+    let empty = changelog.replace(
+        "Migration: handle the new profile explicitly.",
+        "Migration: ",
+    );
+    assert!(reconcile_api_migrations(&empty, "0.4.0", &findings)
+        .iter()
+        .any(|failure| failure.contains("empty migration")));
+    assert!(parse_semver_findings("Failed in:\n  variant X:Y in /tmp/x.rs:1").is_err());
+}
+
+/// TC-175: the measured syntax 0.3-to-0.4 API findings have migration text.
+#[test]
+fn syntax_measured_api_breaks_are_documented() {
+    let findings = [
+        ApiFinding {
+            lint: "enum_variant_added".to_owned(),
+            symbol: "SemanticProfile:InfiniteTraceV1".to_owned(),
+        },
+        ApiFinding {
+            lint: "enum_no_repr_variant_discriminant_changed".to_owned(),
+            symbol: "FormulaError::FormulaV1NodeUnsupported".to_owned(),
+        },
+        ApiFinding {
+            lint: "partial_ord_enum_variants_reordered".to_owned(),
+            symbol: "FormulaError::FormulaV1NodeUnsupported".to_owned(),
+        },
+    ];
+    assert!(
+        reconcile_api_migrations(include_str!("../../CHANGELOG.md"), "0.4.0", &findings).is_empty()
+    );
 }
 
 /// TC-177/178: the consumer cannot silently resolve a path or older pin.

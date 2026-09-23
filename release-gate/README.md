@@ -11,7 +11,10 @@ marks builds `not-run` when the graph is already invalid.
 
 Every crate compares retained legacy corpus bytes with its `previous_tag`
 (initially `v0.3.0`). New wire editions may add paths; old paths may neither
-disappear nor change. The checker also refuses byte-identical vendored copies
+disappear nor change; tl-mltl's retained `schemas/` are included. A separate
+external replay produces formula, parser report, trace and rewrite report bytes
+using the four preceding tagged crates, then admits those same bytes through
+the four candidate public decoders. The checker also refuses byte-identical vendored copies
 of the syntax owner's infinite corpus in any downstream repository and runs
 the three owner-corpus test targets at the exact candidate revisions.
 
@@ -23,9 +26,15 @@ The scratch consumer's lock is checked against all four candidate commits.
 The proposed tag names are checked only after an attributed human decision;
 the checker does not create or push tags.
 
-The checker does not yet run `cargo-semver-checks` or reconcile migration notes
-for TC-175, nor does byte comparison alone prove all four old decoders' behavior.
-Those release criteria remain open.
+The API lane requires `cargo-semver-checks` 0.50.0 (set `TL_SEMVER_CHECKS` to
+its binary path if it is not on `PATH`). It checks every crate against its
+`previous_tag` with all features and a minor-release diagnostic scan, which
+exposes breaking findings even for a planned 0.3-to-0.4 release. Every unique
+lint and affected symbol must have exactly one line in the candidate version's
+`### API migration inventory` CHANGELOG section:
+`- \`lint_id\` \`Affected::Symbol\`: Migration: actionable guidance.`
+Stale entries, tool errors and a breaking finding without a breaking version
+bump fail. A 0.x minor bump is a breaking version bump.
 
 Create a JSON input outside the source tree:
 
@@ -42,9 +51,9 @@ Create a JSON input outside the source tree:
 ```
 
 Run `cargo run --manifest-path release-gate/Cargo.toml --locked --
-<candidate-set.json>`. Exit 0 means the graph, MSRV, corpus, wire-byte and
-consumer lanes passed. It does not claim API
-compatibility or a human release decision. The optional `require_tags: true` plus
+<candidate-set.json>`. Exit 0 means the graph, API, MSRV, corpus, legacy wire
+decoder and consumer lanes passed for the exact candidate commits. It does not
+claim a human release decision. The optional `require_tags: true` plus
 per-candidate `proposed_tag` enables a later read-only tag-target check; the
 tool never creates or changes a tag.
 

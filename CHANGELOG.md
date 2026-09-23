@@ -3,6 +3,17 @@
 All notable user-visible changes to `tl-syntax` are recorded here. The crate is
 distributed as a git source release (`publish = false`); versions are git tags.
 
+## 0.4.0
+
+Stage 1 candidate. This section records API migrations against the immutable
+0.3.0 tag; the version and tag are assigned only with the coordinated release.
+
+### API migration inventory
+
+- `enum_variant_added` `SemanticProfile:InfiniteTraceV1`: Migration: add an explicit arm for the infinite-trace profile to exhaustive `SemanticProfile` matches, and route it to the infinite trace APIs or a typed unsupported-profile refusal.
+- `enum_no_repr_variant_discriminant_changed` `FormulaError::FormulaV1NodeUnsupported`: Migration: stop using numeric casts of `FormulaError` as stable error codes; match the variant directly and assign an application-owned code if one is needed. Its implicit discriminant shifts from 7 to 8.
+- `partial_ord_enum_variants_reordered` `FormulaError::FormulaV1NodeUnsupported`: Migration: stop relying on derived `FormulaError` ordering for persistent or protocol decisions; use an explicit ordering key if needed. This variant moves from position 8 to 9.
+
 ## 0.3.0
 
 First coordinated release of the MLTL crates (`tl-syntax`, `tl-parse`,

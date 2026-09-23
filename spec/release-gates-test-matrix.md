@@ -17,8 +17,11 @@ mutation probes, byte comparisons across all four crates, owner-corpus
 isolation and replay lanes, and an exact-Git external consumer. Its synthetic
 mutation tests and an earlier four-crate smoke probe are component evidence;
 the rows below remain planned until these gates execute on one final candidate
-graph. TC-175 still needs API and migration-note comparison, and TC-176 still
-needs explicit legacy decoder replay. TC-179 has a refusal/order unit test,
+graph. TC-175 now runs cargo-semver-checks against preceding tags and requires
+an exact per-finding migration inventory in each candidate CHANGELOG. TC-176
+now replays four wire records from preceding tagged producers through candidate
+decoders, in addition to its byte comparison. The tagged decoder preflight
+passed on an earlier coherent graph; the final graph remains open. TC-179 has a refusal/order unit test,
 while the human decision and permanent tags remain outside automation.
 
 ## Functional Requirement Coverage
