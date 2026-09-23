@@ -9,6 +9,17 @@ First coordinated release of the MLTL crates (`tl-syntax`, `tl-parse`,
 `tl-mltl`, `tl-rewrite`). The version skips 0.2.0 so all four crates share one
 number past `tl-mltl`'s existing v0.2.0. Changes are relative to v0.1.0.
 
+Release gate: the full local gate (`make ci`) passes. `make spec-release` does
+not. Its strict coverage check reports rows with no backing test, and every one
+belongs to work this release does not claim:
+- source-qualification readiness (FR-015..019, NFR-004/005)
+- infinite-trace and liveness (FR-289..291)
+- downstream profile rows that other crates' evidence will back
+- rows verified by analysis, which strict mode never counts as backed
+
+The owner accepted this exception for 0.3.0. Later releases follow the release
+gates specified in the V1 spec cycle.
+
 ### Added
 
 - **Past-time (history) profile.** The formula graph admits the origin-complete
