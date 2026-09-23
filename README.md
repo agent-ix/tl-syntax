@@ -80,6 +80,21 @@ make test
 make ci
 ```
 
+For the supplementary interval arithmetic proof, run Kani 0.68.0 with
+CBMC 6.11.0:
+
+```bash
+cargo kani --lib \
+  --harness formula::graph::kani_proofs::interval_cardinality_matches_wide_arithmetic \
+  --exact --unwind 4
+```
+
+The harness has no assumptions and checks every `u32` endpoint pair against
+`u64` cardinality, including inverted bounds and the unrepresentable
+`[0,u32::MAX]` length. It does not prove formula validation or temporal
+semantics. The verifier-only harness leaves the production `Interval` body
+unchanged.
+
 ## Manual wire fuzzing
 
 The versioned document decode boundary has a Rust fuzz target. It is intentionally

@@ -61,6 +61,33 @@ impl Interval {
     }
 }
 
+#[cfg(kani)]
+mod kani_proofs {
+    use super::Interval;
+
+    // The arithmetic is over all u32 endpoint pairs, with no assumptions.
+    #[kani::proof]
+    fn interval_cardinality_matches_wide_arithmetic() {
+        let start: u32 = kani::any();
+        let end: u32 = kani::any();
+        match Interval::new(start, end) {
+            Ok(interval) => {
+                assert!(start <= end);
+                assert_eq!(interval.start(), start);
+                assert_eq!(interval.end(), end);
+                let wide = u64::from(end) - u64::from(start) + 1;
+                let expected = u32::try_from(wide).ok();
+                assert_eq!(interval.cardinality(), expected);
+            }
+            Err(error) => {
+                assert!(start > end);
+                assert_eq!(error.start, start);
+                assert_eq!(error.end, end);
+            }
+        }
+    }
+}
+
 /// Error returned when an inclusive interval is inverted.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[non_exhaustive]
