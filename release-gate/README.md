@@ -9,10 +9,23 @@ worktree at each commit is required before it runs all-target, all-feature
 tests at the MSRV. The JSON report names every static inconsistent edge and
 marks builds `not-run` when the graph is already invalid.
 
-The syntax owner also compares every retained legacy corpus golden byte for
-byte with the `previous_tag` (initially `v0.3.0`). New wire editions may add
-new paths; old paths may neither disappear nor change. This is the syntax
-portion of TC-176, not the full four-crate API/wire gate.
+Every crate compares retained legacy corpus bytes with its `previous_tag`
+(initially `v0.3.0`). New wire editions may add paths; old paths may neither
+disappear nor change. The checker also refuses byte-identical vendored copies
+of the syntax owner's infinite corpus in any downstream repository and runs
+the three owner-corpus test targets at the exact candidate revisions.
+
+After the graph and MSRV lanes pass, a separate scratch consumer is generated
+with four exact Git commit dependencies and no path overrides. It asserts
+public parsing, rewriting, signal binding, trace evaluation, and C2PO mapping,
+then runs with the same lockfile at the MSRV and installed `stable` toolchain.
+The scratch consumer's lock is checked against all four candidate commits.
+The proposed tag names are checked only after an attributed human decision;
+the checker does not create or push tags.
+
+The checker does not yet run `cargo-semver-checks` or reconcile migration notes
+for TC-175, nor does byte comparison alone prove all four old decoders' behavior.
+Those release criteria remain open.
 
 Create a JSON input outside the source tree:
 
@@ -29,9 +42,9 @@ Create a JSON input outside the source tree:
 ```
 
 Run `cargo run --manifest-path release-gate/Cargo.toml --locked --
-<candidate-set.json>`. Exit 0 means this graph/MSRV/syntax-wire checker
-passed. It does not claim the corpus, API compatibility, consumer smoke, or
-human release-decision gates passed. The optional `require_tags: true` plus
+<candidate-set.json>`. Exit 0 means the graph, MSRV, corpus, wire-byte and
+consumer lanes passed. It does not claim API
+compatibility or a human release decision. The optional `require_tags: true` plus
 per-candidate `proposed_tag` enables a later read-only tag-target check; the
 tool never creates or changes a tag.
 

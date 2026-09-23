@@ -13,13 +13,14 @@ relationships:
 
 ## Description
 
-Before tagging a coordinated TL release, a non-workspace `release-smoke/`
-consumer shall depend on the exact four proposed tags and exercise the public
-integration path at the shared MSRV and current stable Rust.
+Before pushing coordinated TL release tags, a non-workspace `release-smoke/`
+consumer shall depend on the exact four candidate commits that the proposed
+tags will name and exercise the public integration path at the shared MSRV and
+current stable Rust.
 
 ## Inputs
 
-- Exact candidate tags and commits for tl-syntax, tl-parse, tl-mltl and
+- Proposed tag names and exact candidate commits for tl-syntax, tl-parse, tl-mltl and
   tl-rewrite, with one locked dependency resolution.
 - A representative formula, signal catalog, trace and C2PO mapping request.
 
@@ -30,7 +31,9 @@ integration path at the shared MSRV and current stable Rust.
 
 ## Behavior
 
-The consumer parses and round-trips the formula, rewrites it, binds the signal
+The consumer uses exact Git commit dependencies before tags exist. After an
+attributed release decision, FR-033 checks that each permanent tag targets the
+same accepted commit. The consumer parses and round-trips the formula, rewrites it, binds the signal
 catalog, evaluates the trace and maps an applicable formula to C2PO through
 public APIs. It lives outside the tl-syntax workspace and has no reverse
 dependency on the repository being released. Its lockfile must resolve the
@@ -41,7 +44,7 @@ smoke is insufficient; each named path yields an asserted result.
 
 | ID | Criteria | Verification |
 |---|---|---|
-| FR-032-AC-1 | The consumer uses all four exact proposed tag revisions and executes parsing, rewriting, evaluation, signal binding and C2PO mapping with asserted results. | Test (TC-177) |
+| FR-032-AC-1 | The consumer uses all four exact proposed tag target commits and executes parsing, rewriting, evaluation, signal binding and C2PO mapping with asserted results. | Test (TC-177) |
 | FR-032-AC-2 | The same locked consumer builds and runs at the shared MSRV and current stable; a wrong pin, absent operation or local path override fails. | Test (TC-178) |
 
 ## Dependencies

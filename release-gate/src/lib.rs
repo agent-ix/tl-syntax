@@ -44,6 +44,26 @@ pub struct CandidateSet {
     pub require_tags: bool,
 }
 
+/// An already authenticated FR-018 owner decision supplied by the release
+/// process. This crate checks scope and expiry; it never authenticates a person.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct HumanReleaseDecision {
+    pub decision_id: String,
+    pub human_actor: String,
+    pub accepted: bool,
+    pub expires_unix_seconds: u64,
+    pub candidate_revisions: BTreeMap<String, String>,
+    pub evidence_sha256: String,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+pub struct TagAction {
+    pub name: String,
+    pub tag: String,
+    pub commit: String,
+}
+
 #[derive(Clone, Debug, Serialize)]
 pub struct CandidateFact {
     pub name: String,
@@ -75,7 +95,45 @@ pub struct GateReport {
     pub msrv_builds: Vec<BuildFact>,
     /// Byte-level result for the syntax owner's retained legacy golden files.
     pub syntax_wire_golden: Option<WireFact>,
+    /// Previous-release corpus bytes for every crate, not just the syntax owner.
+    pub wire_goldens: Vec<CrateWireFact>,
+    /// Owner-corpus isolation at the exact selected source revisions.
+    pub corpus_ownership: Vec<CorpusOwnershipFact>,
+    /// Exact external consumer, including its locked graph and two toolchains.
+    pub consumer_smoke: Option<SmokeFact>,
+    /// Owner-corpus replay targets run from each exact downstream candidate.
+    pub corpus_lanes: Vec<CorpusLaneFact>,
     pub accepted: bool,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct CrateWireFact {
+    pub name: String,
+    pub previous_tag: String,
+    pub checked_files: usize,
+    pub differences: Vec<String>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct CorpusOwnershipFact {
+    pub name: String,
+    pub owner_files: usize,
+    pub duplicated_owner_blobs: Vec<String>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct SmokeFact {
+    pub candidate_revisions: Vec<String>,
+    pub lock_result: String,
+    pub msrv_result: String,
+    pub stable_result: String,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct CorpusLaneFact {
+    pub name: String,
+    pub target: &'static str,
+    pub result: String,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -417,9 +475,157 @@ pub fn check(set: &CandidateSet, inputs: &[CandidateInput]) -> GateReport {
         edges,
         msrv_builds: Vec::new(),
         syntax_wire_golden: None,
+        wire_goldens: Vec::new(),
+        corpus_ownership: Vec::new(),
+        consumer_smoke: None,
+        corpus_lanes: Vec::new(),
         accepted: failures.is_empty(),
         failures,
     }
+}
+
+/// Refuse byte-for-byte copies of the syntax-owned corpus in a consumer.
+/// Git blob identities are hashes of the bytes, independent of the path used
+/// by a consumer to hide a copy. The caller supplies blobs from exact commits.
+pub fn duplicated_owner_blobs(
+    owner: &BTreeMap<String, String>,
+    consumer: &BTreeMap<String, String>,
+) -> Vec<String> {
+    let owned: BTreeSet<_> = owner.values().collect();
+    consumer
+        .iter()
+        .filter(|(_, blob)| owned.contains(blob))
+        .map(|(path, _)| path.clone())
+        .collect()
+}
+
+/// Build an external consumer manifest from the already checked candidate
+/// commits. The smoke project has no path overrides or workspace membership.
+pub fn consumer_manifest(candidates: &[CandidateFact]) -> Result<String, String> {
+    if candidates.len() != CRATES.len() {
+        return Err("consumer requires all four TL candidates".to_owned());
+    }
+    let mut manifest = "[package]\nname = \"tl-release-smoke\"\nversion = \"0.0.0\"\nedition = \"2021\"\npublish = false\n\n[dependencies]\n".to_owned();
+    for name in CRATES {
+        let matches: Vec<_> = candidates
+            .iter()
+            .filter(|candidate| candidate.name == name)
+            .collect();
+        if matches.len() != 1 || !valid_sha(&matches[0].commit) {
+            return Err(format!(
+                "{name}: missing or invalid exact candidate revision"
+            ));
+        }
+        let candidate = matches[0];
+        manifest.push_str(&format!(
+            "{name} = {{ version = \"={}\", git = \"https://github.com/agent-ix/{name}.git\", rev = \"{}\" }}\n",
+            candidate.version, candidate.commit
+        ));
+    }
+    Ok(manifest)
+}
+
+/// Refuse duplicate, absent or substituted TL revisions in the external lock.
+pub fn consumer_lock_differences(lock: &toml::Value, candidates: &[CandidateFact]) -> Vec<String> {
+    let mut differences = Vec::new();
+    for name in CRATES {
+        let Some(candidate) = candidates.iter().find(|candidate| candidate.name == name) else {
+            differences.push(format!("{name}: candidate is absent"));
+            continue;
+        };
+        let entries: Vec<_> = lock
+            .get("package")
+            .and_then(toml::Value::as_array)
+            .into_iter()
+            .flatten()
+            .filter(|entry| entry.get("name").and_then(toml::Value::as_str) == Some(name))
+            .collect();
+        let source = format!(
+            "git+https://github.com/agent-ix/{name}.git?rev={}#{}",
+            candidate.commit, candidate.commit
+        );
+        if entries.len() != 1
+            || entries[0].get("version").and_then(toml::Value::as_str)
+                != Some(candidate.version.as_str())
+            || entries[0].get("source").and_then(toml::Value::as_str) != Some(source.as_str())
+        {
+            differences.push(format!(
+                "{name}: external lock differs from exact candidate"
+            ));
+        }
+    }
+    differences
+}
+
+/// Produce a read-only ordered tag plan only for the exact accepted graph.
+/// Tag creation remains an attributed human action outside this checker.
+pub fn authorized_tag_plan(
+    candidates: &[CandidateFact],
+    decision: Option<&HumanReleaseDecision>,
+    required_gates_passed: bool,
+    now_unix_seconds: u64,
+) -> Result<Vec<TagAction>, String> {
+    if !required_gates_passed {
+        return Err("required release gates are incomplete".to_owned());
+    }
+    let decision = decision.ok_or("current human release decision is absent")?;
+    if !decision.accepted
+        || decision.decision_id.is_empty()
+        || decision.human_actor.is_empty()
+        || decision.expires_unix_seconds <= now_unix_seconds
+        || decision.evidence_sha256.len() != 64
+        || !decision
+            .evidence_sha256
+            .bytes()
+            .all(|byte| byte.is_ascii_hexdigit())
+    {
+        return Err("human release decision is rejected, expired or unattributed".to_owned());
+    }
+    if candidates.len() != CRATES.len() || decision.candidate_revisions.len() != CRATES.len() {
+        return Err("decision does not bind the four candidate revisions".to_owned());
+    }
+    let mut actions = Vec::new();
+    for name in CRATES {
+        let matches: Vec<_> = candidates
+            .iter()
+            .filter(|candidate| candidate.name == name)
+            .collect();
+        if matches.len() != 1 {
+            return Err(format!("{name}: expected exactly one candidate"));
+        }
+        let candidate = matches[0];
+        if decision.candidate_revisions.get(name) != Some(&candidate.commit) {
+            return Err(format!("{name}: human decision names a different commit"));
+        }
+        let tag = candidate
+            .proposed_tag
+            .as_ref()
+            .ok_or_else(|| format!("{name}: proposed tag is absent"))?;
+        if let Some(existing) = candidate.tag_commit.as_deref() {
+            return Err(format!(
+                "{name}: proposed tag {tag} already exists at {existing}"
+            ));
+        }
+        actions.push(TagAction {
+            name: name.to_owned(),
+            tag: tag.clone(),
+            commit: candidate.commit.clone(),
+        });
+    }
+    Ok(actions)
+}
+
+/// A Cargo integration target counts only when a real test ran successfully.
+/// A target with every case ignored exits zero, so exit status alone is not a
+/// corpus gate.
+pub fn test_target_has_executed_cases(output: &str) -> bool {
+    output.lines().any(|line| {
+        line.trim()
+            .strip_prefix("test result: ok. ")
+            .and_then(|result| result.split_once(" passed; "))
+            .and_then(|(count, rest)| count.parse::<usize>().ok().map(|count| (count, rest)))
+            .is_some_and(|(count, rest)| count > 0 && rest.starts_with("0 failed; 0 ignored;"))
+    })
 }
 
 pub fn valid_sha(value: &str) -> bool {

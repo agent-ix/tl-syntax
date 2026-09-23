@@ -13,13 +13,17 @@ These gates apply after the released 0.3.0 baseline. TC-170 through TC-179
 are planned until their assertions execute on a candidate using the real
 four-crate graph. Ignored test-first stubs are not implementation coverage.
 The standalone `release-gate/` checker has executable TC-170 through TC-172
-mutation probes and a syntax-owner TC-176 byte comparison. The current
-four-crate graph still has stale cross-crate revisions and no later tags, so
-the rows below remain planned for release-candidate qualification.
+mutation probes, byte comparisons across all four crates, owner-corpus
+isolation and replay lanes, and an exact-Git external consumer. Its synthetic
+mutation tests and an earlier four-crate smoke probe are component evidence;
+the rows below remain planned until these gates execute on one final candidate
+graph. TC-175 still needs API and migration-note comparison, and TC-176 still
+needs explicit legacy decoder replay. TC-179 has a refusal/order unit test,
+while the human decision and permanent tags remain outside automation.
 
 ## Functional Requirement Coverage
 
-| Functional Req | Acceptance Criteria | Test Cases | Coverage Status |
+| Functional Req | Acceptance Criteria | Test Cases | Status |
 |---|---|---|---|
 | FR-029 | FR-029-AC-1 through FR-029-AC-3 | TC-170 through TC-172 | 🚧 planned |
 | FR-030 | FR-030-AC-1 through FR-030-AC-2 | TC-173, TC-174 | 🚧 planned |

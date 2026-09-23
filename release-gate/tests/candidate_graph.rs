@@ -2,8 +2,9 @@ use std::collections::BTreeMap;
 use std::path::PathBuf;
 
 use tl_release_gate::{
-    check, compare_legacy_goldens, Candidate, CandidateFact, CandidateInput, CandidateSet,
-    HistoricalLane, CRATES,
+    authorized_tag_plan, check, compare_legacy_goldens, consumer_lock_differences,
+    consumer_manifest, duplicated_owner_blobs, test_target_has_executed_cases, Candidate,
+    CandidateFact, CandidateInput, CandidateSet, HistoricalLane, HumanReleaseDecision, CRATES,
 };
 
 fn sha(digit: char) -> String {
@@ -212,4 +213,140 @@ fn syntax_legacy_wire_goldens_are_immutable() {
         .iter()
         .any(|difference| difference.contains("is missing")));
     assert!(!compare_legacy_goldens(&BTreeMap::new(), &current).is_empty());
+}
+
+/// TC-162: moving a copied owner file to another path cannot evade isolation.
+#[test]
+fn syntax_owner_corpus_is_not_vendored_by_a_consumer() {
+    let owner = BTreeMap::from([
+        (
+            "corpus/infinite-trace/cases.json".to_owned(),
+            "owner-cases-blob".to_owned(),
+        ),
+        (
+            "corpus/infinite-trace/schema.json".to_owned(),
+            "owner-schema-blob".to_owned(),
+        ),
+    ]);
+    let mut consumer = BTreeMap::from([(
+        "corpus/parser/grammar.json".to_owned(),
+        "separate-parser-fixture".to_owned(),
+    )]);
+    assert!(duplicated_owner_blobs(&owner, &consumer).is_empty());
+    consumer.insert(
+        "fixtures/copied-cases.json".to_owned(),
+        "owner-cases-blob".to_owned(),
+    );
+    assert_eq!(
+        duplicated_owner_blobs(&owner, &consumer),
+        ["fixtures/copied-cases.json".to_owned()]
+    );
+}
+
+/// TC-176: every old path in every crate must retain its exact bytes.
+#[test]
+fn all_crates_legacy_wire_goldens_are_immutable() {
+    for name in CRATES {
+        let previous = BTreeMap::from([(
+            format!("corpus/{name}/wire.json"),
+            format!("{name}-v0.3.0").into_bytes(),
+        )]);
+        let mut current = previous.clone();
+        assert!(compare_legacy_goldens(&previous, &current).is_empty());
+        current.insert(
+            format!("corpus/{name}/wire.json"),
+            b"changed legacy wire".to_vec(),
+        );
+        assert_eq!(compare_legacy_goldens(&previous, &current).len(), 1);
+    }
+}
+
+/// TC-177/178: the consumer cannot silently resolve a path or older pin.
+#[test]
+fn external_consumer_manifest_and_lock_bind_all_four_commits() {
+    let (_, inputs) = fixture();
+    let facts: Vec<_> = inputs.iter().map(|input| input.fact.clone()).collect();
+    let manifest = consumer_manifest(&facts).unwrap();
+    let parsed: toml::Value = manifest.parse().unwrap();
+    assert_eq!(parsed["package"]["name"].as_str(), Some("tl-release-smoke"));
+    assert!(parsed.get("workspace").is_none());
+    for name in CRATES {
+        let entry = &parsed["dependencies"][name];
+        assert_eq!(entry["rev"].as_str(), Some(selected(name).as_str()));
+        assert!(entry.get("path").is_none());
+        assert_eq!(
+            entry["git"].as_str(),
+            Some(format!("https://github.com/agent-ix/{name}.git").as_str())
+        );
+    }
+    let mut lock = "version = 4\n".to_owned();
+    for name in CRATES {
+        let revision = selected(name);
+        lock.push_str(&format!(
+            "[[package]]\nname = \"{name}\"\nversion = \"0.4.0\"\nsource = \"git+https://github.com/agent-ix/{name}.git?rev={revision}#{revision}\"\n"
+        ));
+    }
+    let mut lock: toml::Value = lock.parse().unwrap();
+    assert!(consumer_lock_differences(&lock, &facts).is_empty());
+    lock["package"][0]["source"] = toml::Value::String("path+../tl-syntax".to_owned());
+    assert_eq!(consumer_lock_differences(&lock, &facts).len(), 1);
+    lock["package"].as_array_mut().unwrap().remove(1);
+    assert_eq!(consumer_lock_differences(&lock, &facts).len(), 2);
+}
+
+/// TC-179: no tag plan escapes without a current human decision on this graph.
+#[test]
+fn exact_human_decision_only_yields_dependency_ordered_tag_plan() {
+    let (_, inputs) = fixture();
+    let mut facts: Vec<_> = inputs.iter().map(|input| input.fact.clone()).collect();
+    for fact in &mut facts {
+        fact.tag_commit = None;
+    }
+    let now = 1_000_u64;
+    let mut decision = HumanReleaseDecision {
+        decision_id: "FR-018-reviewed".to_owned(),
+        human_actor: "release-owner".to_owned(),
+        accepted: true,
+        expires_unix_seconds: now + 100,
+        candidate_revisions: facts
+            .iter()
+            .map(|fact| (fact.name.clone(), fact.commit.clone()))
+            .collect(),
+        evidence_sha256: "a".repeat(64),
+    };
+    assert!(authorized_tag_plan(&facts, None, true, now).is_err());
+    assert!(authorized_tag_plan(&facts, Some(&decision), false, now).is_err());
+    let plan = authorized_tag_plan(&facts, Some(&decision), true, now).unwrap();
+    assert_eq!(
+        plan.iter()
+            .map(|action| action.name.as_str())
+            .collect::<Vec<_>>(),
+        CRATES
+    );
+    decision
+        .candidate_revisions
+        .insert("tl-parse".to_owned(), sha('9'));
+    assert!(authorized_tag_plan(&facts, Some(&decision), true, now).is_err());
+    decision
+        .candidate_revisions
+        .insert("tl-parse".to_owned(), selected("tl-parse"));
+    decision.expires_unix_seconds = now;
+    assert!(authorized_tag_plan(&facts, Some(&decision), true, now).is_err());
+    decision.expires_unix_seconds = now + 100;
+    facts[0].tag_commit = Some(facts[0].commit.clone());
+    assert!(authorized_tag_plan(&facts, Some(&decision), true, now).is_err());
+}
+
+/// TC-174: Cargo's success exit is insufficient when every test was ignored.
+#[test]
+fn corpus_target_cannot_pass_with_an_empty_or_ignored_population() {
+    assert!(test_target_has_executed_cases(
+        "running 1 test\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out"
+    ));
+    assert!(!test_target_has_executed_cases(
+        "running 0 tests\ntest result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out"
+    ));
+    assert!(!test_target_has_executed_cases(
+        "running 1 test\ntest result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out"
+    ));
 }

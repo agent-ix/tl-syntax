@@ -37,6 +37,9 @@ all required gates and reviews, before any tag is pushed.
 ## Behavior
 
 Green automation never substitutes for an attributed human decision. An
+external consumer first validates exact candidate commits under FR-032; those
+commits need no pre-existing remote tags. After the decision, the release
+process checks the proposed tag targets against those same commits. An
 exception names the specific failed gate, candidate, owner, rationale,
 counterevidence and expiry, and remains conditional until an authorized
 decision explicitly permits the exact release. The 0.3.0 light-gate exception
