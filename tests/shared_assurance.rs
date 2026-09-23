@@ -1222,9 +1222,21 @@ fn no_local_evidence_framework_remains_and_nothing_still_reads_the_dropped_tree(
 
     // The Makefile is orchestration, not a trust root, and carries no gate that
     // polices its own execution, nor the compatibility view it used to run.
+    // Compare exact directory entry names: on a case-insensitive filesystem
+    // (macOS default) `Path::exists("makefile")` would match `Makefile` itself.
+    let root_entries: BTreeSet<String> = fs::read_dir(&root)
+        .expect("list the repository root")
+        .map(|entry| {
+            entry
+                .expect("read a repository root entry")
+                .file_name()
+                .to_string_lossy()
+                .into_owned()
+        })
+        .collect();
     for higher_precedence in ["GNUmakefile", "makefile"] {
         assert!(
-            !root.join(higher_precedence).exists() && !tracked.contains(higher_precedence),
+            !root_entries.contains(higher_precedence) && !tracked.contains(higher_precedence),
             "{higher_precedence} would take precedence over the reviewed Makefile"
         );
     }
