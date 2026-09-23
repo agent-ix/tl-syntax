@@ -17,7 +17,6 @@ make check-corpus     # corpus digests, schemas, derived oracles, and their muta
 make conformance      # replay the shared temporal corpus through the crate
 make spec             # validate the specification with Quire
 make msrv             # test every target and feature at Rust 1.98.1
-make assurance-env    # build the pinned shared-assurance interpreter
 make assurance-inputs # run the producers and write their structured results
 make assurance        # pins + the Quoin chain
 make ci               # complete local gate set (hosted CI is manual-only)
@@ -42,12 +41,9 @@ lock, retention store, audit store, anchor file, or aggregate verdict. See
 [`assurance/README.md`](./assurance/README.md) and
 [`spec/requirements/FR-006-shared-assurance-intake.md`](./spec/requirements/FR-006-shared-assurance-intake.md).
 
-The EA module remains in its isolated Python environment while its compatibility classifier is a separately installed native CLI:
-
-- `.venv-assurance` holds the EA module from the exact `v0.3.2` tag. Build it with `make assurance-env`; install the native CLI from that tag with Cargo.
-- The corpus gate's Draft 7 lane pins `jsonschema==3.2.0`.
-
-The corpus gate continues to use a separate Python environment. The EA compatibility gate also requires the matrix owner’s recorded acceptance.
+The shared compatibility classifier is the native Engineering Assurance CLI
+at the exact `v0.3.2` tag. Quoin installs its Quire module from the same tag.
+The corpus gate continues to use its separate Draft 7 Python dependency.
 
 This repository retains no evidence. The 23 `quire.derivation-evidence/v1`
 records its pre-migration collector wrote, the two schemas frozen because those

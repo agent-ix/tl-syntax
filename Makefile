@@ -40,12 +40,6 @@ PYTHON ?= python3
 QUIRE ?= quire
 QUOIN ?= quoin
 
-# The shared-assurance lane runs in its own interpreter. engineering-assurance
-# declares jsonschema>=4.23 and this repository's Draft 7 corpus lane pins
-# 3.2.0; both are right for their own job, so they get one environment each.
-ASSURANCE_VENV ?= .venv-assurance
-ASSURANCE_PYTHON ?= $(ASSURANCE_VENV)/bin/python
-
 ASSURANCE_DIR := target/assurance
 CONFORMANCE_RESULT := $(ASSURANCE_DIR)/corpus-conformance.jsonl
 ORACLE_RESULT := $(ASSURANCE_DIR)/corpus-oracle.json
@@ -69,11 +63,10 @@ help:
 	@echo "  make msrv             - test all targets and features with Rust 1.98.1"
 	@echo "  make rustdoc          - build warning-free public documentation"
 	@echo "  make build            - Release build"
-	@echo "  make clean            - cargo clean and drop the assurance environment"
+	@echo "  make clean            - cargo clean"
 	@echo "  make deny             - run all declared cargo-deny policy checks"
 	@echo "  make fuzz-check       - compile and dependency-audit the manual fuzz targets"
 	@echo "  make audit-unsafe     - Enforce // SAFETY: comments on unsafe blocks"
-	@echo "  make assurance-env    - create the pinned shared-assurance interpreter"
 	@echo "  make assurance-inputs - run the producers and write their structured results"
 	@echo "  make pins             - classify the toolchain through the shared matrix"
 	@echo "  make mutation-probes  - weaken each adapter refusal and require its check to go red"
@@ -157,7 +150,6 @@ build:
 .PHONY: clean
 clean:
 	$(CARGO) clean
-	rm -rf $(ASSURANCE_VENV)
 
 # =============================================================================
 # Supply chain & safety
@@ -193,18 +185,10 @@ rustdoc:
 # Shared assurance
 # =============================================================================
 
-$(ASSURANCE_PYTHON):
-	$(PYTHON) -m venv $(ASSURANCE_VENV)
-	$(ASSURANCE_VENV)/bin/pip install --quiet --disable-pip-version-check \
-		-r requirements-assurance.txt
-
-.PHONY: assurance-env
-assurance-env: $(ASSURANCE_PYTHON)
-
 # The only target that runs a producer. Everything downstream consumes these
 # files and refuses to create them.
 .PHONY: assurance-inputs
-assurance-inputs: assurance-env
+assurance-inputs:
 	mkdir -p $(ASSURANCE_DIR)
 	$(CARGO) run --quiet --example corpus_conformance --features serde -- \
 		--manifest corpus/manifest.json > $(CONFORMANCE_RESULT)
@@ -215,8 +199,8 @@ assurance-inputs: assurance-env
 		--message-format=json > $(MSRV_RESULT)
 
 .PHONY: pins
-pins: assurance-env
-	$(ASSURANCE_PYTHON) scripts/check_shared_pins.py
+pins:
+	$(PYTHON) scripts/check_shared_pins.py
 
 # The adapter now carries the whole twelve-state claim, so its refusals are
 # probed by weakening them one at a time and requiring the check that guards

@@ -38,10 +38,8 @@ jobs:
       - name: Cache cargo artifacts
         uses: Swatinem/rust-cache@v2
 
-      # The Draft 7 lane, for the corpus gate. The shared-assurance lane is a
-      # separate interpreter built by `make assurance-env` from
-      # requirements-assurance.txt, because engineering-assurance declares
-      # jsonschema>=4.23 and the two pins cannot share an environment.
+      # The corpus gate uses the pinned Draft 7 Python library. EA itself is
+      # consumed through the native CLI and Quire module installed below.
       - name: Install the Draft 7 corpus lane
         run: pip install 'jsonschema==3.2.0' 'rfc3339-validator==0.1.4' 'rfc3986-validator==0.1.1'
 
