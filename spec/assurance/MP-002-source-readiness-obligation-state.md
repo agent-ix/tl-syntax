@@ -5,16 +5,20 @@ type: MeasurementPlan
 status: proposed
 owner: tl-syntax-evidence-owner
 metric: tl-syntax.source-readiness-obligation-state
-definition_version: tl-syntax.source-readiness-obligation-state/v1
+definition_version: tl-syntax.source-readiness-obligation-state/v2
 stage: gate
+objective:
+  direction: zero
 statistical_design:
   population: every applicable readiness requirement criterion, declared candidate/configuration axis, selected domain suite, review operation, limitation, exception, shared dependency and human decision field
   sampling: complete enumeration with no sampling; stochastic campaigns remain separate attributable observations
   repetitions: 2
-  estimator: per-obligation categorical outcome with no weighted or aggregate qualification score
+  estimator: count
   error_model: stale or substituted source/configuration, omitted obligation, shared-contract incompatibility, producer non-execution, review/decision misattribution, limitation loss and nondeterministic domain output
   uncertainty: deterministic repetitions must agree; disagreements and every missing/unavailable/non-success state are reported individually and never averaged away
-  decision_rule: block a source-readiness claim when any required obligation is non-success or lacks current attributable evidence; the measurement never approves release or adopter use
+  decision_rule:
+    comparator: eq
+    threshold: 0
 relationships:
   - target: ix://agent-ix/tl-syntax/AP-002
     type: measures
