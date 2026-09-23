@@ -3,7 +3,7 @@ name = "tl-syntax-fuzz"
 version = "0.0.0"
 publish = false
 edition = "2021"
-license = "MIT OR Apache-2.0"
+license = "MIT"
 
 [package.metadata]
 cargo-fuzz = true
@@ -19,6 +19,13 @@ features = ["serde"]
 [[bin]]
 name = "wire_decode"
 path = "fuzz_targets/wire_decode.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "infinite_wire_decode"
+path = "fuzz_targets/infinite_wire_decode.rs"
 test = false
 doc = false
 bench = false

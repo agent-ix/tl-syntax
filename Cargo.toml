@@ -5,7 +5,7 @@ edition = "2021"
 rust-version = "1.98.1"
 description = "A no_std syntax tree and semantic profile model for Mission-time Linear Temporal Logic."
 authors = ["Peter Krenesky <kreneskyp@gmail.com>"]
-license = "MIT OR Apache-2.0"
+license = "MIT"
 publish = false
 repository = "https://github.com/agent-ix/tl-syntax"
 
@@ -26,6 +26,9 @@ sha2 = { version = "0.10", default-features = false, optional = true }
 [dev-dependencies]
 proptest = { version = "=1.5.0", default-features = false, features = ["std"] }
 serde_json = "1.0"
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(kani)'] }
 
 [profile.release]
 lto = "thin"

@@ -25,14 +25,14 @@ grammar.
 
 ## Inputs
 
-- A `tl-syntax.formula-unbounded/v1` document and its facet identity.
+- A `tl-syntax.formula-unbounded/v1` document and its TL profile identity.
 - A registered backend's proved/refuted/inconclusive/failed disposition, or
   the FR-290 `unsupported` absence settlement.
 
 ## Outputs
 
-- Evidence attributable to the same canonical graph and facet identity the
-  registered backend consumed.
+- Evidence attributable to the same canonical graph, profile and subject
+  scope/identity the registered backend consumed.
 - Routed implementation tickets with one owner and dependency per concern.
 
 ## Behavior
@@ -45,15 +45,15 @@ mints or amends `tl-syntax.liveness/v1` or the interval grammar it names.
 
 Dependency order:
 
-1. tl-syntax issue [#73](https://github.com/agent-ix/tl-syntax/issues/73)
+1. tl-syntax [TL-15](https://linear.app/agent-ix/issue/TL-15)
    owns the `UnboundedInterval` value, the `tl-syntax.formula-unbounded/v1`
    document, and the `tl-syntax.liveness/v1` registration boundary FR-289 and
    FR-290 specify.
-2. [quire-specification#112](https://github.com/agent-ix/quire-specification/issues/112)
-   mints the `quire.temporal.infinite-trace/v1` facet member this profile
-   admits under and owns the native-side settlement-basis mapping.
-3. tl-mltl issues [#68](https://github.com/agent-ix/tl-mltl/issues/68) and
-   [#72](https://github.com/agent-ix/tl-mltl/issues/72) register the first
+2. [STD-13](https://linear.app/agent-ix/issue/STD-13)
+   mints the corresponding QSL member and owns the native-side
+   settlement-basis mapping; it does not mint the TL profile.
+3. [TL-13](https://linear.app/agent-ix/issue/TL-13) and
+   [TL-7](https://linear.app/agent-ix/issue/TL-7) register and qualify the first
    `tl-syntax.liveness/v1` backend, demonstrating the FR-161-equivalent
    always/eventually/until/release and past-dual inductive semantics,
    fairness, lasso witnesses, and non-conclusive liveness monitoring against
@@ -67,9 +67,9 @@ and FR-290 files above are satisfied.
 
 | ID | Criteria | Verification |
 |---|---|---|
-| FR-291-AC-1 | A registered backend's evidence is attributable to the exact `tl-syntax.formula-unbounded/v1` canonical graph and facet identity it consumed, under both the proved/refuted/inconclusive/failed and the FR-290 `unsupported` dispositions. | Test (TC-147) |
+| FR-291-AC-1 | A registered backend's evidence is attributable to the exact `tl-syntax.formula-unbounded/v1` canonical graph, TL profile and subject scope it consumed, under every FR-341 disposition and the FR-290 absence path. | Test (TC-147) |
 | FR-291-AC-2 | No component other than tl-syntax mints or amends `tl-syntax.liveness/v1` or the FR-289 interval grammar; a registered backend acquires no independent grammar. | Test (TC-147) |
-| FR-291-AC-3 | The stated dependency order routes tl-syntax#73, quire-specification#112, and tl-mltl#68/#72 without authorizing implementation ahead of the FR-289/FR-290 acceptance gates. | Test (TC-147) |
+| FR-291-AC-3 | TL-15, STD-13, TL-13, and TL-7 retain their stated dependency order without authorizing implementation ahead of the accepted V1 specification. | Inspection (TC-147) |
 
 ## Dependencies
 

@@ -390,7 +390,7 @@ fn git_files(root: &Path, arguments: &[&str]) -> CensusResult<BTreeSet<String>> 
         .collect())
 }
 
-const EXPECTED_LIVE_TRACKED: [&str; 191] = [
+const EXPECTED_LIVE_TRACKED: [&str; 236] = [
     ".agent/rules/writing_rust.md",
     ".github/CODEOWNERS",
     ".github/workflows/ci.yml",
@@ -403,8 +403,7 @@ const EXPECTED_LIVE_TRACKED: [&str; 191] = [
     "CONTRIBUTING.md",
     "Cargo.lock",
     "Cargo.toml",
-    "LICENSE-APACHE",
-    "LICENSE-MIT",
+    "LICENSE",
     "Makefile",
     "README.md",
     "assurance/README.md",
@@ -438,6 +437,11 @@ const EXPECTED_LIVE_TRACKED: [&str; 191] = [
     "corpus/future-operators/expected/weak-until-zero-singleton-closed.json",
     "corpus/future-operators/expected/weak-until-zero-singleton-online.json",
     "corpus/future-operators/manifest.json",
+    "corpus/infinite-trace/README.md",
+    "corpus/infinite-trace/SHA256SUMS",
+    "corpus/infinite-trace/cases.json",
+    "corpus/infinite-trace/manifest.json",
+    "corpus/infinite-trace/schema.json",
     "corpus/malformed/forward-reference.json",
     "corpus/malformed/inverted-interval.json",
     "corpus/malformed/unknown-profile.json",
@@ -450,13 +454,31 @@ const EXPECTED_LIVE_TRACKED: [&str; 191] = [
     "corpus/propositions.json",
     "corpus/schema/formula-v1.schema.json",
     "corpus/schema/formula-v2.schema.json",
+    "corpus/schema/formula-unbounded-v1.schema.json",
     "corpus/schema/proposition-map-v1.schema.json",
     "deny.toml",
     "examples/corpus_conformance.rs",
     "fuzz/.gitignore",
     "fuzz/Cargo.lock",
     "fuzz/Cargo.toml",
+    "fuzz/corpus/infinite_wire_decode/SHA256SUMS",
+    "fuzz/corpus/infinite_wire_decode/formula.json",
+    "fuzz/corpus/infinite_wire_decode/lasso.json",
+    "fuzz/corpus/infinite_wire_decode/malformed.json",
+    "fuzz/corpus/infinite_wire_decode/valuation.json",
+    "fuzz/evidence/v4-2026-09-23/report.json",
+    "fuzz/evidence/v4-2026-09-23/stderr.log.gz",
+    "fuzz/evidence/v4-2026-09-23/stdout.log.gz",
+    "fuzz/fuzz_targets/infinite_wire_decode.rs",
     "fuzz/fuzz_targets/wire_decode.rs",
+    "fuzz/run_v4_campaign.py",
+    "fuzz/test_run_v4_campaign.py",
+    "release-gate/Cargo.lock",
+    "release-gate/Cargo.toml",
+    "release-gate/README.md",
+    "release-gate/src/lib.rs",
+    "release-gate/src/main.rs",
+    "release-gate/tests/candidate_graph.rs",
     "requirements-assurance.txt",
     "rust-toolchain.toml",
     "rustfmt.toml",
@@ -506,12 +528,14 @@ const EXPECTED_LIVE_TRACKED: [&str; 191] = [
     "spec/evidence/suites.md",
     "spec/future-profile-test-matrix.md",
     "spec/future-profile.md",
+    "spec/infinite-trace-test-matrix.md",
     "spec/integration/IT-001-shared-source-readiness-handoff.md",
     "spec/integration/IT-002-integrator-package-handoff.md",
     "spec/past-profile-implementation.json",
     "spec/past-profile-implementation.schema.json",
     "spec/past-profile-test-matrix.md",
     "spec/past-profile.md",
+    "spec/release-gates-test-matrix.md",
     "spec/requirements/FR-001-inclusive-intervals.md",
     "spec/requirements/FR-002-validated-formula.md",
     "spec/requirements/FR-003-identities-and-profiles.md",
@@ -531,6 +555,16 @@ const EXPECTED_LIVE_TRACKED: [&str; 191] = [
     "spec/requirements/FR-017-emit-integrator-readiness-package.md",
     "spec/requirements/FR-018-require-human-source-release-decision.md",
     "spec/requirements/FR-019-classify-qualification-execution-paths.md",
+    "spec/requirements/FR-020-infinite-profile-and-clock-identity.md",
+    "spec/requirements/FR-021-fairness-premise-document.md",
+    "spec/requirements/FR-022-lasso-trace-document.md",
+    "spec/requirements/FR-023-partial-valuation-document.md",
+    "spec/requirements/FR-024-infinite-trace-corpus-and-refusals.md",
+    "spec/requirements/FR-029-release-pin-and-msrv-consistency.md",
+    "spec/requirements/FR-030-release-cross-crate-corpus.md",
+    "spec/requirements/FR-031-release-api-and-wire-compatibility.md",
+    "spec/requirements/FR-032-release-consumer-smoke.md",
+    "spec/requirements/FR-033-release-decision-and-tags.md",
     "spec/requirements/FR-289-infinite-trace-interval-grammar.md",
     "spec/requirements/FR-290-liveness-capability-registration.md",
     "spec/requirements/FR-291-infinite-trace-downstream-evidence.md",
@@ -539,6 +573,7 @@ const EXPECTED_LIVE_TRACKED: [&str; 191] = [
     "spec/requirements/NFR-003-qualification-integrity.md",
     "spec/requirements/NFR-004-reproduce-source-readiness-observations.md",
     "spec/requirements/NFR-005-preserve-readiness-authority-and-retention.md",
+    "spec/requirements/NFR-007-reproducible-release-evidence.md",
     "spec/requirements/StR-001-embedded-consumers.md",
     "spec/requirements/StR-002-temporal-interoperability.md",
     "spec/requirements/StR-003-formal-temporal-frontends.md",
@@ -558,8 +593,11 @@ const EXPECTED_LIVE_TRACKED: [&str; 191] = [
     "src/contracts/reader.rs",
     "src/formula/document.rs",
     "src/formula/graph.rs",
+    "src/formula/infinite.rs",
+    "src/formula/liveness.rs",
     "src/formula/mod.rs",
     "src/formula/profile.rs",
+    "src/formula/trace.rs",
     "src/future.rs",
     "src/lib.rs",
     "src/signal/binding.rs",
@@ -575,6 +613,10 @@ const EXPECTED_LIVE_TRACKED: [&str; 191] = [
     "tests/fixtures/valid-signal-catalog.json",
     "tests/future_lowering.rs",
     "tests/future_operator_corpus.rs",
+    "tests/infinite_trace_corpus.rs",
+    "tests/infinite_formula.rs",
+    "tests/infinite_fuzz_seeds.rs",
+    "tests/infinite_trace.rs",
     "tests/integration.rs",
     "tests/past_formula_v2.rs",
     "tests/past_history_corpus.rs",
@@ -582,6 +624,9 @@ const EXPECTED_LIVE_TRACKED: [&str; 191] = [
     "tests/props_fr_007.rs",
     "tests/strict_syntax_artifacts.rs",
     "tests/typed_signal_context.rs",
+    "tests/v1_spec_stubs.rs",
+    "tests/v8_critical_branches.rs",
+    "verification/kani-interval.md",
 ];
 
 const FORBIDDEN: [&str; 5] = [
@@ -993,26 +1038,32 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
 
     let expected_areas: BTreeMap<String, usize> = [
         // 0.3.0 adds CHANGELOG.md.
-        ("<root>", 17),
+        ("<root>", 16),
         (".agent", 1),
         (".github", 3),
         ("assurance", 3),
-        // Issue #41 adds the twenty-file paired W/M corpus.
-        ("corpus", 40),
+        // TL-207 adds the five-file infinite-trace corpus.
+        ("corpus", 46),
         ("examples", 1),
-        ("fuzz", 4),
+        // V4 adds a bounded libFuzzer producer and its false-credit controls.
+        // The measured V4 report and both raw output streams add three files.
+        ("fuzz", 15),
+        ("release-gate", 6),
         // TL-199 adds the spec id: uniqueness check and its test.
         ("scripts", 9),
         // Issue #33 adds the reviewed past-profile artifacts and routing manifest; SpecReviews
         // remain archival and outside the live-source population.
         // Issue #34 adds live source-readiness specification and assurance
         // artifacts; SpecReviews/plans remain archival exclusions.
-        ("spec", 79),
+        // TL-207 adds five requirements and one matrix.
+        ("spec", 92),
         // Issue #40 adds the future-lowering module and its traced tests.
-        ("src", 20),
+        ("src", 23),
         // Issue #41 adds the paired-corpus replay.
         // Issue #53 adds formula-v2/profile and dependency-manifest gates.
-        ("tests", 14),
+        // TL-207 adds the corpus pin test and named implementation stubs.
+        ("tests", 20),
+        ("verification", 1),
     ]
     .into_iter()
     .map(|(area, count)| (area.to_owned(), count))

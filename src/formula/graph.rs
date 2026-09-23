@@ -61,6 +61,33 @@ impl Interval {
     }
 }
 
+#[cfg(kani)]
+mod kani_proofs {
+    use super::Interval;
+
+    // The arithmetic is over all u32 endpoint pairs, with no assumptions.
+    #[kani::proof]
+    fn interval_cardinality_matches_wide_arithmetic() {
+        let start: u32 = kani::any();
+        let end: u32 = kani::any();
+        match Interval::new(start, end) {
+            Ok(interval) => {
+                assert!(start <= end);
+                assert_eq!(interval.start(), start);
+                assert_eq!(interval.end(), end);
+                let wide = u64::from(end) - u64::from(start) + 1;
+                let expected = u32::try_from(wide).ok();
+                assert_eq!(interval.cardinality(), expected);
+            }
+            Err(error) => {
+                assert!(start > end);
+                assert_eq!(error.start, start);
+                assert_eq!(error.end, end);
+            }
+        }
+    }
+}
+
 /// Error returned when an inclusive interval is inverted.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[non_exhaustive]
@@ -423,6 +450,7 @@ impl<'a> Formula<'a> {
                         family == TemporalFamily::Future
                     }
                     SemanticProfile::OriginCompleteHistoryV1 => family == TemporalFamily::Past,
+                    SemanticProfile::InfiniteTraceV1 => true,
                 };
                 if !compatible {
                     let node = u32::try_from(index).map(NodeId).map_err(|_| {
@@ -520,6 +548,8 @@ pub enum FormulaError {
         /// Rejected profile.
         profile: SemanticProfile,
     },
+    /// The unbounded profile requires the separate formula-unbounded edition.
+    InfiniteProfileRequiresUnboundedEdition,
     /// Formula-v1 cannot carry a past-time node.
     FormulaV1NodeUnsupported {
         /// First rejected node in topological order.
@@ -570,6 +600,9 @@ impl fmt::Display for FormulaError {
                 formatter,
                 "formula-v1 does not admit semantic profile {}",
                 profile.as_str()
+            ),
+            Self::InfiniteProfileRequiresUnboundedEdition => formatter.write_str(
+                "infinite-trace profile requires tl-syntax.formula-unbounded/v1"
             ),
             Self::FormulaV1NodeUnsupported { node, operator } => write!(
                 formatter,

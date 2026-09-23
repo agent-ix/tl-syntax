@@ -1,4 +1,6 @@
-use alloc::{string::String, vec::Vec};
+#[cfg(feature = "serde")]
+use alloc::string::String;
+use alloc::vec::Vec;
 use core::{
     cmp::Ordering,
     fmt,
@@ -421,7 +423,10 @@ impl FormulaDocument {
 
     /// Down-converts to formula-v1 only when the profile and nodes are v1-compatible.
     pub fn try_to_v1(&self) -> Result<Self, FormulaConversionError> {
-        if self.semantic_profile == SemanticProfile::OriginCompleteHistoryV1 {
+        if matches!(
+            self.semantic_profile,
+            SemanticProfile::OriginCompleteHistoryV1 | SemanticProfile::InfiniteTraceV1
+        ) {
             return Err(FormulaConversionError::UnsupportedSemanticProfile {
                 profile: self.semantic_profile,
             });
@@ -447,10 +452,16 @@ impl FormulaDocument {
     }
 
     fn validate_schema_compatibility(&self) -> Result<(), FormulaError> {
+        if self.semantic_profile == SemanticProfile::InfiniteTraceV1 {
+            return Err(FormulaError::InfiniteProfileRequiresUnboundedEdition);
+        }
         if self.schema_version == FormulaSchemaVersion::V2 {
             return Ok(());
         }
-        if self.semantic_profile == SemanticProfile::OriginCompleteHistoryV1 {
+        if matches!(
+            self.semantic_profile,
+            SemanticProfile::OriginCompleteHistoryV1 | SemanticProfile::InfiniteTraceV1
+        ) {
             return Err(FormulaError::FormulaV1ProfileUnsupported {
                 profile: self.semantic_profile,
             });
@@ -562,7 +573,10 @@ impl StrictDocument for FormulaDocument {
 
 #[cfg(test)]
 mod tests {
-    use alloc::{string::ToString, vec};
+    use alloc::{
+        string::{String, ToString},
+        vec,
+    };
 
     use super::*;
     use crate::{

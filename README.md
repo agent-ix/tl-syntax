@@ -80,6 +80,21 @@ make test
 make ci
 ```
 
+For the supplementary interval arithmetic proof, run Kani 0.68.0 with
+CBMC 6.11.0:
+
+```bash
+cargo kani --lib \
+  --harness formula::graph::kani_proofs::interval_cardinality_matches_wide_arithmetic \
+  --exact --unwind 4
+```
+
+The harness has no assumptions and checks every `u32` endpoint pair against
+`u64` cardinality, including inverted bounds and the unrepresentable
+`[0,u32::MAX]` length. It does not prove formula validation or temporal
+semantics. The verifier-only harness leaves the production `Interval` body
+unchanged.
+
 ## Manual wire fuzzing
 
 The versioned document decode boundary has a Rust fuzz target. It is intentionally
@@ -87,7 +102,31 @@ manual-only and is not part of `make ci` or hosted CI:
 
 ```bash
 cargo +nightly fuzz run wire_decode -- -runs=100
+cargo +nightly fuzz run infinite_wire_decode -- -runs=100
 ```
+
+`infinite_wire_decode` drives the strict unbounded-formula, lasso, and partial
+valuation readers through canonical serialization and identity computation.
+Its digest-pinned corpus includes valid inputs for all three paths and a
+malformed refusal. `tests/infinite_fuzz_seeds.rs` checks that the seeds reach
+the intended paths before a campaign starts.
+
+For a recorded bounded V4 run on a clean commit, select the installed nightly
+toolchain and run:
+
+```bash
+export PATH="$(dirname "$(rustup which --toolchain nightly cargo)"):$HOME/.cargo/bin:$PATH"
+PYTHONPATH=fuzz python3 -m unittest fuzz.test_run_v4_campaign
+python3 fuzz/run_v4_campaign.py --output fuzz/evidence/v4-2026-09-23 \
+  --runs 1000 --seed 181 --seconds 30
+```
+
+The runner verifies every `SHA256SUMS` entry, copies the seeds to scratch,
+and retains the engine's raw streams as lossless gzip files, exact source/tool/lock identities,
+requested budget, observed execution count, stop reason, and artifact digests.
+A nonzero engine exit, short run, or crash artifact remains incomplete until
+the artifact is minimized and replayed on the same source revision. A clean
+bounded run records that no crash artifact needed replay.
 
 Successful decodes must still pass public validation; malformed bytes are
 expected to be rejected. The checked-in conformance corpus remains the
@@ -110,5 +149,4 @@ authority.
 
 ## License
 
-Licensed under either of Apache License, Version 2.0 or MIT license at your
-option.
+Licensed under the MIT license. See [LICENSE](LICENSE).

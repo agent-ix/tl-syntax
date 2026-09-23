@@ -1,0 +1,65 @@
+{
+  "budget": {
+    "max_len": 4096,
+    "runs": 1000,
+    "seconds": 30,
+    "seed": 181
+  },
+  "command": [
+    "cargo",
+    "fuzz",
+    "run",
+    "--sanitizer",
+    "address",
+    "infinite_wire_decode",
+    "/private/tmp/tl-v4-fuzz-3h89q_4n/corpus",
+    "--",
+    "-runs=1000",
+    "-seed=181",
+    "-max_total_time=30",
+    "-max_len=4096",
+    "-artifact_prefix=/private/tmp/tl-v4-syntax-9de-refresh-run/artifacts/"
+  ],
+  "crash_artifacts_sha256": {},
+  "crate": "tl-syntax",
+  "engine": "libFuzzer",
+  "fuzz_lock_sha256": "b005aa503b16f84c7d97a67ed47545b0cc0d7ecc5afd91c3de259eb615f8fa6b",
+  "observed": {
+    "elapsed_seconds": 15.368,
+    "executions": 1000,
+    "exit_code": 0,
+    "stop_reason": "run_budget"
+  },
+  "raw_output_sha256": {
+    "stderr.log.gz": "d57b6a40a8ab53aca130a8564a82590183202030d9f3fe6b6c15c1e815d51324",
+    "stdout.log.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  "raw_stream_sha256": {
+    "stderr": "e499c746ac613c03eafa79e7b7e9f6c0a229465b25cd643f4b647dd2528d43a7",
+    "stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "replay": {
+    "confirmed": false,
+    "minimized_artifact_sha256": null,
+    "required": false
+  },
+  "root_lock_sha256": "777851cdbb11d0c3a6b03a537d16b12edba5201823ce3350b5d41e754aef9ffb",
+  "sanitizer": "address",
+  "schema": "tl-v4.libfuzzer-campaign/v1",
+  "scope": "bounded observation; no four-crate V4 or correctness claim",
+  "seed_files_sha256": {
+    "formula.json": "93b622605a93acdd2ff0991e6a85a2ee26c6028c62f0a5b819d316c0752c20d3",
+    "lasso.json": "cad4d7218461d3e38633789e254b731db4e88c72ae387b8ff2014b6ae8dacc77",
+    "malformed.json": "e6a8a2a1a9a3619053614d5c9b23a0853d8e4a5231bd38dba238fb4341086954",
+    "valuation.json": "aa382179699faacae8839c8b203c834b63db142739921f0305b0c7c185735b9f"
+  },
+  "source_revision": "9de638dc4d14d0ae62a6825473a3a9bb6a9e57ac",
+  "starting_corpus_sha256": "ee169c5cc1ff13182b543101e473631d39db1bb63d9cdf7fc308477a31d3d248",
+  "status": "bounded_no_crash",
+  "target": "infinite_wire_decode",
+  "tool_versions": {
+    "cargo": "cargo 1.100.0-nightly (495c385d0 2026-09-16)",
+    "cargo_fuzz": "cargo-fuzz 0.13.1",
+    "rustc": "rustc 1.100.0-nightly (1303417c4 2026-09-21)\nbinary: rustc\ncommit-hash: 1303417c416e1595173d9689e7394c31e136ae95\ncommit-date: 2026-09-21\nhost: aarch64-apple-darwin\nrelease: 1.100.0-nightly\nLLVM version: 23.1.1"
+  }
+}
