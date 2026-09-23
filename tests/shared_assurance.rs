@@ -390,7 +390,7 @@ fn git_files(root: &Path, arguments: &[&str]) -> CensusResult<BTreeSet<String>> 
         .collect())
 }
 
-const EXPECTED_LIVE_TRACKED: [&str; 211] = [
+const EXPECTED_LIVE_TRACKED: [&str; 217] = [
     ".agent/rules/writing_rust.md",
     ".github/CODEOWNERS",
     ".github/workflows/ci.yml",
@@ -455,6 +455,7 @@ const EXPECTED_LIVE_TRACKED: [&str; 211] = [
     "corpus/propositions.json",
     "corpus/schema/formula-v1.schema.json",
     "corpus/schema/formula-v2.schema.json",
+    "corpus/schema/formula-unbounded-v1.schema.json",
     "corpus/schema/proposition-map-v1.schema.json",
     "deny.toml",
     "examples/corpus_conformance.rs",
@@ -576,8 +577,11 @@ const EXPECTED_LIVE_TRACKED: [&str; 211] = [
     "src/contracts/reader.rs",
     "src/formula/document.rs",
     "src/formula/graph.rs",
+    "src/formula/infinite.rs",
+    "src/formula/liveness.rs",
     "src/formula/mod.rs",
     "src/formula/profile.rs",
+    "src/formula/trace.rs",
     "src/future.rs",
     "src/lib.rs",
     "src/signal/binding.rs",
@@ -594,6 +598,8 @@ const EXPECTED_LIVE_TRACKED: [&str; 211] = [
     "tests/future_lowering.rs",
     "tests/future_operator_corpus.rs",
     "tests/infinite_trace_corpus.rs",
+    "tests/infinite_formula.rs",
+    "tests/infinite_trace.rs",
     "tests/integration.rs",
     "tests/past_formula_v2.rs",
     "tests/past_history_corpus.rs",
@@ -1018,7 +1024,7 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         (".github", 3),
         ("assurance", 3),
         // TL-207 adds the five-file infinite-trace corpus.
-        ("corpus", 45),
+        ("corpus", 46),
         ("examples", 1),
         ("fuzz", 4),
         // TL-199 adds the spec id: uniqueness check and its test.
@@ -1030,11 +1036,11 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         // TL-207 adds five requirements and one matrix.
         ("spec", 92),
         // Issue #40 adds the future-lowering module and its traced tests.
-        ("src", 20),
+        ("src", 23),
         // Issue #41 adds the paired-corpus replay.
         // Issue #53 adds formula-v2/profile and dependency-manifest gates.
         // TL-207 adds the corpus pin test and named implementation stubs.
-        ("tests", 16),
+        ("tests", 18),
     ]
     .into_iter()
     .map(|(area, count)| (area.to_owned(), count))

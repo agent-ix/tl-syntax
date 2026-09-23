@@ -45,6 +45,30 @@ pub use formula::graph::{
     PastOperatorKind, PropositionId, SemanticProfile, SourceSpan, SourceSpanError, TemporalFamily,
     MAX_FORMULA_DOCUMENT_DEPTH, MAX_FORMULA_DOCUMENT_NODES, PAST_OPERATORS_V1,
 };
+#[cfg(feature = "alloc")]
+pub use formula::infinite::InfiniteFormulaDocument;
+pub use formula::infinite::{
+    lower_infinite_future, InfiniteClock, InfiniteFormula, InfiniteFormulaError,
+    InfiniteFormulaSchemaVersion, InfiniteNode, InfiniteNodeKind, TemporalInterval,
+    TemporalIntervalParseError, UnboundedInterval, EVENT_POSITION_CLOCK, FORMULA_UNBOUNDED_V1,
+    INFINITE_TRACE_PROFILE, LIVENESS_CAPABILITY_V1,
+};
+#[cfg(feature = "serde")]
+pub use formula::infinite::{
+    FORMULA_UNBOUNDED_V1_SCHEMA, FORMULA_UNBOUNDED_V1_SCHEMA_BYTES,
+    FORMULA_UNBOUNDED_V1_SCHEMA_SHA256,
+};
+#[cfg(feature = "alloc")]
+pub use formula::liveness::{
+    settle_liveness, LivenessBackend, LivenessDisposition, LivenessSettlement, LivenessSubject,
+    LivenessSubjectKind,
+};
+#[cfg(feature = "alloc")]
+pub use formula::trace::{
+    FairnessPremisesDocument, FairnessPremisesError, LassoTraceDocument, LassoTraceError,
+    PartialValuation, PartialValuationError, PartialValue, TraceObservation, ValuationEntry,
+    FAIRNESS_PREMISES_V1, LASSO_TRACE_V1, PARTIAL_VALUATION_V1,
+};
 pub use future::{
     FutureKind, FutureLowering, FutureLoweringAxis, FutureLoweringOperand, FutureLoweringRefusal,
     FutureLoweringReport, FutureLoweringRequest, FutureLoweringSpanRole, RawBounds,

@@ -16,14 +16,18 @@ pub enum SemanticProfile {
     /// Origin-complete past-time semantics over a discrete position history.
     #[cfg_attr(feature = "serde", serde(rename = "mltl.origin-complete-history/v1"))]
     OriginCompleteHistoryV1,
+    /// Discrete infinite trace semantics, admitting future and past operators.
+    #[cfg_attr(feature = "serde", serde(rename = "mltl.infinite-trace/v1"))]
+    InfiniteTraceV1,
 }
 
 impl SemanticProfile {
     /// Every profile; `as_str`'s exhaustive match names the same set.
-    pub const ALL: [Self; 3] = [
+    pub const ALL: [Self; 4] = [
         Self::ClosedTraceV1,
         Self::OnlinePrefixV1,
         Self::OriginCompleteHistoryV1,
+        Self::InfiniteTraceV1,
     ];
 
     /// Returns the stable wire identifier.
@@ -32,6 +36,7 @@ impl SemanticProfile {
             Self::ClosedTraceV1 => "mltl.closed-trace/v1",
             Self::OnlinePrefixV1 => "mltl.online-prefix/v1",
             Self::OriginCompleteHistoryV1 => "mltl.origin-complete-history/v1",
+            Self::InfiniteTraceV1 => "mltl.infinite-trace/v1",
         }
     }
 }
