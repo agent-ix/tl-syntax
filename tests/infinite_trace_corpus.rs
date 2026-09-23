@@ -161,7 +161,7 @@ fn expected_case(id: &str) -> Option<(&'static str, &'static str, Option<&'stati
         "globally-refuted-by-loop" => ("lasso", "refuted", None),
         "unbounded-once-reaches-origin" => ("past", "proved", None),
         "missing-value-is-inconclusive" => ("partial", "inconclusive", None),
-        "conflicting-value-is-failed" => ("partial", "failed", None),
+        "conflicting-value-is-inconclusive" => ("partial", "inconclusive", None),
         "fair-loop-satisfies-premise" => ("fairness", "proved", None),
         "finite-profile-refuses-unbounded" => (
             "negative",

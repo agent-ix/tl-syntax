@@ -46,12 +46,12 @@
       "derivation": "The missing loop value permits both p=true and p=false completions; G p is true in one and false in the other."
     },
     {
-      "id": "conflicting-value-is-failed", "family": "partial", "source": "G[0,) p",
+      "id": "conflicting-value-is-inconclusive", "family": "partial", "source": "G[0,) p",
       "formula": {"schema_version": "tl-syntax.formula-unbounded/v1", "semantic_profile": "mltl.infinite-trace/v1", "clock": "event_position", "root": 1, "nodes": [{"kind": "proposition", "proposition": 0}, {"kind": "globally", "interval": {"kind": "unbounded", "start": 0}, "operand": 0}]},
       "trace": {"schema_version": "tl-syntax.lasso-trace/v1", "semantic_profile": "mltl.infinite-trace/v1", "clock": "event_position", "proposition_map": [{"id": 0, "name": "p"}], "prefix": [], "loop": [{"position": 0, "valuation": [{"proposition": 0, "state": "conflicting"}]}]},
       "fairness": {"schema_version": "tl-syntax.fairness-premises/v1", "semantic_profile": "mltl.infinite-trace/v1", "clock": "event_position", "roots": []},
-      "anchor": 0, "expected": {"kind": "settlement", "value": "failed"},
-      "derivation": "Conflicting evidence has no consistent Boolean completion. A satisfaction proof or refutation would claim a model that does not exist."
+      "anchor": 0, "expected": {"kind": "settlement", "value": "inconclusive"},
+      "derivation": "Conflicting evidence permits both truth possibilities while retaining its contradictory-evidence reason. The formula is neither proved nor refuted; closed conflict remains indeterminate."
     },
     {
       "id": "fair-loop-satisfies-premise", "family": "fairness", "source": "G[0,) true; fairness infinitely-often p",
