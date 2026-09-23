@@ -390,7 +390,7 @@ fn git_files(root: &Path, arguments: &[&str]) -> CensusResult<BTreeSet<String>> 
         .collect())
 }
 
-const EXPECTED_LIVE_TRACKED: [&str; 231] = [
+const EXPECTED_LIVE_TRACKED: [&str; 233] = [
     ".agent/rules/writing_rust.md",
     ".github/CODEOWNERS",
     ".github/workflows/ci.yml",
@@ -469,6 +469,8 @@ const EXPECTED_LIVE_TRACKED: [&str; 231] = [
     "fuzz/corpus/infinite_wire_decode/valuation.json",
     "fuzz/fuzz_targets/infinite_wire_decode.rs",
     "fuzz/fuzz_targets/wire_decode.rs",
+    "fuzz/run_v4_campaign.py",
+    "fuzz/test_run_v4_campaign.py",
     "release-gate/Cargo.lock",
     "release-gate/Cargo.toml",
     "release-gate/README.md",
@@ -1040,7 +1042,8 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         // TL-207 adds the five-file infinite-trace corpus.
         ("corpus", 46),
         ("examples", 1),
-        ("fuzz", 10),
+        // V4 adds a bounded libFuzzer producer and its false-credit controls.
+        ("fuzz", 12),
         ("release-gate", 6),
         // TL-199 adds the spec id: uniqueness check and its test.
         ("scripts", 9),

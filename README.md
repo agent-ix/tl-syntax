@@ -111,6 +111,23 @@ Its digest-pinned corpus includes valid inputs for all three paths and a
 malformed refusal. `tests/infinite_fuzz_seeds.rs` checks that the seeds reach
 the intended paths before a campaign starts.
 
+For a recorded bounded V4 run on a clean commit, select the installed nightly
+toolchain and run:
+
+```bash
+export PATH="$(dirname "$(rustup which --toolchain nightly cargo)"):$HOME/.cargo/bin:$PATH"
+PYTHONPATH=fuzz python3 -m unittest fuzz.test_run_v4_campaign
+python3 fuzz/run_v4_campaign.py --output fuzz/evidence/v4-2026-09-23 \
+  --runs 1000 --seed 181 --seconds 30
+```
+
+The runner verifies every `SHA256SUMS` entry, copies the seeds to scratch,
+and retains the engine's raw streams, exact source/tool/lock identities,
+requested budget, observed execution count, stop reason, and artifact digests.
+A nonzero engine exit, short run, or crash artifact remains incomplete until
+the artifact is minimized and replayed on the same source revision. A clean
+bounded run records that no crash artifact needed replay.
+
 Successful decodes must still pass public validation; malformed bytes are
 expected to be rejected. The checked-in conformance corpus remains the
 authoritative compatibility corpus. Generated fuzz inputs are local campaign
