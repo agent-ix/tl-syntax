@@ -24,6 +24,9 @@ rather than a hold, block, or refusal error.
 ## Inputs
 
 - A `tl-syntax.formula-unbounded/v1` document admitted under FR-289.
+- The downstream request's explicit subject kind and identity: a complete
+  lasso trace, a finite prefix, or a transition/model subject. The syntax
+  layer preserves this selection but does not establish model closure.
 - The set of liveness backends registered, at the calling boundary, for the
   `tl-syntax.liveness/v1` capability identity.
 
@@ -52,6 +55,13 @@ finite-prefix evaluator cannot construct that claim for an unbounded liveness
 formula. The provider retains `resource-incomplete` separately from other
 failure reasons even when both map to the external `failed` label.
 
+Registration is capability routing, not a proof premise. The settlement
+request names its subject scope. A complete lasso can support a claim about
+that exact trace; it does not prove a transition/model subject. A backend
+without a model-wide procedure returns `unsupported` for a model request,
+even if it can decide a lasso. The result retains the selected subject kind
+and identity so the QSL correspondence cannot widen a trace claim.
+
 Absence of a registered backend is never a hold, never a blocker, and never a
 refusal error: this is the solver-absence path QSL establishes, and tl-syntax's
 liveness capability follows the same contract. A `tl-syntax.formula-unbounded/v1`
@@ -72,8 +82,8 @@ nothing to that path.
 | ID | Criteria | Verification |
 |---|---|---|
 | FR-290-AC-1 | With no backend registered for `tl-syntax.liveness/v1`, every `tl-syntax.formula-unbounded/v1` document settles `unsupported` with a warning naming `tl-syntax.liveness/v1`, before evaluation is attempted. | Test (TC-146) |
-| FR-290-AC-2 | With a backend registered for `tl-syntax.liveness/v1`, settlement is routed to that backend's disposition and the `unsupported` warning is not produced. | Test (TC-146) |
-| FR-290-AC-3 | The absence settlement is never a hold, block, or refusal error; bounded documents never consult this capability; only a registered infinite-trace provider may emit `proved`. | Test (TC-146) |
+| FR-290-AC-2 | With a backend registered for `tl-syntax.liveness/v1`, settlement is routed to that backend's disposition and the absence warning is not produced; the result retains the exact subject scope. | Test (TC-146) |
+| FR-290-AC-3 | The absence settlement is never a hold, block, or refusal error; bounded documents never consult this capability; only a registered infinite-trace provider may emit a scope-correct `proved`. | Test (TC-146) |
 
 ## Dependencies
 

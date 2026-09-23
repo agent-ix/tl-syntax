@@ -31,8 +31,8 @@ grammar.
 
 ## Outputs
 
-- Evidence attributable to the same canonical graph and profile identity the
-  registered backend consumed.
+- Evidence attributable to the same canonical graph, profile and subject
+  scope/identity the registered backend consumed.
 - Routed implementation tickets with one owner and dependency per concern.
 
 ## Behavior
@@ -67,7 +67,7 @@ and FR-290 files above are satisfied.
 
 | ID | Criteria | Verification |
 |---|---|---|
-| FR-291-AC-1 | A registered backend's evidence is attributable to the exact `tl-syntax.formula-unbounded/v1` canonical graph and TL profile identity it consumed, under every FR-341 disposition and the FR-290 absence path. | Test (TC-147) |
+| FR-291-AC-1 | A registered backend's evidence is attributable to the exact `tl-syntax.formula-unbounded/v1` canonical graph, TL profile and subject scope it consumed, under every FR-341 disposition and the FR-290 absence path. | Test (TC-147) |
 | FR-291-AC-2 | No component other than tl-syntax mints or amends `tl-syntax.liveness/v1` or the FR-289 interval grammar; a registered backend acquires no independent grammar. | Test (TC-147) |
 | FR-291-AC-3 | TL-15, STD-13, TL-13, and TL-7 retain their stated dependency order without authorizing implementation ahead of the accepted V1 specification. | Inspection (TC-147) |
 
