@@ -73,5 +73,7 @@ non-deterministic run as its actual state.
 
 ## Measurement Allocation
 
-[MP-002](../assurance/MP-002-source-readiness-obligation-state.md) defines the
-planned complete observation population without granting release authority.
+[MP-003](../assurance/MP-003-source-readiness-failure-count.md) defines the
+planned complete observation population and a zero-non-success check without
+granting release authority. [MP-002](../assurance/MP-002-source-readiness-obligation-state.md)
+retains the original categorical design as a retired proposal.

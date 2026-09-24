@@ -2,7 +2,7 @@
 id: MP-002
 title: tl-syntax source-readiness obligation-state plan
 type: MeasurementPlan
-status: proposed
+status: retired
 owner: tl-syntax-evidence-owner
 metric: tl-syntax.source-readiness-obligation-state
 definition_version: tl-syntax.source-readiness-obligation-state/v1
@@ -25,6 +25,10 @@ relationships:
 ---
 
 # tl-syntax source-readiness obligation-state plan
+
+This categorical proposal is retained as historical design context. It cannot
+govern a new EA 0.4.1 measurement collection; MP-003 carries its current
+source-readiness gate without changing the per-obligation reporting requirement.
 
 ## Decision Use
 
