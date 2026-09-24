@@ -378,7 +378,7 @@ fn git_files(root: &Path, arguments: &[&str]) -> CensusResult<BTreeSet<String>> 
         .collect())
 }
 
-const EXPECTED_LIVE_TRACKED: [&str; 238] = [
+const EXPECTED_LIVE_TRACKED: [&str; 239] = [
     ".agent/rules/writing_rust.md",
     ".github/CODEOWNERS",
     ".github/workflows/ci.yml",
@@ -492,6 +492,7 @@ const EXPECTED_LIVE_TRACKED: [&str; 238] = [
     "spec/assurance/CAC-001.md",
     "spec/assurance/MP-001.md",
     "spec/assurance/MP-002-source-readiness-obligation-state.md",
+    "spec/assurance/MP-003-source-readiness-failure-count.md",
     "spec/ecosystem/decisions/ADR-003-subsystem-architecture-and-self-model-boundary.md",
     "spec/ecosystem/domain/DOM-001-origin-complete-temporal-ecosystem.md",
     "spec/ecosystem/interfaces/IF-001-native-definition-authority.md",
@@ -1047,7 +1048,8 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         // Issue #34 adds live source-readiness specification and assurance
         // artifacts; SpecReviews/plans remain archival exclusions.
         // TL-207 adds five requirements and one matrix.
-        ("spec", 92),
+        // MP-003 adds the source-readiness failure-count measurement plan.
+        ("spec", 93),
         // Issue #40 adds the future-lowering module and its traced tests.
         ("src", 23),
         // Issue #41 adds the paired-corpus replay.
