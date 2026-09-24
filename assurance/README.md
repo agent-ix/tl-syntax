@@ -7,8 +7,8 @@ Two files and no evidence.
 claims to meet, the things it promises not to break, the proofs it offers, and
 the questions it cannot answer. `pins.json` is the Engineering Assurance
 release it adopts and the artifacts it actually reads from that
-release. The v0.4.1 candidate uses the native EA compatibility CLI; its
-matrix gate remains withheld until an attributed human acceptance is recorded.
+release. The accepted v0.4.1 tag uses the native EA compatibility CLI; its
+matrix records Peter Krenesky's attributed acceptance on 2026-09-23.
 
 ## Why there is no evidence in here
 
