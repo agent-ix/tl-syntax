@@ -30,6 +30,8 @@ protected_apparatus:
   - corpus/**
   - deny.toml
   - examples/**
+  - fuzz/**
+  - rust-toolchain.toml
   - rustfmt.toml
   - requirements-assurance.txt
   - scripts/**
