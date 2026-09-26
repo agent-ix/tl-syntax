@@ -24,11 +24,14 @@ protected_apparatus:
   - Cargo.lock
   - Cargo.toml
   - Makefile
+  - .github/workflows/**
+  - assurance/pins.json
   - clippy.toml
   - corpus/**
   - deny.toml
   - examples/**
   - rustfmt.toml
+  - requirements-assurance.txt
   - scripts/**
   - spec/**
   - src/**
