@@ -5,8 +5,9 @@ type: MeasurementPlan
 status: proposed
 owner: tl-syntax-evidence-owner
 metric: tl-syntax.source-readiness-obligation-state
-definition_version: tl-syntax.source-readiness-obligation-state/v2
+definition_version: tl-syntax.source-readiness-obligation-state/v3
 stage: gate
+ground_truth_kind: mechanical
 objective:
   direction: zero
 statistical_design:
@@ -19,6 +20,35 @@ statistical_design:
   decision_rule:
     comparator: eq
     threshold: 0
+protected_apparatus:
+  - Cargo.lock
+  - Cargo.toml
+  - Makefile
+  - clippy.toml
+  - corpus/**
+  - deny.toml
+  - examples/**
+  - rustfmt.toml
+  - scripts/**
+  - spec/**
+  - src/**
+  - tests/**
+negative_controls:
+  - kind: suppressed-observation
+    description: >-
+      The complete readiness population is enumerated from the protected
+      requirement and TestMatrix files; missing, skipped, or unavailable states
+      are reported per obligation and remain non-success results.
+  - kind: stale-evidence
+    description: >-
+      Each result is bound to the exact source candidate, toolchain, feature,
+      corpus, profile, and shared-contract identities before it can count as
+      current evidence.
+  - kind: apparatus-edit
+    description: >-
+      The requirements, test matrix, source, test, corpus, gate, and tool
+      configuration that define the population and produce its results are
+      protected and their digests are recorded with each collection.
 relationships:
   - target: ix://agent-ix/tl-syntax/AP-002
     type: measures

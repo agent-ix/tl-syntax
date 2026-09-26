@@ -4,7 +4,7 @@ title: tl-syntax progressive source-readiness profile
 type: AssuranceProfile
 status: proposed
 owner: tl-syntax-release-owner
-profile_version: 0.2
+schema_version: 0.2
 profile_kind: general
 scope: one exact tl-syntax Rust source candidate, declared build/evaluation configuration and source-release disposition
 impact_assessments:
