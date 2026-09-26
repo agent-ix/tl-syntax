@@ -36,7 +36,9 @@ jobs:
           components: rustfmt, clippy
 
       - name: Install EA 0.4.0 CLI toolchain
-        run: rustup toolchain install 1.98.1
+        run: |
+          rustup toolchain install 1.98.1
+          rustup component add rustfmt clippy --toolchain 1.98.1
 
       - name: Install Engineering Assurance CLI 0.4.0
         run: |
