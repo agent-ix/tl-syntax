@@ -38,3 +38,7 @@ No new vendored upstream source was identified in the feature diff: the new sche
 | FND-002 | fixed | ceaddff739ef98546c1ebc99c806ff767cd06700; the backend asserts the exact formula pointer and subject and the test checks one call for each disposition. |
 
 Round 1 reviewed `ceaddff739ef98546c1ebc99c806ff767cd06700`. The original findings above remain unchanged.
+
+## Base-drift verification (disposition pass 2)
+
+Reviewed `f9e754ac7cc09211ecce4bd548cf4630a6b05a8c` against main `463e72758c95b1b9f1014bebe7a1bcbede18df2c`. The 45 changed paths and normalized zero-context patch match the reviewed stacked candidate at `6c57e11ab71331defbfde275b1ff585a2a08be9e`: SHA-256 `207509e51ef6f624abfbb833fb50e9d92082e467fba9307de980683cc7f4a90f`. The only final feature-path byte difference is `spec/future-profile-test-matrix.md`'s `Coverage Status` heading inherited unchanged from main; the feature edit to that file is identical. Targeted Quire validation reports that the installed schema expects `Status`, but `git show 463e727:spec/future-profile-test-matrix.md` proves this heading and failure condition pre-existed TL-15. No prior finding reopened and no new finding arose from the base change. The round-1 dispositions remain current, so round 2 adds no `## Dispositions` rows.
