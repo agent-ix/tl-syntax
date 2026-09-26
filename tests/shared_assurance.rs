@@ -462,6 +462,12 @@ const EXPECTED_LIVE_TRACKED: [&str; 217] = [
     "fuzz/.gitignore",
     "fuzz/Cargo.lock",
     "fuzz/Cargo.toml",
+    "fuzz/corpus/infinite_wire_decode/SHA256SUMS",
+    "fuzz/corpus/infinite_wire_decode/formula.json",
+    "fuzz/corpus/infinite_wire_decode/lasso.json",
+    "fuzz/corpus/infinite_wire_decode/malformed.json",
+    "fuzz/corpus/infinite_wire_decode/valuation.json",
+    "fuzz/fuzz_targets/infinite_wire_decode.rs",
     "fuzz/fuzz_targets/wire_decode.rs",
     "requirements-assurance.txt",
     "rust-toolchain.toml",
@@ -592,6 +598,7 @@ const EXPECTED_LIVE_TRACKED: [&str; 217] = [
     "tests/future_operator_corpus.rs",
     "tests/infinite_trace_corpus.rs",
     "tests/infinite_formula.rs",
+    "tests/infinite_fuzz_seeds.rs",
     "tests/infinite_trace.rs",
     "tests/integration.rs",
     "tests/past_formula_v2.rs",
@@ -1019,7 +1026,7 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         // TL-207 adds the five-file infinite-trace corpus.
         ("corpus", 46),
         ("examples", 1),
-        ("fuzz", 4),
+        ("fuzz", 10),
         // TL-199 adds the spec id: uniqueness check and its test.
         ("scripts", 9),
         // Issue #33 adds the reviewed past-profile artifacts and routing manifest; SpecReviews
@@ -1033,7 +1040,7 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         // Issue #41 adds the paired-corpus replay.
         // Issue #53 adds formula-v2/profile and dependency-manifest gates.
         // TL-207 adds the corpus pin test and named implementation stubs.
-        ("tests", 18),
+        ("tests", 19),
     ]
     .into_iter()
     .map(|(area, count)| (area.to_owned(), count))

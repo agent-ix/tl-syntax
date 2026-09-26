@@ -54,6 +54,12 @@ pub struct LivenessSettlement<'formula, 'subject> {
 
 /// Registered infinite-trace provider for `tl-syntax.liveness/v1`.
 pub trait LivenessBackend {
+    /// Whether this backend has a model-wide proof procedure. Lasso support alone
+    /// cannot establish a claim about every trace of a model.
+    fn supports_model_proof(&self) -> bool {
+        false
+    }
+
     /// Settles the canonical formula for exactly the selected subject.
     fn settle(
         &self,
@@ -79,6 +85,14 @@ pub fn settle_liveness<'formula, 'subject>(
             warning: Some(LIVENESS_CAPABILITY_V1),
         };
     };
+    if subject.kind == LivenessSubjectKind::Model && !backend.supports_model_proof() {
+        return LivenessSettlement {
+            formula,
+            subject,
+            disposition: LivenessDisposition::Unsupported,
+            warning: None,
+        };
+    }
     let disposition = backend.settle(formula, subject);
     let disposition = if subject.kind == LivenessSubjectKind::FinitePrefix
         && disposition == LivenessDisposition::Proved

@@ -110,6 +110,18 @@ fn absent_liveness_backend_settles_unsupported_before_evaluation() {
     let claim = settle_liveness(&doc, prefix, Some(&backend));
     assert_eq!(claim.disposition, LivenessDisposition::Failed);
     assert_eq!(claim.subject, prefix);
+    let model = LivenessSubject {
+        kind: LivenessSubjectKind::Model,
+        identity: "model-42",
+    };
+    let unsupported = settle_liveness(&doc, model, Some(&backend));
+    assert_eq!(unsupported.disposition, LivenessDisposition::Unsupported);
+    assert_eq!(unsupported.subject, model);
+    assert_eq!(
+        backend.0.get(),
+        2,
+        "a lasso-only backend must not receive a model request"
+    );
 }
 
 // Trace: TC-148, FR-020-AC-1
@@ -249,6 +261,10 @@ fn liveness_results_retain_exact_canonical_graph_and_subject() {
     use tl_syntax::{settle_liveness, LivenessDisposition, LivenessSubject, LivenessSubjectKind};
     struct Selected(LivenessDisposition);
     impl tl_syntax::LivenessBackend for Selected {
+        fn supports_model_proof(&self) -> bool {
+            true
+        }
+
         fn settle(
             &self,
             _: &InfiniteFormulaDocument,
