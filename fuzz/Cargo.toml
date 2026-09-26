@@ -22,3 +22,10 @@ path = "fuzz_targets/wire_decode.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "infinite_wire_decode"
+path = "fuzz_targets/infinite_wire_decode.rs"
+test = false
+doc = false
+bench = false
