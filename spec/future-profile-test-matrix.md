@@ -11,7 +11,7 @@ relationships:
 
 ## Functional Requirement Coverage
 
-| Functional Req | Acceptance Criteria | Test Cases | Coverage Status |
+| Functional Req | Acceptance Criteria | Test Cases | Status |
 |---|---|---|---|
 | FR-008 | FR-008-AC-1 through FR-008-AC-4 | TC-040, TC-041, TC-042, TC-044, TC-046 | 🚧 planned |
 | FR-009 | FR-009-AC-1 through FR-009-AC-4 | TC-040, TC-043, TC-044, TC-046, TC-047 | 🚧 planned |
@@ -46,9 +46,13 @@ and TC-045 land.
 
 [TL-15](https://linear.app/agent-ix/issue/TL-15) owns TC-144 through TC-147.
 TC-144 and TC-145 now execute against the syntax owner's unbounded formula
-edition. TC-146's registered-backend case and TC-147's downstream-evidence
-case remain planned until the tl-mltl provider registers against
-`tl-syntax.liveness/v1` and its cross-crate evidence runs.
+edition. The syntax-owned part of TC-146 executes in `tests/infinite_formula.rs`:
+absent registration settles `unsupported`, registered dispositions retain
+subject scope, and a lasso-only backend cannot receive a model request. The
+syntax-owned part of TC-147 binds every disposition to the same canonical
+graph, TL profile, clock, and subject identity. Their full rows remain planned
+until TL-13 registers the tl-mltl provider against `tl-syntax.liveness/v1`
+and TL-212 runs cross-crate evidence at exact pins.
 
 ## Operator and profile evidence allocation
 

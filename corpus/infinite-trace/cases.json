@@ -108,6 +108,29 @@
       "fairness": {"schema_version": "tl-syntax.fairness-premises/v1", "semantic_profile": "mltl.infinite-trace/v1", "clock": "event_position", "roots": []},
       "anchor": 0, "expected": {"kind": "refusal", "axis": "operator", "value": "previous_has_no_interval"},
       "derivation": "Strong Previous has one fixed predecessor and no interval field, so an open-bound interval on Y is refused before evaluation."
+    },
+    {
+      "id": "unfair-loop-has-no-admitted-trace",
+      "family": "fairness",
+      "source": "G[0,) true; fairness infinitely-often p, loop p=false",
+      "formula": {"schema_version": "tl-syntax.formula-unbounded/v1", "semantic_profile": "mltl.infinite-trace/v1", "clock": "event_position", "root": 1, "nodes": [{"kind": "true"}, {"kind": "globally", "interval": {"kind": "unbounded", "start": 0}, "operand": 0}, {"kind": "proposition", "proposition": 0}]},
+      "trace": {"schema_version": "tl-syntax.lasso-trace/v1", "semantic_profile": "mltl.infinite-trace/v1", "clock": "event_position", "proposition_map": [{"id": 0, "name": "p"}], "prefix": [], "loop": [{"position": 0, "valuation": [{"proposition": 0, "state": "false"}]}]},
+      "fairness": {"schema_version": "tl-syntax.fairness-premises/v1", "semantic_profile": "mltl.infinite-trace/v1", "clock": "event_position", "roots": [2]},
+      "anchor": 0,
+      "expected": {"kind": "settlement", "value": "inconclusive"},
+      "derivation": "The sole loop state has p=false on every repetition, so no completion of this lasso satisfies the infinitely-often p premise. An empty fair admission cannot prove or refute the selected formula."
+    },
+    {
+      "id": "finite-prefix-globally-inconclusive",
+      "family": "partial",
+      "source": "G[0,) p observed through the first prefix position only",
+      "formula": {"schema_version": "tl-syntax.formula-unbounded/v1", "semantic_profile": "mltl.infinite-trace/v1", "clock": "event_position", "root": 1, "nodes": [{"kind": "proposition", "proposition": 0}, {"kind": "globally", "interval": {"kind": "unbounded", "start": 0}, "operand": 0}]},
+      "trace": {"schema_version": "tl-syntax.lasso-trace/v1", "semantic_profile": "mltl.infinite-trace/v1", "clock": "event_position", "proposition_map": [{"id": 0, "name": "p"}], "prefix": [{"position": 0, "valuation": [{"proposition": 0, "state": "true"}]}], "loop": [{"position": 1, "valuation": [{"proposition": 0, "state": "false"}]}]},
+      "fairness": {"schema_version": "tl-syntax.fairness-premises/v1", "semantic_profile": "mltl.infinite-trace/v1", "clock": "event_position", "roots": []},
+      "anchor": 0,
+      "expected": {"kind": "settlement", "value": "inconclusive"},
+      "derivation": "Only prefix position zero is selected and it has p=true. A future position may still have p=false or all future positions may have p=true, so the finite prefix cannot settle G[0,) p. The stored loop is outside the selected subject.",
+      "subject_kind": "finite_prefix"
     }
   ]
 }

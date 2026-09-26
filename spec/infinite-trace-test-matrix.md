@@ -11,7 +11,7 @@ relationships:
 
 ## Functional Requirement Coverage
 
-| Functional Req | Acceptance Criteria | Test Cases | Coverage Status |
+| Functional Req | Acceptance Criteria | Test Cases | Status |
 |---|---|---|---|
 | FR-020 | FR-020-AC-1 through FR-020-AC-3 | TC-148 through TC-150 | 🚧 planned |
 | FR-021 | FR-021-AC-1 through FR-021-AC-3 | TC-151 through TC-153 | ✅ implemented |
@@ -19,8 +19,17 @@ relationships:
 | FR-023 | FR-023-AC-1 through FR-023-AC-3 | TC-157 through TC-159 | ✅ implemented |
 | FR-024 | FR-024-AC-1 through FR-024-AC-3 | TC-160 through TC-162 | 🚧 planned |
 
-TC-162 remains an inspection of downstream consumers and is still planned.
-Executing syntax evidence is in `tests/infinite_formula.rs`,
+TC-150's v1/v2 golden-byte and TL profile refusal assertions execute in
+`tests/infinite_formula.rs`; its native QSL result-comparison portion remains
+with TL-13's paired-corpus exit and TL-212's cross-crate verification campaign.
+TC-162 remains an inspection of downstream consumers at their exact syntax
+pins. TL-13 owns the native/TL paired-corpus exit; TL-212 owns the
+five-repository pin and evidence graph. Neither check changes this corpus's
+owner bytes.
+
+The corpus includes an unfair loop and an explicitly selected finite-prefix
+subject alongside its valid lasso carrier; only the prefix observations enter
+that case's oracle derivation. Executing syntax evidence is in `tests/infinite_formula.rs`,
 `tests/infinite_trace.rs`, and `tests/infinite_trace_corpus.rs`. A matrix row
 becomes implemented only when its assertion executes against the real public
 API and passes; an ignored placeholder is not coverage.

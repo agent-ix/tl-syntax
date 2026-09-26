@@ -21,6 +21,7 @@
         "id": {"type": "string", "minLength": 1},
         "family": {"enum": ["lasso", "past", "partial", "fairness", "negative"]},
         "source": {"type": "string", "minLength": 1},
+        "subject_kind": {"enum": ["finite_prefix"]},
         "formula": {"$ref": "#/$defs/formula"},
         "trace": {"$ref": "#/$defs/trace"},
         "fairness": {"$ref": "#/$defs/fairness"},

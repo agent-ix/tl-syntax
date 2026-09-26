@@ -80,7 +80,7 @@ fn tc_160_owner_corpus_manifest_is_pinned_and_cases_are_distinct() {
             .expect("case JSON");
     let cases = cases["cases"].as_array().expect("case array");
     assert_eq!(cases.len(), manifest.case_count);
-    assert_eq!(cases.len(), 13);
+    assert_eq!(cases.len(), 15);
     let mut ids = BTreeSet::new();
     let mut families = BTreeSet::new();
     let mut axes = BTreeSet::new();
@@ -95,6 +95,13 @@ fn tc_160_owner_corpus_manifest_is_pinned_and_cases_are_distinct() {
         assert_eq!(case["fairness"]["schema_version"], manifest.fairness_schema);
         if case["expected"]["kind"] == "refusal" {
             axes.insert(case["expected"]["axis"].as_str().expect("refusal axis"));
+        }
+        if case["id"] == "finite-prefix-globally-inconclusive" {
+            assert_eq!(case["subject_kind"], "finite_prefix");
+            assert_eq!(case["trace"]["prefix"].as_array().unwrap().len(), 1);
+            assert_eq!(case["expected"]["value"], "inconclusive");
+        } else {
+            assert!(case.get("subject_kind").is_none());
         }
     }
     assert_eq!(
@@ -163,6 +170,8 @@ fn expected_case(id: &str) -> Option<(&'static str, &'static str, Option<&'stati
         "missing-value-is-inconclusive" => ("partial", "inconclusive", None),
         "conflicting-value-is-inconclusive" => ("partial", "inconclusive", None),
         "fair-loop-satisfies-premise" => ("fairness", "proved", None),
+        "unfair-loop-has-no-admitted-trace" => ("fairness", "inconclusive", None),
+        "finite-prefix-globally-inconclusive" => ("partial", "inconclusive", None),
         "finite-profile-refuses-unbounded" => (
             "negative",
             "unbounded_requires_infinite_profile",
@@ -272,6 +281,29 @@ fn admit_case(case: &serde_json::Value) -> Result<(), &'static str> {
 fn verify_case(case: &serde_json::Value) -> Result<(), String> {
     let id = case["id"].as_str().ok_or("case id absent")?;
     let (family, value, axis) = expected_case(id).ok_or("unknown case id")?;
+    match id {
+        "unfair-loop-has-no-admitted-trace" => {
+            if case.get("subject_kind").is_some()
+                || case["fairness"]["roots"] != serde_json::json!([2])
+                || case["trace"]["loop"][0]["valuation"][0]["state"] != "false"
+            {
+                return Err(format!("{id}: unfair-loop witness changed"));
+            }
+        }
+        "finite-prefix-globally-inconclusive" => {
+            if case["subject_kind"] != "finite_prefix"
+                || case["trace"]["prefix"].as_array().map(Vec::len) != Some(1)
+                || case["trace"]["prefix"][0]["valuation"][0]["state"] != "true"
+                || case["trace"]["loop"][0]["valuation"][0]["state"] != "false"
+            {
+                return Err(format!("{id}: finite-prefix witness changed"));
+            }
+        }
+        _ if case.get("subject_kind").is_some() => {
+            return Err(format!("{id}: unexpected subject selection"));
+        }
+        _ => {}
+    }
     if case["family"] != family || case["expected"]["value"] != value {
         return Err(format!("{id}: expected family/verdict changed"));
     }
@@ -315,6 +347,12 @@ fn tc_161_input_expected_axis_and_verdict_mutations_fail() {
     let mut negative = corpus["cases"][7].clone();
     negative["expected"]["axis"] = "clock".into();
     assert!(verify_case(&negative).is_err());
+    let mut unfair = corpus["cases"][13].clone();
+    unfair["trace"]["loop"][0]["valuation"][0]["state"] = "true".into();
+    assert!(verify_case(&unfair).is_err());
+    let mut prefix = corpus["cases"][14].clone();
+    prefix["subject_kind"] = "lasso".into();
+    assert!(verify_case(&prefix).is_err());
 }
 
 fn verify_manifest_pins(root: &Path, manifest: &serde_json::Value) -> Result<(), String> {

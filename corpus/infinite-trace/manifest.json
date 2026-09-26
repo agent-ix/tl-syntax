@@ -8,10 +8,10 @@
   "fairness_schema": "tl-syntax.fairness-premises/v1",
   "semantic_profile": "mltl.infinite-trace/v1",
   "clock": "event_position",
-  "case_count": 13,
+  "case_count": 15,
   "files": [
-    {"path": "README.md", "sha256": "2d6002cca5fa49d9c2616eaf1144da7c6065cddd00e3c5b7326ce9598caf3386"},
-    {"path": "cases.json", "sha256": "8d7f61aa75762d0c3dfcf4d1bd2d04af672a21032defdf65055721d2c9c09bc2"},
-    {"path": "schema.json", "sha256": "65eedd38814a544c17b4c82193d5e80d6027df623b0113bc1d93d29702874c18"}
+    {"path": "README.md", "sha256": "228582edc95c6c8ac415175c8a6a72b18b0144fe9abbd58ddcc1c71328024858"},
+    {"path": "cases.json", "sha256": "9b84a5c9fbaa5cb887f7dc4edfa231f35c7a3bec74efdb18892a48b1a50573fa"},
+    {"path": "schema.json", "sha256": "3985dcf6544d54a00c2d19fb871cf0d58e4e3d8b475a674c1b2fbdb3624b1be4"}
   ]
 }
