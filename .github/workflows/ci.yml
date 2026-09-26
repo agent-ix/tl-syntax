@@ -45,6 +45,12 @@ jobs:
             --tag v0.4.0 --locked --bin engineering-assurance
           echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
 
+      - name: Install nightly fuzz toolchain
+        run: rustup toolchain install nightly
+
+      - name: Install cargo-fuzz
+        run: cargo +stable install cargo-fuzz --version 0.13.2 --locked
+
       - name: Cache cargo artifacts
         uses: Swatinem/rust-cache@v2
 
