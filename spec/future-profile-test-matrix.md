@@ -16,7 +16,7 @@ relationships:
 | FR-008 | FR-008-AC-1 through FR-008-AC-4 | TC-040, TC-041, TC-042, TC-044, TC-046 | 🚧 planned |
 | FR-009 | FR-009-AC-1 through FR-009-AC-4 | TC-040, TC-043, TC-044, TC-046, TC-047 | 🚧 planned |
 | FR-010 | FR-010-AC-1 through FR-010-AC-4 | TC-041 through TC-046, TC-074 | 🚧 planned |
-| FR-289 | FR-289-AC-1 through FR-289-AC-4 | TC-144, TC-145 | 🚧 planned |
+| FR-289 | FR-289-AC-1 through FR-289-AC-4 | TC-144, TC-145 | ✅ implemented |
 | FR-290 | FR-290-AC-1 through FR-290-AC-3 | TC-146 | 🚧 planned |
 | FR-291 | FR-291-AC-1 through FR-291-AC-3 | TC-147 | 🚧 planned |
 
@@ -44,12 +44,15 @@ source bytes and operator spellings but does not parse: precedence,
 associativity, and grouping stay with TC-043. FR-010 stays planned until TC-044
 and TC-045 land.
 
-Issue #73 implements TC-144 through TC-147, binding FR-289 (`UnboundedInterval`
-and `tl-syntax.formula-unbounded/v1` admission), FR-290 (`tl-syntax.liveness/v1`
-registration and its `unsupported` absence settlement), and FR-291 (downstream
-evidence and dependency order). All four rows stay planned until #73 lands;
-TC-146's registered-backend case and TC-147's downstream-evidence case also
-depend on tl-mltl#68/#72 registering the first `tl-syntax.liveness/v1` backend.
+[TL-15](https://linear.app/agent-ix/issue/TL-15) owns TC-144 through TC-147.
+TC-144 and TC-145 now execute against the syntax owner's unbounded formula
+edition. The syntax-owned part of TC-146 executes in `tests/infinite_formula.rs`:
+absent registration settles `unsupported`, registered dispositions retain
+subject scope, and a lasso-only backend cannot receive a model request. The
+syntax-owned part of TC-147 binds every disposition to the same canonical
+graph, TL profile, clock, and subject identity. Their full rows remain planned
+until TL-13 registers the tl-mltl provider against `tl-syntax.liveness/v1`
+and TL-212 runs cross-crate evidence at exact pins.
 
 ## Operator and profile evidence allocation
 
@@ -79,7 +82,7 @@ derived semantic branch.
 | TC-046 | Generate every raw admission-field failure and require the exact refusal precedence; include unknown request identity, semantic-profile/formula mismatch, an operand absent from the borrowed validated formula, and the fixed 100,000-node formula-v1 limit; refuse every unknown, over-limit, next, past, missing-interval, open-bound, unknown-semantic-profile, and derived-wire combination before construction; at this typed boundary dense, timestamped, unit-bearing, and window-closure selections are unknown semantic profiles, and source-level distinct refusals for them and for weak-next and mixed-time forms belong to TC-047 | Property | P0 | FR-008-AC-1, FR-008-AC-3, FR-009-AC-4, FR-010-AC-4 | ✅ implemented |
 | TC-047 | Fuzz `tl-parse.clean-ascii/v2` so arbitrary bytes either produce the specified lowered graph/report or a bounded diagnostic without unwinding or v1-dialect misattribution | Fuzz | P1 | FR-009-AC-1, FR-009-AC-4 | 🚧 planned |
 | TC-074 | Replay the digest-pinned paired W/M corpus through the tl-syntax lowering API so every derived- or primitive-source case and its directly constructed pair produce one shared span-free canonical document under its bound dialect, operator, and semantic profile, W and M cover `[0,0]` and `[u32::MAX,u32::MAX]` under both profiles, every span reads its source bytes and operator spelling (grammar stays with TC-043), every refused and malformed case fails with its declared code, and mutating a lowering branch, generated-node order, inclusive endpoint, associativity, profile, node charge, span attribution, refusal, or pinned byte turns the replay red | Integration | P0 | FR-010-AC-2, FR-010-AC-4 | ✅ implemented |
-| TC-144 | Construct `[a,)` as a distinct `UnboundedInterval` under the `quire.temporal.infinite-trace/v1` facet on F/G/U/R and, by lowering, W/M; refuse a missing/unknown/mismatched facet identity and every malformed unbounded spelling before construction | Property | P0 | FR-289-AC-1, FR-289-AC-2, FR-289-AC-4 | 🚧 planned |
-| TC-145 | Round-trip a `tl-syntax.formula-unbounded/v1` document and confirm an unmodified `tl-syntax.formula/v1` decoder rejects it as an unknown schema; confirm no `tl-syntax.formula/v1` document ever carries an `UnboundedInterval` | Integration | P0 | FR-289-AC-2, FR-289-AC-3 | 🚧 planned |
-| TC-146 | With no `tl-syntax.liveness/v1` backend registered, every `tl-syntax.formula-unbounded/v1` document settles `unsupported` with a warning naming `tl-syntax.liveness/v1` before evaluation; with a backend registered, settlement routes to its disposition instead; a bounded `tl-syntax.formula/v1` document never consults this capability | Integration | P0 | FR-290-AC-1, FR-290-AC-2, FR-290-AC-3 | 🚧 planned |
-| TC-147 | Trace a registered backend's evidence to the exact FR-289 canonical graph and facet identity it consumed under both the disposition and the FR-290 `unsupported` path, and confirm the tl-syntax#73 / quire-specification#112 / tl-mltl#68 / tl-mltl#72 dependency order routes without authorizing implementation ahead of the FR-289/FR-290 gates | Integration | P0 | FR-291-AC-1, FR-291-AC-2, FR-291-AC-3 | 🚧 planned |
+| TC-144 | Construct `[a,)` under `mltl.infinite-trace/v1` on F/G/U/R/O/H/S/T and lowered W/M; refuse missing or mismatched profile and malformed interval before construction | Property | P0 | FR-289-AC-1, FR-289-AC-2, FR-289-AC-4 | ✅ implemented in `tests/infinite_formula.rs` |
+| TC-145 | Round-trip formula-unbounded/v1 including mixed future/past nodes; old formula v1/v2 decoders reject its schema and their golden bytes remain unchanged | Integration | P0 | FR-289-AC-2, FR-289-AC-3 | ✅ implemented in `tests/infinite_formula.rs` |
+| TC-146 | With no `tl-syntax.liveness/v1` backend registered, every `tl-syntax.formula-unbounded/v1` request settles `unsupported` with a warning naming the capability before evaluation; with a backend, settlement retains exact lasso/prefix/model subject scope and refuses an unsupported model procedure; bounded formula-v1 never consults the capability | Integration | P0 | FR-290-AC-1, FR-290-AC-2, FR-290-AC-3 | 🚧 planned |
+| TC-147 | Trace registered-backend evidence to the exact canonical graph, TL profile and subject scope under every settlement label; inspect TL-15 / STD-13 / TL-13 / TL-7 order and accepted-spec gate | Integration | P0 | FR-291-AC-1, FR-291-AC-2, FR-291-AC-3 | 🚧 planned |
