@@ -17,7 +17,7 @@ This specification defines the first post-v0.1 evolution of the internal,
 parser-independent future-time MLTL operator profile. It adds a small derived
 surface without changing the canonical formula graph, interval meaning, or the
 two existing evaluator profiles. It also admits an unbounded interval under
-the `quire.temporal.infinite-trace/v1` facet as a separate, co-existing
+the `mltl.infinite-trace/v1` profile as a separate, co-existing
 formula edition, leaving the closed `tl-syntax.formula/v1` schema exactly as
 it stands.
 
@@ -37,18 +37,17 @@ independent clause authority.
 - Version, compatibility, source-span, canonical-format, resource, horizon,
   corpus, rewrite, and interoperability rules for that lowering.
 - Explicit refusal of unknown spellings and unsupported profile combinations.
-- An unbounded interval (no upper bound) on `F`, `G`, `U`, `R` and, by
-  inherited lowering, `W`/`M`, admitted only under the
-  `quire.temporal.infinite-trace/v1` infinite-trace facet
-  ([quire-specification#112](https://github.com/agent-ix/quire-specification/issues/112)),
-  as a new co-existing formula edition rather than an amendment of the closed
-  `tl-syntax.formula/v1` schema.
+- An unbounded interval (no upper bound) on `F/G/U/R/O/H/S/T` and, by
+  inherited lowering, `W/M`, admitted only under `mltl.infinite-trace/v1` as a
+  co-existing formula edition. `quire.temporal.infinite-trace/v1` is the QSL
+  correspondence, not a TL identity or lowering target.
 
 ### Out of scope
 
 - A new `NodeKind`, evaluator, rewrite semantics, or semantic interpretation
   for an existing formula.
-- Past-time/history operators, which belong to tl-syntax #33.
+- Bounded past-time/history semantics, which remain with the existing v2
+  profile; the infinite-trace edition may carry past canonical nodes.
 - Strong- or weak-next operators, dense or timestamped time, duration-unit
   conversion, and mixed future/past profiles.
 - Typed predicates, native Quire grammar, production monitoring, and claims of
@@ -65,7 +64,7 @@ before constructing a validated `tl-syntax` formula. `tl-mltl` evaluates only
 the canonical graph. `tl-rewrite` rewrites only canonical nodes. Corpus and
 interoperability owners consume the lowered representation and preserve the
 selected semantic-profile identity. The same division holds under the
-infinite-trace facet: `tl-syntax` owns the unbounded interval grammar and the
+infinite-trace profile: `tl-syntax` owns the unbounded interval grammar and the
 liveness-capability identity a backend registers against; it does not evaluate,
 and admitting the grammar makes no liveness, lasso, or fairness claim.
 
@@ -90,7 +89,7 @@ the downstream evidence and dependency order for a registered liveness
 backend.
 [ADR-001](./assurance/ADR-001-future-operator-profile.md) records why lowering,
 rather than AST expansion, is the selected architecture, and
-[AD-003](./assurance/AD-003.md) records the infinite-trace facet as a new
+[AD-003](./assurance/AD-003.md) records the infinite-trace profile as a new
 co-existing edition rather than an amendment of `tl-syntax.formula/v1`.
 [TM-002](./future-profile-test-matrix.md) assigns every proposed operator and
 semantic-profile combination to its required downstream evidence.

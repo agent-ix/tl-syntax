@@ -423,6 +423,7 @@ impl<'a> Formula<'a> {
                         family == TemporalFamily::Future
                     }
                     SemanticProfile::OriginCompleteHistoryV1 => family == TemporalFamily::Past,
+                    SemanticProfile::InfiniteTraceV1 => true,
                 };
                 if !compatible {
                     let node = u32::try_from(index).map(NodeId).map_err(|_| {
@@ -520,6 +521,8 @@ pub enum FormulaError {
         /// Rejected profile.
         profile: SemanticProfile,
     },
+    /// The unbounded profile requires the separate formula-unbounded edition.
+    InfiniteProfileRequiresUnboundedEdition,
     /// Formula-v1 cannot carry a past-time node.
     FormulaV1NodeUnsupported {
         /// First rejected node in topological order.
@@ -570,6 +573,9 @@ impl fmt::Display for FormulaError {
                 formatter,
                 "formula-v1 does not admit semantic profile {}",
                 profile.as_str()
+            ),
+            Self::InfiniteProfileRequiresUnboundedEdition => formatter.write_str(
+                "infinite-trace profile requires tl-syntax.formula-unbounded/v1"
             ),
             Self::FormulaV1NodeUnsupported { node, operator } => write!(
                 formatter,
