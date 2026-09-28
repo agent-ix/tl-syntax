@@ -5,15 +5,13 @@ Four things this file deliberately is not.
 
 It is not a copy of the compatibility matrix. It never says which version of
 anything is correct. It observes what is installed and hands every verdict to
-`engineering_assurance.compatibility`, because a second copy of the rule is a
-second authority, and two authorities drift.
+the pinned `engineering-assurance compatibility` command, because a second
+copy of the rule is a second authority, and two authorities drift.
 
-It is not an acceptance gate. The pinned release records
-`accepted.state = accepted` and ships a `human_acceptance_recorded` predicate
-(release: accept ix-flow 0.2.3 matrix, agent-ix/engineering-assurance#47). This
-script reports the acceptance state the installed distribution carries and gates
-only on things that are local and checkable. An absent field is not read as an
-approval, and it is not read as a rejection either.
+It is not an acceptance gate. This script reports whether the installed
+distribution carries an attributed human acceptance and gates only on things
+that are local and checkable. An absent field is not read as an approval, and it
+is not read as a rejection either.
 
 It is not a network probe. It does not ask a registry whether a release landed.
 `npm.ix` in particular is a mirror that lags the public registry and is not an
@@ -23,13 +21,16 @@ it written down anywhere in this repository.
 It is not an envelope. It prints a report and exits. It retains nothing.
 
 Exit status: 0 when every component is compatible and no local check fails,
-1 when something is not compatible, 2 when Engineering Assurance itself cannot
-be loaded — which is a different fact from a failing check and gets its own code.
+1 when something is not compatible, 2 when the Engineering Assurance command
+cannot be loaded or its response is unusable — which is a different fact from a
+failing check and gets its own code.
 """
 
 from __future__ import annotations
 
 import json
+import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -82,26 +83,31 @@ def observe_quire() -> str | None:
 
 
 def observe_engineering_assurance() -> str | None:
-    from importlib.metadata import PackageNotFoundError, version
-
-    try:
-        return version("engineering-assurance")
-    except PackageNotFoundError:
+    executable = os.environ.get("ENGINEERING_ASSURANCE_CLI", "engineering-assurance")
+    raw = observe([executable, "--version"])
+    if raw is None:
         return None
+    match = re.fullmatch(r"engineering-assurance (\S+)", raw)
+    return match.group(1) if match else None
 
 
 def artifact_digest_mismatches(pins: dict[str, Any]) -> list[str]:
     """Re-hash every artifact this repository reads out of the pinned release."""
+    artifacts = [
+        artifact
+        for artifact in pins["consumed_artifacts"]
+        if artifact.get("sha256") is not None
+    ]
+    if not artifacts:
+        return []
     import hashlib
 
     import engineering_assurance
 
     package_root = Path(engineering_assurance.__file__).resolve().parent
     mismatches: list[str] = []
-    for artifact in pins["consumed_artifacts"]:
+    for artifact in artifacts:
         expected = artifact.get("sha256")
-        if expected is None:
-            continue
         path = package_root / artifact["path"]
         if not path.is_file():
             mismatches.append(f"{artifact['path']}: absent from the installed release")
@@ -138,31 +144,53 @@ def mirror_references(pins: dict[str, Any]) -> list[str]:
 
 
 def build_report() -> dict[str, Any]:
-    try:
-        from engineering_assurance.compatibility import accepted, classify_all, load_matrix
-    except ImportError as error:  # pragma: no cover - exercised by the mutation probe
-        raise PinError(f"the pinned assurance distribution is unusable: {error}") from error
-
     pins = json.loads(PINS_PATH.read_text(encoding="utf-8"))
-    matrix = load_matrix()
     observed = {
         "quire-cli": observe_quire(),
         "quoin": observe(["quoin", "--version"]),
         "ix-flow": observe(["ix-flow", "--version"]),
         "engineering-assurance": observe_engineering_assurance(),
     }
-    classifications = classify_all(matrix, observed)
+    # v0.4.0 moved the reviewed matrix classifier to the Rust CLI. Send the
+    # observations to that API verbatim; this adapter owns no compatibility
+    # rules and never interprets a component pin itself.
+    request = {
+        "protocol": "engineering-assurance.compatibility-request/v1",
+        "observed": [
+            {"component": component, "version": version}
+            for component, version in observed.items()
+        ],
+    }
+    try:
+        command = os.environ.get("ENGINEERING_ASSURANCE_CLI", "engineering-assurance")
+        result = subprocess.run(
+            [command, "compatibility"],
+            input=json.dumps(request),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except (OSError, ValueError) as error:
+        raise PinError(f"the pinned assurance distribution is unusable: {error}") from error
+    try:
+        classified = json.loads(result.stdout)
+        classifications = classified["components"]
+    except (json.JSONDecodeError, KeyError, TypeError) as error:
+        detail = result.stderr.strip() or "invalid compatibility response"
+        raise PinError(f"the pinned assurance distribution is unusable: {detail}") from error
+    if result.returncode not in (0, 1):
+        raise PinError(result.stderr.strip() or "compatibility classification failed")
     mismatches = artifact_digest_mismatches(pins)
     offenders = mirror_references(pins)
-    versions_ok = accepted(classifications)
-    acceptance = matrix["accepted"]
+    versions_ok = classified["versions_compatible"]
+    acceptance_recorded = classified["human_acceptance_recorded"]
     return {
         "schemaVersion": "tl-syntax.shared-pin-report/v1",
-        "matrix_version": matrix["matrix_version"],
-        "acceptance_state": acceptance["state"],
+        "matrix_version": classified["matrix_version"],
+        "acceptance_state": "accepted" if acceptance_recorded else "not recorded",
         "acceptance_recorded_here": False,
         "acceptance_authority": (
-            "engineering_assurance/compatibility-matrix.json in the installed release. "
+            "engineering-assurance compatibility matrix in the installed release. "
             "This repository reports it and is not a second acceptance authority."
         ),
         "versions_compatible": versions_ok,
@@ -171,11 +199,11 @@ def build_report() -> dict[str, Any]:
         "accepted": versions_ok and not mismatches and not offenders,
         "components": [
             {
-                "component": item.component,
-                "observed": item.observed,
-                "expected": item.expected,
-                "verdict": item.verdict,
-                "reason": item.reason,
+                "component": item["component"],
+                "observed": item["observed"],
+                "expected": item["expected"],
+                "verdict": item["verdict"],
+                "reason": item["reason"],
             }
             for item in classifications
         ],
