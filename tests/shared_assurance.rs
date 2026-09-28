@@ -625,6 +625,7 @@ fn is_archival_record(relative: &str) -> bool {
         || (relative.ends_with(".md")
             && (relative.starts_with("spec/reviews/")
                 || relative.starts_with("spec/plans/")
+                || relative.starts_with("reviews/")
                 || relative.starts_with("plan/")))
 }
 
