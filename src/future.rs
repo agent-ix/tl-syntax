@@ -1168,6 +1168,10 @@ mod tests {
     // Trace: TC-046, FR-008-AC-1, FR-008-AC-3
     #[test]
     fn node_budget_refusals_follow_their_precedence() {
+        #[cfg(target_pointer_width = "64")]
+        let expected_id_refusal = "generated_id_out_of_range";
+        #[cfg(target_pointer_width = "32")]
+        let expected_id_refusal = "document_node_limit_exceeded";
         assert_eq!(
             preflight_node_ids(usize::MAX - 2),
             Err(FutureLoweringRefusal::NodeCountOverflow {
@@ -1176,11 +1180,7 @@ mod tests {
         );
         assert_eq!(
             preflight_node_ids(usize::MAX - 3).map_err(|refusal| refusal.code()),
-            Err(if usize::BITS > u32::BITS {
-                "generated_id_out_of_range"
-            } else {
-                "document_node_limit_exceeded"
-            })
+            Err(expected_id_refusal)
         );
         assert_eq!(
             preflight_node_ids(MAX_FORMULA_DOCUMENT_NODES - 2),
