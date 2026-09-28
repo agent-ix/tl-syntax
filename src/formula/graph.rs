@@ -61,6 +61,32 @@ impl Interval {
     }
 }
 
+#[cfg(kani)]
+mod kani_proofs {
+    use super::Interval;
+
+    // Every pair of u32 endpoints is symbolic; the proof has no assumptions.
+    #[kani::proof]
+    fn interval_cardinality_matches_wide_arithmetic() {
+        let start: u32 = kani::any();
+        let end: u32 = kani::any();
+        match Interval::new(start, end) {
+            Ok(interval) => {
+                assert!(start <= end);
+                assert_eq!(interval.start(), start);
+                assert_eq!(interval.end(), end);
+                let wide = u64::from(end) - u64::from(start) + 1;
+                assert_eq!(interval.cardinality(), u32::try_from(wide).ok());
+            }
+            Err(error) => {
+                assert!(start > end);
+                assert_eq!(error.start, start);
+                assert_eq!(error.end, end);
+            }
+        }
+    }
+}
+
 /// Error returned when an inclusive interval is inverted.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[non_exhaustive]
@@ -899,6 +925,31 @@ mod tests {
         assert!(!singleton.contains(5));
         assert_eq!(Interval::new(0, u32::MAX).unwrap().cardinality(), None);
         assert_eq!(Interval::new(3, 2), Err(IntervalError { start: 3, end: 2 }));
+    }
+
+    // Trace: TC-001, TC-002, FR-001-AC-1, FR-001-AC-2
+    #[test]
+    fn interval_cardinality_extreme_bounds() {
+        assert_eq!(
+            Interval::new(0, u32::MAX - 1).unwrap().cardinality(),
+            Some(u32::MAX)
+        );
+        assert_eq!(
+            Interval::new(1, u32::MAX).unwrap().cardinality(),
+            Some(u32::MAX)
+        );
+        assert_eq!(
+            Interval::new(u32::MAX, u32::MAX).unwrap().cardinality(),
+            Some(1)
+        );
+        assert_eq!(Interval::new(0, u32::MAX).unwrap().cardinality(), None);
+        assert_eq!(
+            Interval::new(u32::MAX, u32::MAX - 1),
+            Err(IntervalError {
+                start: u32::MAX,
+                end: u32::MAX - 1
+            })
+        );
     }
 
     // Trace: TC-006, FR-003-AC-1
