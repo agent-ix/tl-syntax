@@ -88,13 +88,13 @@ contract for every pair of `u32` endpoints:
 ```bash
 cargo kani --lib \
   --harness formula::graph::kani_proofs::interval_cardinality_matches_wide_arithmetic \
-  --exact --unwind 4
+  --exact --unwind 2 --solver cadical
 ```
 
 The harness has no assumptions. It checks inverted-bound rejection, endpoint
 preservation, and `Option<u32>` cardinality against independent `u64`
-arithmetic. The explicit unwind bound is four; the harness has no loops or
-recursion. This proof covers interval arithmetic only.
+arithmetic. The procedure's explicit unwind bound is two; the harness has no
+loops or recursion. This proof covers interval arithmetic only.
 
 ## Manual wire fuzzing
 
