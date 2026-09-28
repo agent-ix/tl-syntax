@@ -80,6 +80,22 @@ make test
 make ci
 ```
 
+## Interval arithmetic proof
+
+Kani 0.68.0 with CBMC 6.11.0 proves the inclusive interval cardinality
+contract for every pair of `u32` endpoints:
+
+```bash
+cargo kani --lib \
+  --harness formula::graph::kani_proofs::interval_cardinality_matches_wide_arithmetic \
+  --exact --unwind 4
+```
+
+The harness has no assumptions. It checks inverted-bound rejection, endpoint
+preservation, and `Option<u32>` cardinality against independent `u64`
+arithmetic. The explicit unwind bound is four; the harness has no loops or
+recursion. This proof covers interval arithmetic only.
+
 ## Manual wire fuzzing
 
 The versioned document decode boundary has a Rust fuzz target. It is intentionally
