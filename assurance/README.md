@@ -61,6 +61,16 @@ establish source-release readiness.
 
 ## What runs what
 
+`conformance-adapter INPUT.jsonl` is the Rust FR-006 native adapter used by
+`make assurance-record`. It consumes existing `tl-syntax.corpus-conformance/v1`
+rows and emits Quoin's normalized entries. It validates the whole stream before
+emitting output: empty, malformed, foreign-protocol, unnamed-outcome and invalid
+entry-field input refuses. The six declared domain outcomes retain the existing
+mapping: pass to pass, fail/malformed to fail, and unavailable/not-computed/
+vacuous to skip. It executes no producer and creates no proof attestation,
+freshness claim or human decision. The legacy Python chain remains pending
+the rest of the Rust/shared migration.
+
 One target produces:
 
 ```

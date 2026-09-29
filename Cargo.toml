@@ -18,6 +18,11 @@ name = "source-grounding"
 path = "src/bin/source_grounding.rs"
 required-features = ["serde"]
 
+[[bin]]
+name = "conformance-adapter"
+path = "src/bin/conformance_adapter.rs"
+required-features = ["serde"]
+
 [features]
 default = []
 alloc = []

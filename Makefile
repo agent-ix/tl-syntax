@@ -247,7 +247,7 @@ source-grounding-record:
 # something a gate should do on every run.
 .PHONY: assurance-record
 assurance-record: assurance-inputs
-	$(PYTHON) scripts/assurance_chain.py --adapt $(CONFORMANCE_RESULT) \
+	$(CARGO) run --quiet --locked --features serde --bin conformance-adapter -- $(CONFORMANCE_RESULT) \
 		> $(ASSURANCE_DIR)/entries.json
 	$(QUOIN) evidence record \
 		--repo . \

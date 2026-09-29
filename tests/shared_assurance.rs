@@ -390,7 +390,7 @@ fn git_files(root: &Path, arguments: &[&str]) -> CensusResult<BTreeSet<String>> 
         .collect())
 }
 
-const EXPECTED_LIVE_TRACKED: [&str; 217] = [
+const EXPECTED_LIVE_TRACKED: [&str; 225] = [
     ".agent/rules/writing_rust.md",
     ".github/CODEOWNERS",
     ".github/workflows/ci.yml",
@@ -410,6 +410,9 @@ const EXPECTED_LIVE_TRACKED: [&str; 217] = [
     "assurance/README.md",
     "assurance/change-assurance.json",
     "assurance/pins.json",
+    "assurance/production-feature-status.md",
+    "assurance/source-grounding-premises.json",
+    "assurance/source-readiness-prerequisites.md",
     "clippy.toml",
     "corpus/README.md",
     "corpus/SHA256SUMS",
@@ -470,6 +473,9 @@ const EXPECTED_LIVE_TRACKED: [&str; 217] = [
     "fuzz/fuzz_targets/infinite_wire_decode.rs",
     "fuzz/fuzz_targets/wire_decode.rs",
     "requirements-assurance.txt",
+    "reviews/2026-09-26-tl-15-code-review.md",
+    "reviews/2026-09-26-tl-15-gap-analysis.md",
+    "reviews/2026-09-26-tl-15-spec-review-base.md",
     "rust-toolchain.toml",
     "rustfmt.toml",
     "scripts/assurance_chain.py",
@@ -567,6 +573,8 @@ const EXPECTED_LIVE_TRACKED: [&str; 217] = [
     "spec/spec.md",
     "spec/test-matrix.md",
     "src/bounded_string.rs",
+    "src/bin/conformance_adapter.rs",
+    "src/bin/source_grounding.rs",
     "src/context.rs",
     "src/context_document.rs",
     "src/contracts/identity.rs",
@@ -1022,7 +1030,8 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         ("<root>", 17),
         (".agent", 1),
         (".github", 3),
-        ("assurance", 3),
+        ("assurance", 6),
+        ("reviews", 3),
         // TL-207 adds the five-file infinite-trace corpus.
         ("corpus", 46),
         ("examples", 1),
@@ -1036,7 +1045,7 @@ fn live_source_enumeration_has_an_exact_fail_closed_partition() {
         // TL-207 adds five requirements and one matrix.
         ("spec", 85),
         // Issue #40 adds the future-lowering module and its traced tests.
-        ("src", 23),
+        ("src", 25),
         // Issue #41 adds the paired-corpus replay.
         // Issue #53 adds formula-v2/profile and dependency-manifest gates.
         // TL-207 adds the corpus pin test and named implementation stubs.

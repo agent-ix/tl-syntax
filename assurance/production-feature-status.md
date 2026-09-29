@@ -26,6 +26,7 @@ passed. Those observations do not establish freshness or durable retention.
 | Requirement | Implementation status |
 | --- | --- |
 | tl-syntax FR-006-AC-9 | Draft path-binding behavior implemented in PR #96; FR-006 as a whole is not reaccepted by this increment. |
+| tl-syntax FR-006-AC-2 | The native corpus-result transcription now has a Rust implementation used by `assurance-record`; the legacy full chain and other producer paths remain. All 22 entries from a real corpus replay matched the Python adapter, and Quoin accepted the Rust entries with no unmatched or suspect bindings. |
 | tl-syntax FR-019 / TL-23 | Unimplemented complete census/classifier and Rust/shared parity. Legacy executable paths remain. |
 | tl-syntax FR-015 / TL-22 | Unimplemented complete immutable candidate/configuration binding and fresh producer-result admission. TL-63 is a partial source projection only. |
 | tl-syntax FR-016 / TL-21 | Unimplemented lifecycle stages, durable retention and supersession adapter. |
