@@ -19,6 +19,7 @@ relationships:
 | FR-004 | FR-004-AC-1, FR-004-AC-2, FR-004-AC-3, FR-004-AC-4, FR-004-AC-5 | TC-009, TC-010, TC-011, TC-017, TC-020, TC-036 | ✅ covered |
 | FR-005 | FR-005-AC-1, FR-005-AC-2, FR-005-AC-3 | TC-012, TC-013, TC-014 | ✅ covered |
 | FR-006 | FR-006-AC-1, FR-006-AC-2, FR-006-AC-3, FR-006-AC-5, FR-006-AC-6, FR-006-AC-7, FR-006-AC-8 | TC-021, TC-022, TC-023, TC-025, TC-026, TC-034, TC-035 | ✅ covered |
+| FR-006 | FR-006-AC-9 | TC-060, TC-069 in TM-004 | 🚧 planned; TL-63 projection partial |
 | FR-007 | FR-007-AC-1, FR-007-AC-2, FR-007-AC-3, FR-007-AC-4, FR-007-AC-5 | TC-027, TC-028, TC-029, TC-030, TC-031, TC-032 | ✅ covered |
 | FR-014 | FR-014-AC-1 through FR-014-AC-5 | TC-075 | ✅ covered |
 
