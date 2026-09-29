@@ -45,6 +45,9 @@ fn read_json(path: &Path) -> Result<Value, String> {
 fn source_bytes(root: &Path, identity: &str) -> Result<Vec<u8>, String> {
     let relative = Path::new(identity);
     if relative.as_os_str().is_empty()
+        || identity
+            .split('/')
+            .any(|segment| segment.is_empty() || segment == "." || segment == "..")
         || !relative
             .components()
             .all(|part| matches!(part, Component::Normal(_)))
@@ -135,7 +138,11 @@ fn validate_source_locator(
     Ok(())
 }
 
-fn validate_requirement_statements(record: &Value, export: &Value) -> Result<(), String> {
+fn validate_requirement_statements(
+    record: &Value,
+    export: &Value,
+    connected_sources: &BTreeSet<String>,
+) -> Result<(), String> {
     let requirements = array(
         &record["definition"]["requirements"],
         "definition.requirements",
@@ -158,12 +165,43 @@ fn validate_requirement_statements(record: &Value, export: &Value) -> Result<(),
             string(member(found[0], "document")?, "obligation.document")?
         );
         let source_ids = array(member(requirement, "source_ids")?, "requirement.source_ids")?;
+        let mut references = BTreeSet::new();
+        for source in source_ids {
+            let identity = string(source, "requirement.source_ids entry")?;
+            if !connected_sources.contains(identity) || !references.insert(identity) {
+                return Err(fail(format!(
+                    "requirement {id} has an unconnected or duplicate source identity: {identity}"
+                )));
+            }
+        }
         if found[0]["statement"] != statement
             || !source_ids.iter().any(|source| source == &source_path)
         {
             return Err(fail(format!(
                 "declaration diverges from authoritative obligation {id}"
             )));
+        }
+    }
+    Ok(())
+}
+
+fn validate_preservation_sources(
+    record: &Value,
+    connected_sources: &BTreeSet<String>,
+) -> Result<(), String> {
+    for constraint in array(
+        &record["definition"]["preservation_constraints"],
+        "definition.preservation_constraints",
+    )? {
+        let id = string(member(constraint, "id")?, "preservation constraint.id")?;
+        let mut references = BTreeSet::new();
+        for source in array(member(constraint, "source_ids")?, "constraint.source_ids")? {
+            let identity = string(source, "constraint.source_ids entry")?;
+            if !connected_sources.contains(identity) || !references.insert(identity) {
+                return Err(fail(format!(
+                    "constraint {id} has an unconnected or duplicate source identity: {identity}"
+                )));
+            }
         }
     }
     Ok(())
@@ -194,7 +232,7 @@ fn project(
     let connections = record["source_connections"]
         .as_array_mut()
         .ok_or_else(|| fail("source_connections must be an array"))?;
-    if connections.len() != sources.len() {
+    if connections.is_empty() || connections.len() != sources.len() {
         return Err(fail(
             "source lookup and sealed connections differ in population",
         ));
@@ -218,16 +256,26 @@ fn project(
         connection["revision"] = json!(revision);
         connection["digest"] = json!(actual_digest);
     }
-    validate_requirement_statements(&record, export)?;
+    validate_requirement_statements(&record, export, &seen)?;
+    validate_preservation_sources(&record, &seen)?;
     record["subject"]["base_revision"] = json!(revision);
     record["impact_snapshot"]["revision"] = json!(revision);
     record["impact_snapshot"]["digest"] = json!(digest(export_bytes));
     // Quire grounds specification facts. It does not compare the author's
     // declared scope with the candidate's complete changed-path population.
     record["impact_snapshot"]["completeness"] = json!("incomplete");
-    record["impact_snapshot"]["gaps"] = json!([
-        "subject.scope is authorial; candidate change-footprint completeness is unverified"
-    ]);
+    let scope_gap =
+        "subject.scope is authorial; candidate change-footprint completeness is unverified";
+    let snapshot = record["impact_snapshot"]
+        .as_object_mut()
+        .ok_or_else(|| fail("impact_snapshot must be an object"))?;
+    let gaps = snapshot.entry("gaps").or_insert_with(|| json!([]));
+    let gaps = gaps
+        .as_array_mut()
+        .ok_or_else(|| fail("impact_snapshot.gaps must be an array"))?;
+    if !gaps.iter().any(|gap| gap == scope_gap) {
+        gaps.push(json!(scope_gap));
+    }
     let proofs = record["definition"]["proof_obligations"]
         .as_array_mut()
         .ok_or_else(|| fail("proof_obligations must be an array"))?;
@@ -328,13 +376,15 @@ mod tests {
             "obligations":[{"id":"FR-001-AC-1","document":"requirements/FR-001.md","statement":"Exact source statement"}]
         });
         let declaration = json!({
+            "purpose":"authorial metadata, not a decision",
             "sources":{spec:spec},
             "record":{
-                "subject":{"repository":"agent-ix/tl-syntax"},
+                "subject":{"repository":"agent-ix/tl-syntax","scope":["nonexistent-scope"]},
                 "source_connections":[{"source_id":spec,"kind":"requirement"}],
                 "impact_snapshot":{},
                 "definition":{
                     "requirements":[{"id":"FR-001-AC-1","statement":"Exact source statement","source_ids":[spec]}],
+                    "preservation_constraints":[{"id":"PRESERVE-source","source_ids":[spec]}],
                     "proof_obligations":[
                         {"proof_id":"PROOF-domain","configuration":"configuration.json"},
                         {"proof_id":"PROOF-quire-static-export","configuration":"configuration.json"}
@@ -346,6 +396,8 @@ mod tests {
         let projected =
             project(&root, &declaration, &export, &premises, b"export", revision).unwrap();
         assert_eq!(projected["impact_snapshot"]["completeness"], "incomplete");
+        assert_eq!(projected["subject"]["scope"], json!(["nonexistent-scope"]));
+        assert!(projected.get("purpose").is_none());
         assert_eq!(
             projected["definition"]["proof_obligations"]
                 .as_array()
@@ -361,6 +413,59 @@ mod tests {
                 && item["disposition"] == "open"));
 
         let mut changed = declaration.clone();
+        changed["record"]["impact_snapshot"]["completeness"] = json!("complete");
+        changed["record"]["impact_snapshot"]["gaps"] = json!(["unresolved external fact"]);
+        let false_scope =
+            project(&root, &changed, &export, &premises, b"export", revision).unwrap();
+        assert_eq!(false_scope["impact_snapshot"]["completeness"], "incomplete");
+        assert!(false_scope["impact_snapshot"]["gaps"]
+            .as_array()
+            .unwrap()
+            .contains(&json!("unresolved external fact")));
+
+        for reference in ["spec/missing.md", spec] {
+            changed = declaration.clone();
+            changed["record"]["definition"]["requirements"][0]["source_ids"] =
+                json!([spec, reference]);
+            assert!(
+                project(&root, &changed, &export, &premises, b"export", revision)
+                    .unwrap_err()
+                    .contains("unconnected or duplicate")
+            );
+        }
+        changed = declaration.clone();
+        changed["record"]["definition"]["preservation_constraints"][0]["source_ids"] =
+            json!(["spec/missing.md"]);
+        assert!(
+            project(&root, &changed, &export, &premises, b"export", revision)
+                .unwrap_err()
+                .contains("unconnected or duplicate")
+        );
+        for alias in [
+            "spec//requirements/FR-001.md",
+            "spec/./requirements/FR-001.md",
+            "spec/requirements/FR-001.md/",
+            "spec/requirements/../requirements/FR-001.md",
+        ] {
+            assert!(
+                source_bytes(&root, alias).is_err(),
+                "accepted alias {alias}"
+            );
+        }
+        let mut wrong_export = export.clone();
+        wrong_export["modules"][0]["version"] = json!("unknown-version");
+        assert!(project(
+            &root,
+            &declaration,
+            &wrong_export,
+            &premises,
+            b"export",
+            revision
+        )
+        .unwrap_err()
+        .contains("module or schema digest"));
+
+        changed = declaration.clone();
         changed["sources"][spec] = json!("configuration.json");
         assert!(
             project(&root, &changed, &export, &premises, b"export", revision)

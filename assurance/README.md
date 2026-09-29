@@ -35,6 +35,12 @@ sealed repository-relative path. Top-level declaration metadata is authorial
 and is not sealed evidence. Runtime release-integrity admission for the Quire
 binary and module remains TL-24 work.
 
+The authoritative release-limit statements in `spec/assurance/AA-001.md` and
+`spec/reviews/SR-013-make-execution-control-measurement.md` are source-connected.
+The descriptions in `Makefile` and `CLAUDE.md` are explanatory mirrors; they do
+not supply a second acceptance decision. The local SUITE-008 observation remains
+in its original PR record and is not converted to a Quoin attestation here.
+
 `make source-grounding-record SOURCE_EXPORT=/path/to/quire-assurance.json`
 consumes an already-produced export for `REVISION` (default: the checkout's
 HEAD), projects it with the Rust adapter, and gives the resulting disposable
