@@ -1,6 +1,6 @@
 # Shared assurance
 
-Two files and no evidence.
+Authorial inputs and release premises, with no retained evidence.
 
 `change-assurance.json` is what this repository *states* about the change under
 [issue #12](https://github.com/agent-ix/tl-syntax/issues/12): the requirements it
@@ -21,6 +21,29 @@ The repository that produced a result does not also get to be the place that
 result is kept, digested, and pronounced upon. That arrangement is the thing
 this migration removed, and putting a smaller version of it back under a new
 directory name would be the same mistake in a nicer font.
+
+## Source-grounded record projection (TL-63)
+
+`source-grounding` is a Rust adapter for a Quire `assurance-v1` export. It
+checks the export against the `spec-artifacts-process@v0.26.0` module and schema
+premises recorded in `source-grounding-premises.json`. It checks repository and
+revision identities; compares each declaration source path
+with the path whose bytes are read; checks Quire's specification locators and
+authoritative obligation statements; and emits a body accepted by Quoin's
+`change-assurance seal-record` command. `source_connections[].source_id` is the
+sealed repository-relative path. Top-level declaration metadata is authorial
+and is not sealed evidence. Runtime release-integrity admission for the Quire
+binary and module remains TL-24 work.
+
+The `subject.scope` list is authorial. Quire grounds specification source
+locators but does not prove that list covers the candidate's complete change
+footprint, so the projected impact snapshot remains `incomplete` and names
+that gap. The adapter removes the legacy `quire coverage` proof obligation
+from this source-grounded projection: the source export has no fresh producer
+attestation yet, and the projected record keeps that fact open. The existing
+`make assurance` chain still uses its legacy export until the Rust/shared
+execution and parity tasks migrate it; a projected record alone does not
+establish source-release readiness.
 
 ## What runs what
 

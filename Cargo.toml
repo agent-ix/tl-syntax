@@ -13,6 +13,11 @@ repository = "https://github.com/agent-ix/tl-syntax"
 name = "tl_syntax"
 path = "src/lib.rs"
 
+[[bin]]
+name = "source-grounding"
+path = "src/bin/source_grounding.rs"
+required-features = ["serde"]
+
 [features]
 default = []
 alloc = []

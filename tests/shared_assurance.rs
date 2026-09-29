@@ -1311,7 +1311,7 @@ fn local_suite_identity_is_declared_without_becoming_a_quoin_proof_claim() {
     )
     .expect("the change-assurance declaration is JSON");
     assert_eq!(
-        declaration["sources"]["NFR-003"],
+        declaration["sources"]["spec/requirements/NFR-003-qualification-integrity.md"],
         "spec/requirements/NFR-003-qualification-integrity.md"
     );
     assert!(
@@ -1320,7 +1320,8 @@ fn local_suite_identity_is_declared_without_becoming_a_quoin_proof_claim() {
             .expect("source_connections")
             .iter()
             .any(|connection| {
-                connection["source_id"] == "NFR-003" && connection["kind"] == "requirement"
+                connection["source_id"] == "spec/requirements/NFR-003-qualification-integrity.md"
+                    && connection["kind"] == "requirement"
             }),
         "NFR-003 is not bound into the candidate's source connections"
     );
