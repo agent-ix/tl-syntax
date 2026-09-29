@@ -1,4 +1,5 @@
 ---
+id: PLAN-008-log
 type: log
 title: "PLAN-008 - Update log"
 description: "Chronological changes to the future-operator lowering plan."

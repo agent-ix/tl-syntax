@@ -1,4 +1,5 @@
 ---
+id: PLAN-004-log
 type: log
 title: "PLAN-004 - Update log"
 description: "Chronological changes to the tracked source census plan."

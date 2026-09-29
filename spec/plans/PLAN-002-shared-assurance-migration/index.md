@@ -1,4 +1,5 @@
 ---
+id: PLAN-002-index
 type: index
 title: "PLAN-002 - Shared assurance migration"
 description: "Contents of the tl-syntax shared assurance migration plan bundle."

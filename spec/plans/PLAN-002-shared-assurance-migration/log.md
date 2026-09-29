@@ -1,4 +1,5 @@
 ---
+id: PLAN-002-log
 type: log
 title: "PLAN-002 - Update log"
 description: "Chronological changes to the shared assurance migration plan bundle."

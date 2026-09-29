@@ -1,4 +1,5 @@
 ---
+id: PLAN-006-log
 type: log
 title: "PLAN-006 - Update log"
 description: "Chronological changes to the qualification-integrity ownership plan."

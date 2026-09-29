@@ -1,4 +1,5 @@
 ---
+id: PLAN-010-index
 type: index
 title: "PLAN-010 — Origin-complete past/history implementation"
 description: "Contents of the complete cross-repository past/history implementation plan."

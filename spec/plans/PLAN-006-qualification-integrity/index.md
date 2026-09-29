@@ -1,4 +1,5 @@
 ---
+id: PLAN-006-index
 type: index
 title: "PLAN-006 - Qualification-integrity ownership"
 description: "Contents of the tl-syntax issue 19 implementation plan."
