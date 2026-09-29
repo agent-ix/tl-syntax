@@ -35,6 +35,14 @@ sealed repository-relative path. Top-level declaration metadata is authorial
 and is not sealed evidence. Runtime release-integrity admission for the Quire
 binary and module remains TL-24 work.
 
+`make source-grounding-record SOURCE_EXPORT=/path/to/quire-assurance.json`
+consumes an already-produced export for `REVISION` (default: the checkout's
+HEAD), projects it with the Rust adapter, and gives the resulting disposable
+body to Quoin for sealing in `target/assurance-store`. A missing or incompatible
+export stops the target before Quoin. The target does not run Quire or other
+domain producers; the projected record retains the open scope and freshness
+limitations described below. Make's execution-control limitation still applies.
+
 The `subject.scope` list is authorial. Quire grounds specification source
 locators but does not prove that list covers the candidate's complete change
 footprint, so the projected impact snapshot remains `incomplete` and names

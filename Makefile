@@ -51,6 +51,8 @@ CONFORMANCE_RESULT := $(ASSURANCE_DIR)/corpus-conformance.jsonl
 ORACLE_RESULT := $(ASSURANCE_DIR)/corpus-oracle.json
 FEATURE_RESULT := $(ASSURANCE_DIR)/feature-boundary.json
 QUIRE_EXPORT := $(ASSURANCE_DIR)/quire-static-export.json
+SOURCE_EXPORT ?= $(ASSURANCE_DIR)/quire-source-export.json
+SOURCE_RECORD_BODY := $(ASSURANCE_DIR)/source-record-body.json
 MSRV_RESULT := $(ASSURANCE_DIR)/msrv.jsonl
 REVISION ?= $(shell git rev-parse HEAD)
 
@@ -78,6 +80,7 @@ help:
 	@echo "  make pins             - classify the toolchain through the shared matrix"
 	@echo "  make mutation-probes  - weaken each adapter refusal and require its check to go red"
 	@echo "  make assurance-chain  - seal and verify through Quoin without local retention"
+	@echo "  make source-grounding-record - project an existing Quire source export and seal it through Quoin"
 	@echo "  make assurance        - pins + mutation-probes + assurance-chain"
 	@echo "  make ci               - All CI gates locally (hosted CI is manual-only)"
 
@@ -226,6 +229,18 @@ assurance-chain: assurance-inputs
 
 .PHONY: assurance
 assurance: pins mutation-probes assurance-chain
+
+# TL-63 consumes an existing source-grounded export; this target runs no domain
+# producer and does not establish freshness, complete scope or release authority.
+# Quoin owns the sealed record; the Rust output is only a disposable input body.
+.PHONY: source-grounding-record
+source-grounding-record:
+	mkdir -p $(ASSURANCE_DIR)
+	$(CARGO) run --quiet --locked --features serde --bin source-grounding -- \
+		"$(CURDIR)" assurance/change-assurance.json "$(SOURCE_EXPORT)" \
+		assurance/source-grounding-premises.json "$(REVISION)" > $(SOURCE_RECORD_BODY)
+	$(QUOIN) change-assurance seal-record --repo target/assurance-store \
+		--input $(SOURCE_RECORD_BODY) --json
 
 # An operator target, not a CI gate. It writes into this repository's own Quoin
 # evidence store, which is a reviewed change to spec/evidence/ rather than

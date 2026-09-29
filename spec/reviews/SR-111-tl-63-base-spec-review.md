@@ -15,6 +15,14 @@ FR-015 owns full candidate materialization and freshness. AP-002 selects base
 plus all seven analyses for M6. This review occurred after the draft adapter
 was written; it does not claim a pre-implementation review.
 
+On 2026-09-29, `quoin review` created run `tl63-source-binding` using the
+released plugin's review workflow version 0.2.1, definition SHA-256
+`edadae3cc5d5b89f7185530b8af60dab1ade4b63485bb389993bc2abaaca1513`.
+The AP-002 selection and all eight validated document paths were recorded,
+and the run advanced to `validated`. Human acceptance was not advanced.
+The disposable ix-flow run state is under `target/spec-workflow`; this
+document records the procedure and does not substitute for retained evidence.
+
 ## Findings
 
 | ID | Severity | Summary | Refs | Escape Cause |
