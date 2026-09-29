@@ -58,3 +58,10 @@ capability only when its released identity satisfies MRS-004.
   retention/operator selection, policy/event source, integrator-package release
   and quire-research#64.
 - Individual downstream work may resume only when every prerequisite it consumes is admitted; a partial ledger is not a global pass.
+- The partial consumer ledger is `assurance/source-readiness-prerequisites.md`.
+  It records the accepted Engineering Assurance v0.4.1 matrix, the released
+  Quire/Quoin/ix-flow identities, the Quire process module premise, and the
+  v0.4.1 Rust producer-execution code. Retention selection, decision authority,
+  integrator-package release, LR08 dispositions and candidate binding remain
+  open. Engineering-assurance#11 is a use-specific migration question, not a
+  blanket veto on every admitted release identity.
