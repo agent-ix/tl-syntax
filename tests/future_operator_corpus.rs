@@ -118,6 +118,7 @@ fn fail<T>(code: Code, subject: &str, detail: impl Into<String>) -> Replay<T> {
 // ---------------------------------------------------------------------------
 
 #[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
 struct ManifestWire {
     corpus: String,
     revision: u64,
@@ -1664,6 +1665,9 @@ fn manifest_identity_faults_turn_the_replay_red() {
     });
     assert_manifest_mutation(Code::CorpusIdentityMismatch, MANIFEST, |manifest| {
         manifest["primitive_dialect"] = DERIVED_DIALECT.into();
+    });
+    assert_manifest_mutation(Code::ManifestDecodeRejected, MANIFEST, |manifest| {
+        manifest["notes"] = "unreviewed".into();
     });
     assert_mutation(Code::MissingFile, CASES, |files| {
         files.remove(CASES);

@@ -239,8 +239,8 @@ fn run() -> Result<(Vec<String>, usize), String> {
     let mut failures = 0usize;
 
     // The revision the crate publishes and the revision the manifest declares are
-    // one identity in two places. Consumers pin it, so a silent divergence would
-    // make every downstream conformance claim name a corpus that does not exist.
+    // one identity in two places. A silent divergence would make every
+    // downstream conformance claim name a corpus that does not exist.
     let revision_matches = declared_revision == CORPUS_REVISION;
     if !revision_matches {
         failures += 1;

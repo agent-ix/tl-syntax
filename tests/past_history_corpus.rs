@@ -12,6 +12,7 @@ use tl_syntax::{
 const DIRECTORY: &str = "corpus/past-history";
 
 #[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
 struct Manifest {
     corpus: String,
     revision: u64,

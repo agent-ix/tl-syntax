@@ -6,6 +6,7 @@ use serde::Deserialize;
 use tl_syntax::CORPUS_DIR;
 
 #[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
 struct Manifest {
     corpus: String,
     revision: u64,

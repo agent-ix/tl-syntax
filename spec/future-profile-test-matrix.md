@@ -52,7 +52,7 @@ subject scope, and a lasso-only backend cannot receive a model request. The
 syntax-owned part of TC-147 binds every disposition to the same canonical
 graph, TL profile, clock, and subject identity. Their full rows remain planned
 until TL-13 registers the tl-mltl provider against `tl-syntax.liveness/v1`
-and TL-212 runs cross-crate evidence at exact pins.
+and TL-212 runs cross-crate evidence.
 
 ## Operator and profile evidence allocation
 

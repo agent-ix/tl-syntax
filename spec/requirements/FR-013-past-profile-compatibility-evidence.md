@@ -168,8 +168,7 @@ Git-history lookup; its trusted input is the checked-in manifest.
 ## Dependencies
 
 Depends on FR-004/FR-005 versioning and corpus foundations plus FR-011/FR-012.
-MRS-002 supplies the profile-evolution policy. M0 and the accepted MRS-003 merge
-revision remain hard implementation prerequisites. The routed implementation
+MRS-002 supplies the profile-evolution policy. The routed implementation
 tickets are `tl-syntax#53`, `tl-parse#35`, `tl-mltl#63`, `tl-rewrite#38`,
 `tl-syntax#54`, `quire-contract-ir#70`, and `quire-contract-ir#71`, under epic
 `tl-syntax#52`.

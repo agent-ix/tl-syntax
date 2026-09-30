@@ -22,9 +22,8 @@ relationships:
 TC-150's v1/v2 golden-byte and TL profile refusal assertions execute in
 `tests/infinite_formula.rs`; its native QSL result-comparison portion remains
 with TL-13's paired-corpus exit and TL-212's cross-crate verification campaign.
-TC-162 remains an inspection of downstream consumers at their exact syntax
-pins. TL-13 owns the native/TL paired-corpus exit; TL-212 owns the
-five-repository pin and evidence graph. Neither check changes this corpus's
+TC-162 remains an inspection of downstream consumers. TL-13 owns the
+native/TL paired-corpus exit; TL-212 owns the evidence graph. Neither check changes this corpus's
 owner bytes.
 
 The corpus includes an unfair loop and an explicitly selected finite-prefix
@@ -58,5 +57,5 @@ API and passes; an ignored placeholder is not coverage.
 
 | Purpose | Target | Type | Test Cases |
 |---|---|---|---|
-| Parse, rewrite, and evaluate the same owner corpus at exact pins | tl-parse, tl-rewrite, tl-mltl | service | TC-150, TC-160, TC-161, TC-162 |
+| Parse, rewrite, and evaluate the same owner corpus | tl-parse, tl-rewrite, tl-mltl | service | TC-150, TC-160, TC-161, TC-162 |
 | Compare results where both native and TL infinite-trace profiles apply | QSL native temporal provider | service | TC-150, TC-160 |
