@@ -37,3 +37,56 @@ TL-22's shared-executor consumer binding remains unavailable. This repository
 will not wrap the library in a local runner or silently expand its dependency
 license policy. The released executor's Linux-only execution boundary is a
 separate host limitation; a CLI does not make execution available on macOS.
+
+## TL-23 executable population preparation
+
+Read-only inspection at candidate `c526700` found the following entry-point
+families. This is an authorial inventory preparation, not the executable
+classifier, an approved disposition, or proof of exhaustiveness. Each family
+must be expanded to individual entry points/runtime invocations in Task-019.
+The shared LR08 policy is recorded in quire-research#64; it grants no blanket
+external-tool, host, glue or test exemption.
+
+| Tracked source / construction | Language and purpose | Owner and proposed treatment | Evidence / resume condition |
+| --- | --- | --- | --- |
+| `src/lib.rs`, reachable modules under `src/` | Rust production syntax/profile/document contracts and embedded unit tests | tl-syntax; domain Rust | Existing implementation remains; per-entry census is outstanding. |
+| `src/bin/source_grounding.rs::main` | Rust source-connected record projection | tl-syntax; domain Rust | PR #96 focused adverse cases; no full scope/freshness claim. |
+| `src/bin/conformance_adapter.rs::main` | Rust corpus-result transcription | tl-syntax; domain Rust | PR #96 real 22-entry parity; malformed-stream refusal. |
+| `examples/corpus_conformance.rs::main` | Rust temporal corpus producer | tl-syntax; domain Rust | Existing domain producer; exact shared execution binding remains TL-22 work. |
+| Every `tests/*.rs` harness and each test function | Rust domain assertions and shared-intake checks | tl-syntax; domain Rust, with nested runtime paths separately classified | Rust file ownership does not dispose subprocesses or generated code. |
+| `tests/v1_spec_stubs.rs::pending_v1_case!` expansion | Rust generated ignored test for TC-162 | tl-syntax; domain Rust | Macro-generated test remains in population; ignored assertion is not feature evidence. |
+| `fuzz/fuzz_targets/wire_decode.rs`, `infinite_wire_decode.rs` | Rust executable fuzz targets declared by `fuzz/Cargo.toml` | tl-syntax; domain Rust | Inventory only; no campaign is authorized in this phase. |
+| `scripts/assurance_chain.py` CLI, including `--adapt` and mutation mode | Python result mapping, environment observations and Quoin orchestration | tl-syntax; temporary legacy, shared/domain split required | Native corpus transcription is replaced only at `assurance-record`; full-chain parity is absent. |
+| `scripts/check_shared_pins.py` | Python package/tool observations plus shared compatibility invocation | tl-syntax observation adapter; EA owns classification | Consume admitted EA compatibility CLI rather than duplicate its matrix; immutable consumer binding outstanding. |
+| `scripts/check_default_dependencies.py` | Python default dependency and four feature-combination checks | tl-syntax owns domain interpretation; EA owns bounded execution | Separate domain response adaptation from missing shared CLI execution; no local runner port. |
+| `scripts/validate_corpus.py` | Python schema/digest/oracle domain validation | tl-syntax; temporary legacy pending domain Rust replacement | Positive/adverse parity required before removal; schema-runtime/shared boundaries must be resolved. |
+| `scripts/test_corpus_gate.py` | Python subprocess mutation assertions over corpus validation | tl-syntax; temporary legacy | Nested Python invocation remains executable; no campaign expansion in this phase. |
+| `scripts/check_spec_id_uniqueness.py` | Python specification ID validation | Quire owns reusable specification semantics; tl-syntax currently carries legacy entry point | Identify admitted shared equivalent or upstream missing capability before removing it. |
+| `scripts/test_check_spec_id_uniqueness.py` | Python uniqueness-check assertions | tl-syntax; temporary legacy | Requires Rust/shared positive and adverse parity; not disposed merely because it is a test. |
+| `scripts/check_unsafe_comments.sh` and nested `grep`, `sed`, `sort` invocations | Bash source safety-comment audit and baseline writer | tl-syntax; temporary legacy; reusable source-audit boundary unresolved | `--update-baseline` is a separate executable use, not data; no scoped owner approval identified. |
+| Make recipes for every named target, plus `$(shell git rev-parse HEAD)` | Make/shell orchestration and dynamically selected tool variables | tl-syntax owns recipes; tool owners own invoked semantics | Expand each recipe command and variable-selected invocation; defaults do not prove resolved runtime identity. |
+| Make `assurance-env`: Python `-m venv` and generated environment `pip` | Python environment/package construction | tl-syntax legacy orchestration; external tool dispositions required | Existing two-lane policy is not a Rust-language exception. |
+| Make `assurance-inputs`, `assurance-record`, `source-grounding-record` | Shell redirects, Cargo/domain producers, Quire and Quoin consumers | tl-syntax domain adapters; shared owners retain execution/export/evidence semantics | Each nested command needs its own row; producer-free projection is distinct from producer execution. |
+| `tests/feature_boundary.rs` nested `make` | Rust test invokes Make, then Cargo and Python recipes | tl-syntax; temporary legacy invocation underneath Rust test | A Rust caller does not remediate non-Rust behavior. |
+| `tests/shared_assurance.rs::run`, `run_chain_with_path` | Dynamic interpreter/tool selection; Python chain, Quoin, ix-flow, Git probes | tl-syntax adapter; shared tool and host dispositions outstanding | Resolve every caller/argument construction rather than approve generic `run(program, args)`. |
+| `tests/shared_assurance.rs::producer_shims` | Rust writes executable `#!/bin/sh` scripts containing `case`, `echo`, `exit` | tl-syntax; generated temporary legacy | Generated shell is executable population even though authoring source is Rust. |
+| `tests/shared_assurance.rs` Git init/add/config/update-index/diff probes | Rust invokes Git for candidate fixtures and index observations | tl-syntax owns assertions; Git host disposition outstanding | Separate each runtime invocation; no blanket external-tool exception. |
+| `tests/future_operator_corpus.rs`, `past_history_corpus.rs`, `shared_assurance.rs` digest probes | Rust invokes `sha256sum` | tl-syntax owns checks; external host disposition outstanding | Either scoped disposition or Rust domain hashing with parity; caller language alone is insufficient. |
+| `.github/workflows/ci.yml` inline `run` blocks | Shell, pip, npm, Cargo, Make and shared-tool invocation | tl-syntax orchestration; temporary legacy and external-tool dispositions outstanding | Includes npm-installed launchers/module operations, not just `make ci`; hosted dispatch remains unauthorized here. |
+| `.github/workflows/ci.yml` `uses` entries | External checkout/toolchain/cache/install actions with runtime implementations | Action owners; missing scoped retained-tool dispositions | Their names and versions do not establish accepted language/runtime exceptions. |
+| `.github/workflows/cla.yml` reusable workflow `@main` | External generated workflow execution for CLA handling | agent-ix/.github owns workflow; TL owner owns consumption scope | Mutable reference and runtime expansion remain unresolved; no automatic classification as data. |
+| Cargo dependency/procedural macro/build behavior, including dev dependencies | External runtime/build-time executable supply chain | Package owners; scoped tool/runtime dispositions outstanding | Cargo manifests/locks identify packages, not complete executable construction or approved dispositions. |
+
+Schema JSON, corpus formula/trace JSON, digest lists and
+`scripts/unsafe_comment_baseline.txt` are data inputs, not standalone executable
+entry points. Their consumers stay in the population. `include_str!` embeds data
+and documentation; `pending_v1_case!` constructs executable tests. Inspection
+found only three Git executable-mode files (the ID checker, its test and the
+unsafe-comment shell audit), while five additional Python script files are
+interpreter-invoked. Executable mode and extension counts therefore cannot
+establish this census.
+
+No family above is owner-dispositioned by this document. Unresolved dynamic
+constructions stay unclassified. The exact-census/refusal implementation,
+individual row expansion, scoped owner decisions and complete parity remain
+unimplemented; Task-019 remains blocked.
