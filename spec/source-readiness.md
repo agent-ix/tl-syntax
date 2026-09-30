@@ -7,8 +7,6 @@ relationships:
     type: depends_on
   - target: ix://agent-ix/tl-syntax/issues/34
     type: references
-  - target: ix://agent-ix/quire-contract-ir/PGM-01
-    type: depends_on
 ---
 
 # Progressive tl-syntax source-readiness and integrator boundary
@@ -139,7 +137,7 @@ allocates planned evidence.
 The internal hard-prerequisite graph is acyclic:
 
 ```text
-MRS-001 + PGM-01 + NFR-003 + FR-006
+MRS-001 + NFR-003 + FR-006
   -> FR-019 executable-path classification
   -> FR-015 candidate/configuration binding
   -> FR-016 stage and lifecycle preservation
@@ -158,7 +156,7 @@ implementation node remains unavailable at an external resume condition.
 - Specification and composite review may proceed now.
 - Actual v0.1 source-release evidence remains provisional until the exact M0
   candidate, required independent reviews, human Task-007 decision and signed
-  tag/checksum exist in the order governed by `quire-contract-ir#4`/PGM-01.
+  tag/checksum exist.
 - Authoritative source-path/scope sealing remains blocked on `tl-syntax#16`:
   resume only after an immutable, reviewed and human-accepted Engineering
   Assurance release names the Quire 0.32 source-grounded export and exact

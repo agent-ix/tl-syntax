@@ -805,7 +805,7 @@ fn all_twelve_verification_outcomes_are_demonstrated_and_paired_with_controls() 
     // notice the loss of.
     //
     // `malformed` used to be demonstrated by the legacy-compatibility census
-    // instead, over a PGM-01 record whose collector field had the wrong type.
+    // instead, over a retained evidence record whose collector field had the wrong type.
     // That census went with the retained evidence under agent-ix/tl-syntax#12.
     // The state did not: the adapter refuses an undecodable row as malformed
     // and says so, and that is what is asserted here. Twelve remains twelve

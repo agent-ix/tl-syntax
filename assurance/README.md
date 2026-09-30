@@ -53,7 +53,7 @@ This repository used to retain 23 `quire.derivation-evidence/v1` envelopes and
 read them, on every run, through
 `engineering_assurance.verification_semantics.map_pgm01_bytes`. The mapping
 answered `incompatible` for every one of them — "unknown PGM-01 schema version"
-— because that family is one the PGM-01 programme governed but never defined.
+— because that family was never one the mapping defined.
 That answer was reported as it stood and was never converted into a pass.
 
 Those records were deleted under

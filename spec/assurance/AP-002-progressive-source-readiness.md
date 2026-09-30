@@ -52,8 +52,6 @@ relationships:
     type: governs
   - target: ix://agent-ix/tl-syntax/AP-001
     type: references
-  - target: ix://agent-ix/quire-contract-ir/PGM-01
-    type: references
   - target: ix://agent-ix/tl-syntax/NFR-005
     type: governs
 ---

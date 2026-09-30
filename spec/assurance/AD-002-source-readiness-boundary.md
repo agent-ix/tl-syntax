@@ -45,7 +45,7 @@ exact Git source + Cargo/toolchain/config/profile/corpus identities
 The external context is:
 
 ```text
-PGM-01 + native-language ruling + LR08 policy
+native-language ruling + LR08 policy
                     |
 Git/repository -> tl-syntax Rust readiness projection/admission adapter
                     |                 |                 |
@@ -77,7 +77,7 @@ missing, the guarantee remains unavailable rather than falling back locally.
 
 | Dependency | Trust mode | Contract and current state |
 |---|---|---|
-| PGM-01 and native-language ruling | Assumed | Governance/source-language authority; bind exact immutable identity before implementation. |
+| Native-language ruling | Assumed | Source-language authority; bind exact immutable identity before implementation. |
 | Git repository/object/materialization | Guaranteed boundary; Git correctness/provenance assumed | TC-059/060/069 bind/refuse identities; Git implementation and repository provenance remain external assumptions. |
 | Rust/Cargo toolchain and public package delivery | Guaranteed identity; semantics/provenance assumed | FR-015 identity mutations; no compiler or registry certification claim. |
 | Released Quire source export and Engineering Assurance classifier | Guaranteed when available | IT-001; unavailable until the `tl-syntax#16` accepted release set exists. |

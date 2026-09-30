@@ -62,7 +62,7 @@ reported unavailable and must not replace that capability locally.
 
 ## Dependencies
 
-Upstream policy comes from `ix://agent-ix/quire-contract-ir/PGM-01`, the native-
+Upstream policy comes from the native-
 language owner ruling and the released shared-assurance contracts. Downstream
 realization is allocated to [FR-015](./FR-015-bind-source-readiness-candidate.md)
 through [FR-019](./FR-019-classify-qualification-execution-paths.md),

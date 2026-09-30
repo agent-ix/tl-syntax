@@ -2,9 +2,6 @@
 id: MRS-001
 title: tl-syntax v0.1 master requirements
 type: MasterRequirements
-relationships:
-  - target: ix://agent-ix/quire-contract-ir/PGM-01
-    type: depends_on
 ---
 
 # Master Requirements Specification
@@ -14,11 +11,6 @@ relationships:
 This specification defines the parser-independent, `no_std` MLTL syntax and
 semantic-profile substrate shared by the temporal crate family. It is the
 authoritative requirements boundary for tl-syntax v0.1.
-
-The governing compatibility, provenance, evidence, release-order, and
-qualification policy is PGM-01 at
-`ix://agent-ix/quire-contract-ir/PGM-01`. This specification cites that policy
-without redefining or weakening it.
 
 ## Scope
 
@@ -82,6 +74,4 @@ inspection evidence.
 - [Strict owner artifact contracts](./requirements/FR-014-publish-strict-syntax-artifacts.md).
 - [Progressive source-readiness child](https://github.com/agent-ix/tl-syntax/issues/34).
 - [Progressive source-readiness specification](./source-readiness.md).
-- [PGM-01 governance gate](https://github.com/agent-ix/quire-contract-ir/issues/3),
-  identified as `ix://agent-ix/quire-contract-ir/PGM-01`.
 - Cargo package manifest and repository contribution policy.

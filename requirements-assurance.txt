@@ -2,7 +2,7 @@
 #
 # It is deliberately separate from the Draft 7 lane this repository's hosted CI
 # installs (jsonschema 3.2.0, rfc3339-validator, rfc3986-validator), which is
-# what the corpus gate and the retained PGM-01 schema checks were written
+# what the corpus gate and the retained evidence schema checks were written
 # against. engineering-assurance declares jsonschema>=4.23,<5. Both pins are
 # correct for their own job and neither may be bent to fit the other, so they
 # get one environment each:

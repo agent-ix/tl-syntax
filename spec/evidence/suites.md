@@ -34,7 +34,7 @@ SUITE-003 was a repository-local traceability reimplementation. Quire is the
 authority on static specification, obligation and coverage facts, so the suite
 now names Quire's own export.
 
-SUITE-006 and SUITE-007 were originally the PGM-01 evidence schema and envelope
+SUITE-006 and SUITE-007 were originally the evidence schema and envelope
 conformance checks run by this repository's deleted collector. `#9` reused both
 identifiers rather than minting new ones, because neither row had ever appeared
 in a retained record's discharged-obligation list: `SUITE-006` became the shared
