@@ -288,33 +288,11 @@ def validate_proposition_map(value: Any, schema: Draft7Validator) -> None:
         raise AssertionError("proposition names are not unique")
 
 
-PROTOCOL = "tl-syntax.corpus-oracle/v1"
-
-# What this oracle does and does not own, stated in the stream rather than only
-# in prose. tl-syntax ships no evaluator, so the horizon and closed-trace values
-# are derived here and nowhere else in the crate; the accept/reject half is
-# derived independently by the real decoder in examples/corpus_conformance.rs,
-# and the two are required to agree.
-LIMITATIONS = (
-    "Horizons and closed-trace outcomes are derived by this script alone. "
-    "tl-syntax owns no finite-trace evaluator; tl-mltl does. A downstream "
-    "evaluator that disagrees with these values is a finding about one of the "
-    "two, and this stream is not the authority that settles it.",
-    "Accept/reject identity and rejection reasons here are derived from the "
-    "corpus schema plus this script's semantic checks. The authority on what "
-    "this crate actually accepts is examples/corpus_conformance.rs, which "
-    "decodes with the real crate.",
-)
-
-
-def _row(fixture: str, check: str, outcome: str, trace_ids: list[str], detail: Any) -> dict:
+def _row(fixture: str, check: str, outcome: str, detail: Any) -> dict:
     return {
-        "protocol": PROTOCOL,
         "fixture": fixture,
         "check": check,
-        "symbol": f"corpus-oracle::{fixture}::{check}",
         "outcome": outcome,
-        "traceIds": trace_ids,
         "detail": detail,
     }
 
@@ -322,10 +300,7 @@ def _row(fixture: str, check: str, outcome: str, trace_ids: list[str], detail: A
 def survey() -> list[dict]:
     """Walk the corpus once and report a row per check.
 
-    One traversal, two consumers: `validate()` turns the first failing row into
-    the exit-code gate this repository has always had, and `--json` emits the
-    stream Quoin transcribes. There is deliberately not a second walk, because
-    two walks of the same corpus are two oracles that can disagree.
+    `validate()` turns the first failing row into the exit-code gate.
     """
     formula_schema_value = load_json(CORPUS / "schema" / "formula-v1.schema.json")
     proposition_schema_value = load_json(
@@ -344,7 +319,6 @@ def survey() -> list[dict]:
             "proposition-map",
             "schema_and_identity_order",
             "pass",
-            ["FR-003-AC-1"],
             {"schema": "tl-syntax.proposition-map/v1"},
         )
     )
@@ -362,13 +336,12 @@ def survey() -> list[dict]:
                         identity,
                         "validation",
                         "fail",
-                        ["FR-005-AC-1"],
                         {"expected": "valid", "observed_error": observed_error},
                     )
                 )
                 continue
             rows.append(
-                _row(identity, "validation", "pass", ["FR-005-AC-1"], {"expected": "valid"})
+                _row(identity, "validation", "pass", {"expected": "valid"})
             )
             derived_horizon = formula_horizon(document)
             declared_horizon = fixture.get("expected_horizon")
@@ -377,7 +350,6 @@ def survey() -> list[dict]:
                     identity,
                     "derived_horizon",
                     "pass" if declared_horizon == derived_horizon else "fail",
-                    ["FR-005-AC-2", "StR-002-VC-1"],
                     {"derived": derived_horizon, "declared": declared_horizon},
                 )
             )
@@ -389,20 +361,15 @@ def survey() -> list[dict]:
                         identity,
                         "derived_closed_trace",
                         "pass" if declared_closed == derived_closed else "fail",
-                        ["FR-005-AC-2", "StR-002-VC-1"],
                         {"derived": derived_closed, "declared": declared_closed},
                     )
                 )
             else:
-                # A fixture the manifest supplies no evaluation oracle for is not
-                # a passing fixture and is not a failing one. Saying so is the
-                # whole point of keeping not-computed a distinct state.
                 rows.append(
                     _row(
                         identity,
                         "derived_closed_trace",
                         "not-computed",
-                        ["FR-005-AC-2"],
                         {"why": "the manifest supplies no closed-trace oracle for this fixture"},
                     )
                 )
@@ -413,7 +380,6 @@ def survey() -> list[dict]:
                     identity,
                     "rejection_reason",
                     "pass" if observed_error == expected_error else "fail",
-                    ["FR-005-AC-2"],
                     {"expected": expected_error, "observed": observed_error},
                 )
             )
@@ -423,7 +389,6 @@ def survey() -> list[dict]:
                     identity,
                     "validation",
                     "malformed",
-                    ["FR-005-AC-1"],
                     {"why": f"unknown expected_validation {declared!r}"},
                 )
             )
@@ -445,35 +410,12 @@ def validate() -> None:
 def main() -> int:
     global CORPUS
     argv = sys.argv[1:]
-    as_json = False
-    if argv and argv[0] == "--json":
-        as_json = True
-        argv = argv[1:]
     if len(argv) == 2 and argv[0] == "--corpus":
         CORPUS = Path(argv[1])
     elif argv:
-        print("usage: validate_corpus.py [--json] [--corpus DIRECTORY]", file=sys.stderr)
+        print("usage: validate_corpus.py [--corpus DIRECTORY]", file=sys.stderr)
         return 2
     try:
-        if as_json:
-            rows = survey()
-            print(
-                json.dumps(
-                    {
-                        "protocol": PROTOCOL,
-                        "corpus_revision": load_json(CORPUS / "manifest.json")[
-                            "corpus_revision"
-                        ],
-                        "limitations": list(LIMITATIONS),
-                        "entries": rows,
-                    },
-                    indent=2,
-                    sort_keys=True,
-                )
-            )
-            return 0 if all(
-                row["outcome"] in {"pass", "not-computed"} for row in rows
-            ) else 1
         validate()
     except (AssertionError, OSError, json.JSONDecodeError) as error:
         print(f"corpus validation failed: {error}", file=sys.stderr)

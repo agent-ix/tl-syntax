@@ -48,18 +48,17 @@ caller-supplied source identity.
 ### Intended Users
 
 Embedded Rust consumers use the allocation-free borrowed model. Temporal tools
-use the optional owned and serialization features. Reviewers use the corpus and
-the sealed assurance chain to check compatibility and determinism.
+use the optional owned and serialization features. Reviewers use the corpus to
+check compatibility and determinism.
 
 ## Requirements Architecture
 
 The stakeholder requirements define portability and interoperability needs.
 Functional requirements own interval validation, graph validation, identity,
 versioning, corpus publication, bounded signal declarations, proposition
-binding, caller-source context, and shared-assurance intake behavior.
-Non-functional requirements constrain the feature boundary, deterministic
-domain behavior, and the meaning and lifecycle of candidate-qualification
-claims. The test matrix maps every acceptance criterion to executable or
+binding, and caller-source context.
+Non-functional requirements constrain the feature boundary and deterministic
+domain behavior. The test matrix maps every acceptance criterion to executable or
 inspection evidence.
 
 ## References

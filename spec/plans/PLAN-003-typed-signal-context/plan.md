@@ -40,7 +40,7 @@ FR-007 + StR-003 + SR-014
   -> alloc-owned values and bounded strict serde documents
   -> borrowed formula binding and lookup
   -> positive/negative fixtures, property tests, feature checks, legacy snapshots
-  -> existing local gate and shared assurance intake
+  -> existing local gate
   -> code review + gap analysis
   -> exact downstream API handoff to tl-parse#20 and tl-rewrite#21
 ```
@@ -88,9 +88,7 @@ versioned shared temporal corpus.
 
 The existing `make` targets remain orchestration only. No new Python helper,
 shell gate, evidence collector, tool-identity implementation, traceability
-implementation, runner, or Make target is introduced. The existing native
-producers and shared Quire/Quoin/Engineering Assurance intake remain the only
-assurance path. Hosted CI remains manual-only and is not dispatched by this
+implementation, runner, or Make target is introduced. Hosted CI remains manual-only and is not dispatched by this
 plan.
 
 ## Exit Criteria
