@@ -37,9 +37,6 @@ use tl_syntax::{
     SemanticProfile, CORPUS_REVISION, MAX_FORMULA_DOCUMENT_NODES,
 };
 
-/// The stream identity a consumer matches on before reading a single row.
-const PROTOCOL: &str = "tl-syntax.corpus-conformance/v1";
-
 /// How a fixture was rejected, named by the typed error that rejected it.
 ///
 /// These identifiers are the corpus manifest's `expected_error` vocabulary. Each
@@ -196,15 +193,13 @@ fn classify(raw: &str) -> Result<Classification, String> {
     }
 }
 
-fn row(fixture: &str, check: &str, outcome: &str, trace_ids: &[&str], detail: Value) -> String {
+fn row(fixture: &str, check: &str, outcome: &str, detail: Value) -> String {
     let entry = json!({
-        "protocol": PROTOCOL,
         "corpus_revision": CORPUS_REVISION,
         "fixture": fixture,
         "check": check,
         "symbol": format!("corpus::{fixture}::{check}"),
         "outcome": outcome,
-        "traceIds": trace_ids,
         "detail": detail,
     });
     entry.to_string()
@@ -254,7 +249,6 @@ fn run() -> Result<(Vec<String>, usize), String> {
         "corpus",
         "revision_identity",
         if revision_matches { "pass" } else { "fail" },
-        &["FR-005-AC-3", "NFR-002-AC-2"],
         json!({ "declared": declared_revision, "crate": CORPUS_REVISION }),
     ));
 
@@ -274,7 +268,6 @@ fn run() -> Result<(Vec<String>, usize), String> {
         "proposition-map",
         "decode",
         if map_accepted { "pass" } else { "fail" },
-        &["FR-003-AC-1", "FR-004-AC-1"],
         json!({ "path": map_relative }),
     ));
 
@@ -313,7 +306,6 @@ fn run() -> Result<(Vec<String>, usize), String> {
                     id,
                     "decode",
                     "unavailable",
-                    &["FR-005-AC-1"],
                     json!({ "path": relative, "error": error.to_string() }),
                 ));
                 continue;
@@ -328,7 +320,6 @@ fn run() -> Result<(Vec<String>, usize), String> {
                     id,
                     "decode",
                     "malformed",
-                    &["FR-005-AC-1"],
                     json!({ "path": relative, "error": error }),
                 ));
                 continue;
@@ -345,7 +336,6 @@ fn run() -> Result<(Vec<String>, usize), String> {
             id,
             "validation",
             if validation_ok { "pass" } else { "fail" },
-            &["FR-005-AC-1", "FR-002-AC-2"],
             json!({
                 "expected": expected_validation,
                 "observed": if classification.accepted { "valid" } else { "invalid" },
@@ -364,7 +354,6 @@ fn run() -> Result<(Vec<String>, usize), String> {
             id,
             "decoder_agreement",
             if decoder_agrees { "pass" } else { "fail" },
-            &["FR-004-AC-1", "NFR-002-AC-1"],
             json!({
                 "staged": classification.accepted,
                 "document_decode": classification.document_decode_accepted,
@@ -385,7 +374,6 @@ fn run() -> Result<(Vec<String>, usize), String> {
                     id,
                     "rejection_reason",
                     if reason_ok { "pass" } else { "fail" },
-                    &["FR-005-AC-2"],
                     json!({ "expected": expected_error, "observed": observed }),
                 ));
             }
@@ -395,7 +383,6 @@ fn run() -> Result<(Vec<String>, usize), String> {
                     id,
                     "rejection_reason",
                     "not-computed",
-                    &["FR-005-AC-2"],
                     json!({
                         "why": "the manifest declares this fixture invalid and names no expected_error, so no reason could be checked",
                     }),
@@ -423,7 +410,6 @@ fn run() -> Result<(Vec<String>, usize), String> {
         "corpus",
         "census",
         if census_ok { "pass" } else { "vacuous" },
-        &["FR-005-AC-1"],
         json!({
             "fixtures": fixtures.len(),
             "classes": classes,

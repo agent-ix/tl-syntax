@@ -23,6 +23,6 @@ conformance, supply-chain, specification, MSRV, rustdoc, and assurance gates.
 ## Completion Evidence
 
 Every new matrix row has a native trace symbol, every refusal has an accepted
-neighboring control, `corpus/SHA256SUMS` still passes unchanged, strict coverage
+neighboring control, strict coverage
 has no new unbacked implementation row, and the existing full local gate passes
 without dispatching hosted CI.

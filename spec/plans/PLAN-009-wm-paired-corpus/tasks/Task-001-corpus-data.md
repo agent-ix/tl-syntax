@@ -8,9 +8,8 @@ relationships:
     type: part_of
 ---
 
-# Task-001: Add the paired W/M corpus data and digests
+# Task-001: Add the paired W/M corpus data
 
 Add `corpus/future-operators/` with `manifest.json`, `cases.json`, span-free
-expected formula-v1 documents under `expected/`, `SHA256SUMS`, and a README.
-Add the digest check to `make check-corpus`. The existing
+expected formula-v1 documents under `expected/`, and a README. The existing
 `tl-syntax-corpus/v1` corpus is unchanged.

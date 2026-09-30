@@ -29,11 +29,9 @@ Deliver `quire-contract-ir#70` after PR #67: the complete FR-025 strict total-Bo
 
 ## Subtasks
 
-- [x] Merge the accepted FR-025 specification (`quire-contract-ir#67`,
-  `39bffb40f41b7caceaf026f438546b15bf140ce4`).
+- [x] Merge the accepted FR-025 specification (`quire-contract-ir#67`).
 - [x] Publish the strict signal-catalog/proposition-map owner reader surface in
-  `tl-syntax#61` and consume the reconciled owner merge
-  `842d82553f045eb69a7f38745756d968254fc25e`.
+  `tl-syntax#61` and consume the reconciled owner merge.
 - [x] Consume the complete reviewed owner-contract set from Task-010 without
   mirrored wire types, callbacks, or trust flags.
 - [x] Organize implementation as cohesive contract-admission,
@@ -52,12 +50,7 @@ Deliver `quire-contract-ir#70` after PR #67: the complete FR-025 strict total-Bo
 ## Notes
 
 - GitHub owner: `agent-ix/quire-contract-ir#70`.
-- Merged through `quire-contract-ir#77` at
-  `202210cf6339208740299ae4050d6f16908d557e`; issue #70 is closed.
-- Exact owner revisions are QSL `4f404454b3d5cfb78dfdc468c76de85c199191e5`,
-  Quire Observation `9ac80e93f4b68a2c7d5a337f9a448ad10de798fc`,
-  Quire Protocol `36af8d7bb4753ea89f020fe1e5080cef21879b65`, and
-  tl-syntax `842d82553f045eb69a7f38745756d968254fc25e`.
+- Merged through `quire-contract-ir#77`; issue #70 is closed.
 - Exact consumed schema SHA-256 values are checked-predicate
   `459b72a948ddc17be824412b04929fb5795ea033b0bf2aa3f60cf378bc42a531`,
   result-availability

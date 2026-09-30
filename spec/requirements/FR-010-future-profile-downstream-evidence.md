@@ -58,7 +58,7 @@ to a span-free expected formula-v1 document; a directly constructed case shares
 the same document. A primitive-source case binds `tl-parse.clean-ascii/v1` text
 to the compatibility graph the same way. The replay binds spans to the source
 bytes and operator spellings but does not parse; grammar stays with TC-043. Refused and malformed cases declare their typed refusal or
-replay error and produce no document. File digests pin the corpus identity.
+replay error and produce no document.
 The corpus is evidence input replayed through the tl-syntax lowering API: it is
 neither an evaluator nor an editable source language, and it defines no derived
 formula-v1 node.

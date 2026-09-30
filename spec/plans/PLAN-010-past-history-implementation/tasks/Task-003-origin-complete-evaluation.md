@@ -48,7 +48,6 @@ Deliver `tl-mltl#63`: strict histories, exact clock binding, checked history ana
 ## Notes
 
 - GitHub owner: `agent-ix/tl-mltl#63`.
-- Merged implementation: `agent-ix/tl-mltl#64` at
-  `b346cd0902794633e862f644a5575fc9776c34fb`.
+- Merged implementation: `agent-ix/tl-mltl#64`.
 - TC-053 and TC-056 remain globally open only for allocations owned by later
   plan tasks; the complete tl-mltl allocation is delivered here.

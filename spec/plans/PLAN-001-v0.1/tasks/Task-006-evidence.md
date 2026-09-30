@@ -8,8 +8,6 @@ priority: P0
 relationships:
   - target: ix://agent-ix/tl-syntax/PLAN-001
     type: part_of
-  - target: ix://agent-ix/tl-syntax/MP-001
-    type: references
 ---
 # Task-006: Exact-candidate evidence
 

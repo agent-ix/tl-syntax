@@ -19,7 +19,7 @@ relationships:
 
 When the V1 infinite-trace corpus is published, tl-syntax shall retain a
 versioned `tl-syntax.infinite-trace-corpus/v1` manifest, a schema, and
-digest-pinned hand-verified positive and negative cases under `corpus/`.
+hand-verified positive and negative cases under `corpus/`.
 
 ## Inputs
 
@@ -28,7 +28,7 @@ digest-pinned hand-verified positive and negative cases under `corpus/`.
 
 ## Outputs
 
-- Stable case identities and SHA-256 digests for every retained corpus file.
+- Stable case identities.
 - Positive cases with the derivation of each expected verdict beside that
   verdict; negative cases with the exact rejected axis and reason.
 
@@ -42,7 +42,7 @@ mismatches, fairness on a non-lasso trace, malformed loops, and unsupported
 operator/interval combinations. Syntax refusals classify profile, schema,
 operator, interval, fairness, clock, lasso, valuation, and resource axes with
 typed reasons; no wildcard converts an unknown axis to another. A consumer
-reads the corpus through `tl_syntax::CORPUS_DIR` at its pinned revision rather
+reads the corpus through `tl_syntax::CORPUS_DIR` rather
 than vending a copy. The corpus records its independently checked oracle
 reasoning; it does not derive golden verdicts from production evaluation.
 
@@ -50,9 +50,9 @@ reasoning; it does not derive golden verdicts from production evaluation.
 
 | ID | Criteria | Verification |
 |---|---|---|
-| FR-024-AC-1 | Every case has a unique identity, declared schema/profile/clock, expected result or refusal, and human derivation; the manifest digest-verifies every retained corpus file. | Test (TC-160) |
-| FR-024-AC-2 | Each listed positive and negative family has at least one case, and mutating its input, expected axis, verdict, or pinned digest makes replay fail. | Test (TC-161) |
-| FR-024-AC-3 | Downstream consumers resolve the owner corpus through `CORPUS_DIR` at a pinned revision and do not vendor its bytes. | Inspection (TC-162) |
+| FR-024-AC-1 | Every case has a unique identity, declared schema/profile/clock, expected result or refusal, and human derivation. | Test (TC-160) |
+| FR-024-AC-2 | Each listed positive and negative family has at least one case, and mutating its input, expected axis, or verdict makes replay fail. | Test (TC-161) |
+| FR-024-AC-3 | Downstream consumers resolve the owner corpus through `CORPUS_DIR` and do not vendor its bytes. | Inspection (TC-162) |
 
 ## Dependencies
 

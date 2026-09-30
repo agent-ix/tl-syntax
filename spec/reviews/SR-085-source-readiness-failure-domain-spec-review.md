@@ -11,8 +11,7 @@ review_set: all
 
 Candidate substitution, stale producer output, symlink escape, typed decode,
 retention failure, event conflict, supersession topology, partial publication,
-retry and license-authority failures were reviewed at specification commit
-`767dc92a97f1b3d9ffbb76467bdda9ecf2261e40`. The specified state domains are
+retry and license-authority failures were reviewed. The specified state domains are
 closed and non-promoting, with explicit traversal/resource bounds.
 
 ## Findings

@@ -117,7 +117,7 @@ acceptance are:
    rewrite without an admitted equivalence. These two lanes may proceed in
    parallel after the graph/wire contract exists.
 4. `tl-syntax` owns the canonical shared schema/fixture corpus; each consumer
-   owns replay evidence against the exact corpus digest.
+   owns replay evidence.
 5. Target adapters own target-specific mappings and loss reports;
    `quire-contract-ir` owns the separately reviewed native Quire
    clock/capture/predicate correspondence into this canonical graph.

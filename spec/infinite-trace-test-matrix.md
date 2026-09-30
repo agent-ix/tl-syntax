@@ -50,9 +50,9 @@ API and passes; an ignored placeholder is not coverage.
 | TC-157 | Preserve each of four partial-valuation states and stable order | Property | P0 | FR-023-AC-1 | ✅ implemented |
 | TC-158 | Refuse unknown, duplicate, omitted, or unordered valuation entries | Property | P0 | FR-023-AC-2 | ✅ implemented |
 | TC-159 | Keep missing distinct from conflicting with no Boolean coercion | Unit | P0 | FR-023-AC-3 | ✅ implemented |
-| TC-160 | Verify manifest identities, human oracle derivations, schemas, and file digests | Integration | P0 | FR-024-AC-1 | ✅ implemented |
-| TC-161 | Replay each positive/negative family and fail under input, oracle, or digest mutation | Integration | P0 | FR-024-AC-2 | ✅ implemented |
-| TC-162 | Inspect pinned downstream `CORPUS_DIR` use and absence of vendored copies | Inspection | P1 | FR-024-AC-3 | 🚧 planned |
+| TC-160 | Verify manifest identities, human oracle derivations, and schemas | Integration | P0 | FR-024-AC-1 | ✅ implemented |
+| TC-161 | Replay each positive/negative family and fail under input or oracle mutation | Integration | P0 | FR-024-AC-2 | ✅ implemented |
+| TC-162 | Inspect downstream `CORPUS_DIR` use and absence of vendored copies | Inspection | P1 | FR-024-AC-3 | 🚧 planned |
 
 ## Integration Test Matrix
 

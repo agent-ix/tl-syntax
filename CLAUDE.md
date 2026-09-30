@@ -13,7 +13,7 @@ make build            # release build
 make clean            # cargo clean
 make deny             # cargo-deny advisories, bans, licenses, and sources
 make audit-unsafe     # enforce the unsafe-code policy guard
-make check-corpus     # corpus digests, schemas, derived oracles, and their mutation probe
+make check-corpus     # corpus schemas, derived oracles, and their mutation probe
 make conformance      # replay the shared temporal corpus through the crate
 make spec             # validate the specification with Quire
 make msrv             # test every target and feature at Rust 1.98.1
@@ -32,15 +32,7 @@ which remains a human decision.
 
 ## Assurance
 
-This repository retains no evidence. The 23 `quire.derivation-evidence/v1`
-records its pre-migration collector wrote, the two schemas frozen because those
-records named them by digest, and the read-only compatibility view over them
-were all deleted under
-[issue #12](https://github.com/agent-ix/tl-syntax/issues/12), on the
-preservation constraint `agent-ix/engineering-assurance#7` released for the
-pre-stable phase. Deleted, not rewritten — no claim that historical evidence
-still verifies survives them. The constraint re-applies at the move toward
-stable releases.
+This repository retains no evidence.
 
 ## Safety scaffolding
 
@@ -51,8 +43,7 @@ Backported from `agent-ix/ecaz`:
 - `scripts/check_unsafe_comments.sh` runs in CI and locally via `make audit-unsafe`. Every `unsafe {` block must have a `// SAFETY:` comment within the 3 preceding lines, or be listed in `scripts/unsafe_comment_baseline.txt`. Update the baseline with `bash scripts/check_unsafe_comments.sh --update-baseline`.
 - `rustfmt.toml` uses only stable 100-character-width settings.
 - `Cargo.toml` declares Rust 1.98.1 as the MSRV; `make msrv` checks every target
-  and feature at that version while `rust-toolchain.toml` pins the same exact
-  version for rustfmt and clippy.
+  and feature at that version.
 
 ## Layout
 
@@ -65,8 +56,8 @@ examples/corpus_conformance.rs # the domain conformance runner over the shared c
 tests/integration.rs           # end-to-end domain tests
 tests/future_lowering.rs       # FR-008 traced lowering and refusal tests
 tests/future_operator_corpus.rs # TC-074 replay of the paired W/M corpus
-corpus/                        # pinned formula schemas, fixtures, traces, and oracles
-corpus/future-operators/       # digest-pinned paired W/M source and canonical-graph corpus
+corpus/                        # formula schemas, fixtures, traces, and oracles
+corpus/future-operators/       # paired W/M source and canonical-graph corpus
 spec/                          # requirements, plans, reviews, and the test matrix
 scripts/                       # domain gates
 ```

@@ -62,12 +62,11 @@ native-owner/bridge Cargo graph acyclic.
 
 ## Notes
 
-- Shared semantic authority merged through `quire-specification#44` at
-  `983b0b28c479241fb066cbe4db3fc0980362de36`; it is a normative specification
+- Shared semantic authority merged through `quire-specification#44`; it is a normative specification
   owner and intentionally publishes no runtime parser or duplicate wire crate.
 - Existing tickets include `quire-specification#31/#40`, `quire-spec-language#90`,
   completed `quire-observation#15`, and `quire-protocol#8`; the FR-042 portion
-  of the last merged through `quire-protocol#51` at `36af8d7b`, while #8 stays
+  of the last merged through `quire-protocol#51`, while #8 stays
   open for broader Plan-001 acceptance. Task-008 may split additional repository
   tickets where ownership requires separate merge order.
 - QProtocol handoff: result contract `quire.protocol.result/v1-draft.1`, schema
@@ -83,8 +82,7 @@ native-owner/bridge Cargo graph acyclic.
   Protocol contract or introducing a dependency cycle.
 - The corrective owner implementation is tracked by
   `agent-ix/quire-spec-language#95` and merged through
-  `agent-ix/quire-spec-language#96` at
-  `c29153388b4f06d464f9a1daf949c5dc950fd832`.
+  `agent-ix/quire-spec-language#96`.
 - QSL native temporal handoff: request contract
   `quire.native-temporal-request/v1`, schema SHA-256
   `2539140ff1f6fb5e481e5ae658b81c325a284bfcd85cc5c048ea1d49c4dfdebe`;

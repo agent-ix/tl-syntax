@@ -13,14 +13,11 @@ through the tl-syntax lowering API (`Formula::new` and
 ## Files
 
 - `manifest.json` names the corpus, operator-profile, request, formula-schema,
-  derived-dialect, and primitive-dialect identities and the tl-parse revision
-  the source cases were cross-checked against, and pins every replayed file by
-  SHA-256. The test pins the manifest digest.
+  derived-dialect, and primitive-dialect identities.
 - `cases.json` holds every case.
 - `expected/*.json` are span-free canonical formula-v1 documents. Each one is
   shared by one source case (derived or primitive) and one directly constructed
   case.
-- `SHA256SUMS` repeats the digests for `make check-corpus`.
 
 ## Case classes
 
@@ -45,14 +42,13 @@ through the tl-syntax lowering API (`Formula::new` and
   `tl-parse.clean-ascii/v1`.
 
 Source spans and lowering records were checked against `tl-parse` `parse`
-and `parse_clean_ascii_v2` at `9ca856b`, the revision `manifest.json` records.
+and `parse_clean_ascii_v2`.
 tl-syntax does not depend on tl-parse, so the replay does not re-run the parser.
 It binds every span to the source bytes and operator spellings, but precedence,
 associativity, and grouping remain tl-parse grammar rules owned by TC-043.
 
 ## Changing the corpus
 
-Edit the case or document, update its digest in `manifest.json` and
-`SHA256SUMS`, then update `MANIFEST_SHA256` in the test. The mutation controls
+Edit the case or document. The mutation controls
 in the test show that a changed expectation without a matching graph turns the
 replay red.

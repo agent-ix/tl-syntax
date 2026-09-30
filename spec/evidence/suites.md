@@ -11,8 +11,8 @@ type: SuiteRegistry
 | ID | Name | Command | Tool | Evidence Kind |
 |---|---|---|---|---|
 | SUITE-001 | Shared temporal corpus conformance | `cargo run --example corpus_conformance --features serde -- --manifest corpus/manifest.json` | tl-syntax corpus conformance runner (the crate itself) | Integration |
-| SUITE-002 | Strict specification validation | `quire validate --scope . 'spec/**/*.md' --strict --summary` | quire 0.31.0 / quire-rs 0.46.0 | Analysis |
-| SUITE-003 | Static specification and coverage export | `quire coverage --scope . --json` | quire 0.31.0 / quire-rs 0.46.0 | Static |
+| SUITE-002 | Strict specification validation | `quire validate --scope . 'spec/**/*.md' --strict --summary` | quire | Analysis |
+| SUITE-003 | Static specification and coverage export | `quire coverage --scope . --json` | quire | Static |
 | SUITE-004 | Public API documentation | `RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --all-features` | rustdoc | Static |
 | SUITE-005 | Corpus schema, derived horizon, and closed-trace oracle | `python3 scripts/validate_corpus.py` | Python jsonschema Draft 7, tl-syntax corpus oracle | Analysis |
 | SUITE-009 | Source-readiness property and state-model tests | `cargo test --test source_readiness_properties --all-features` | planned Rust proptest/state-machine harness | Property |

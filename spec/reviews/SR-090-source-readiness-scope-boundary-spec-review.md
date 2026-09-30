@@ -9,8 +9,7 @@ review_set: all
 
 ## Summary
 
-The owner ruling and per-lane notice were applied at specification commit
-`767dc92a97f1b3d9ffbb76467bdda9ecf2261e40`. Native Quire is the sole editable
+The owner ruling and per-lane notice were applied. Native Quire is the sole editable
 formal-clause source profile. tl-syntax owns parser-independent Rust syntax
 values and local source-readiness projection only; shared compatibility,
 retention, qualification and human authority remain with their declared owners.

@@ -50,8 +50,6 @@ review_policy:
 relationships:
   - target: ix://agent-ix/tl-syntax/MRS-004
     type: governs
-  - target: ix://agent-ix/tl-syntax/AP-001
-    type: references
   - target: ix://agent-ix/tl-syntax/NFR-005
     type: governs
 ---
@@ -61,7 +59,7 @@ relationships:
 ## Decision Boundary
 
 This profile prepares a human source-release decision for one exact Rust source
-candidate and configuration. It extends rather than rewrites AP-001. It does not
+candidate and configuration. It does not
 qualify the native Quire language, a generated MLTL formula, a parser/evaluator/
 rewriter/monitor, crates.io publication, a consuming system or an integrator's
 intended use.

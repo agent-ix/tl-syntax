@@ -9,8 +9,7 @@ review_set: all
 
 ## Summary
 
-The complete M6 source-readiness profile was reviewed at specification commit
-`767dc92a97f1b3d9ffbb76467bdda9ecf2261e40`. Quire validated 120/120 documents
+The complete M6 source-readiness profile was reviewed. Quire validated 120/120 documents
 with zero grammar findings. The profile treats tl-syntax only as internal Rust
 syntax/evaluator infrastructure: native Quire remains the sole editable formal-
 clause language, and every downstream package or qualification decision remains
