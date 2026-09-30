@@ -12,7 +12,7 @@ Positions are discrete event positions. A lasso with prefix `u` and nonempty
 loop `v` denotes `u·vʷ`. A `missing` valuation permits either Boolean value;
 `conflicting` records incompatible evidence and is never treated as missing.
 The one fairness form in V1 asks that its referenced formula hold infinitely
-often. `SHA256SUMS` and `manifest.json` pin the retained bytes.
+often.
 
 Cases without `subject_kind` select the complete lasso. The
 `finite-prefix-globally-inconclusive` case selects only the materialized prefix
@@ -21,4 +21,4 @@ subject. This makes the scope difference explicit without minting a finite-prefi
 wire edition in tl-syntax.
 
 This corpus is test input. It is not a language authority or a production
-oracle. Consumers use `tl_syntax::CORPUS_DIR` at their pinned tl-syntax revision.
+oracle. Consumers use `tl_syntax::CORPUS_DIR`.

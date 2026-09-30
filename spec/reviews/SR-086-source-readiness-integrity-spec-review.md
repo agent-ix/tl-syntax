@@ -10,8 +10,7 @@ review_set: all
 ## Summary
 
 The requirements, closed vocabularies, acceptance criteria, integration
-scenarios and matrix were cross-checked at specification commit
-`767dc92a97f1b3d9ffbb76467bdda9ecf2261e40`. All review-owned cardinality,
+scenarios and matrix were cross-checked. All review-owned cardinality,
 atomicity, transition, decode and failure-mapping findings were corrected before
 this artifact was authored. The planned rows remain truthfully unbacked.
 

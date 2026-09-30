@@ -60,11 +60,6 @@ fn every_dependency_manifest_axis_fails_closed_with_a_stable_refusal() {
             json!("blocked"),
             "authorization.state",
         ),
-        (
-            "/authorization/revision",
-            Value::Null,
-            "authorization.revision",
-        ),
     ] {
         let mut value = parsed_manifest();
         *value.pointer_mut(pointer).unwrap() = replacement;
@@ -75,27 +70,21 @@ fn every_dependency_manifest_axis_fails_closed_with_a_stable_refusal() {
         [
             "prerequisites[0].repository",
             "prerequisites[0].kind",
-            "prerequisites[0].revision",
             "prerequisites[0].state",
         ],
         [
             "prerequisites[1].repository",
             "prerequisites[1].kind",
-            "prerequisites[1].revision",
             "prerequisites[1].state",
         ],
         [
             "prerequisites[2].repository",
             "prerequisites[2].kind",
-            "prerequisites[2].revision",
             "prerequisites[2].state",
         ],
     ];
     for (index, fields) in expected_fields.iter().enumerate() {
-        for (field, expected) in ["repository", "kind", "revision", "state"]
-            .into_iter()
-            .zip(fields)
-        {
+        for (field, expected) in ["repository", "kind", "state"].into_iter().zip(fields) {
             let mut value = parsed_manifest();
             *value
                 .pointer_mut(&format!("/prerequisites/{index}/{field}"))

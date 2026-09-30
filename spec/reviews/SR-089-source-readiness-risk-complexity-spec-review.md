@@ -9,8 +9,7 @@ review_set: all
 
 ## Summary
 
-The M6 profile was assessed at specification commit
-`767dc92a97f1b3d9ffbb76467bdda9ecf2261e40`. Its highest-risk seams are mutable
+The M6 profile was assessed. Its highest-risk seams are mutable
 source identity, external-process freshness, review/event concurrency, durable
 retention, and atomic package publication. The specification bounds these seams
 and requires load-bearing negative mutations before evidence admission.

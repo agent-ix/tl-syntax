@@ -9,8 +9,7 @@ review_set: all
 
 ## Summary
 
-Quoin's catalog advisor evaluated 100 obligations at specification commit
-`767dc92a97f1b3d9ffbb76467bdda9ecf2261e40`. It reported no M6 mismatch,
+Quoin's catalog advisor evaluated 100 obligations. It reported no M6 mismatch,
 uncatalogued obligation or inconclusive recommendation. TM-004 allocates every
 new criterion to TC-059 through TC-073 and SUITE-009 through SUITE-013 without
 claiming that the planned producers exist.

@@ -38,11 +38,8 @@ specification-only M6 PR after the current-main integration.
 
 ## Assurance Context
 
-- **Profiles:** AP-001 and proposed AP-002, both profile version 0.2; AP-002
+- **Profiles:** proposed AP-002; AP-002
   requires specification review, independent code review and gap analysis.
-- **Baseline:** PR #39 head `7a3d15b27436155f42e693b44b1a2f98e2ae9902`
-  over `origin/main` `5b1c134`; reviewed executable candidate `9598fea` plus
-  the final review/task-status record.
 - **Impact evaluated:** live-source omission, candidate/configuration
   substitution, automated authority promotion and limitation loss.
 - **Decision boundary:** the PR defines M6 and its routing only. It implements

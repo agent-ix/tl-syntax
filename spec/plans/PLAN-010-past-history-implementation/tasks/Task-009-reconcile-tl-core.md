@@ -63,8 +63,3 @@ model while preserving every accepted wire identity and compatibility promise.
   own sake.
 - GitHub trackers: `tl-syntax#65`, `tl-parse#38`, `tl-mltl#66`, and
   `tl-rewrite#41`.
-- Exact promoted revisions: tl-syntax
-  `842d82553f045eb69a7f38745756d968254fc25e`, tl-parse
-  `2bc030dae8fdb30c9ddc967434c6c9902a3905dc`, tl-mltl
-  `22862189ac4eb515ab84928faec25b2eac47d835`, and tl-rewrite
-  `c416951281c34e2b9d30187d401605f30f34a18b`.

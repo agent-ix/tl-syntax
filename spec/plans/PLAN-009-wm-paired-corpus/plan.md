@@ -35,9 +35,8 @@ lands after them.
    TM-002 and FR-010, and move the TM-002 paired-corpus cells from TC-045 to
    TC-074.
 2. Add `corpus/future-operators/` with a manifest, cases, span-free expected
-   formula-v1 documents, and a `SHA256SUMS` file; add its digest check to
-   `make check-corpus`.
-3. Add `tests/future_operator_corpus.rs`: verify digests, bind source spans to
+   formula-v1 documents.
+3. Add `tests/future_operator_corpus.rs`: bind source spans to
    source text, build derived and direct documents through `Formula::new` and
    `FutureLoweringRequest::lower`, compare them with the shared expectation,
    replay refused and malformed cases, and run the mutation controls.

@@ -35,8 +35,7 @@ Deliver `tl-rewrite#38`: only reviewed past-profile equivalences, profile preser
 ## Notes
 
 - GitHub owner: `agent-ix/tl-rewrite#38`.
-- Completed by `agent-ix/tl-rewrite#39` at merge revision
-  `22b9cadcb1692cec8d3a97768f4f3b38fc654a5e`.
+- Completed by `agent-ix/tl-rewrite#39`.
 - The tl-rewrite allocation of TC-056 is complete. Canonical shared-corpus
   publication and exact consumer replay remain with dependent Task-005; native
   allocations remain with Tasks 006 and 007.

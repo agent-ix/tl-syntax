@@ -9,8 +9,7 @@ review_set: all
 
 ## Summary
 
-At `33678fa`, using spec-artifacts-process
-`737987b7131938203c2bda0f153f4bf15e8818bd`, Quoin advised on 48 M6
+Quoin advised on 48 M6
 obligations with zero mismatches, zero uncatalogued methods and zero
 inconclusive recommendations. Quire coverage is 84/162 repository rows backed
 and 0/15 for TM-004, exactly matching the planned state. Rust trace authoring

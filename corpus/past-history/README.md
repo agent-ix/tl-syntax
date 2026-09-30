@@ -8,13 +8,10 @@ semantic authority and not qualification output.
 origin-complete event and fixed-sample histories, anchored outcomes,
 required-history bounds, correction identities, rewrite expectations, refusal
 classes, and closed external-target dispositions. `schema.json` is closed at
-every record boundary. `manifest.json` pins the exact implementation revisions
-and every replay file; `SHA256SUMS` provides the same file-integrity boundary to
-non-Rust consumers.
+every record boundary.
 
-Consumers read this corpus in place through `tl_syntax::CORPUS_DIR` and pin
-the manifest digest in their own replay evidence rather than copying the
-files. `tl-mltl` is confirmed to consume it this way; its native replay tests
+Consumers read this corpus in place through `tl_syntax::CORPUS_DIR` rather
+than copying the files. `tl-mltl` is confirmed to consume it this way; its native replay tests
 consume only the fields owned by that component and still validate the
 complete closed corpus shape.
 

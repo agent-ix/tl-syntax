@@ -9,8 +9,7 @@ review_set: all
 
 ## Summary
 
-Quire strict validation and a semantic EARS/atomicity pass were run against
-specification commit `767dc92a97f1b3d9ffbb76467bdda9ecf2261e40`.
+Quire strict validation and a semantic EARS/atomicity pass were run.
 Event, state, unwanted-condition and optional-feature triggers match their
 intended semantics; accountable subjects, observable responses and separately
 scoped obligations remain explicit.

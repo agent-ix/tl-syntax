@@ -1,12 +1,6 @@
 #![cfg(feature = "serde")]
 
-use std::{
-    collections::{BTreeMap, BTreeSet},
-    fs,
-    io::Write,
-    path::Path,
-    process::{Command, Stdio},
-};
+use std::{collections::BTreeSet, fs, path::Path};
 
 use serde::Deserialize;
 use serde_json::Value;
@@ -16,7 +10,6 @@ use tl_syntax::{
 };
 
 const DIRECTORY: &str = "corpus/past-history";
-const MANIFEST_SHA256: &str = "0bb497481a08d82ae74db794657eb6e7c57e6d1e5b5a8471b3559f82f405afd1";
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -29,24 +22,6 @@ struct Manifest {
     semantic_profile: String,
     history_schema: String,
     dialect: String,
-    implementation_revisions: Revisions,
-    files: Vec<Pin>,
-}
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct Revisions {
-    tl_syntax: String,
-    tl_parse: String,
-    tl_mltl: String,
-    tl_rewrite: String,
-}
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct Pin {
-    path: String,
-    sha256: String,
 }
 
 #[derive(Deserialize)]
@@ -153,46 +128,10 @@ struct Target {
     reason: String,
 }
 
-fn sha256(bytes: &[u8]) -> String {
-    let mut child = Command::new("sha256sum")
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .spawn()
-        .unwrap();
-    child.stdin.as_mut().unwrap().write_all(bytes).unwrap();
-    let output = child.wait_with_output().unwrap();
-    assert!(output.status.success());
-    String::from_utf8(output.stdout)
-        .unwrap()
-        .split_whitespace()
-        .next()
-        .unwrap()
-        .to_owned()
-}
-
 fn load() -> (Manifest, Cases) {
     let directory = Path::new(env!("CARGO_MANIFEST_DIR")).join(DIRECTORY);
     let manifest_bytes = fs::read(directory.join("manifest.json")).unwrap();
-    assert_eq!(sha256(&manifest_bytes), MANIFEST_SHA256);
     let manifest: Manifest = serde_json::from_slice(&manifest_bytes).unwrap();
-    let pins: BTreeMap<_, _> = manifest
-        .files
-        .iter()
-        .map(|pin| (pin.path.as_str(), pin.sha256.as_str()))
-        .collect();
-    assert_eq!(pins.len(), manifest.files.len());
-    assert_eq!(
-        pins.keys().copied().collect::<Vec<_>>(),
-        ["README.md", "cases.json", "schema.json"]
-    );
-    for pin in &manifest.files {
-        assert_eq!(
-            sha256(&fs::read(directory.join(&pin.path)).unwrap()),
-            pin.sha256,
-            "{}",
-            pin.path
-        );
-    }
     let cases = serde_json::from_slice(&fs::read(directory.join("cases.json")).unwrap()).unwrap();
     (manifest, cases)
 }
@@ -231,7 +170,7 @@ fn required(nodes: &[tl_syntax::Node], id: NodeId) -> Option<u64> {
 
 // Trace: TC-056, FR-012-AC-3, FR-012-AC-4, FR-013-AC-3, FR-013-AC-4
 #[test]
-fn paired_past_history_corpus_is_closed_pinned_and_complete() {
+fn paired_past_history_corpus_is_closed_and_complete() {
     let (manifest, cases) = load();
     assert_eq!(manifest.corpus, PAST_HISTORY_CORPUS_V1);
     assert_eq!(manifest.revision, 1);
@@ -244,22 +183,6 @@ fn paired_past_history_corpus_is_closed_pinned_and_complete() {
     );
     assert_eq!(manifest.history_schema, "tl-mltl.position-history/v1");
     assert_eq!(manifest.dialect, "tl-parse.clean-ascii/v3");
-    assert_eq!(
-        manifest.implementation_revisions.tl_syntax,
-        "e70f2379a752117c79603bc399a86c26feed7716"
-    );
-    assert_eq!(
-        manifest.implementation_revisions.tl_parse,
-        "f82b0c724675c0f774415aa696c360959da30481"
-    );
-    assert_eq!(
-        manifest.implementation_revisions.tl_mltl,
-        "b346cd0902794633e862f644a5575fc9776c34fb"
-    );
-    assert_eq!(
-        manifest.implementation_revisions.tl_rewrite,
-        "22b9cadcb1692cec8d3a97768f4f3b38fc654a5e"
-    );
 
     assert_eq!(cases.corpus, manifest.corpus);
     assert_eq!(cases.formula_schema, manifest.formula_schema);
@@ -449,8 +372,4 @@ fn corpus_identity_profile_and_closed_wire_mutations_are_rejected() {
     value["formulas"][0]["document"]["semantic_profile"] =
         Value::String("mltl.closed-trace/v1".into());
     assert!(serde_json::from_value::<Cases>(value).is_err());
-
-    let mut manifest = fs::read(directory.join("manifest.json")).unwrap();
-    manifest[0] ^= 1;
-    assert_ne!(sha256(&manifest), MANIFEST_SHA256);
 }

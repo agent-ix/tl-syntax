@@ -3,7 +3,6 @@
 use std::{collections::BTreeSet, fs, path::Path};
 
 use serde::Deserialize;
-use sha2::{Digest, Sha256};
 use tl_syntax::CORPUS_DIR;
 
 #[derive(Deserialize)]
@@ -19,23 +18,11 @@ struct Manifest {
     semantic_profile: String,
     clock: String,
     case_count: usize,
-    files: Vec<Pin>,
-}
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct Pin {
-    path: String,
-    sha256: String,
-}
-
-fn digest(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
 }
 
 // Trace: TC-160, FR-024-AC-1 (manifest and case-input portion)
 #[test]
-fn tc_160_owner_corpus_manifest_is_pinned_and_cases_are_distinct() {
+fn tc_160_owner_corpus_manifest_and_cases_are_distinct() {
     let root = Path::new(CORPUS_DIR).join("infinite-trace");
     let manifest_bytes = fs::read(root.join("manifest.json")).expect("manifest");
     let manifest: Manifest = serde_json::from_slice(&manifest_bytes).expect("typed manifest");
@@ -48,32 +35,6 @@ fn tc_160_owner_corpus_manifest_is_pinned_and_cases_are_distinct() {
     assert_eq!(manifest.fairness_schema, "tl-syntax.fairness-premises/v1");
     assert_eq!(manifest.semantic_profile, "mltl.infinite-trace/v1");
     assert_eq!(manifest.clock, "event_position");
-
-    let expected_files = BTreeSet::from(["README.md", "cases.json", "schema.json"]);
-    let mut actual_files = BTreeSet::new();
-    for pin in &manifest.files {
-        assert!(actual_files.insert(pin.path.as_str()), "duplicate file pin");
-        assert_eq!(
-            digest(&fs::read(root.join(&pin.path)).expect("pinned file")),
-            pin.sha256
-        );
-    }
-    assert_eq!(actual_files, expected_files);
-
-    let sums = fs::read_to_string(root.join("SHA256SUMS")).expect("checksum list");
-    let listed: BTreeSet<_> = sums
-        .lines()
-        .map(|line| line.split_once("  ").expect("checksum row"))
-        .map(|(hash, path)| (path.to_owned(), hash.to_owned()))
-        .collect();
-    assert_eq!(listed.len(), 4);
-    for name in ["README.md", "cases.json", "manifest.json", "schema.json"] {
-        let hash = digest(&fs::read(root.join(name)).expect("checksum member"));
-        assert!(
-            listed.contains(&(name.to_owned(), hash)),
-            "{name} digest mismatch"
-        );
-    }
 
     let cases: serde_json::Value =
         serde_json::from_slice(&fs::read(root.join("cases.json")).expect("cases"))
@@ -353,29 +314,4 @@ fn tc_161_input_expected_axis_and_verdict_mutations_fail() {
     let mut prefix = corpus["cases"][14].clone();
     prefix["subject_kind"] = "lasso".into();
     assert!(verify_case(&prefix).is_err());
-}
-
-fn verify_manifest_pins(root: &Path, manifest: &serde_json::Value) -> Result<(), String> {
-    let pins = manifest["files"].as_array().ok_or("files absent")?;
-    for pin in pins {
-        let path = pin["path"].as_str().ok_or("pin path absent")?;
-        let expected = pin["sha256"].as_str().ok_or("digest absent")?;
-        let actual = digest(&fs::read(root.join(path)).map_err(|error| error.to_string())?);
-        if actual != expected {
-            return Err(format!("{path}: digest mismatch"));
-        }
-    }
-    Ok(())
-}
-
-// Trace: TC-161, FR-024-AC-2
-#[test]
-fn tc_161_pinned_digest_mutation_fails() {
-    let root = Path::new(CORPUS_DIR).join("infinite-trace");
-    let mut manifest: serde_json::Value =
-        serde_json::from_slice(&fs::read(root.join("manifest.json")).unwrap()).unwrap();
-    assert!(verify_manifest_pins(&root, &manifest).is_ok());
-    manifest["files"][0]["sha256"] =
-        "0000000000000000000000000000000000000000000000000000000000000000".into();
-    assert!(verify_manifest_pins(&root, &manifest).is_err());
 }

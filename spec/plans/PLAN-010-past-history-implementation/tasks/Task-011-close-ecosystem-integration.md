@@ -57,11 +57,8 @@ epic #52 only when every planned feature and architecture repair is merged.
 - This is implementation integration and model export, not an external
   qualification campaign or self-certification claim.
 - Model-export tracker: `quire-contract-ir#74`.
-- Contract IR PR #79 merged the complete PLAN-007/FR-027 implementation. Its
-  promoted implementation revision is
-  `0c450731626f40fd90c99e787cc0f7f5e053904c`; PR #80 reconciled the exact
-  self-selection after the required rebase merge, leaving final reviewed main
-  at `4d139309bc86b3d698cc73404356900e904d43be`.
+- Contract IR PR #79 merged the complete PLAN-007/FR-027 implementation. PR #80
+  reconciled the exact self-selection after the required rebase merge.
 - `ecosystem_model::{manifest::read, export, read}` strict-read the exact
   nine-repository campaign and export/re-read the bounded descriptive model.
   The immutable manifest and model schema SHA-256 digests are respectively

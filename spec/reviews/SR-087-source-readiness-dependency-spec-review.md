@@ -9,8 +9,7 @@ review_set: all
 
 ## Summary
 
-The M6 dependency graph was checked for ownership and cycles at specification
-commit `767dc92a97f1b3d9ffbb76467bdda9ecf2261e40`. Local work orders executable-
+The M6 dependency graph was checked for ownership and cycles. Local work orders executable-
 path classification before source binding, stage preservation and human
 decision admission; package publication follows all of them. External
 enablement remains separate from feature implementation.

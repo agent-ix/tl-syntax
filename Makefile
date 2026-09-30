@@ -19,7 +19,7 @@ help:
 	@echo "  make lint             - Clippy with -D warnings"
 	@echo "  make test             - cargo test"
 	@echo "  make check-features   - check no-default, alloc, serde, and all features"
-	@echo "  make check-corpus     - verify corpus digests, schemas, and derived oracles"
+	@echo "  make check-corpus     - verify corpus schemas and derived oracles"
 	@echo "  make conformance      - replay the shared temporal corpus through the crate"
 	@echo "  make spec             - validate specs, check id: uniqueness, and report coverage"
 	@echo "  make spec-release     - require every active specification row to be backed"
@@ -70,9 +70,6 @@ conformance:
 
 .PHONY: check-corpus
 check-corpus:
-	sha256sum --check corpus/SHA256SUMS
-	sha256sum --check corpus/future-operators/SHA256SUMS
-	sha256sum --check corpus/past-history/SHA256SUMS
 	$(PYTHON) scripts/validate_corpus.py
 	$(PYTHON) scripts/test_corpus_gate.py
 

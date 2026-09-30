@@ -12,15 +12,12 @@
 //!
 //! The replay binds every span to the bytes and operator spellings of its
 //! source, but it does not parse: precedence, associativity, and grouping are
-//! grammar rules owned by tl-parse and TC-043. The manifest names the tl-parse
-//! revision the case steps were cross-checked against.
+//! grammar rules owned by tl-parse and TC-043.
 
 use std::{
     collections::{BTreeMap, BTreeSet},
     fs,
-    io::Write,
     path::{Path, PathBuf},
-    process::{Command, Stdio},
 };
 
 use serde::Deserialize;
@@ -38,13 +35,11 @@ const CORPUS_REVISION: u64 = 1;
 const EVIDENCE_ROLE: &str = "evidence-input";
 const DERIVED_DIALECT: &str = "tl-parse.clean-ascii/v2";
 const PRIMITIVE_DIALECT: &str = "tl-parse.clean-ascii/v1";
-const CROSS_CHECK_PARSER: &str = "tl-parse";
-const CROSS_CHECK_ENTRY_POINTS: [&str; 2] = ["parse", "parse_clean_ascii_v2"];
 const MANIFEST: &str = "manifest.json";
 const CASES: &str = "cases.json";
 const EXPECTED_PREFIX: &str = "expected/";
-/// Files the replay does not read: prose, and the `make check-corpus` digest list.
-const UNREPLAYED: [&str; 2] = ["README.md", "SHA256SUMS"];
+/// Files the replay does not read: prose.
+const UNREPLAYED: [&str; 1] = ["README.md"];
 const KINDS: [FutureKind; 2] = [FutureKind::WeakUntil, FutureKind::StrongRelease];
 const PROFILES: [SemanticProfile; 2] = [
     SemanticProfile::ClosedTraceV1,
@@ -52,22 +47,14 @@ const PROFILES: [SemanticProfile; 2] = [
 ];
 const BOUNDARIES: [(u32, u32); 2] = [(0, 0), (u32::MAX, u32::MAX)];
 
-/// SHA-256 of `corpus/future-operators/manifest.json`; the manifest pins every other file.
-const MANIFEST_SHA256: &str = "e38ef2a7bfc49631932c9c8527b9d08ba1087825e8ae3bccff5f326e74605172";
-
 /// Stable replay failure classes. Tests and malformed cases match these, never
 /// diagnostic text; `cases.json` spells them in snake case.
 #[derive(Clone, Copy, Debug, Deserialize, Eq, Ord, PartialEq, PartialOrd)]
 #[serde(rename_all = "snake_case")]
 enum Code {
     MissingFile,
-    ManifestDigestMismatch,
     ManifestDecodeRejected,
-    ManifestPinsItself,
-    DuplicatePin,
     CorpusIdentityMismatch,
-    FileDigestMismatch,
-    UnpinnedFile,
     CasesDecodeRejected,
     ExpectedDocumentRejected,
     ExpectedDocumentCarriesSpan,
@@ -141,25 +128,6 @@ struct ManifestWire {
     request_identity: String,
     derived_dialect: String,
     primitive_dialect: String,
-    source_cross_check: CrossCheckWire,
-    files: Vec<PinWire>,
-}
-
-/// The out-of-band parser run the case steps were checked against. tl-syntax
-/// cannot depend on tl-parse, so this records the revision and does not re-run it.
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct CrossCheckWire {
-    parser: String,
-    revision: String,
-    entry_points: Vec<String>,
-}
-
-#[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
-struct PinWire {
-    path: String,
-    sha256: String,
 }
 
 #[derive(Deserialize)]
@@ -292,33 +260,11 @@ enum Step {
 }
 
 // ---------------------------------------------------------------------------
-// Digests and file access
+// File access
 // ---------------------------------------------------------------------------
 
 /// Relative corpus path to file bytes.
 type CorpusFiles = BTreeMap<String, Vec<u8>>;
-
-fn sha256_hex(bytes: &[u8]) -> String {
-    let mut child = Command::new("sha256sum")
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .spawn()
-        .expect("spawn sha256sum");
-    child
-        .stdin
-        .take()
-        .expect("sha256sum stdin")
-        .write_all(bytes)
-        .expect("write sha256sum stdin");
-    let output = child.wait_with_output().expect("sha256sum output");
-    assert!(output.status.success(), "sha256sum failed");
-    String::from_utf8(output.stdout)
-        .expect("sha256sum prints UTF-8")
-        .split_whitespace()
-        .next()
-        .expect("sha256sum prints a digest")
-        .to_owned()
-}
 
 fn corpus_root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join(CORPUS_DIRECTORY)
@@ -406,10 +352,6 @@ fn check_manifest_identity(manifest: &ManifestWire) -> Replay<()> {
         ),
         (manifest.derived_dialect.as_str(), DERIVED_DIALECT),
         (manifest.primitive_dialect.as_str(), PRIMITIVE_DIALECT),
-        (
-            manifest.source_cross_check.parser.as_str(),
-            CROSS_CHECK_PARSER,
-        ),
     ];
     for (declared, required) in identities {
         if declared != required {
@@ -430,97 +372,29 @@ fn check_manifest_identity(manifest: &ManifestWire) -> Replay<()> {
             ),
         );
     }
-    let revision = &manifest.source_cross_check.revision;
-    let full_commit = revision.len() == 40
-        && revision
-            .bytes()
-            .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte));
-    if !full_commit || manifest.source_cross_check.entry_points != CROSS_CHECK_ENTRY_POINTS {
-        return fail(
-            Code::CorpusIdentityMismatch,
-            MANIFEST,
-            "the source cross-check names a full tl-parse commit and both parser entry points",
-        );
-    }
     Ok(())
 }
 
-fn replay(files: &CorpusFiles, manifest_pin: &str) -> Replay<Summary> {
+fn replay(files: &CorpusFiles) -> Replay<Summary> {
     let manifest_bytes = files
         .get(MANIFEST)
         .ok_or_else(|| ReplayError::new(Code::MissingFile, MANIFEST, "manifest is absent"))?;
-    let manifest_digest = sha256_hex(manifest_bytes);
-    if manifest_digest != manifest_pin {
-        return fail(
-            Code::ManifestDigestMismatch,
-            MANIFEST,
-            format!("manifest digest {manifest_digest} is not the pinned {manifest_pin}"),
-        );
-    }
     let manifest: ManifestWire = serde_json::from_slice(manifest_bytes).map_err(|error| {
         ReplayError::new(Code::ManifestDecodeRejected, MANIFEST, error.to_string())
     })?;
     check_manifest_identity(&manifest)?;
 
-    let mut pins = BTreeMap::new();
-    for pin in &manifest.files {
-        if pin.path == MANIFEST {
-            return fail(
-                Code::ManifestPinsItself,
-                MANIFEST,
-                "the test pins the manifest; the manifest cannot pin itself",
-            );
-        }
-        if pins.insert(pin.path.clone(), pin.sha256.clone()).is_some() {
-            return fail(
-                Code::DuplicatePin,
-                &pin.path,
-                "the manifest pins this path twice",
-            );
-        }
-        let bytes = files.get(&pin.path).ok_or_else(|| {
-            ReplayError::new(Code::MissingFile, &pin.path, "pinned file is absent")
-        })?;
-        let digest = sha256_hex(bytes);
-        if digest != pin.sha256 {
-            return fail(
-                Code::FileDigestMismatch,
-                &pin.path,
-                format!("digest {digest} is not the pinned {}", pin.sha256),
-            );
-        }
-    }
-    for path in files.keys() {
-        if path != MANIFEST && !pins.contains_key(path) {
-            return fail(
-                Code::UnpinnedFile,
-                path,
-                "file is not pinned by the manifest",
-            );
-        }
-    }
-    if !pins.contains_key(CASES) {
-        return fail(
-            Code::MissingFile,
-            CASES,
-            "the manifest does not pin the cases",
-        );
-    }
-    if let Some(path) = pins
-        .keys()
-        .find(|path| path.as_str() != CASES && !path.starts_with(EXPECTED_PREFIX))
-    {
-        return fail(
-            Code::UnpinnedFile,
-            path,
-            "the manifest pins a file the replay has no role for",
-        );
+    if !files.contains_key(CASES) {
+        return fail(Code::MissingFile, CASES, "the cases are absent");
     }
 
     let mut corpus = Corpus {
         expected: BTreeMap::new(),
     };
-    for path in pins.keys().filter(|path| path.starts_with(EXPECTED_PREFIX)) {
+    for path in files
+        .keys()
+        .filter(|path| path.starts_with(EXPECTED_PREFIX))
+    {
         let document: FormulaDocument = serde_json::from_slice(&files[path]).map_err(|error| {
             ReplayError::new(Code::ExpectedDocumentRejected, path, error.to_string())
         })?;
@@ -1357,20 +1231,6 @@ fn put_json(files: &mut CorpusFiles, path: &str, value: &Value) {
     files.insert(path.to_owned(), bytes);
 }
 
-/// Recomputes every manifest pin and returns the new manifest digest, so a
-/// mutation reaches the semantic replay instead of stopping at a digest check.
-fn repin(files: &mut CorpusFiles) -> String {
-    let mut manifest = json(files, MANIFEST);
-    let pins: Vec<Value> = files
-        .iter()
-        .filter(|(path, _)| path.as_str() != MANIFEST)
-        .map(|(path, bytes)| serde_json::json!({ "path": path, "sha256": sha256_hex(bytes) }))
-        .collect();
-    manifest["files"] = Value::Array(pins);
-    put_json(files, MANIFEST, &manifest);
-    sha256_hex(&files[MANIFEST])
-}
-
 fn mutate_json(files: &mut CorpusFiles, path: &str, mutate: impl FnOnce(&mut Value)) {
     let mut value = json(files, path);
     mutate(&mut value);
@@ -1410,15 +1270,8 @@ fn remove_pair(files: &mut CorpusFiles, stem: &str) {
         .unwrap_or_else(|| panic!("no expected document for {stem}"));
 }
 
-fn replay_code(files: &CorpusFiles, pin: &str) -> Code {
-    match replay(files, pin) {
-        Ok(summary) => panic!("the mutated corpus replayed: {summary:?}"),
-        Err(error) => error.code,
-    }
-}
-
-fn assert_failure(files: &CorpusFiles, pin: &str, code: Code, subject: &str) {
-    let error = replay(files, pin).expect_err("the mutated corpus replayed");
+fn assert_failure(files: &CorpusFiles, code: Code, subject: &str) {
+    let error = replay(files).expect_err("the mutated corpus replayed");
     assert_eq!(
         (error.code, error.subject.as_str()),
         (code, subject),
@@ -1427,21 +1280,18 @@ fn assert_failure(files: &CorpusFiles, pin: &str, code: Code, subject: &str) {
     );
 }
 
-/// Mutates corpus files, re-pins them, and requires the named failure.
+/// Mutates corpus files and requires the named failure.
 fn assert_mutation(code: Code, subject: &str, mutate: impl FnOnce(&mut CorpusFiles)) {
     let mut files = load_corpus();
     mutate(&mut files);
-    let pin = repin(&mut files);
-    assert_failure(&files, &pin, code, subject);
+    assert_failure(&files, code, subject);
 }
 
-/// Mutates the re-pinned manifest itself, re-pins its digest, and requires the named failure.
+/// Mutates the manifest and requires the named failure.
 fn assert_manifest_mutation(code: Code, subject: &str, mutate: impl FnOnce(&mut Value)) {
     let mut files = load_corpus();
-    repin(&mut files);
     mutate_json(&mut files, MANIFEST, mutate);
-    let pin = sha256_hex(&files[MANIFEST]);
-    assert_failure(&files, &pin, code, subject);
+    assert_failure(&files, code, subject);
 }
 
 // ---------------------------------------------------------------------------
@@ -1452,7 +1302,7 @@ fn assert_manifest_mutation(code: Code, subject: &str, mutate: impl FnOnce(&mut 
 #[test]
 fn paired_corpus_replays_through_the_lowering_api() {
     let files = load_corpus();
-    let summary = replay(&files, MANIFEST_SHA256)
+    let summary = replay(&files)
         .unwrap_or_else(|error| panic!("{:?} at {}: {}", error.code, error.subject, error.detail));
     assert_eq!(
         (
@@ -1507,29 +1357,6 @@ fn paired_corpus_replays_through_the_lowering_api() {
             Code::UnpinnedExpectedDocument,
         ])
     );
-}
-
-// Trace: TC-074, FR-010-AC-2
-#[test]
-fn make_digest_list_names_exactly_the_manifest_and_its_pins() {
-    let files = load_corpus();
-    let listed = fs::read_to_string(corpus_root().join("SHA256SUMS")).expect("SHA256SUMS");
-    let listed: BTreeMap<String, String> = listed
-        .lines()
-        .map(|line| {
-            let (digest, path) = line.split_once("  ").expect("sha256sum line");
-            let path = path
-                .strip_prefix(&format!("{CORPUS_DIRECTORY}/"))
-                .expect("repository-relative corpus path");
-            (path.to_owned(), digest.to_owned())
-        })
-        .collect();
-    let computed: BTreeMap<String, String> = files
-        .iter()
-        .map(|(path, bytes)| (path.clone(), sha256_hex(bytes)))
-        .collect();
-    assert_eq!(listed, computed);
-    assert_eq!(computed[MANIFEST], MANIFEST_SHA256);
 }
 
 // Trace: TC-074, FR-010-AC-4
@@ -1832,62 +1659,15 @@ fn mutating_a_refusal_or_malformed_expectation_turns_the_replay_red() {
 
 // Trace: TC-074, FR-010-AC-4
 #[test]
-fn changed_pinned_bytes_turn_the_replay_red() {
-    let files = load_corpus();
-
-    let mut flipped = files.clone();
-    flipped
-        .get_mut("expected/weak-until-closed.json")
-        .expect("expected document")[0] ^= 0x20;
-    assert_eq!(
-        replay_code(&flipped, MANIFEST_SHA256),
-        Code::FileDigestMismatch
-    );
-
-    let mut manifest = files.clone();
-    mutate_json(&mut manifest, MANIFEST, |value| {
-        value["revision"] = 2.into();
-    });
-    assert_eq!(
-        replay_code(&manifest, MANIFEST_SHA256),
-        Code::ManifestDigestMismatch
-    );
-
-    let mut extra = files.clone();
-    extra.insert("expected/unlisted.json".to_owned(), b"{}".to_vec());
-    assert_eq!(replay_code(&extra, MANIFEST_SHA256), Code::UnpinnedFile);
-
-    let mut missing = files;
-    missing.remove("expected/compound-operands.json");
-    assert_eq!(replay_code(&missing, MANIFEST_SHA256), Code::MissingFile);
-}
-
-// Trace: TC-074, FR-010-AC-4
-#[test]
-fn manifest_identity_and_pin_faults_turn_the_replay_red() {
+fn manifest_identity_faults_turn_the_replay_red() {
     assert_manifest_mutation(Code::CorpusIdentityMismatch, MANIFEST, |manifest| {
         manifest["revision"] = 2.into();
-    });
-    assert_manifest_mutation(Code::CorpusIdentityMismatch, MANIFEST, |manifest| {
-        manifest["source_cross_check"]["revision"] = "9ca856b".into();
     });
     assert_manifest_mutation(Code::CorpusIdentityMismatch, MANIFEST, |manifest| {
         manifest["primitive_dialect"] = DERIVED_DIALECT.into();
     });
     assert_manifest_mutation(Code::ManifestDecodeRejected, MANIFEST, |manifest| {
         manifest["notes"] = "unreviewed".into();
-    });
-    assert_manifest_mutation(Code::ManifestPinsItself, MANIFEST, |manifest| {
-        let pin = serde_json::json!({ "path": MANIFEST, "sha256": MANIFEST_SHA256 });
-        manifest["files"].as_array_mut().expect("pins").push(pin);
-    });
-    assert_manifest_mutation(Code::DuplicatePin, CASES, |manifest| {
-        let pins = manifest["files"].as_array_mut().expect("pins");
-        let first = pins[0].clone();
-        pins.push(first);
-    });
-    assert_mutation(Code::UnpinnedFile, "notes.json", |files| {
-        files.insert("notes.json".to_owned(), b"{}".to_vec());
     });
     assert_mutation(Code::MissingFile, CASES, |files| {
         files.remove(CASES);

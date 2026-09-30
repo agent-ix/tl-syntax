@@ -9,7 +9,7 @@ review_set: subset
 
 ## Summary
 
-Reviewed the Rust implementation, test tracing, wire decoders, bounds, and local Rust gates at `bf0286e48e136b5071f9ad083b82b7ac2b529ac4`. No source-level high-severity defect was established; property coverage remains incomplete as a criterion-grounded program.
+Reviewed the Rust implementation, test tracing, wire decoders, bounds, and local Rust gates. No source-level high-severity defect was established; property coverage remains incomplete as a criterion-grounded program.
 
 ## Verdict
 
@@ -17,7 +17,7 @@ Reviewed the Rust implementation, test tracing, wire decoders, bounds, and local
 
 ## Assurance Context
 
-`AP-001` (`spec/assurance/AP-001.md`) applies to this candidate. The malformed-graph, semantic-identity, and context-misbinding controls were inspected; `cargo fmt --check`, strict Clippy, and Cargo Deny passed. Full nested-process integration execution is unavailable in this sandbox, so no claim is made that it ran here. No exception is asserted.
+The malformed-graph, semantic-identity, and context-misbinding controls were inspected; `cargo fmt --check`, strict Clippy, and Cargo Deny passed. Full nested-process integration execution is unavailable in this sandbox, so no claim is made that it ran here. No exception is asserted.
 
 ## Findings
 

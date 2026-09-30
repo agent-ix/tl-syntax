@@ -61,10 +61,9 @@ formula-v2 adds the closed `tl-syntax.past-operators/v1` node catalog and
 down-conversion refuses a past profile. Unknown versions and fields are rejected. The existing
 formula/proposition JSON Schemas, fixtures, and expected horizon/closed-trace
 results live in [`corpus/`](corpus/README.md); that v1 corpus is unchanged by
-the new separate documents. The signal-catalog schema is the separately pinned
+the new separate documents. The signal-catalog schema is the
 [`spec/signal-catalog-v1.schema.json`](spec/signal-catalog-v1.schema.json)
-artifact exposed by the `serde` API. Downstream temporal crates must pin and
-report `tl-syntax-corpus/v1`.
+artifact exposed by the `serde` API.
 
 Each formula, signal-catalog, and proposition-map owner document exposes
 `from_json_bytes(bytes, SyntaxArtifactLimits)`. These readers intersect caller
@@ -92,7 +91,7 @@ cargo +nightly fuzz run infinite_wire_decode -- -runs=100
 
 `infinite_wire_decode` drives the strict unbounded-formula, lasso, and partial
 valuation readers through canonical serialization and identity computation.
-Its digest-pinned corpus includes valid inputs for all three paths and a
+Its corpus includes valid inputs for all three paths and a
 malformed refusal. `tests/infinite_fuzz_seeds.rs` checks that the seeds reach
 the intended paths before a campaign starts.
 

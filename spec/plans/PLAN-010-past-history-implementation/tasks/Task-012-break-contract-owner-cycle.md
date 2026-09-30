@@ -43,6 +43,5 @@ without changing any existing public API, wire identity or QSL Rust import.
 - This is architecture-required implementation, not a semantic rewrite.
 - No copied owner type, trust flag, callback or local owner parser is allowed.
 - GitHub tracker: `quire-contract-ir#73`.
-- Merged by `quire-contract-ir#76` at
-  `53cc03c639e2e26528132d34d96dc56449df78e8`; SR-534 and SR-535 record the
+- Merged by `quire-contract-ir#76`; SR-534 and SR-535 record the
   passing code/Rust and gap reviews.

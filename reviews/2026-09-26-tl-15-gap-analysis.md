@@ -3,7 +3,7 @@ id: SR-112
 title: "TL-15 feature trace gap analysis"
 type: SpecReview
 analysis: gap-analysis
-scope: "agent-ix/tl-syntax@e2ca5aabfe5a9cf00c8d9806e812854a5c4061c7; spec/infinite-trace-test-matrix.md; spec/requirements/FR-020 through FR-024 and FR-289 through FR-291; tests/infinite_formula.rs; tests/infinite_trace.rs; tests/infinite_trace_corpus.rs; tests/v1_spec_stubs.rs"
+scope: "spec/infinite-trace-test-matrix.md; spec/requirements/FR-020 through FR-024 and FR-289 through FR-291; tests/infinite_formula.rs; tests/infinite_trace.rs; tests/infinite_trace_corpus.rs; tests/v1_spec_stubs.rs"
 review_set: subset
 ---
 
@@ -30,11 +30,5 @@ The focused 33 tests passed. `quire coverage --scope . --json` reports TC-162 un
 
 | FND | outcome | sha/reason |
 | --- | --- | --- |
-| FND-001 | fixed | ceaddff739ef98546c1ebc99c806ff767cd06700; the TC-147 backend now checks the graph pointer, subject and call count. |
+| FND-001 | fixed | the TC-147 backend now checks the graph pointer, subject and call count. |
 | FND-002 | deferred | TC-150 native QSL/paired-corpus comparison belongs to TL-13; TC-162 exact downstream pin inspection belongs to TL-212, whose qualification campaign is halted. Neither is TL-15 syntax evidence or a TL-15 merge blocker. |
-
-Round 1 reviewed `ceaddff739ef98546c1ebc99c806ff767cd06700`. The original findings above remain unchanged.
-
-## Base-drift verification (disposition pass 2)
-
-Reviewed `f9e754ac7cc09211ecce4bd548cf4630a6b05a8c` against main `463e72758c95b1b9f1014bebe7a1bcbede18df2c`. The 45 changed paths and normalized zero-context patch match the reviewed stacked candidate at `6c57e11ab71331defbfde275b1ff585a2a08be9e`: SHA-256 `207509e51ef6f624abfbb833fb50e9d92082e467fba9307de980683cc7f4a90f`. The only final feature-path byte difference is `spec/future-profile-test-matrix.md`'s `Coverage Status` heading inherited unchanged from main; the feature edit to that file is identical. Targeted Quire validation reports that the installed schema expects `Status`, but `git show 463e727:spec/future-profile-test-matrix.md` proves this heading and failure condition pre-existed TL-15. No prior finding reopened and no new finding arose from the base change. The round-1 dispositions remain current, so round 2 adds no `## Dispositions` rows.

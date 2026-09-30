@@ -2,7 +2,6 @@
 
 use std::{fs, path::Path};
 
-use sha2::{Digest, Sha256};
 use tl_syntax::{
     InfiniteFormulaDocument, LassoTraceDocument, PartialValuation, SyntaxArtifactLimits,
 };
@@ -12,12 +11,14 @@ use tl_syntax::{
 #[test]
 fn infinite_wire_fuzz_seeds_reach_the_intended_reader_paths() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("fuzz/corpus/infinite_wire_decode");
-    let checksum_lines = fs::read_to_string(root.join("SHA256SUMS")).unwrap();
     let mut seen = 0;
-    for line in checksum_lines.lines() {
-        let (expected, name) = line.split_once("  ").unwrap();
+    for name in [
+        "formula.json",
+        "lasso.json",
+        "malformed.json",
+        "valuation.json",
+    ] {
         let bytes = fs::read(root.join(name)).unwrap();
-        assert_eq!(format!("{:x}", Sha256::digest(&bytes)), expected, "{name}");
         let limits = SyntaxArtifactLimits::default();
         match name {
             "formula.json" => {

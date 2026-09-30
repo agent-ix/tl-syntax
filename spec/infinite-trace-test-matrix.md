@@ -22,9 +22,8 @@ relationships:
 TC-150's v1/v2 golden-byte and TL profile refusal assertions execute in
 `tests/infinite_formula.rs`; its native QSL result-comparison portion remains
 with TL-13's paired-corpus exit and TL-212's cross-crate verification campaign.
-TC-162 remains an inspection of downstream consumers at their exact syntax
-pins. TL-13 owns the native/TL paired-corpus exit; TL-212 owns the
-five-repository pin and evidence graph. Neither check changes this corpus's
+TC-162 remains an inspection of downstream consumers. TL-13 owns the
+native/TL paired-corpus exit; TL-212 owns the evidence graph. Neither check changes this corpus's
 owner bytes.
 
 The corpus includes an unfair loop and an explicitly selected finite-prefix
@@ -50,13 +49,13 @@ API and passes; an ignored placeholder is not coverage.
 | TC-157 | Preserve each of four partial-valuation states and stable order | Property | P0 | FR-023-AC-1 | ✅ implemented |
 | TC-158 | Refuse unknown, duplicate, omitted, or unordered valuation entries | Property | P0 | FR-023-AC-2 | ✅ implemented |
 | TC-159 | Keep missing distinct from conflicting with no Boolean coercion | Unit | P0 | FR-023-AC-3 | ✅ implemented |
-| TC-160 | Verify manifest identities, human oracle derivations, schemas, and file digests | Integration | P0 | FR-024-AC-1 | ✅ implemented |
-| TC-161 | Replay each positive/negative family and fail under input, oracle, or digest mutation | Integration | P0 | FR-024-AC-2 | ✅ implemented |
-| TC-162 | Inspect pinned downstream `CORPUS_DIR` use and absence of vendored copies | Inspection | P1 | FR-024-AC-3 | 🚧 planned |
+| TC-160 | Verify manifest identities, human oracle derivations, and schemas | Integration | P0 | FR-024-AC-1 | ✅ implemented |
+| TC-161 | Replay each positive/negative family and fail under input or oracle mutation | Integration | P0 | FR-024-AC-2 | ✅ implemented |
+| TC-162 | Inspect downstream `CORPUS_DIR` use and absence of vendored copies | Inspection | P1 | FR-024-AC-3 | 🚧 planned |
 
 ## Integration Test Matrix
 
 | Purpose | Target | Type | Test Cases |
 |---|---|---|---|
-| Parse, rewrite, and evaluate the same owner corpus at exact pins | tl-parse, tl-rewrite, tl-mltl | service | TC-150, TC-160, TC-161, TC-162 |
+| Parse, rewrite, and evaluate the same owner corpus | tl-parse, tl-rewrite, tl-mltl | service | TC-150, TC-160, TC-161, TC-162 |
 | Compare results where both native and TL infinite-trace profiles apply | QSL native temporal provider | service | TC-150, TC-160 |

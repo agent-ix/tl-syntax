@@ -25,9 +25,7 @@ existing formula-v1, proposition-map-v1, or shared corpus bytes.
 
 ## Base and landing
 
-The work begins on exact local base
-`73a5d69c3095aede9bf5e6f29ce9c22bf27c6d2e`, the current head of tl-syntax PR
-#14. The #15 branch shall not be proposed for merge until #14 lands or the
+The #15 branch shall not be proposed for merge until #14 lands or the
 feature branch is rebased onto its landed equivalent. No #15 commit may mutate
 the #14 branch or obscure its pending review.
 
@@ -67,8 +65,7 @@ FR-007 + StR-003 + SR-014
 - Serde wire intermediates use closed enums, `deny_unknown_fields`, required
   present-context fields, and bounded sequence visitors before semantic
   validation.
-- Existing formula and proposition-map structs are not extended. Existing
-  corpus files and `corpus/SHA256SUMS` remain byte-for-byte unchanged.
+- Existing formula and proposition-map structs are not extended.
 
 Names are compared as exact UTF-8 bytes. Direct binding searches the sorted
 catalog deterministically and visits formula propositions in node order. A

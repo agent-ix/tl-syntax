@@ -23,10 +23,7 @@ automatic-execution finding remains in the reviewed fuzz-target scope.
 
 ## Assurance Context
 
-`AP-001` (`spec/assurance/AP-001.md`) applies to this v0.1 source-candidate
-slice because malformed graph admission is a named material impact scenario.
-The reviewed baseline is `3888f6a` plus this staged wire-fuzz change. The
-candidate has no formed change-assurance record, no campaign-duration or
+The candidate has no formed change-assurance record, no campaign-duration or
 coverage measurement, and no human decision; none is implied by this target.
 No exception is active. The target reinforces the existing checked public
 validation boundary and creates no local evidence representation.
