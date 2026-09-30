@@ -138,27 +138,22 @@ The machine-readable routing record is
 `tl-syntax.past-profile-implementation/v1`; its closed Draft 7 schema is
 `spec/past-profile-implementation.schema.json`. It contains exactly `format`,
 `owner_epic`, `authorization`, `prerequisites`, and `tasks`.
-`authorization` contains `state` (`blocked` or `authorized`) and, only when
-authorized, the exact immutable merged MRS-003 revision. Each prerequisite
+`authorization` contains `state` (`blocked` or `authorized`). Each prerequisite
 contains a canonical `repository`, `kind` (`m0`, `mrs-002`, or `mrs-003`),
-immutable `revision`, and `state` (`accepted` or `pending`). Each task contains
+and `state` (`accepted` or `pending`). Each task contains
 a canonical repository, GitHub issue number, one owner component, and a sorted
 distinct predecessor list of canonical `owner/repository#number` keys. The
 owner is `tl-syntax`; the first syntax task is the sole bootstrap exception and
 depends directly on the three prerequisites rather than on another
 implementation task.
 
-The Rust gate admits implementation only when M0 names tag `v0.1.0` at
-`26b801d6567645b637be20bef5c256d0ea4ed45c`, MRS-002 names its accepted merged
-revision, MRS-003 names the exact revision containing this accepted profile,
-`authorization.state` is `authorized`, and every routed task has its specified
-owner and predecessor edge. It returns the typed
+The Rust gate admits implementation only when the M0, MRS-002 and MRS-003
+prerequisites are accepted, `authorization.state` is `authorized`, and every
+routed task has its specified owner and predecessor edge. It returns the typed
 `past_profile_dependency_manifest_invalid` refusal naming the first canonical
 field/task mismatch. Negative fixtures independently change owner, remove an
-edge, substitute each prerequisite revision/state, omit the authorization
-receipt, and authorize against an unmerged MRS-003 revision. The gate performs
-no network or Git-history lookup; its trusted inputs are the checked-in manifest
-and these immutable accepted revisions.
+edge, and substitute each prerequisite state. The gate performs no network or
+Git-history lookup; its trusted input is the checked-in manifest.
 
 ## Acceptance Criteria
 
@@ -168,7 +163,7 @@ and these immutable accepted revisions.
 | FR-013-AC-2 | `tl-parse.clean-ascii/v3` parses/formats O/H/Y/S/T with exact precedence, associativity, intervals, and spans; old v1/v2 reject past spellings and arbitrary input cannot unwind either parser or formula-v2 decoder. | Test (TC-055, TC-057) |
 | FR-013-AC-3 | The corpus, Rust oracle, properties, and mutations cover every enumerated semantic, history, resource, serialization, and identity dimension without a second production evaluator. | Test (TC-052, TC-056) |
 | FR-013-AC-4 | Every external target retains its reviewed supported/unsupported/unavailable state, introduces no foreign qualification dependency, and makes no parser-acceptance, monitor-certification, or native-source-authority claim. | Test (TC-056) |
-| FR-013-AC-5 | The Rust dependency-manifest gate over `spec/past-profile-implementation.json` refuses the first canonical owner, predecessor, prerequisite-revision/state, or authorization mismatch and authorizes implementation only against immutable accepted M0/MRS-002/MRS-003 revisions. | Test (TC-058) |
+| FR-013-AC-5 | The Rust dependency-manifest gate over `spec/past-profile-implementation.json` refuses the first canonical owner, predecessor, prerequisite-state, or authorization mismatch and authorizes implementation only against accepted M0/MRS-002/MRS-003 prerequisites. | Test (TC-058) |
 
 ## Dependencies
 

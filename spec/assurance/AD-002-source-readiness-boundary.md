@@ -114,7 +114,7 @@ missing, the guarantee remains unavailable rather than falling back locally.
 - `agent-ix/tl-syntax#16` cannot resume until an immutable Engineering Assurance
   release accepts the source-grounded Quire release and artifact shape.
 - The latest immutable Engineering Assurance release does not yet carry its
-  corrected human-acceptance predicate or accept Quire 0.32; branch-head state
+  corrected human-acceptance predicate; branch-head state
   and a repository-local compatibility fixture are not substitutes.
 - The general shared integrator-package contract is not yet selected; IT-002
   remains blocked on a real accepted Rust-consumable release.

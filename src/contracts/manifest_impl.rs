@@ -12,9 +12,6 @@ pub const PAST_PROFILE_IMPLEMENTATION_V1: &str = "tl-syntax.past-profile-impleme
 pub const PAST_PROFILE_MANIFEST_MAX_BYTES: usize = OWNER_MANIFEST_BYTES;
 
 const OWNER_EPIC: &str = "agent-ix/tl-syntax#52";
-const M0: &str = "26b801d6567645b637be20bef5c256d0ea4ed45c";
-const MRS_002: &str = "8d3ff9873acdef9b0af03f05971620c07eacf733";
-const MRS_003: &str = "568a5f18ea496232e0fa9eff7506990bfcecfefa";
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -30,7 +27,6 @@ struct Manifest {
 #[serde(deny_unknown_fields)]
 struct Authorization {
     state: String,
-    revision: Option<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
@@ -38,7 +34,6 @@ struct Authorization {
 struct Prerequisite {
     repository: String,
     kind: String,
-    revision: String,
     state: String,
 }
 
@@ -99,19 +94,16 @@ fn expected_prerequisites() -> [Prerequisite; 3] {
         Prerequisite {
             repository: "agent-ix/tl-syntax".into(),
             kind: "m0".into(),
-            revision: M0.into(),
             state: "accepted".into(),
         },
         Prerequisite {
             repository: "agent-ix/tl-syntax".into(),
             kind: "mrs-002".into(),
-            revision: MRS_002.into(),
             state: "accepted".into(),
         },
         Prerequisite {
             repository: "agent-ix/tl-syntax".into(),
             kind: "mrs-003".into(),
-            revision: MRS_003.into(),
             state: "accepted".into(),
         },
     ]
@@ -191,9 +183,6 @@ fn validate(manifest: &Manifest) -> Result<(), PastProfileManifestError> {
     if manifest.authorization.state != "authorized" {
         return Err(refusal("authorization.state"));
     }
-    if manifest.authorization.revision.as_deref() != Some(MRS_003) {
-        return Err(refusal("authorization.revision"));
-    }
     let expected_prerequisites = expected_prerequisites();
     if manifest.prerequisites.len() != expected_prerequisites.len() {
         return Err(refusal("prerequisites"));
@@ -202,19 +191,16 @@ fn validate(manifest: &Manifest) -> Result<(), PastProfileManifestError> {
         [
             "prerequisites[0].repository",
             "prerequisites[0].kind",
-            "prerequisites[0].revision",
             "prerequisites[0].state",
         ],
         [
             "prerequisites[1].repository",
             "prerequisites[1].kind",
-            "prerequisites[1].revision",
             "prerequisites[1].state",
         ],
         [
             "prerequisites[2].repository",
             "prerequisites[2].kind",
-            "prerequisites[2].revision",
             "prerequisites[2].state",
         ],
     ];
@@ -230,11 +216,8 @@ fn validate(manifest: &Manifest) -> Result<(), PastProfileManifestError> {
         if actual.kind != expected.kind {
             return Err(refusal(names[1]));
         }
-        if actual.revision != expected.revision {
-            return Err(refusal(names[2]));
-        }
         if actual.state != expected.state {
-            return Err(refusal(names[3]));
+            return Err(refusal(names[2]));
         }
     }
     let expected = expected_tasks();

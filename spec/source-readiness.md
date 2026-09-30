@@ -159,7 +159,7 @@ implementation node remains unavailable at an external resume condition.
   tag/checksum exist.
 - Authoritative source-path/scope sealing remains blocked on `tl-syntax#16`:
   resume only after an immutable, reviewed and human-accepted Engineering
-  Assurance release names the Quire 0.32 source-grounded export and exact
+  Assurance release names the Quire source-grounded export and exact
   compatible artifacts.
 - Use-specific qualified records remain blocked on
   `engineering-assurance#11`. Engineering-assurance#34 delivered reusable
