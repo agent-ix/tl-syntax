@@ -17,8 +17,6 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
 
-PROTOCOL = "tl-syntax.feature-boundary/v1"
-
 
 def cargo() -> str:
     return os.environ.get("CARGO", "cargo")
@@ -43,22 +41,14 @@ def dependency_entry(tree_output: str | None = None) -> dict[str, Any]:
         )
         if result.returncode != 0:
             return {
-                "protocol": PROTOCOL,
-                "symbol": "feature-boundary::default-dependency-graph",
-                "check": "default_dependency_graph",
                 "outcome": "unavailable",
-                "traceIds": ["NFR-001-AC-1"],
                 "detail": {"stderr": result.stderr.strip()},
             }
         tree_output = result.stdout
     dependencies = [line for line in tree_output.splitlines() if line.strip()]
     empty = len(dependencies) == 1 and dependencies[0].startswith("tl-syntax v")
     return {
-        "protocol": PROTOCOL,
-        "symbol": "feature-boundary::default-dependency-graph",
-        "check": "default_dependency_graph",
         "outcome": "pass" if empty else "fail",
-        "traceIds": ["NFR-001-AC-1"],
         "detail": {"graph": dependencies},
     }
 

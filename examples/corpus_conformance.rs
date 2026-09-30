@@ -1,4 +1,4 @@
-//! Replay the shared temporal corpus through the real crate and emit structured results.
+//! Replay the shared temporal corpus through the real crate.
 //!
 //! Four things this example deliberately is not.
 //!
@@ -15,8 +15,7 @@
 //! accepts the fixture, and for exactly which typed reason it does not.
 //!
 //! It is not a verdict. It writes one JSON object per line to stdout and exits 0
-//! if every fixture matched its declared expectation and 1 if one did not. It
-//! retains nothing, digests nothing, and attests to nothing.
+//! if every fixture matched its declared expectation and 1 if one did not.
 //!
 //! It is not a Quire or Quoin client. Nothing in this file, and nothing in the
 //! published crate, links either of them.

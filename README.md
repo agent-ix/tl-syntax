@@ -111,9 +111,8 @@ testing, provenance, and human release gates as every other contribution.
 
 Under program governance, `tl-syntax` is a linked-runtime component. Its source
 release provides reusable qualification support only: it does not validate,
-accredit, or certify a consuming project. Candidate evidence is sealed and
-retained by Quoin, and review and release decisions are left to the named human
-authority.
+accredit, or certify a consuming project. Review and release decisions are left
+to the named human authority.
 
 ## License
 

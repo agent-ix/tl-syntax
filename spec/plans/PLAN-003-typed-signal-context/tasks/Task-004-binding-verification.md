@@ -26,6 +26,3 @@ Every new matrix row has a native trace symbol, every refusal has an accepted
 neighboring control, `corpus/SHA256SUMS` still passes unchanged, strict coverage
 has no new unbacked implementation row, and the existing full local gate passes
 without dispatching hosted CI.
-
-The complete local gate passed, including Rust 1.75. A final rerun is required
-after the closing review documents are committed.

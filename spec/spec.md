@@ -48,8 +48,8 @@ caller-supplied source identity.
 ### Intended Users
 
 Embedded Rust consumers use the allocation-free borrowed model. Temporal tools
-use the optional owned and serialization features. Reviewers use the corpus and
-the sealed assurance chain to check compatibility and determinism.
+use the optional owned and serialization features. Reviewers use the corpus to
+check compatibility and determinism.
 
 ## Requirements Architecture
 

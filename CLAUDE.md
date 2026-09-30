@@ -10,14 +10,13 @@ make fmt-check        # verify formatting (CI gate)
 make lint             # clippy with -D warnings
 make test             # cargo test
 make build            # release build
-make clean            # cargo clean and drop the assurance environment
+make clean            # cargo clean
 make deny             # cargo-deny advisories, bans, licenses, and sources
 make audit-unsafe     # enforce the unsafe-code policy guard
 make check-corpus     # corpus digests, schemas, derived oracles, and their mutation probe
 make conformance      # replay the shared temporal corpus through the crate
 make spec             # validate the specification with Quire
 make msrv             # test every target and feature at Rust 1.98.1
-make assurance-env    # build the empty interpreter hosted CI still calls
 make ci               # complete local gate set (hosted CI is manual-only)
 ```
 

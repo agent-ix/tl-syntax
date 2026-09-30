@@ -1,4 +1,3 @@
-.venv-assurance/
 proptest-regressions/
 Cargo.lock.bak
 *.swp

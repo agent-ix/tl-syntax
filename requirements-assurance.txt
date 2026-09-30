@@ -1,2 +1,0 @@
-# Intentionally installs nothing. Hosted CI still runs `make assurance-env`,
-# which builds an empty .venv-assurance from this file.

@@ -288,17 +288,11 @@ def validate_proposition_map(value: Any, schema: Draft7Validator) -> None:
         raise AssertionError("proposition names are not unique")
 
 
-PROTOCOL = "tl-syntax.corpus-oracle/v1"
-
-
-def _row(fixture: str, check: str, outcome: str, trace_ids: list[str], detail: Any) -> dict:
+def _row(fixture: str, check: str, outcome: str, detail: Any) -> dict:
     return {
-        "protocol": PROTOCOL,
         "fixture": fixture,
         "check": check,
-        "symbol": f"corpus-oracle::{fixture}::{check}",
         "outcome": outcome,
-        "traceIds": trace_ids,
         "detail": detail,
     }
 
@@ -325,7 +319,6 @@ def survey() -> list[dict]:
             "proposition-map",
             "schema_and_identity_order",
             "pass",
-            ["FR-003-AC-1"],
             {"schema": "tl-syntax.proposition-map/v1"},
         )
     )
@@ -343,13 +336,12 @@ def survey() -> list[dict]:
                         identity,
                         "validation",
                         "fail",
-                        ["FR-005-AC-1"],
                         {"expected": "valid", "observed_error": observed_error},
                     )
                 )
                 continue
             rows.append(
-                _row(identity, "validation", "pass", ["FR-005-AC-1"], {"expected": "valid"})
+                _row(identity, "validation", "pass", {"expected": "valid"})
             )
             derived_horizon = formula_horizon(document)
             declared_horizon = fixture.get("expected_horizon")
@@ -358,7 +350,6 @@ def survey() -> list[dict]:
                     identity,
                     "derived_horizon",
                     "pass" if declared_horizon == derived_horizon else "fail",
-                    ["FR-005-AC-2", "StR-002-VC-1"],
                     {"derived": derived_horizon, "declared": declared_horizon},
                 )
             )
@@ -370,20 +361,15 @@ def survey() -> list[dict]:
                         identity,
                         "derived_closed_trace",
                         "pass" if declared_closed == derived_closed else "fail",
-                        ["FR-005-AC-2", "StR-002-VC-1"],
                         {"derived": derived_closed, "declared": declared_closed},
                     )
                 )
             else:
-                # A fixture the manifest supplies no evaluation oracle for is not
-                # a passing fixture and is not a failing one. Saying so is the
-                # whole point of keeping not-computed a distinct state.
                 rows.append(
                     _row(
                         identity,
                         "derived_closed_trace",
                         "not-computed",
-                        ["FR-005-AC-2"],
                         {"why": "the manifest supplies no closed-trace oracle for this fixture"},
                     )
                 )
@@ -394,7 +380,6 @@ def survey() -> list[dict]:
                     identity,
                     "rejection_reason",
                     "pass" if observed_error == expected_error else "fail",
-                    ["FR-005-AC-2"],
                     {"expected": expected_error, "observed": observed_error},
                 )
             )
@@ -404,7 +389,6 @@ def survey() -> list[dict]:
                     identity,
                     "validation",
                     "malformed",
-                    ["FR-005-AC-1"],
                     {"why": f"unknown expected_validation {declared!r}"},
                 )
             )
