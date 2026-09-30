@@ -19,7 +19,7 @@
     {
       "path": "compatibility.py",
       "sha256": "c9dd4f8d0dca38a32206c114ba04304776baacfa8c1d5036691d3a46790d966d",
-      "why": "load_matrix, classify_all and accepted are the only Engineering Assurance behaviour this repository still consumes; scripts/check_shared_pins.py delegates every version verdict to them and restates no rule of its own. It is pinned by digest so the digest check has something to check: the PGM-01 mapper, its view schema and its two record fixtures were pinned here only for the retained-evidence reader, and went with it under agent-ix/tl-syntax#12."
+      "why": "load_matrix, classify_all and accepted are the only Engineering Assurance behaviour this repository still consumes; scripts/check_shared_pins.py delegates every version verdict to them and restates no rule of its own. It is pinned by digest so the digest check has something to check: the retained-evidence mapper, its view schema and its two record fixtures were pinned here only for the retained-evidence reader, and went with it under agent-ix/tl-syntax#12."
     },
     {
       "path": "compatibility-matrix.json",
@@ -27,7 +27,7 @@
     }
   ],
   "retained_evidence": {
-    "statement": "None. The 23 quire.derivation-evidence/v1 envelopes this repository held were deleted under agent-ix/tl-syntax#12, on the preservation constraint agent-ix/engineering-assurance#7 released for the pre-stable phase on 2026-09-02. They were read through map_pgm01_bytes for the duration of the migration and every one was refused as an unknown PGM-01 schema version; not one was rewritten. This repository now retains no evidence, reads no compatibility mapping, and makes no claim that any historical record still verifies. The constraint re-applies unchanged at the move toward stable releases.",
+    "statement": "None. The 23 quire.derivation-evidence/v1 envelopes this repository held were deleted under agent-ix/tl-syntax#12, on the preservation constraint agent-ix/engineering-assurance#7 released for the pre-stable phase on 2026-09-02. They were read through map_pgm01_bytes for the duration of the migration and every one was refused as an unknown schema version; not one was rewritten. This repository now retains no evidence, reads no compatibility mapping, and makes no claim that any historical record still verifies. The constraint re-applies unchanged at the move toward stable releases.",
     "closes_upstream": "agent-ix/engineering-assurance#21 becomes moot for this repository rather than fixed"
   },
   "known_drift": [

@@ -126,7 +126,7 @@ configuration after the required independent reviews and limitation inspection.
   required review operations and decision boundary.
 - `agent-ix/engineering-assurance#11` owns later use-specific producer
   qualification and independence, not this source-release decision.
-- PGM-01 and the repository's exact human-release-owner policy own source-
+- The repository's exact human-release-owner policy owns source-
   release authority; GitHub supplies authenticated review/event facts but does
   not define independence or quorum. Until the exact immutable policy/event
   source and authorized actor set are selected, decision admission remains
