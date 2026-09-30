@@ -1,6 +1,6 @@
 # Shared assurance
 
-Two files and no evidence.
+Authorial inputs and release premises, with no retained evidence.
 
 `change-assurance.json` is what this repository *states* about the change under
 [issue #12](https://github.com/agent-ix/tl-syntax/issues/12): the requirements it
@@ -22,7 +22,54 @@ result is kept, digested, and pronounced upon. That arrangement is the thing
 this migration removed, and putting a smaller version of it back under a new
 directory name would be the same mistake in a nicer font.
 
+## Source-grounded record projection (TL-63)
+
+`source-grounding` is a Rust adapter for a Quire `assurance-v1` export. It
+checks the export against the `spec-artifacts-process@v0.26.0` module and schema
+premises recorded in `source-grounding-premises.json`. It checks repository and
+revision identities; compares each declaration source path
+with the path whose bytes are read; checks Quire's specification locators and
+authoritative obligation statements; and emits a body accepted by Quoin's
+`change-assurance seal-record` command. `source_connections[].source_id` is the
+sealed repository-relative path. Top-level declaration metadata is authorial
+and is not sealed evidence. Runtime release-integrity admission for the Quire
+binary and module remains TL-24 work.
+
+The authoritative release-limit statements in `spec/assurance/AA-001.md` and
+`spec/reviews/SR-013-make-execution-control-measurement.md` are source-connected.
+The descriptions in `Makefile` and `CLAUDE.md` are explanatory mirrors; they do
+not supply a second acceptance decision. The local SUITE-008 observation remains
+in its original PR record and is not converted to a Quoin attestation here.
+
+`make source-grounding-record SOURCE_EXPORT=/path/to/quire-assurance.json`
+consumes an already-produced export for `REVISION` (default: the checkout's
+HEAD), projects it with the Rust adapter, and gives the resulting disposable
+body to Quoin for sealing in `target/assurance-store`. A missing or incompatible
+export stops the target before Quoin. The target does not run Quire or other
+domain producers; the projected record retains the open scope and freshness
+limitations described below. Make's execution-control limitation still applies.
+
+The `subject.scope` list is authorial. Quire grounds specification source
+locators but does not prove that list covers the candidate's complete change
+footprint, so the projected impact snapshot remains `incomplete` and names
+that gap. The adapter removes the legacy `quire coverage` proof obligation
+from this source-grounded projection: the source export has no fresh producer
+attestation yet, and the projected record keeps that fact open. The existing
+`make assurance` chain still uses its legacy export until the Rust/shared
+execution and parity tasks migrate it; a projected record alone does not
+establish source-release readiness.
+
 ## What runs what
+
+`conformance-adapter INPUT.jsonl` is the Rust FR-006 native adapter used by
+`make assurance-record`. It consumes existing `tl-syntax.corpus-conformance/v1`
+rows and emits Quoin's normalized entries. It validates the whole stream before
+emitting output: empty, malformed, foreign-protocol, unnamed-outcome and invalid
+entry-field input refuses. The six declared domain outcomes retain the existing
+mapping: pass to pass, fail/malformed to fail, and unavailable/not-computed/
+vacuous to skip. It executes no producer and creates no proof attestation,
+freshness claim or human decision. The legacy Python chain remains pending
+the rest of the Rust/shared migration.
 
 One target produces:
 

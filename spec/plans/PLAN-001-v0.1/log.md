@@ -1,4 +1,5 @@
 ---
+id: PLAN-001-log
 type: log
 title: "PLAN-001 - Update log"
 description: "Chronological changes to the tl-syntax v0.1 plan bundle."

@@ -1,4 +1,5 @@
 ---
+id: PLAN-005-index
 type: index
 title: "PLAN-005 - Source-census reproducibility"
 description: "Contents of the tl-syntax issue 20 implementation plan."

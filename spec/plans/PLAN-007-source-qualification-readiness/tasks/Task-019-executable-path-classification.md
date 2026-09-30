@@ -43,5 +43,12 @@ first-party behavior to Rust or a released shared capability.
 
 ## Notes
 
+- The FR-006 native corpus-result transcription has an independent Rust
+  replacement, `src/bin/conformance_adapter.rs`, used by `assurance-record`.
+  It consumes the existing repository-owned protocol and Quoin entries shape,
+  so it needs no producer runner, generic source parser or new shared contract.
+  This partial replacement does not close the executable census, scoped host
+  dispositions, full-chain parity or Task-019 gate; the Python chain remains.
+
 - Blocked until the current specification is independently reviewed/merged and
   the consumed LR08/shared-runner entries are admitted by Task-018.

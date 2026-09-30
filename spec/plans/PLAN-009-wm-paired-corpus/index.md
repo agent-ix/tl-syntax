@@ -1,4 +1,5 @@
 ---
+id: PLAN-009-index
 type: index
 title: "PLAN-009 - Paired W/M corpus"
 description: "Contents of the tl-syntax issue 41 implementation plan."

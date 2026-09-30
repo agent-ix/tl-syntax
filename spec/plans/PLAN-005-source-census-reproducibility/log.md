@@ -1,4 +1,5 @@
 ---
+id: PLAN-005-log
 type: log
 title: "PLAN-005 - Update log"
 description: "Chronological changes to the source-census reproducibility plan."

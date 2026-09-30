@@ -1,4 +1,5 @@
 ---
+id: PLAN-004-index
 type: index
 title: "PLAN-004 - Tracked source census hardening"
 description: "Contents of the tl-syntax issue 17 implementation plan."

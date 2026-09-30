@@ -1,4 +1,5 @@
 ---
+id: PLAN-001-index
 type: index
 title: "PLAN-001 - tl-syntax v0.1"
 description: "Contents of the tl-syntax v0.1 implementation plan bundle."

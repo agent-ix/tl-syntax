@@ -25,6 +25,8 @@ framework.
 - Structured results produced by this repository's own tools: the corpus
   conformance runner, the corpus semantic oracle, and the feature-boundary gate.
 - The Quire static export of specification, obligation, and coverage facts.
+- A source-grounded Quire assurance export and the authorial declaration of
+  source connections for the same repository and candidate revision.
 
 ## Outputs
 
@@ -54,6 +56,15 @@ framework.
   distinguishable from one another.
 - tl-syntax shall report no non-success outcome as a success.
 - tl-syntax shall retain no evidence of its own.
+- For a source-grounded record, each sealed source connection shall identify
+  the repository-relative path whose bytes supply its digest. An unsealed
+  lookup shall not substitute a different path.
+- The source-grounded projection shall compare declared requirement statements
+  and specification source locators with the released Quire export. It shall
+  report an incomplete scope when no shared capability has checked the
+  declared scope against the candidate's full change footprint.
+- Top-level declaration metadata outside the sealed Quoin record shall remain
+  authorial and shall not be presented as retained evidence.
 - tl-syntax shall implement no compatibility mapping of its own.
 - tl-syntax shall retain no generic runner, evidence envelope, manifest,
   tool-identity framework, retention store, audit store, anchor file, or
@@ -78,6 +89,7 @@ framework.
 | FR-006-AC-6 | No live repository source implements or names the deleted generic evidence envelope, manifest, retention store, tool-identity lock, anchor file, or aggregate verdict. Immutable review and plan records that describe the deleted subjects, the declaring test, and an inert directory marker are explicit non-live exclusions. | Test (TC-026) |
 | FR-006-AC-7 | Every version-control-tracked non-archival path is present in the exact reviewed live-source set regardless of its name or extension; a changed per-area population is diagnosed before the exact path delta; every ordinary-untracked live path is scanned, named, and refuses a clean reviewed population; repository-authored ignored generated paths do not redefine that population; and unavailable enumeration is a typed refusal rather than an intercepted panic. | Test (TC-034) |
 | FR-006-AC-8 | The deleted-identity scan accepts arbitrary non-UTF-8 tracked bytes, still detects an embedded forbidden ASCII identity with its path named, includes ordinary-untracked paths even when workstation or administrative Git excludes name them, and refuses untracked or index-divergent `.gitignore` policy. | Test (TC-035) |
+| FR-006-AC-9 | A source-grounded Quoin record binds each source digest to its sealed repository-relative path; path substitution, duplicate identities, changed specification bytes, divergent obligation statements and incompatible export premises are refused. Top-level authorial metadata does not become sealed authority, and a scope not checked against the full candidate footprint remains explicitly incomplete. | Test (TC-060, TC-069) |
 
 ### Source-census reproducibility
 
