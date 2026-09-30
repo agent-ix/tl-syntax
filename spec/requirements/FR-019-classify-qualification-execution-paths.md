@@ -7,10 +7,6 @@ relationships:
     type: implements
   - target: ix://agent-ix/tl-syntax/FR-015
     type: references
-  - target: ix://agent-ix/tl-syntax/NFR-003
-    type: depends_on
-  - target: ix://agent-ix/tl-syntax/FR-006
-    type: depends_on
 ---
 
 # FR-019: Classify every readiness execution path

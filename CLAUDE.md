@@ -8,7 +8,7 @@ A no_std syntax tree and semantic profile model for Mission-time Linear Temporal
 make fmt              # format with rustfmt
 make fmt-check        # verify formatting (CI gate)
 make lint             # clippy with -D warnings
-make test             # cargo test, after the producers have run
+make test             # cargo test
 make build            # release build
 make clean            # cargo clean and drop the assurance environment
 make deny             # cargo-deny advisories, bans, licenses, and sources
@@ -17,9 +17,7 @@ make check-corpus     # corpus digests, schemas, derived oracles, and their muta
 make conformance      # replay the shared temporal corpus through the crate
 make spec             # validate the specification with Quire
 make msrv             # test every target and feature at Rust 1.98.1
-make assurance-env    # build the pinned shared-assurance interpreter
-make assurance-inputs # run the producers and write their structured results
-make assurance        # pins + the Quoin chain
+make assurance-env    # build the empty interpreter hosted CI still calls
 make ci               # complete local gate set (hosted CI is manual-only)
 ```
 
@@ -35,22 +33,6 @@ which remains a human decision.
 
 ## Assurance
 
-This repository produces verification results with its own tools and hands them
-to the released Engineering Assurance, Quire, and Quoin contracts. It keeps no
-evidence framework of its own — no runner, envelope, manifest, tool-identity
-lock, retention store, audit store, anchor file, or aggregate verdict. See
-[`assurance/README.md`](./assurance/README.md) and
-[`spec/requirements/FR-006-shared-assurance-intake.md`](./spec/requirements/FR-006-shared-assurance-intake.md).
-
-Two Python lanes, deliberately:
-
-- `.venv-assurance` holds `engineering-assurance` at the `v0.2.1` tag, which
-  declares `jsonschema>=4.23`. Build it with `make assurance-env`.
-- The corpus gate's Draft 7 lane pins `jsonschema==3.2.0`.
-
-Both are right for their own job and neither may be bent to fit the other, so
-they get one environment each.
-
 This repository retains no evidence. The 23 `quire.derivation-evidence/v1`
 records its pre-migration collector wrote, the two schemas frozen because those
 records named them by digest, and the read-only compatibility view over them
@@ -60,24 +42,6 @@ preservation constraint `agent-ix/engineering-assurance#7` released for the
 pre-stable phase. Deleted, not rewritten — no claim that historical evidence
 still verifies survives them. The constraint re-applies at the move toward
 stable releases.
-
-The Makefile is orchestration and is not a trust root. When a chain run reaches
-Quoin and produces a record, Quoin binds the producer inputs by digest and
-constrains the content of that record. The chain retains nothing locally, so
-this does not survive Make suppressing the chain's own exit status: under the
-measured global `.IGNORE:`, no record was produced and `make ci` still exited 0.
-Pure gates likewise have no record to contradict and no guard; the gap is
-measured and recorded, not closed. At base `4cb5787`, an invalid Rust item made
-the no-`.IGNORE:` control exit 2; the `make -k` diagnostic classified eight of
-thirteen prerequisite paths as failed or unmade. The other five were unaffected
-by that compile fault and were not measured under their own faults. With global
-`.IGNORE:`, the eight affected paths emitted ignored failures while Make treated
-all thirteen as successful and exited 0. Seventeen other execution-control
-spellings remain unmeasured. The per-prerequisite result and reproduction are in
-[`SR-013`](./spec/reviews/SR-013-make-execution-control-measurement.md) and the
-owner decision—limited to the measured spelling and requiring re-evaluation
-before the first stable release candidate—is tracked in
-[issue #11](https://github.com/agent-ix/tl-syntax/issues/11).
 
 ## Safety scaffolding
 
@@ -102,10 +66,8 @@ examples/corpus_conformance.rs # the domain conformance runner over the shared c
 tests/integration.rs           # end-to-end domain tests
 tests/future_lowering.rs       # FR-008 traced lowering and refusal tests
 tests/future_operator_corpus.rs # TC-074 replay of the paired W/M corpus
-tests/shared_assurance.rs      # FR-006 traced tests over the shared intake path
 corpus/                        # pinned formula schemas, fixtures, traces, and oracles
 corpus/future-operators/       # digest-pinned paired W/M source and canonical-graph corpus
-assurance/                     # the change declaration and the adopted release pins
 spec/                          # requirements, plans, reviews, and the test matrix
-scripts/                       # domain gates and the shared-assurance driver
+scripts/                       # domain gates
 ```

@@ -76,8 +76,7 @@ system, and it does not turn tl-syntax into a user-authored language.
   Reason: reproducibility, non-promotion, retention and authority are
   cross-cutting correctness properties.
 
-The principal seams are the existing Rust shared-assurance intake in
-`tests/shared_assurance.rs`, future Rust source-readiness modules, the released
+The principal seams are future Rust source-readiness modules, the released
 Quire/Engineering Assurance export, Quoin retention handles, and the future
 Engineering Assurance integrator package. Markdown parsing and local contract
 copies are outside every seam.

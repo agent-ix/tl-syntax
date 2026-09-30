@@ -137,7 +137,7 @@ allocates planned evidence.
 The internal hard-prerequisite graph is acyclic:
 
 ```text
-MRS-001 + NFR-003 + FR-006
+MRS-001
   -> FR-019 executable-path classification
   -> FR-015 candidate/configuration binding
   -> FR-016 stage and lifecycle preservation

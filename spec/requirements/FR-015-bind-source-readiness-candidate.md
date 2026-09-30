@@ -5,8 +5,6 @@ type: FR
 relationships:
   - target: ix://agent-ix/tl-syntax/StR-004
     type: implements
-  - target: ix://agent-ix/tl-syntax/NFR-003
-    type: depends_on
   - target: ix://agent-ix/tl-syntax/FR-019
     type: depends_on
 ---
@@ -117,9 +115,6 @@ configuration through released shared-assurance contracts.
 
 ## Dependencies
 
-- [FR-006](./FR-006-shared-assurance-intake.md) owns current shared intake.
-- [NFR-003](./NFR-003-qualification-integrity.md) owns existing v0.1
-  qualification meaning and the pre-stable limitations.
 - `agent-ix/tl-syntax#16` owns adoption of a released source-grounded Quire and
   Engineering Assurance compatibility set; this requirement does not bypass
   its resume condition.

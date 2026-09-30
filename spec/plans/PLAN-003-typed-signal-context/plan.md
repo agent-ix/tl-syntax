@@ -40,7 +40,7 @@ FR-007 + StR-003 + SR-014
   -> alloc-owned values and bounded strict serde documents
   -> borrowed formula binding and lookup
   -> positive/negative fixtures, property tests, feature checks, legacy snapshots
-  -> existing local gate and shared assurance intake
+  -> existing local gate
   -> code review + gap analysis
   -> exact downstream API handoff to tl-parse#20 and tl-rewrite#21
 ```
