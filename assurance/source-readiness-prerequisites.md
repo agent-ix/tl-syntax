@@ -20,3 +20,20 @@ consumer projection: the existing `make assurance` path has not been migrated,
 and no exact fresh producer attestation or complete scope claim is made. The
 ledger must be rebound to one immutable candidate/configuration by TL-22; it
 cannot by itself make downstream work ready.
+
+## Standalone producer-execution boundary
+
+The intended consumer boundary is a separate EA CLI tool, not an EA Rust
+dependency in the published MIT/Apache tl-syntax library. Tool use does not
+require changing that library's license. Inspection of the admitted v0.4.1
+`src/main.rs` command registration and dispatch found no producer-execution
+command; the released capability is currently exposed through the Rust library.
+EA#34 therefore establishes executor availability, but does not establish a
+standalone CLI consumer contract for this use.
+
+Engineering Assurance owns the missing released CLI entry point and its versioned
+request/result transport. Until that boundary is identified and admitted,
+TL-22's shared-executor consumer binding remains unavailable. This repository
+will not wrap the library in a local runner or silently expand its dependency
+license policy. The released executor's Linux-only execution boundary is a
+separate host limitation; a CLI does not make execution available on macOS.
