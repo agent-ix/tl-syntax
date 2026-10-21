@@ -12,7 +12,6 @@ make test             # cargo test
 make build            # release build
 make clean            # cargo clean
 make deny             # cargo-deny advisories, bans, licenses, and sources
-make audit-unsafe     # enforce the unsafe-code policy guard
 make check-corpus     # corpus schemas, derived oracles, and their mutation probe
 make conformance      # replay the shared temporal corpus through the crate
 make spec             # validate the specification with Quire
@@ -40,7 +39,7 @@ Backported from `agent-ix/ecaz`:
 
 - `clippy.toml` pins MSRV to `1.98.1` and caps cognitive complexity / arg count
 - `deny.toml` allow-lists licenses and denies unknown registries/git sources
-- `scripts/check_unsafe_comments.sh` runs in CI and locally via `make audit-unsafe`. Every `unsafe {` block must have a `// SAFETY:` comment within the 3 preceding lines, or be listed in `scripts/unsafe_comment_baseline.txt`. Update the baseline with `bash scripts/check_unsafe_comments.sh --update-baseline`.
+- The workspace Clippy `undocumented_unsafe_blocks` lint enforces `// SAFETY:` comments on unsafe blocks during `make lint` and CI.
 - `rustfmt.toml` uses only stable 100-character-width settings.
 - `Cargo.toml` declares Rust 1.98.1 as the MSRV; `make msrv` checks every target
   and feature at that version.

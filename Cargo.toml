@@ -30,3 +30,9 @@ serde_json = "1.0"
 [profile.release]
 lto = "thin"
 codegen-units = 1
+
+[lints]
+workspace = true
+
+[workspace.lints.clippy]
+undocumented_unsafe_blocks = "deny"

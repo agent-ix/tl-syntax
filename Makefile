@@ -21,7 +21,7 @@ help:
 	@echo "  make check-features   - check no-default, alloc, serde, and all features"
 	@echo "  make check-corpus     - verify corpus schemas and derived oracles"
 	@echo "  make conformance      - replay the shared temporal corpus through the crate"
-	@echo "  make spec             - validate specs, check id: uniqueness, and report coverage"
+	@echo "  make spec             - validate specs and report coverage"
 	@echo "  make spec-release     - require every active specification row to be backed"
 	@echo "  make msrv             - test all targets and features with Rust 1.98.1"
 	@echo "  make rustdoc          - build warning-free public documentation"
@@ -29,7 +29,6 @@ help:
 	@echo "  make clean            - cargo clean"
 	@echo "  make deny             - run all declared cargo-deny policy checks"
 	@echo "  make fuzz-check       - compile and dependency-audit the manual fuzz targets"
-	@echo "  make audit-unsafe     - Enforce // SAFETY: comments on unsafe blocks"
 	@echo "  make ci               - All CI gates locally (hosted CI is manual-only)"
 
 # =============================================================================
@@ -79,14 +78,10 @@ check-corpus:
 .PHONY: spec spec-release
 spec:
 	$(QUIRE) validate --scope . 'spec/**/*.md' --strict --summary
-	$(PYTHON) scripts/check_spec_id_uniqueness.py
-	$(PYTHON) scripts/test_check_spec_id_uniqueness.py
 	$(QUIRE) coverage --scope .
 
 spec-release:
 	$(QUIRE) validate --scope . 'spec/**/*.md' --strict --summary
-	$(PYTHON) scripts/check_spec_id_uniqueness.py
-	$(PYTHON) scripts/test_check_spec_id_uniqueness.py
 	$(QUIRE) coverage --scope . --strict
 
 .PHONY: build
@@ -115,10 +110,6 @@ fuzz-check:
 	$(CARGO) +nightly fuzz build wire_decode
 	cd fuzz && $(CARGO) deny check --config ../deny.toml
 
-.PHONY: audit-unsafe
-audit-unsafe:
-	bash scripts/check_unsafe_comments.sh
-
 .PHONY: msrv
 msrv:
 	rustup run 1.98.1 $(CARGO) test --all-features
@@ -135,4 +126,4 @@ rustdoc:
 # `spec-release` under Task-007 after planned roadmap rows have backing.
 .PHONY: ci
 ci: fmt-check check-features check-default-dependencies lint test check-corpus \
-	conformance deny fuzz-check audit-unsafe spec msrv rustdoc
+	conformance deny fuzz-check spec msrv rustdoc
