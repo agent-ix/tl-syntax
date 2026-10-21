@@ -39,7 +39,7 @@ pub const FORMULA_V1_SCHEMA_BYTES: &[u8] =
 /// Lowercase SHA-256 of [`FORMULA_V1_SCHEMA_BYTES`].
 #[cfg(feature = "serde")]
 pub const FORMULA_V1_SCHEMA_SHA256: &str =
-    "780c70055eb979a7913dc224e752d56f057793a0ef60af0e7270f53a4f973393";
+    "996b5fef4690df59a7b0c655f95cfbdb2e56a9db534e0db58859bed9666389ce";
 
 /// Exact checked-in Draft 7 schema bytes for `tl-syntax.formula/v2`.
 #[cfg(feature = "serde")]

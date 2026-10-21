@@ -3,7 +3,7 @@
   "$id": "https://agent-ix.github.io/tl-syntax/schema/formula-v1.schema.json",
   "title": "tl-syntax formula document v1",
   "description": "Structural Draft 7 contract. The declared semantic validator is mandatory for relational graph, interval, and span constraints.",
-  "x-tl-syntax-semantic-validator": "python3 scripts/validate_corpus.py",
+  "x-tl-syntax-semantic-validator": "cargo run --quiet --example corpus_gate --features serde --",
   "x-tl-syntax-semantic-constraints": [
     "interval start must not exceed end",
     "span start must not exceed end",

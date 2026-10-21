@@ -9,7 +9,7 @@
 //! wording does.
 //!
 //! It is not an oracle for horizons or closed-trace outcomes. This crate owns no
-//! evaluator; that is `tl-mltl`'s job. `scripts/validate_corpus.py` derives those
+//! evaluator; that is `tl-mltl`'s job. `corpus_gate` derives those
 //! two values and states its own limitation. What this runner owns is the half a
 //! Python re-implementation could never own honestly: whether the real decoder
 //! accepts the fixture, and for exactly which typed reason it does not.

@@ -8,7 +8,6 @@
 # to its own correctness, or retains evidence of its own.
 
 CARGO ?= cargo
-PYTHON ?= python3
 QUIRE ?= quire
 
 .PHONY: help
@@ -60,7 +59,8 @@ check-features:
 
 .PHONY: check-default-dependencies
 check-default-dependencies:
-	$(PYTHON) scripts/check_default_dependencies.py
+	$(CARGO) run --quiet --example default_dependencies
+	$(CARGO) test --quiet --example default_dependencies
 
 .PHONY: conformance
 conformance:
@@ -69,8 +69,8 @@ conformance:
 
 .PHONY: check-corpus
 check-corpus:
-	$(PYTHON) scripts/validate_corpus.py
-	$(PYTHON) scripts/test_corpus_gate.py
+	$(CARGO) run --quiet --example corpus_gate --features serde
+	$(CARGO) test --quiet --example corpus_gate --features serde
 
 # Specification-first work is allowed to land before its implementation. The
 # authoring gate reports those rows without treating them as evidence; the

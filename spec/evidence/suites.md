@@ -14,7 +14,7 @@ type: SuiteRegistry
 | SUITE-002 | Strict specification validation | `quire validate --scope . 'spec/**/*.md' --strict --summary` | quire | Analysis |
 | SUITE-003 | Static specification and coverage export | `quire coverage --scope . --json` | quire | Static |
 | SUITE-004 | Public API documentation | `RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --all-features` | rustdoc | Static |
-| SUITE-005 | Corpus schema, derived horizon, and closed-trace oracle | `python3 scripts/validate_corpus.py` | Python jsonschema Draft 7, tl-syntax corpus oracle | Analysis |
+| SUITE-005 | Corpus schema, derived horizon, and closed-trace oracle | `cargo run --quiet --example corpus_gate --features serde` | Rust tl-syntax corpus oracle | Analysis |
 | SUITE-009 | Source-readiness property and state-model tests | `cargo test --test source_readiness_properties --all-features` | planned Rust proptest/state-machine harness | Property |
 | SUITE-010 | Source-readiness fault and freshness tests | `cargo test --test source_readiness_failures --all-features` | planned Rust fault-injection harness | Integration |
 | SUITE-011 | Real shared source-readiness contract tests | `cargo test --test source_readiness_shared --all-features -- --ignored` | planned Rust integration harness plus released Engineering Assurance/Quire/Quoin | Integration |
