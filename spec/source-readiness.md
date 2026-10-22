@@ -147,7 +147,7 @@ MRS-001
 
 NFR-004 and NFR-005 are cross-cutting controls designed with FR-019 and gate
 completion of every functional requirement they constrain. AP-002 selects the
-review boundary; MP-002 operationalizes the NFR observations and does not
+review boundary; MP-002 plans the NFR observations and does not
 precede or redefine either NFR. Specification/review can finish while an
 implementation node remains unavailable at an external resume condition.
 
