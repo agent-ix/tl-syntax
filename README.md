@@ -117,3 +117,5 @@ to the named human authority.
 
 Licensed under either of Apache License, Version 2.0 or MIT license at your
 option.
+
+<!-- STD-30 language-boundary canary: inert README change. -->
