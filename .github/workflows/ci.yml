@@ -50,6 +50,8 @@ jobs:
         run: |
           npm install --global '@agent-ix/quire-cli' '@agent-ix/quoin' '@agent-ix/ix-flow'
           quoin module ensure-defaults
+          quoin module install github:agent-ix/spec-objects-business//spec_objects_business@e5ec1918046d5c78ca52486dfc487d239b1494ce
+          quoin module install github:agent-ix/spec-objects-architecture//spec_objects_architecture@6d594b575ec15b6698d3c48060d2b2211d185266
 
       - name: Install cargo-deny
         uses: taiki-e/install-action@v2
