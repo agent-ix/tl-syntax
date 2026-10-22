@@ -37,3 +37,13 @@ invariants:
   - exact limits pass and every one-over failure returns no partial request result or Boolean
 dispatch: exact native request and result ContractSelection values
 ```
+## Features
+
+Declared operations in contract order.
+
+| Feature | Kind |
+|---|---|
+| produce_request | operation |
+| read_request | operation |
+| evaluate | operation |
+| read_result | operation |

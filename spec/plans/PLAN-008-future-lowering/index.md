@@ -9,7 +9,7 @@ description: "Contents of the tl-syntax issue 40 implementation plan."
 ## Contents
 
 - [Plan overview](./plan.md)
-- [Update log](./log.md)
+- [Update log](../../../docs/plan-history/PLAN-008-future-lowering.md)
 - [Task-001: Admission and lowering module](./tasks/Task-001-admission-and-lowering.md)
 - [Task-002: Traced tests and matrix bindings](./tasks/Task-002-traced-tests.md)
 - [Task-003: Verification and closing review](./tasks/Task-003-verification.md)

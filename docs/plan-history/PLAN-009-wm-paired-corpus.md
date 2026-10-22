@@ -1,5 +1,4 @@
 ---
-type: log
 title: "PLAN-009 - Update log"
 description: "Chronological changes to the paired W/M corpus plan."
 ---

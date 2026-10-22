@@ -37,3 +37,13 @@ invariants:
   - refusal identity is independent of rendering and no failed operation returns partial canonical bytes
 dispatch: exact result ContractSelection
 ```
+## Features
+
+Declared operations in contract order.
+
+| Feature | Kind |
+|---|---|
+| produce_result | operation |
+| read_result | operation |
+| validate_lineage | operation |
+| map_contract_ir_predicate_result | operation |

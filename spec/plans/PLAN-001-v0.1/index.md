@@ -8,7 +8,7 @@ description: "Contents of the tl-syntax v0.1 implementation plan bundle."
 ## Contents
 
 - [Plan overview](./plan.md)
-- [Update log](./log.md)
+- [Update log](../../../docs/plan-history/PLAN-001-v0.1.md)
 - [Task-001: Specification and assurance foundation](./tasks/Task-001-foundation.md)
 - [Task-002: Checked values and identities](./tasks/Task-002-checked-values.md)
 - [Task-003: Borrowed formula graph](./tasks/Task-003-formula-graph.md)

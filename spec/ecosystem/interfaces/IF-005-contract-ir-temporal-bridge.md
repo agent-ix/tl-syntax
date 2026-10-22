@@ -39,3 +39,13 @@ invariants:
   - every non-admitted decision has ordered nonempty typed causes and no usable partial artifact
 dispatch: exact bridge profile and complete ContractSelection set
 ```
+## Features
+
+Declared operations in contract order.
+
+| Feature | Kind |
+|---|---|
+| project_predicate_set | operation |
+| value_predicate | operation |
+| project_temporal_subject | operation |
+| join_results | operation |

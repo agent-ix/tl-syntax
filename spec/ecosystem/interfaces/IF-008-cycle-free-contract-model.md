@@ -28,3 +28,11 @@ invariants:
   - owner readers flow toward the bridge and no reverse production edge remains
 dispatch: exact existing Contract IR substrate selection
 ```
+## Features
+
+Declared operations in contract order.
+
+| Feature | Kind |
+|---|---|
+| admit_model | operation |
+| canonicalize | operation |
