@@ -5,8 +5,8 @@ type: MeasurementPlan
 status: proposed
 owner: tl-syntax-evidence-owner
 metric: tl-syntax.source-readiness-obligation-state
-definition_version: tl-syntax.source-readiness-obligation-state/v2
-stage: gate
+definition_version: tl-syntax.source-readiness-obligation-state/v3
+stage: target
 objective:
   direction: zero
 statistical_design:
@@ -29,6 +29,23 @@ relationships:
 ---
 
 # tl-syntax source-readiness obligation-state plan
+
+## Promotion to Gate
+
+This proposed plan states the target for a future source-readiness measurement.
+It is not an executable gate: the source-readiness test matrix records its
+domain cases as planned or blocked, and this repository has no implemented
+collector that can produce the declared count. Keep the `eq 0` rule as the
+intended bar without representing an unrun collection as evidence.
+
+Before changing this plan to `stage: gate` and `status: active`, its owner must
+identify the actual producer, population selector, corpus or answer key, and
+checker configuration in `protected_apparatus`; declare negative controls for
+omitted, stale, or selectively reported results; identify how ground truth is
+established; and demonstrate the complete collection and one-axis mutations
+named below.
+The promoted plan needs a new `definition_version`. Until then, no result from
+this plan can establish source readiness.
 
 ## Decision Use
 
@@ -62,14 +79,15 @@ owns.
 
 ## Interpretation
 
-The `count` estimate is the number of required obligations whose result is
-non-success or lacks current attributable evidence, taken over both
+The planned `count` estimate is the number of required obligations whose result
+is non-success or lacks current attributable evidence, taken over both
 repetitions together. An obligation whose repetitions disagree counts. The
-decision rule `eq 0` therefore blocks a source-readiness claim when any
-required obligation is non-success or lacks current attributable evidence. The
-count is a blocking tally, not a weighted or aggregate qualification score. It
-never replaces the per-obligation categorical results, and a zero count never
-approves release or adopter use.
+decision rule `eq 0` is the target for a future gate: if promoted with a real
+collection, any nonzero count will block a source-readiness claim. At this
+proposed target stage, the plan records no result and blocks no claim by
+itself. The count will be a blocking tally, not a weighted or aggregate
+qualification score. It never replaces the per-obligation categorical results,
+and a zero count never approves release or adopter use.
 
 Report each categorical result and discrepancy. A missing, failed, skipped,
 unsupported, stale, suspect, vacuous, tampered or nondeterministic result blocks
