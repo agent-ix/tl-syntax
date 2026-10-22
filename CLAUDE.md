@@ -58,5 +58,6 @@ tests/future_operator_corpus.rs # TC-074 replay of the paired W/M corpus
 corpus/                        # formula schemas, fixtures, traces, and oracles
 corpus/future-operators/       # paired W/M source and canonical-graph corpus
 spec/                          # requirements, plans, reviews, and the test matrix
-scripts/                       # domain gates
+examples/corpus_gate.rs          # Rust corpus schema and oracle gate
+examples/default_dependencies.rs # Rust default dependency graph gate
 ```

@@ -6,9 +6,10 @@
 Formula files conform structurally to `schema/formula-v1.schema.json`;
 proposition names conform to `schema/proposition-map-v1.schema.json`. Draft 7
 cannot express the formula graph's ordering and cross-field relationships, so
-`python3 scripts/validate_corpus.py` is the mandatory semantic validator for
-interval/span ordering, root range, and preceding-operand constraints. The
-schema declares that boundary in `x-tl-syntax-semantic-*` fields. Fixture
+`cargo run --quiet --example corpus_gate --features serde --` is the mandatory
+semantic validator for interval/span ordering, root range, and
+preceding-operand constraints. The schema declares that boundary in
+`x-tl-syntax-semantic-*` fields. Fixture
 identities, class names, paths, traces, horizons, and expected closed-trace
 outcomes are stable data in v1.
 
