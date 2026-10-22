@@ -8,7 +8,7 @@ description: "Contents of the tl-syntax typed signal and caller context plan bun
 ## Contents
 
 - [Plan overview](./plan.md)
-- [Update log](./log.md)
+- [Update log](../../../docs/plan-history/PLAN-003-typed-signal-context.md)
 - [Task-001: Specification and composite review](./tasks/Task-001-specification.md)
 - [Task-002: Allocation-free signal and context core](./tasks/Task-002-borrowed-core.md)
 - [Task-003: Owned strict wire documents](./tasks/Task-003-wire-documents.md)

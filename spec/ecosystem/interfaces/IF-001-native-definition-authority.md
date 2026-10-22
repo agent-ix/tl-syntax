@@ -36,3 +36,13 @@ invariants:
   - unknown fields versions profiles graph edges and resource overruns return no validated view
 dispatch: exact ContractSelection only
 ```
+## Features
+
+Declared operations in contract order.
+
+| Feature | Kind |
+|---|---|
+| checked_predicate | operation |
+| temporal_subject | operation |
+| read_checked_predicate | operation |
+| read_temporal_subject | operation |

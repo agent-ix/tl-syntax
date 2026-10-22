@@ -1,5 +1,4 @@
 ---
-type: log
 title: "PLAN-003 - Update log"
 description: "Chronological changes to the typed signal and caller context plan bundle."
 ---

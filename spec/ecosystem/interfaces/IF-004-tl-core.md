@@ -59,3 +59,18 @@ invariants:
   - every accepted wire family has canonical schema bytes and a bounded public strict reader
 dispatch: exact formula semantic evaluator and rewrite ContractSelections
 ```
+## Features
+
+Declared operations in contract order.
+
+| Feature | Kind |
+|---|---|
+| read_formula | operation |
+| read_signal_binding | operation |
+| read_history | operation |
+| read_trace | operation |
+| read_evaluation_request | operation |
+| read_evaluation_report | operation |
+| evaluate | operation |
+| map_evaluation_report | operation |
+| rewrite | operation |

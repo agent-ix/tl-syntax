@@ -28,3 +28,11 @@ invariants:
   - accepted owner-specific spellings remain distinct until an explicit total mapping relates them
 dispatch: exact ix identity and immutable accepted revision
 ```
+## Features
+
+Declared operations in contract order.
+
+| Feature | Kind |
+|---|---|
+| select_semantic_object | operation |
+| verify_owner_allocation | operation |

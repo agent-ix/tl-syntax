@@ -61,3 +61,19 @@ invariants:
   - strict-reader refusal returns no trusted partial assertion
 dispatch: exact ContractSelection for each of the nine authority families
 ```
+## Features
+
+Declared operations in contract order.
+
+| Feature | Kind |
+|---|---|
+| derive_context | operation |
+| read_observation | operation |
+| read_population | operation |
+| read_position_ledger | operation |
+| read_clock_binding | operation |
+| read_capture_environment | operation |
+| read_progress | operation |
+| read_closure | operation |
+| read_completeness | operation |
+| read_result_availability | operation |

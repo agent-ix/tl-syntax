@@ -1,5 +1,4 @@
 ---
-type: log
 title: "Plan-007 — Update Log"
 description: "Chronological log of the progressive source-qualification-readiness plan."
 ---

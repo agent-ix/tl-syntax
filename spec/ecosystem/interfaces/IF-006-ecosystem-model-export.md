@@ -28,3 +28,11 @@ invariants:
   - improvement output is a proposal requiring the ordinary external owner review and merge path
 dispatch: exact model ContractSelection
 ```
+## Features
+
+Declared operations in contract order.
+
+| Feature | Kind |
+|---|---|
+| export_model | operation |
+| read_model | operation |
