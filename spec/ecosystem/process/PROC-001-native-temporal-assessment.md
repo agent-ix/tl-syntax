@@ -11,6 +11,23 @@ artifact is interpreted.
 
 ## Workflow
 
+The rows transcribe the numbered algorithm below. The algorithm does not
+assign per-step artifact names, so Consumes and Emits remain unspecified.
+
+| Step | Kind | Consumes | Emits | Description |
+|---|---|---|---|---|
+| admit_contracts | command | | | Admit every selected contract and exact schema before interpreting governed bytes. |
+| read_owner_artifacts | command | | | Strict-read the compiled native definition and all observation authority artifacts. |
+| derive_predicate_population | command | | | Derive the sorted predicate population and strict-read its TL signal/proposition artifacts. |
+| map_predicate_results | command | | | Map each available native protocol predicate result to one typed valuation; retain every non-value without coercion. |
+| construct_temporal_request | command | | | Construct and strict-read the exact TL formula, history/trace and evaluator request for the selected profile. |
+| execute_and_read_results | command | | | Execute the selected bounded TL evaluator and strict-read both producer results. |
+| compare_results | decision | | | Compare all independent progress, closure, truth, settlement, decision-premise, completeness and correction axes. |
+| return_decision | decision | | | Return one complete decision and retain every owner identity used to derive it. |
+| export_model | command | | | Export the bounded descriptive ecosystem graph; route any suggested change through external owner review. |
+
+### Workflow diagram
+
 ```mermaid
 flowchart TD
     Source[Native Quire source and model authorities] --> Compile[QSL parse link check and compiled protocol v2 admission]
