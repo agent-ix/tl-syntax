@@ -70,7 +70,7 @@ A formula passes through several crates on its way from text to a Quire outcome.
 
 The calling program moves documents from one stage to the next. The dependency structure between the crates is in the [README](../README.md#the-tl-stack).
 
-## In a debugging session
+## A worked example
 
 In a worked debugging session a deadline requirement fails on a recorded trace and the engineer asks why. tl-syntax is step 2. The catalog declares the signals the monitored system provides and binds each proposition number in the formula to one of them. Every later step reads the formula through that binding.
 
