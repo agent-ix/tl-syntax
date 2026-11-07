@@ -1,119 +1,126 @@
-# TL Syntax
+# tl-syntax
 
 [![Discord](https://img.shields.io/badge/Discord-Join%20us-5865F2?logo=discord&logoColor=white)](https://discord.gg/k8DVhuYBR2)
+[![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue)](#license)
+[![Rust](https://img.shields.io/badge/rust-1.98.1%2B-orange?logo=rust)](Cargo.toml)
+[![no_std](https://img.shields.io/badge/no__std-compatible-brightgreen)](docs/features.md)
 
-A parser-independent, `no_std` syntax tree and semantic-profile model for
-discrete bounded Mission-time Linear Temporal Logic (MLTL).
+tl-syntax is a Rust crate that defines the syntax tree, semantic profiles and
+signal model for discrete bounded Mission-time Linear Temporal Logic (MLTL). It
+is the base crate of the TL family:
+[tl-parse](https://github.com/agent-ix/tl-parse),
+[tl-rewrite](https://github.com/agent-ix/tl-rewrite),
+[tl-mltl](https://github.com/agent-ix/tl-mltl),
+[tl-oracle](https://github.com/agent-ix/tl-oracle) and
+[quire-mltl](https://github.com/agent-ix/quire-mltl) all depend on it.
 
-The crate models propositions, Boolean operators, bounded Future, Globally,
-Until, and Release, and the origin-complete past operators Once, Historically,
-strong Previous, Since, and Triggered over checked inclusive intervals. Future
-and past primitives are admitted only by their matching semantic profiles. It also validates named
-Boolean/Integer/fixed-Decimal signal catalogs, direct Boolean proposition
-bindings, and optional caller-supplied requirement context. Formulas and
-catalogs are borrowed views, so the default API needs neither `std` nor a heap
-allocator. Optional owned and serde layers provide strict versioned exchange
-documents.
+The crate validates formula graphs against a semantic profile, validates
+catalogs of typed input signals and their bindings to propositions, and reads
+and writes strict versioned JSON documents with a canonical form and a content
+identity. It does not parse text and does not evaluate formulas. The default
+build needs neither `std` nor an allocator.
 
-The public semantic modules are `formula::{graph, profile, document}`,
-`signal::{domain, catalog, binding, document}`, and
-`contracts::{limits, manifest}`. Crate-root re-exports preserve the original
-paths.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/hero-dark.svg">
+  <img alt="A node table of 2 nodes and a semantic profile, mltl.closed-trace/v1, go into Formula::new, which returns a borrowed Formula or the first FormulaError. A signal catalog of 3 signals and 1 binding goes into SignalCatalog::new, which returns a SignalCatalog or the first SignalCatalogError. bind_formula joins the two into a BoundFormula when every proposition has a binding to a Boolean signal. The crate defines 4 semantic profiles." src="docs/images/hero-light.svg">
+</picture>
 
-## Features
+> **Status: prerelease.** The API is not stable. The crate has `publish = false`
+> and other TL crates depend on it through git. Registry publication waits for
+> the v0.1 assurance review.
 
-| Feature | Default | Adds |
-|---|---:|---|
-| core | yes | Checked values plus allocation-free borrowed formulas, signal catalogs, formula bindings, and requirement contexts |
-| `alloc` | no | Owned formula, proposition-map, signal-catalog, and requirement-context documents |
-| `serde` | no | Serialization for versioned owned documents; implies `alloc` |
+## Usage
 
-## Example
+This builds a formula, binds it to a signal catalog and looks up the signal for a
+proposition. It runs as a doc test with the default features.
 
 ```rust
-use tl_syntax::{Formula, Interval, Node, NodeId, NodeKind, PropositionId, SemanticProfile};
+use tl_syntax::{
+    Formula, Interval, Node, NodeId, NodeKind, PropositionBinding, PropositionId,
+    SemanticProfile, SignalCatalog, SignalDeclaration, SignalDomain, SignalId,
+};
 
 let nodes = [
-    Node::new(NodeKind::Proposition { proposition: PropositionId(0) }),
+    Node::new(NodeKind::Proposition { proposition: PropositionId(7) }),
     Node::new(NodeKind::Future {
         interval: Interval::new(1, 3).unwrap(),
         operand: NodeId(0),
     }),
 ];
 let formula = Formula::new(SemanticProfile::ClosedTraceV1, NodeId(1), &nodes).unwrap();
-assert_eq!(formula.root(), NodeId(1));
+
+let signals = [SignalDeclaration::new(SignalId(1), "request_ready", SignalDomain::Boolean)];
+let bindings = [PropositionBinding::new(PropositionId(7), SignalId(1))];
+let mut scratch = [0_u32; 1];
+let catalog = SignalCatalog::new(&signals, &bindings, &mut scratch).unwrap();
+
+let bound = catalog.bind_formula(formula).unwrap();
+let signal = bound.signal_for_proposition(PropositionId(7)).unwrap();
+assert_eq!(signal.name(), "request_ready");
 ```
 
-Signals use identities distinct from proposition identities. A direct binding
-is valid only when its target signal is Boolean; numeric signals remain typed
-inputs for an explicit predicate-lowering layer outside this crate.
+The formula is `F[1,3] p7`. The same construction pattern is in
+`tests/typed_signal_context.rs`. More examples, including JSON documents, are in
+[docs/examples.md](docs/examples.md).
 
-## Wire formats and corpus
+## Reference
 
-The `serde` feature exposes formula schemas `tl-syntax.formula/v1` and
-`tl-syntax.formula/v2`, proposition-
-map schema `tl-syntax.proposition-map/v1`, signal-catalog schema
-`tl-syntax.signal-catalog/v1`, requirement-context schema
-`tl-syntax.requirement-context/v1`, and the closed set of supported semantic-
-profile identifiers. Formula-v1 remains future-only and byte-compatible;
-formula-v2 adds the closed `tl-syntax.past-operators/v1` node catalog and
-`mltl.origin-complete-history/v1`. V1 documents upgrade losslessly, while v2
-down-conversion refuses a past profile. Unknown versions and fields are rejected. The existing
-formula/proposition JSON Schemas, fixtures, and expected horizon/closed-trace
-results live in [`corpus/`](corpus/README.md); that v1 corpus is unchanged by
-the new separate documents. The signal-catalog schema is the
-[`spec/signal-catalog-v1.schema.json`](spec/signal-catalog-v1.schema.json)
-artifact exposed by the `serde` API.
+| Module | What it holds |
+| --- | --- |
+| `formula::graph` | `Formula`, `Node`, `NodeKind`, `Interval`, `SourceSpan` and `FormulaError`. |
+| `formula::profile` | `SemanticProfile`, `TemporalFamily` and the closed past-operator catalog. |
+| `formula::document` | `FormulaDocument` for schemas `tl-syntax.formula/v1` and `v2` (feature `alloc`, strict readers with `serde`). |
+| `formula::infinite` | The unbounded formula edition, `tl-syntax.formula-unbounded/v1`, and the infinite-trace profile. |
+| `formula::trace` | Lasso traces, partial valuations and fairness premises (feature `alloc`). |
+| `formula::liveness` | Routing of liveness requests to an optional backend (feature `alloc`). |
+| `signal::{domain, catalog, binding}` | Boolean, integer and fixed-decimal signals, catalogs, and proposition bindings. |
+| `signal::document` | Owned signal-catalog and proposition-map documents (feature `alloc`). |
+| `contracts::{limits, manifest}` | Resource limits for readers, and the past-profile implementation manifest check. |
+| `future` (crate root) | Lowering of derived operators `W` and `M` to primitive nodes, with typed refusals. |
 
-Each formula, signal-catalog, and proposition-map owner document exposes
-`from_json_bytes(bytes, SyntaxArtifactLimits)`. These readers intersect caller
-limits with immutable owner maxima, reject noncanonical or trailing JSON, and
-return only fully validated values. The same API publishes exact schema bytes
-and lowercase SHA-256 digest constants. Validated documents can emit canonical
-bytes and a contract-domain-separated content identity.
+| Feature | Default | Adds |
+| --- | ---: | --- |
+| none | yes | Borrowed formulas, signal catalogs, bindings and requirement contexts, with no allocation. |
+| `alloc` | no | Owned documents. |
+| `serde` | no | JSON serialization and strict readers, schema constants, content identity. Implies `alloc`. |
 
-## Build
+See [docs/api-reference.md](docs/api-reference.md) and
+[docs/features.md](docs/features.md).
 
-```bash
-make test
-make ci
+## The TL stack
+
+tl-syntax holds the types every other TL crate shares. tl-parse reads text into
+these graphs, tl-rewrite and tl-mltl work on them, tl-oracle is a development-only
+reference evaluator, and quire-mltl is the one crate that connects the family to
+Quire.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/tl-stack-dark.svg">
+  <img alt="The TL crates. tl-syntax defines the formula graph, profiles and signal catalog, and tl-parse, tl-oracle, tl-mltl, tl-rewrite and quire-mltl all depend on it. tl-rewrite depends on tl-mltl. quire-mltl depends on tl-mltl and quire-observation, and is the single bridge to Quire. Dashed lines are development-only: tl-mltl and tl-rewrite test against tl-oracle, and tl-rewrite tests against tl-parse." src="docs/images/tl-stack-light.svg">
+</picture>
+
+[docs/how-it-works.md](docs/how-it-works.md) shows where each crate sits in the
+text-to-outcome pipeline.
+
+## Building and testing
+
+```sh
+make test          # cargo test --all-features
+make ci            # format, features, clippy, tests, corpus, conformance, deny, fuzz build, spec, MSRV, rustdoc
+make check-corpus  # validate the corpus schemas and derived oracles
 ```
 
-## Manual wire fuzzing
+The Rust version is pinned in `rust-toolchain.toml` (1.98.1). Hosted CI is
+manual-only; the checks run locally. Wire-decoder fuzzing is described in
+[docs/wire-formats.md](docs/wire-formats.md).
 
-The versioned document decode boundary has a Rust fuzz target. It is intentionally
-manual-only and is not part of `make ci` or hosted CI:
+## Contributing
 
-```bash
-cargo +nightly fuzz run wire_decode -- -runs=100
-cargo +nightly fuzz run infinite_wire_decode -- -runs=100
-```
-
-`infinite_wire_decode` drives the strict unbounded-formula, lasso, and partial
-valuation readers through canonical serialization and identity computation.
-Its corpus includes valid inputs for all three paths and a
-malformed refusal. `tests/infinite_fuzz_seeds.rs` checks that the seeds reach
-the intended paths before a campaign starts.
-
-Successful decodes must still pass public validation; malformed bytes are
-expected to be rejected. The checked-in conformance corpus remains the
-authoritative compatibility corpus. Generated fuzz inputs are local campaign
-scratch, not replacement fixtures or assurance evidence.
-
-## Development status
-
-This crate is being developed spec-first. Its public API is not stable yet, and
-registry publication is disabled until the v0.1 assurance review is complete.
-
-Agent-assisted contributions are reviewed under the same requirements,
-testing, provenance, and human release gates as every other contribution.
-
-Under program governance, `tl-syntax` is a linked-runtime component. Its source
-release provides reusable qualification support only: it does not validate,
-accredit, or certify a consuming project. Review and release decisions are left
-to the named human authority.
+Read [CONTRIBUTING.md](CONTRIBUTING.md) and [CLA.md](CLA.md). Work is specified
+before it is implemented; see [CLAUDE.md](CLAUDE.md) for the workflow and
+commands. The change history is in [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
-Licensed under either of Apache License, Version 2.0 or MIT license at your
-option.
+Licensed under either of [Apache License, Version 2.0](LICENSE-APACHE) or the
+[MIT license](LICENSE-MIT) at your option.
