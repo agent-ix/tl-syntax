@@ -4,7 +4,7 @@ tl-syntax is the syntax tree, semantic profile and signal model for discrete bou
 
 | Page | What it covers |
 | --- | --- |
-| [how-it-works.md](how-it-works.md) | The formula graph, semantic profiles, signal catalogs, strict documents, and where the crate sits in the pipeline from text to a Quire outcome. |
+| [how-it-works.md](how-it-works.md) | The formula graph, semantic profiles, signal catalogs, strict documents, and where the crate sits in the pipeline from text to a Quire outcome, and this crate's step in a worked debugging session. |
 | [examples.md](examples.md) | Runnable examples: refusals, JSON documents and identities, derived-operator lowering. |
 | [api-reference.md](api-reference.md) | Public types and functions by module, with their error types. |
 | [wire-formats.md](wire-formats.md) | Document schemas, canonical encoding, content identity, resource limits and fuzzing. |
