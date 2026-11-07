@@ -12,9 +12,3 @@ tl-syntax is the syntax tree, semantic profile and signal model for discrete bou
 | [features.md](features.md) | The `alloc` and `serde` features and the `no_std` guarantee. |
 
 `docs/plan-history/` holds the delivery plans for earlier versions. They are a record of past work and do not describe the current API.
-
-## Scope
-
-The crate owns syntax and data contracts. It does not parse text (tl-parse), rewrite formulas (tl-rewrite), evaluate formulas (tl-mltl) or connect to Quire (quire-mltl). tl-oracle is an independent reference evaluator used only in development.
-
-Under the program's governance, tl-syntax is a linked-runtime component. A source release gives qualification support to a consuming project and does not validate, accredit or certify that project. The public API is not stable and the crate has `publish = false`.
