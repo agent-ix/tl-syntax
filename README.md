@@ -5,20 +5,14 @@
 [![Rust](https://img.shields.io/badge/rust-1.98.1%2B-orange?logo=rust)](Cargo.toml)
 [![no_std](https://img.shields.io/badge/no__std-compatible-brightgreen)](docs/features.md)
 
-tl-syntax is a Rust crate that defines the syntax tree, semantic profiles and
-signal model for discrete bounded Mission-time Linear Temporal Logic (MLTL). It
-is the base crate of the TL family:
-[tl-parse](https://github.com/agent-ix/tl-parse),
-[tl-rewrite](https://github.com/agent-ix/tl-rewrite),
-[tl-mltl](https://github.com/agent-ix/tl-mltl),
-[tl-oracle](https://github.com/agent-ix/tl-oracle) and
-[quire-mltl](https://github.com/agent-ix/quire-mltl) all depend on it.
+tl-syntax is the shared vocabulary of the TL family: the formula graph, the
+semantic profiles and the signal catalog for discrete bounded Mission-time Linear
+Temporal Logic (MLTL). Use it to build a formula, check that it is valid under a
+profile, and bind its propositions to typed signals.
 
-The crate validates formula graphs against a semantic profile, validates
-catalogs of typed input signals and their bindings to propositions, and reads
-and writes strict versioned JSON documents with a canonical form and a content
-identity. It does not parse text and does not evaluate formulas. The default
-build needs neither `std` nor an allocator.
+Formulas and signal catalogs read and write as strict versioned JSON with a
+canonical form and a content identity. The default build needs neither `std` nor
+an allocator.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/hero-dark.svg">
@@ -49,7 +43,7 @@ cargo build --release
 ## Usage
 
 This builds a formula, binds it to a signal catalog and looks up the signal for a
-proposition. It runs as a doc test with the default features.
+proposition.
 
 ```rust
 use tl_syntax::{
@@ -76,8 +70,7 @@ let signal = bound.signal_for_proposition(PropositionId(7)).unwrap();
 assert_eq!(signal.name(), "request_ready");
 ```
 
-The formula is `F[1,3] p7`. The same construction pattern is in
-`tests/typed_signal_context.rs`. More examples, including JSON documents, are in
+The formula is `F[1,3] p7`. More examples, including JSON documents, are in
 [docs/examples.md](docs/examples.md).
 
 ## Reference
@@ -106,18 +99,12 @@ See [docs/api-reference.md](docs/api-reference.md) and
 
 ## The TL stack
 
-tl-syntax holds the types every other TL crate shares. tl-parse reads text into
-these graphs, tl-rewrite and tl-mltl work on them, tl-oracle is a development-only
-reference evaluator, and quire-mltl is the one crate that connects the family to
-Quire.
+tl-syntax holds the types every other TL crate shares.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/tl-stack-dark.svg">
   <img alt="The TL crates. tl-syntax defines the formula graph, profiles and signal catalog, and tl-parse, tl-oracle, tl-mltl, tl-rewrite and quire-mltl all depend on it. tl-rewrite depends on tl-mltl. quire-mltl depends on tl-mltl and quire-observation, and is the single bridge to Quire. Dashed lines are development-only: tl-mltl and tl-rewrite test against tl-oracle, and tl-rewrite tests against tl-parse." src="docs/images/tl-stack-light.svg">
 </picture>
-
-[docs/how-it-works.md](docs/how-it-works.md) shows where each crate sits in the
-text-to-outcome pipeline.
 
 ## Building and testing
 
@@ -127,15 +114,12 @@ make ci            # format, features, clippy, tests, corpus, conformance, deny,
 make check-corpus  # validate the corpus schemas and derived oracles
 ```
 
-The Rust version is pinned in `rust-toolchain.toml` (1.98.1). Hosted CI is
-manual-only; the checks run locally. Wire-decoder fuzzing is described in
-[docs/wire-formats.md](docs/wire-formats.md).
+Wire-decoder fuzzing is described in [docs/wire-formats.md](docs/wire-formats.md).
 
 ## Contributing
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) and [CLA.md](CLA.md). Work is specified
-before it is implemented; see [CLAUDE.md](CLAUDE.md) for the workflow and
-commands. The change history is in [CHANGELOG.md](CHANGELOG.md).
+Read [CONTRIBUTING.md](CONTRIBUTING.md) and [CLA.md](CLA.md). The change history is in
+[CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
