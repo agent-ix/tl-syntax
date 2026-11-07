@@ -69,3 +69,76 @@ A formula passes through several crates on its way from text to a Quire outcome.
 </picture>
 
 The calling program moves documents from one stage to the next. The dependency structure between the crates is in the [README](../README.md#the-tl-stack).
+
+## A worked example
+
+In a worked debugging session a deadline requirement fails on a recorded trace and the engineer asks why. tl-syntax is step 2. The catalog declares the signals the monitored system provides and binds each proposition number in the formula to one of them. Every later step reads the formula through that binding.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="images/scenario-sequence-dark.svg">
+  <img alt="A deadline requirement fails on a recorded trace, and the engineer asks why. The engineer sends F[0,3] p2 to tl-parse and gets a formula document, binds p2 to signal s2 with tl-syntax, and sends the document to tl-rewrite, which reports Unchanged. tl-mltl evaluates the formula and trace and returns false at time 0 with a buffer of 4 instants, and R2U2, which runs outside the crates, returns false at time 0 for the C2PO expression F[0,3](p2). tl-oracle evaluates the same formula and trace independently and returns false. quire-mltl maps the result to Value false. Numbered rings mark where to look at each step." src="images/scenario-sequence-light.svg">
+</picture>
+
+The case is `r2u2-future-deadline-v1`: the requirement is `F[0,3] p2`, the trace has four instants, and signal `s2` is absent at every one of them, so the verdict is false at time 0. At this step, check two things:
+
+- `p2` is bound to the signal the requirement is about. A formula bound to a neighboring signal gives a valid verdict about the wrong thing.
+- A proposition with no binding is refused with `FormulaBindingError::MissingPropositionBinding`. Nothing is evaluated against a guessed signal.
+
+The program below builds `F[0,3] p2` under the `online-prefix` profile and binds it to the catalog from the case's `signals.map`, where proposition N is signal `sN`. It then removes the binding for `p2` and binds again. It ran from a scratch crate that depends on this repository by path.
+
+```rust
+use tl_syntax::{
+    Formula, Interval, Node, NodeId, NodeKind, PropositionBinding, PropositionId,
+    SemanticProfile, SignalCatalog, SignalDeclaration, SignalDomain, SignalId,
+};
+
+fn main() {
+    let nodes = [
+        Node::new(NodeKind::Proposition { proposition: PropositionId(2) }),
+        Node::new(NodeKind::Future { interval: Interval::new(0, 3).unwrap(), operand: NodeId(0) }),
+    ];
+    let formula = Formula::new(SemanticProfile::OnlinePrefixV1, NodeId(1), &nodes).unwrap();
+
+    let signals = [
+        SignalDeclaration::new(SignalId(0), "s0", SignalDomain::Boolean),
+        SignalDeclaration::new(SignalId(1), "s1", SignalDomain::Boolean),
+        SignalDeclaration::new(SignalId(2), "s2", SignalDomain::Boolean),
+        SignalDeclaration::new(SignalId(3), "s3", SignalDomain::Boolean),
+    ];
+    let bindings = [
+        PropositionBinding::new(PropositionId(0), SignalId(0)),
+        PropositionBinding::new(PropositionId(1), SignalId(1)),
+        PropositionBinding::new(PropositionId(2), SignalId(2)),
+        PropositionBinding::new(PropositionId(3), SignalId(3)),
+    ];
+    let mut scratch = [0_u32; 4];
+    let catalog = SignalCatalog::new(&signals, &bindings, &mut scratch).unwrap();
+    let bound = catalog.bind_formula(formula).unwrap();
+    let signal = bound.signal_for_proposition(PropositionId(2)).unwrap();
+    println!("p2 -> signal s{} ({})", signal.id().0, signal.name());
+
+    // The same catalog without the binding for p2.
+    let partial = [
+        PropositionBinding::new(PropositionId(0), SignalId(0)),
+        PropositionBinding::new(PropositionId(1), SignalId(1)),
+        PropositionBinding::new(PropositionId(3), SignalId(3)),
+    ];
+    let mut scratch = [0_u32; 4];
+    let catalog = SignalCatalog::new(&signals, &partial, &mut scratch).unwrap();
+    let err = catalog.bind_formula(formula).unwrap_err();
+    println!("{err}");
+    println!("{err:?}");
+}
+```
+
+Output:
+
+```text
+p2 -> signal s2 (s2)
+formula proposition 2 has no signal binding
+MissingPropositionBinding { proposition: PropositionId(2) }
+```
+
+The first line is the binding to look for. The second and third lines are the refusal. The refusal names the proposition number only. The byte span of the proposition in the requirement text comes from tl-parse, which binds with its own context call.
+
+I ran the program above against this repository. I did not run the other steps here. The signal values, the verdict and the R2U2 comparison come from the later steps in the full walkthrough, [docs/scenario.md in tl-mltl](https://github.com/agent-ix/tl-mltl/blob/main/docs/scenario.md).
