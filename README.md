@@ -25,9 +25,26 @@ build needs neither `std` nor an allocator.
   <img alt="A node table of 2 nodes and a semantic profile, mltl.closed-trace/v1, go into Formula::new, which returns a borrowed Formula or the first FormulaError. A signal catalog of 3 signals and 1 binding goes into SignalCatalog::new, which returns a SignalCatalog or the first SignalCatalogError. bind_formula joins the two into a BoundFormula when every proposition has a binding to a Boolean signal. The crate defines 4 semantic profiles." src="docs/images/hero-light.svg">
 </picture>
 
-> **Status: prerelease.** The API is not stable. The crate has `publish = false`
-> and other TL crates depend on it through git. Registry publication waits for
-> the v0.1 assurance review.
+## Getting started
+
+tl-syntax is not on crates.io. Depend on it through git:
+
+```toml
+[dependencies]
+tl-syntax = { git = "https://github.com/agent-ix/tl-syntax" }
+```
+
+Add `rev = "<commit>"` to pin a commit. It needs the Rust version in `rust-version` in `Cargo.toml`, or newer.
+
+The crate is `no_std` by default. Enable `alloc` for the owned document types and `serde` for the strict JSON readers and writers, for example `features = ["serde"]`.
+
+To build from a clone:
+
+```sh
+git clone https://github.com/agent-ix/tl-syntax.git
+cd tl-syntax
+cargo build --release
+```
 
 ## Usage
 
