@@ -8,5 +8,5 @@
   "fairness_schema": "tl-syntax.fairness-premises/v1",
   "semantic_profile": "mltl.infinite-trace/v1",
   "clock": "event_position",
-  "case_count": 15
+  "case_count": 18
 }

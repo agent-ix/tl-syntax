@@ -8,6 +8,11 @@ intentionally invalid inputs. `schema.json` checks the corpus envelope;
 the reviewed Rust decoders enforce the formula, lasso, clock, valuation, and
 fairness invariants in the TL-207 matrix.
 
+The `until-guard-starts-at-lower-bound`, `release-guard-starts-at-lower-bound` and `until-bounded-guard-starts-at-lower-bound`
+cases fix the guard range of a positive lower bound: for `p U[a,b] q` the left
+operand is read on the offsets `[a,i)` before the witness offset `i`, never on
+the offsets below `a`, and `R` is the dual.
+
 Positions are discrete event positions. A lasso with prefix `u` and nonempty
 loop `v` denotes `u·vʷ`. A `missing` valuation permits either Boolean value;
 `conflicting` records incompatible evidence and is never treated as missing.
