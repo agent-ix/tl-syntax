@@ -14,8 +14,7 @@ relationships:
 ## Dependency DAG
 
 ```text
-PGM-01
-  -> specification + assurance foundation
+specification + assurance foundation
   -> interval, identity, span, profile values
   -> borrowed node graph validation
   -> alloc-owned and serde wire documents
@@ -33,7 +32,7 @@ PGM-01
 | Task-003 | Borrowed formula graph | Complete operator and graph-invariant tests |
 | Task-004 | Wire documents and corpus | Strict serde tests, schemas, fixtures, and semantic corpus checker |
 | Task-005 | Verification and review remediation | Complete local gate and resolved automated-review findings |
-| Task-006 | Exact-candidate evidence | Sealed PGM-01 validations and checksummed retained record |
+| Task-006 | Exact-candidate evidence | Sealed validations and checksummed retained record |
 | Task-007 | Human source-release decision | Maintainer review and explicit release decision |
 
 ## Exit Criteria

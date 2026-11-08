@@ -13,7 +13,7 @@ relationships:
 
 ## Scope
 
-Retain the exact clean revision's local results, tool and dependency identities, PGM-01 checks, and
+Retain the exact clean revision's local results, tool and dependency identities, validation checks, and
 explicit limitations in a checksummed evidence record.
 
 ## Completion Evidence
@@ -23,7 +23,7 @@ older records remain immutable historical evidence and do not cover later
 source or specification changes. The current PR must therefore retain and
 anchor a new passing record before requesting another merge decision.
 
-The retained `835833fb2338` record has a passing collection summary, two passing sealed PGM-01
+The retained `835833fb2338` record has a passing collection summary, two passing sealed
 validations, and an anchored checksum manifest that exactly enumerates every artifact. Its envelope
 remains non-self-attesting and explicitly inconclusive; the post-seal summary records the external
 result, the sealed artifacts, and exact envelope SHA-256
