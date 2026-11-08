@@ -4,7 +4,7 @@ The `corpus/` directory holds the checked-in data that the TL crates share. Each
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="images/corpus-dark.svg">
-  <img alt="The checked-in corpora hold 103 counted cases: tl-syntax-corpus/v1 8, future-operators 69, past-history evaluations 9, infinite-trace 17." src="images/corpus-light.svg">
+  <img alt="The checked-in corpora hold 104 counted cases: tl-syntax-corpus/v1 8, future-operators 69, past-history evaluations 9, infinite-trace 18." src="images/corpus-light.svg">
 </picture>
 
 The chart counts fixtures for the shared corpus, cases for the future-operator and infinite-trace corpora, and evaluations for the past-history corpus. Counts come from the corpus files.
