@@ -29,3 +29,5 @@ path = "fuzz_targets/infinite_wire_decode.rs"
 test = false
 doc = false
 bench = false
+
+[workspace]

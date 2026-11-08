@@ -315,3 +315,18 @@ fn tc_161_input_expected_axis_and_verdict_mutations_fail() {
     prefix["subject_kind"] = "lasso".into();
     assert!(verify_case(&prefix).is_err());
 }
+
+// Trace: TC-162, FR-024-AC-3 (owner side: the one resolvable path downstream
+// consumers read; their non-vendoring is the recorded inspection)
+#[test]
+fn tc_162_owner_corpus_is_resolvable_only_through_corpus_dir() {
+    let root = Path::new(CORPUS_DIR);
+    assert!(root.starts_with(env!("CARGO_MANIFEST_DIR")));
+    let infinite = root.join("infinite-trace");
+    for file in ["manifest.json", "cases.json", "schema.json", "README.md"] {
+        assert!(
+            infinite.join(file).is_file(),
+            "{file} missing from owner corpus"
+        );
+    }
+}
