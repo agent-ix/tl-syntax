@@ -78,11 +78,11 @@ The domain prefix is exported as `CONTENT_IDENTITY_DOMAIN_V1`. Including the sch
 
 ## Fuzzing the decoders
 
-Two fuzz targets exercise the decode boundary. They are manual and are not part of `make ci`:
+Two fuzz targets exercise the decode boundary. Campaigns are manual; `make ci` only compiles the targets (`make fuzz-check`), and `make fuzz-smoke` replays each checked-in corpus once:
 
 ```sh
 cargo +nightly fuzz run wire_decode -- -runs=100
 cargo +nightly fuzz run infinite_wire_decode -- -runs=100
 ```
 
-`infinite_wire_decode` drives the unbounded formula, lasso and partial-valuation readers through canonical serialization and identity computation. Every successful decode must still pass public validation, and malformed bytes must be refused. `tests/infinite_fuzz_seeds.rs` checks that the seed corpus reaches the intended paths. `make fuzz-check` compiles the targets and audits their dependencies without starting a campaign. Generated inputs are scratch and are not fixtures.
+`infinite_wire_decode` drives the unbounded formula, lasso and partial-valuation readers through canonical serialization and identity computation. Every successful decode must still pass public validation, malformed bytes must be refused, and a formula carrying an unbounded interval `[a,)` must be refused by the bounded readers even when its schema label, profile and clock are rewritten to the bounded forms. `tests/infinite_fuzz_seeds.rs` and `tests/wire_decode_fuzz_seeds.rs` check that the seed corpora reach the intended paths. `make fuzz-check` compiles the targets and audits their dependencies without starting a campaign. Generated inputs are scratch and are not fixtures.

@@ -28,6 +28,7 @@ help:
 	@echo "  make clean            - cargo clean"
 	@echo "  make deny             - run all declared cargo-deny policy checks"
 	@echo "  make fuzz-check       - compile and dependency-audit the manual fuzz targets"
+	@echo "  make fuzz-smoke       - replay the checked-in fuzz corpora once per target"
 	@echo "  make ci               - All CI gates locally (hosted CI is manual-only)"
 
 # =============================================================================
@@ -107,8 +108,16 @@ deny:
 # campaign remains an explicit, manual operator action documented in README.
 .PHONY: fuzz-check
 fuzz-check:
-	$(CARGO) +nightly fuzz build wire_decode
+	$(CARGO) +nightly fuzz build
 	cd fuzz && $(CARGO) deny check --config ../deny.toml
+
+# fuzz-smoke replays every checked-in corpus entry through its target once
+# (no mutation, no campaign). Longer campaigns are manual: see README.
+.PHONY: fuzz-smoke
+fuzz-smoke:
+	@for target in $$($(CARGO) +nightly fuzz list); do \
+		$(CARGO) +nightly fuzz run $$target fuzz/corpus/$$target -- -runs=0 || exit 1; \
+	done
 
 .PHONY: msrv
 msrv:
