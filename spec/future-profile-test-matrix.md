@@ -13,46 +13,56 @@ relationships:
 
 | Functional Req | Acceptance Criteria | Test Cases | Status |
 |---|---|---|---|
-| FR-008 | FR-008-AC-1 through FR-008-AC-4 | TC-040, TC-041, TC-042, TC-044, TC-046 | 🚧 planned |
-| FR-009 | FR-009-AC-1 through FR-009-AC-4 | TC-040, TC-043, TC-044, TC-046, TC-047 | 🚧 planned |
-| FR-010 | FR-010-AC-1 through FR-010-AC-4 | TC-041 through TC-046, TC-074 | 🚧 planned |
+| FR-008 | FR-008-AC-1 through FR-008-AC-4 | TC-040, TC-041, TC-042, TC-044, TC-046 | ✅ covered |
+| FR-009 | FR-009-AC-1 through FR-009-AC-4 | TC-040, TC-043, TC-044, TC-046, TC-047 | ✅ covered |
+| FR-010 | FR-010-AC-1 through FR-010-AC-4 | TC-041 through TC-046, TC-074 | ✅ covered |
 | FR-289 | FR-289-AC-1 through FR-289-AC-4 | TC-144, TC-145 | ✅ implemented |
-| FR-290 | FR-290-AC-1 through FR-290-AC-3 | TC-146 | 🚧 planned |
-| FR-291 | FR-291-AC-1 through FR-291-AC-3 | TC-147 | 🚧 planned |
+| FR-290 | FR-290-AC-1 through FR-290-AC-3 | TC-146 | ✅ covered |
+| FR-291 | FR-291-AC-1 through FR-291-AC-3 | TC-147 | ✅ covered |
 
-Each row stays planned until every listed test case is implemented. Issue #40
-implements TC-040, TC-041, TC-042, and TC-046 in `tests/future_lowering.rs`,
-and the tl-syntax portion of TC-044: lowered and direct formula-v1 documents
-are equal, byte-identical on the wire, and semantically identical under both
-profiles, and the 100,000-node limit holds. The typed request carries one
-kind and one semantic-profile identity, so TC-046 refuses dense, timestamped,
-unit-bearing, and window-closure selections as unknown semantic profiles;
-distinct source-level refusals are TC-047's. TC-044 stays planned until the
-evaluation, prefix-progress, horizon, and resource evidence owned downstream
-lands; TC-043, TC-045, and TC-047 are owned by the parser, rewrite, and
-interoperability follow-ons.
+Each row is covered only when every listed test case executes and passes in
+its owning repository. The TL-257 reconciliation (below) closed the rows that
+earlier waited on parser, rewrite, evaluator, and provider owners.
 
-Issue #41 implements TC-074 in `tests/future_operator_corpus.rs` over the
+tl-syntax implements TC-040, TC-041, TC-042, TC-046, and TC-074 in
+`tests/future_lowering.rs` and `tests/future_operator_corpus.rs` over the
 `tl-syntax.future-operator-corpus/v1` corpus in `corpus/future-operators/`.
-Each derived-source case binds the `tl-parse.clean-ascii/v2` dialect, the
-operator and semantic profiles, the source text, and its lowering steps to one
-span-free expected formula-v1 document that a directly constructed case shares;
-one primitive-source case binds `tl-parse.clean-ascii/v1` text the same way.
-The replay builds both through the tl-syntax lowering API only; it is evidence
-input, not an evaluator or an editable source language. It binds spans to the
-source bytes and operator spellings but does not parse: precedence,
-associativity, and grouping stay with TC-043. FR-010 stays planned until TC-044
-and TC-045 land.
+The replay builds both derived and direct cases through the tl-syntax lowering
+API only; it binds spans to source bytes and operator spellings but does not
+parse, so precedence, associativity, and grouping stay with TC-043. The typed
+request carries one kind and one semantic-profile identity, so TC-046 refuses
+dense, timestamped, unit-bearing, and window-closure selections as unknown
+semantic profiles.
 
 [TL-15](https://linear.app/agent-ix/issue/TL-15) owns TC-144 through TC-147.
-TC-144 and TC-145 now execute against the syntax owner's unbounded formula
-edition. The syntax-owned part of TC-146 executes in `tests/infinite_formula.rs`:
-absent registration settles `unsupported`, registered dispositions retain
-subject scope, and a lasso-only backend cannot receive a model request. The
-syntax-owned part of TC-147 binds every disposition to the same canonical
-graph, TL profile, clock, and subject identity. Their full rows remain planned
-until TL-13 registers the tl-mltl provider against `tl-syntax.liveness/v1`
-and TL-212 runs cross-crate evidence.
+TC-144 and TC-145 execute against the syntax owner's unbounded formula
+edition. The syntax-owned part of TC-146 executes in
+`tests/infinite_formula.rs` (absent registration settles `unsupported`,
+registered dispositions retain subject scope, a lasso-only backend cannot
+receive a model request) and the registered provider part executes in
+tl-mltl `tests/infinite_trace.rs`
+(`deployment_registry_routes_one_provider_and_refuses_duplicate`,
+`registered_detailed_route_preserves_reason_evidence_and_identity`). TC-147
+binds every disposition to the same canonical graph, TL profile, clock, and
+subject identity in both repositories.
+
+## Owner evidence (TL-257 reconciliation)
+
+Run on fresh clones of each owner's `main` (tl-syntax on the TL-257 branch). Each owner's own test numbering
+differs from this matrix; the mapping is explicit.
+
+| This matrix | Owner | Evidence | Result |
+|---|---|---|---|
+| TC-040, 041, 042, 046, 074; tl-syntax half of TC-044 | tl-syntax | `make ci` | pass |
+| TC-043, TC-047 | tl-parse | `tests/clean_ascii_v2.rs`, `tests/versioned_dialects.rs` (parse TC-039 through TC-043, TC-046), `fuzz/fuzz_targets/clean_ascii_v2.rs` and checked seeds (parse TC-044, `make fuzz-build fuzz-smoke`) | pass |
+| TC-044 evaluation, prefix progress, horizon, resource | tl-mltl | `tests/future_parity.rs` (mltl TC-076 through TC-080) | pass |
+| TC-045 rewrite | tl-rewrite | `tests/future_lowering_parity.rs` (rewrite TC-041 through TC-045) | pass |
+| TC-045 native bridge, C2PO, FRETish output-only | tl-mltl | `tests/future_interop.rs` (mltl TC-081, TC-082; no FRETish emitter) | pass |
+| TC-146, TC-147 provider | tl-mltl | `tests/infinite_trace.rs`, `tests/infinite_corpus.rs` | pass |
+
+Commands: `make ci` in tl-syntax; `make test conformance roundtrip fuzz-build
+fuzz-smoke deny msrv rustdoc` in tl-parse and tl-rewrite; `cargo test
+--no-fail-fast` in tl-mltl.
 
 ## Operator and profile evidence allocation
 
@@ -76,13 +86,13 @@ derived semantic branch.
 | TC-040 | Bind the closed operator catalog, identified request/report/refusal contracts, unchanged formula-v1 wire vocabulary, and orthogonal operator/dialect/semantic-profile identities | Integration | P0 | FR-008-AC-1, FR-009-AC-2, FR-009-AC-3 | ✅ implemented |
 | TC-041 | Lower bounded weak until in U/G/Or order, retain attribution, and compare interval/span/profile boundaries with direct construction | Property | P0 | FR-008-AC-2, FR-008-AC-3, FR-008-AC-4, FR-010-AC-4 | ✅ implemented |
 | TC-042 | Lower bounded strong release in R/F/And order, retain attribution, and compare interval/span/profile boundaries with direct construction | Property | P0 | FR-008-AC-2, FR-008-AC-3, FR-008-AC-4, FR-010-AC-4 | ✅ implemented |
-| TC-043 | Parse `tl-parse.clean-ascii/v2` with exact precedence, associativity, interval and token/expression-span rules; reject malformed forms and normalize to old-v1 primitive text | Integration | P0 | FR-009-AC-1, FR-009-AC-3, FR-010-AC-4 | 🚧 planned |
-| TC-044 | Prove direct/lowered wire, semantic identity, evaluation, prefix progress, horizon, resource, report-identity, and no-partial-mutation behavior under both profiles | Property | P0 | FR-008-AC-2, FR-008-AC-3, FR-008-AC-4, FR-009-AC-2, FR-009-AC-3, FR-010-AC-1, FR-010-AC-4 | 🚧 planned |
-| TC-045 | Keep rewrite, native bridge, R2U2/C2PO, and output-only FRETish paths canonical and preserve every unsupported/unavailable result | Integration | P0 | FR-010-AC-2, FR-010-AC-3, FR-010-AC-4 | 🚧 planned |
+| TC-043 | Parse `tl-parse.clean-ascii/v2` with exact precedence, associativity, interval and token/expression-span rules; reject malformed forms and normalize to old-v1 primitive text | Integration | P0 | FR-009-AC-1, FR-009-AC-3, FR-010-AC-4 | ✅ implemented in tl-parse `tests/clean_ascii_v2.rs` (parse TC-039 through TC-043, TC-046) |
+| TC-044 | Prove direct/lowered wire, semantic identity, evaluation, prefix progress, horizon, resource, report-identity, and no-partial-mutation behavior under both profiles | Property | P0 | FR-008-AC-2, FR-008-AC-3, FR-008-AC-4, FR-009-AC-2, FR-009-AC-3, FR-010-AC-1, FR-010-AC-4 | ✅ implemented in `tests/future_lowering.rs` and tl-mltl `tests/future_parity.rs` (mltl TC-076 through TC-080) |
+| TC-045 | Keep rewrite, native bridge, R2U2/C2PO, and output-only FRETish paths canonical and preserve every unsupported/unavailable result | Integration | P0 | FR-010-AC-2, FR-010-AC-3, FR-010-AC-4 | ✅ implemented in tl-rewrite `tests/future_lowering_parity.rs` and tl-mltl `tests/future_interop.rs` (mltl TC-081, TC-082) |
 | TC-046 | Generate every raw admission-field failure and require the exact refusal precedence; include unknown request identity, semantic-profile/formula mismatch, an operand absent from the borrowed validated formula, and the fixed 100,000-node formula-v1 limit; refuse every unknown, over-limit, next, past, missing-interval, open-bound, unknown-semantic-profile, and derived-wire combination before construction; at this typed boundary dense, timestamped, unit-bearing, and window-closure selections are unknown semantic profiles, and source-level distinct refusals for them and for weak-next and mixed-time forms belong to TC-047 | Property | P0 | FR-008-AC-1, FR-008-AC-3, FR-009-AC-4, FR-010-AC-4 | ✅ implemented |
-| TC-047 | Fuzz `tl-parse.clean-ascii/v2` so arbitrary bytes either produce the specified lowered graph/report or a bounded diagnostic without unwinding or v1-dialect misattribution | Fuzz | P1 | FR-009-AC-1, FR-009-AC-4 | 🚧 planned |
+| TC-047 | Fuzz `tl-parse.clean-ascii/v2` so arbitrary bytes either produce the specified lowered graph/report or a bounded diagnostic without unwinding or v1-dialect misattribution | Fuzz | P1 | FR-009-AC-1, FR-009-AC-4 | ✅ implemented in tl-parse `fuzz/fuzz_targets/clean_ascii_v2.rs` and its checked seeds (parse TC-044) |
 | TC-074 | Replay the paired W/M corpus through the tl-syntax lowering API so every derived- or primitive-source case and its directly constructed pair produce one shared span-free canonical document under its bound dialect, operator, and semantic profile, W and M cover `[0,0]` and `[u32::MAX,u32::MAX]` under both profiles, every span reads its source bytes and operator spelling (grammar stays with TC-043), every refused and malformed case fails with its declared code, and mutating a lowering branch, generated-node order, inclusive endpoint, associativity, profile, node charge, span attribution, or refusal turns the replay red | Integration | P0 | FR-010-AC-2, FR-010-AC-4 | ✅ implemented |
 | TC-144 | Construct `[a,)` under `mltl.infinite-trace/v1` on F/G/U/R/O/H/S/T and lowered W/M; refuse missing or mismatched profile and malformed interval before construction | Property | P0 | FR-289-AC-1, FR-289-AC-2, FR-289-AC-4 | ✅ implemented in `tests/infinite_formula.rs` |
 | TC-145 | Round-trip formula-unbounded/v1 including mixed future/past nodes; old formula v1/v2 decoders reject its schema and their golden bytes remain unchanged | Integration | P0 | FR-289-AC-2, FR-289-AC-3 | ✅ implemented in `tests/infinite_formula.rs` |
-| TC-146 | With no `tl-syntax.liveness/v1` backend registered, every `tl-syntax.formula-unbounded/v1` request settles `unsupported` with a warning naming the capability before evaluation; with a backend, settlement retains exact lasso/prefix/model subject scope and refuses an unsupported model procedure; bounded formula-v1 never consults the capability | Integration | P0 | FR-290-AC-1, FR-290-AC-2, FR-290-AC-3 | 🚧 planned |
-| TC-147 | Trace registered-backend evidence to the exact canonical graph, TL profile and subject scope under every settlement label; inspect TL-15 / STD-13 / TL-13 / TL-7 order and accepted-spec gate | Integration | P0 | FR-291-AC-1, FR-291-AC-2, FR-291-AC-3 | 🚧 planned |
+| TC-146 | With no `tl-syntax.liveness/v1` backend registered, every `tl-syntax.formula-unbounded/v1` request settles `unsupported` with a warning naming the capability before evaluation; with a backend, settlement retains exact lasso/prefix/model subject scope and refuses an unsupported model procedure; bounded formula-v1 never consults the capability | Integration | P0 | FR-290-AC-1, FR-290-AC-2, FR-290-AC-3 | ✅ implemented in `tests/infinite_formula.rs` and tl-mltl `tests/infinite_trace.rs` |
+| TC-147 | Trace registered-backend evidence to the exact canonical graph, TL profile and subject scope under every settlement label; inspect TL-15 / STD-13 / TL-13 / TL-7 order and accepted-spec gate | Integration | P0 | FR-291-AC-1, FR-291-AC-2, FR-291-AC-3 | ✅ implemented in `tests/infinite_formula.rs` and tl-mltl `tests/infinite_trace.rs` |
