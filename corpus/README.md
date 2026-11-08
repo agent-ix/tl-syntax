@@ -23,3 +23,7 @@ closed-trace semantics; downstream reference evaluators consume them.
 Malformed files deliberately violate either checked interval decoding or
 formula graph validation. They are corpus inputs, not examples of accepted
 documents.
+
+The hand-authored boundary corpus lives in `boundary-v1/` (see its README):
+positive, negative and boundary cases per operator x interval-shape cell with
+stored hand-derived verdicts, replayed by downstream evaluators.
