@@ -23,16 +23,15 @@ TC-150's v1/v2 golden-byte and TL profile refusal assertions execute in
 `tests/infinite_formula.rs`. Its QSL correspondence is an inspection: no
 tl-syntax, tl-parse, tl-mltl, or tl-rewrite source names QSL or
 `quire.temporal`, so no QSL-to-TL lowering exists (a recursive search of
-`src` in the four crates for those names returns nothing at the revisions
-below). The native QSL result comparison is owned by the QSL repo and is not
+`src` in the four crates for those names returns nothing). The native QSL result comparison is owned by the QSL repo and is not
 asserted here. TC-162 is an inspection: tl-parse
 (`tests/owner_infinite_corpus.rs`), tl-mltl (`tests/infinite_corpus.rs`), and
 tl-rewrite (`tests/infinite_owner_corpus.rs`) read the owner corpus through
 `tl_syntax::CORPUS_DIR`, and none of them carries a copy of
 `infinite-trace/cases.json`; the owner-side resolvability is executed by
-`tc_162_owner_corpus_is_resolvable_only_through_corpus_dir`. Inspected at
-the tl-syntax TL-257 branch, tl-parse `5f9a21c`, tl-mltl `c2e7448`, and
-tl-rewrite `3f5cc0c`.
+`tc_162_owner_corpus_is_resolvable_only_through_corpus_dir`. Inspected on
+the tl-syntax TL-257 branch and the `main` branches of tl-parse, tl-mltl, and
+tl-rewrite.
 
 The corpus includes an unfair loop and an explicitly selected finite-prefix
 subject alongside its valid lasso carrier; only the prefix observations enter

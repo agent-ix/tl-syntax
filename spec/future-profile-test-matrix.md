@@ -48,17 +48,17 @@ subject identity in both repositories.
 
 ## Owner evidence (TL-257 reconciliation)
 
-Run on fresh clones of each owner's `main`. Each owner's own test numbering
+Run on fresh clones of each owner's `main` (tl-syntax on the TL-257 branch). Each owner's own test numbering
 differs from this matrix; the mapping is explicit.
 
-| This matrix | Owner | Revision | Evidence | Result |
-|---|---|---|---|---|
-| TC-040, 041, 042, 046, 074; tl-syntax half of TC-044 | tl-syntax | `5fd20dd` plus TL-257 branch | `make ci` | pass |
-| TC-043, TC-047 | tl-parse | `5f9a21c` | `tests/clean_ascii_v2.rs`, `tests/versioned_dialects.rs` (parse TC-039 through TC-043, TC-046), `fuzz/fuzz_targets/clean_ascii_v2.rs` and checked seeds (parse TC-044, `make fuzz-build fuzz-smoke`) | pass |
-| TC-044 evaluation, prefix progress, horizon, resource | tl-mltl | `c2e7448` | `tests/future_parity.rs` (mltl TC-076 through TC-080) | pass |
-| TC-045 rewrite | tl-rewrite | `3f5cc0c` | `tests/future_lowering_parity.rs` (rewrite TC-041 through TC-045) | pass |
-| TC-045 native bridge, C2PO, FRETish output-only | tl-mltl | `c2e7448` | `tests/future_interop.rs` (mltl TC-081, TC-082; no FRETish emitter) | pass |
-| TC-146, TC-147 provider | tl-mltl | `c2e7448` | `tests/infinite_trace.rs`, `tests/infinite_corpus.rs` | pass |
+| This matrix | Owner | Evidence | Result |
+|---|---|---|---|
+| TC-040, 041, 042, 046, 074; tl-syntax half of TC-044 | tl-syntax | `make ci` | pass |
+| TC-043, TC-047 | tl-parse | `tests/clean_ascii_v2.rs`, `tests/versioned_dialects.rs` (parse TC-039 through TC-043, TC-046), `fuzz/fuzz_targets/clean_ascii_v2.rs` and checked seeds (parse TC-044, `make fuzz-build fuzz-smoke`) | pass |
+| TC-044 evaluation, prefix progress, horizon, resource | tl-mltl | `tests/future_parity.rs` (mltl TC-076 through TC-080) | pass |
+| TC-045 rewrite | tl-rewrite | `tests/future_lowering_parity.rs` (rewrite TC-041 through TC-045) | pass |
+| TC-045 native bridge, C2PO, FRETish output-only | tl-mltl | `tests/future_interop.rs` (mltl TC-081, TC-082; no FRETish emitter) | pass |
+| TC-146, TC-147 provider | tl-mltl | `tests/infinite_trace.rs`, `tests/infinite_corpus.rs` | pass |
 
 Commands: `make ci` in tl-syntax; `make test conformance roundtrip fuzz-build
 fuzz-smoke deny msrv rustdoc` in tl-parse and tl-rewrite; `cargo test
