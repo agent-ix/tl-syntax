@@ -41,7 +41,7 @@ fn tc_160_owner_corpus_manifest_and_cases_are_distinct() {
             .expect("case JSON");
     let cases = cases["cases"].as_array().expect("case array");
     assert_eq!(cases.len(), manifest.case_count);
-    assert_eq!(cases.len(), 15);
+    assert_eq!(cases.len(), 17);
     let mut ids = BTreeSet::new();
     let mut families = BTreeSet::new();
     let mut axes = BTreeSet::new();
@@ -126,6 +126,8 @@ fn expected_case(id: &str) -> Option<(&'static str, &'static str, Option<&'stati
     Some(match id {
         "globally-true-empty-prefix" => ("lasso", "proved", None),
         "eventual-witness-after-prefix" => ("lasso", "proved", None),
+        "until-guard-starts-at-lower-bound" => ("lasso", "proved", None),
+        "release-guard-starts-at-lower-bound" => ("lasso", "refuted", None),
         "globally-refuted-by-loop" => ("lasso", "refuted", None),
         "unbounded-once-reaches-origin" => ("past", "proved", None),
         "missing-value-is-inconclusive" => ("partial", "inconclusive", None),

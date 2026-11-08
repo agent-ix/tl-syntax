@@ -131,6 +131,22 @@
       "expected": {"kind": "settlement", "value": "inconclusive"},
       "derivation": "Only prefix position zero is selected and it has p=true. A future position may still have p=false or all future positions may have p=true, so the finite prefix cannot settle G[0,) p. The stored loop is outside the selected subject.",
       "subject_kind": "finite_prefix"
+    },
+    {
+      "id": "until-guard-starts-at-lower-bound", "family": "lasso", "source": "p U[2,) !p",
+      "formula": {"schema_version": "tl-syntax.formula-unbounded/v1", "semantic_profile": "mltl.infinite-trace/v1", "clock": "event_position", "root": 2, "nodes": [{"kind": "proposition", "proposition": 0}, {"kind": "not", "operand": 0}, {"kind": "until", "interval": {"kind": "unbounded", "start": 2}, "left": 0, "right": 1}]},
+      "trace": {"schema_version": "tl-syntax.lasso-trace/v1", "semantic_profile": "mltl.infinite-trace/v1", "clock": "event_position", "proposition_map": [{"id": 0, "name": "p"}], "prefix": [{"position": 0, "valuation": [{"proposition": 0, "state": "false"}]}, {"position": 1, "valuation": [{"proposition": 0, "state": "true"}]}, {"position": 2, "valuation": [{"proposition": 0, "state": "true"}]}], "loop": [{"position": 3, "valuation": [{"proposition": 0, "state": "false"}]}]},
+      "fairness": {"schema_version": "tl-syntax.fairness-premises/v1", "semantic_profile": "mltl.infinite-trace/v1", "clock": "event_position", "roots": []},
+      "anchor": 0, "expected": {"kind": "settlement", "value": "proved"},
+      "derivation": "The word is p=false, true, true, then false forever. The right operand !p first holds at offset 3 within [2,). The left operand p must hold on the offsets from the lower bound up to the witness, which is offset 2 only, and it does. The false p at offset 0 lies below the lower bound and is not read."
+    },
+    {
+      "id": "release-guard-starts-at-lower-bound", "family": "lasso", "source": "p R[2,) !p",
+      "formula": {"schema_version": "tl-syntax.formula-unbounded/v1", "semantic_profile": "mltl.infinite-trace/v1", "clock": "event_position", "root": 2, "nodes": [{"kind": "proposition", "proposition": 0}, {"kind": "not", "operand": 0}, {"kind": "release", "interval": {"kind": "unbounded", "start": 2}, "left": 0, "right": 1}]},
+      "trace": {"schema_version": "tl-syntax.lasso-trace/v1", "semantic_profile": "mltl.infinite-trace/v1", "clock": "event_position", "proposition_map": [{"id": 0, "name": "p"}], "prefix": [{"position": 0, "valuation": [{"proposition": 0, "state": "false"}]}, {"position": 1, "valuation": [{"proposition": 0, "state": "true"}]}, {"position": 2, "valuation": [{"proposition": 0, "state": "true"}]}], "loop": [{"position": 3, "valuation": [{"proposition": 0, "state": "false"}]}]},
+      "fairness": {"schema_version": "tl-syntax.fairness-premises/v1", "semantic_profile": "mltl.infinite-trace/v1", "clock": "event_position", "roots": []},
+      "anchor": 0, "expected": {"kind": "settlement", "value": "refuted"},
+      "derivation": "The word is p=false, true, true, then false forever. Release is the dual of until, so p R[2,) !p holds only if !p holds at every offset from 2 up to and including any offset where p releases it. Offset 2 is the first of the window and has p=true, so !p fails there with no earlier release inside the window. The !p at offsets 0 and 1 lie below the lower bound and do not matter."
     }
   ]
 }
