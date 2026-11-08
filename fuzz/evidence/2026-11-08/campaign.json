@@ -1,0 +1,124 @@
+{
+ "repository": "tl-syntax",
+ "campaigns": [
+  {
+   "repo": "tl-syntax",
+   "source_revision": "7c5a42c0674173514831806b736c3d823b36d123",
+   "dirty": false,
+   "rustc": "rustc 1.100.0-nightly (1303417c4 2026-09-21)",
+   "cargo_fuzz": "cargo-fuzz 0.13.1",
+   "host": "aarch64-apple-darwin",
+   "sanitizer": "address (cargo-fuzz default)",
+   "libfuzzer_flags": "-max_total_time=60 -max_len=2048 -rss_limit_mb=8192",
+   "final_corpus_entries_after": {
+    "wire_decode": 6915,
+    "infinite_wire_decode": 6915
+   }
+  }
+ ],
+ "runs": [
+  {
+   "target": "wire_decode",
+   "seed": 101,
+   "scratch_corpus": true,
+   "starting_corpus_files": 9,
+   "requested_seconds": 60,
+   "observed_seconds": 61,
+   "executions": 3341145,
+   "final_cov_edges": 2168,
+   "final_features": 6412,
+   "final_corpus_entries": 1992,
+   "exit_status": 0,
+   "crash": null,
+   "panic": null,
+   "wall_seconds_including_build": 99
+  },
+  {
+   "target": "wire_decode",
+   "seed": 102,
+   "scratch_corpus": true,
+   "starting_corpus_files": null,
+   "requested_seconds": 60,
+   "observed_seconds": 61,
+   "executions": 4551432,
+   "final_cov_edges": 2231,
+   "final_features": 6995,
+   "final_corpus_entries": 1824,
+   "exit_status": 0,
+   "crash": null,
+   "panic": null,
+   "wall_seconds_including_build": 62
+  },
+  {
+   "target": "wire_decode",
+   "seed": 103,
+   "scratch_corpus": true,
+   "starting_corpus_files": null,
+   "requested_seconds": 60,
+   "observed_seconds": 61,
+   "executions": 4936454,
+   "final_cov_edges": 2273,
+   "final_features": 7369,
+   "final_corpus_entries": 1942,
+   "exit_status": 0,
+   "crash": null,
+   "panic": null,
+   "wall_seconds_including_build": 62
+  },
+  {
+   "target": "infinite_wire_decode",
+   "seed": 101,
+   "scratch_corpus": true,
+   "starting_corpus_files": 4,
+   "requested_seconds": 60,
+   "observed_seconds": 61,
+   "executions": 2981315,
+   "final_cov_edges": 3745,
+   "final_features": 10102,
+   "final_corpus_entries": 2603,
+   "exit_status": 0,
+   "crash": null,
+   "panic": null,
+   "wall_seconds_including_build": 69
+  },
+  {
+   "target": "infinite_wire_decode",
+   "seed": 102,
+   "scratch_corpus": true,
+   "starting_corpus_files": null,
+   "requested_seconds": 60,
+   "observed_seconds": 61,
+   "executions": 2236860,
+   "final_cov_edges": 3858,
+   "final_features": 10702,
+   "final_corpus_entries": 2419,
+   "exit_status": 0,
+   "crash": null,
+   "panic": null,
+   "wall_seconds_including_build": 62
+  },
+  {
+   "target": "infinite_wire_decode",
+   "seed": 103,
+   "scratch_corpus": true,
+   "starting_corpus_files": null,
+   "requested_seconds": 60,
+   "observed_seconds": 61,
+   "executions": 1930982,
+   "final_cov_edges": 3936,
+   "final_features": 11044,
+   "final_corpus_entries": 2507,
+   "exit_status": 0,
+   "crash": null,
+   "panic": null,
+   "wall_seconds_including_build": 62
+  }
+ ],
+ "seeded_faults": [
+  {
+   "target": "infinite_wire_decode",
+   "fault": "bounded `Interval` deserializer made to accept a missing `end` as `u32::MAX` and to ignore unknown fields (src/formula/graph.rs), i.e. the bounded reader silently reads `[a,)` as `[a,4294967295]`",
+   "result": "found on the first execution of the checked-in `formula.json` seed (seed 219, assertion that the relabelled bounded document is refused)"
+  }
+ ]
+}
