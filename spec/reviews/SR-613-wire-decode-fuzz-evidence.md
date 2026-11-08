@@ -53,11 +53,11 @@ target was run from an empty or seed-only corpus.
 
 | ID | Severity | Summary | Refs |
 | --- | --- | --- | --- |
-| FND-6101 | medium | At the revision this work branched from, `make fuzz-check` could not build any fuzz target (the root manifest's `[workspace.lints]` makes it a workspace root and `fuzz/Cargo.toml` declared no workspace). The same fix landed upstream while this work was in progress; this branch builds both targets through `make fuzz-check`, which now runs `cargo fuzz build` for every target instead of `wire_decode` alone. | fuzz/Cargo.toml, Makefile |
-| FND-6102 | medium | `wire_decode` had no seed corpus, so the first campaign would have started from nothing. Nine seeds (five formulas, one proposition map, three malformed documents) are checked in and `tests/wire_decode_fuzz_seeds.rs` proves they reach both the accepting and refusing decoder paths. | fuzz/corpus/wire_decode, TC-036 |
-| FND-6103 | low | The unbounded-interval version boundary was asserted only in a unit test. `infinite_wire_decode` now also asserts, for every accepted document containing `[a,)`, that the bounded readers refuse it, including after its schema label, profile and clock are rewritten to the bounded forms. | fuzz/fuzz_targets/infinite_wire_decode.rs, TC-145, FR-289-AC-3 |
-| FND-6104 | low | No crash, timeout or out-of-memory result in any recorded run. Coverage was still growing at the end of every run, so no plateau is claimed. | campaign.json |
-| FND-6105 | low | On macOS libFuzzer counts the address sanitizer's freed memory toward RSS, so the default 2048 MB limit aborted runs whose live heap was tens of megabytes; recorded runs pass `-rss_limit_mb=8192`. Not a target defect. | fuzz/README |
+| FND-61301 | medium | At the revision this work branched from, `make fuzz-check` could not build any fuzz target (the root manifest's `[workspace.lints]` makes it a workspace root and `fuzz/Cargo.toml` declared no workspace). The same fix landed upstream while this work was in progress; this branch builds both targets through `make fuzz-check`, which now runs `cargo fuzz build` for every target instead of `wire_decode` alone. | fuzz/Cargo.toml, Makefile |
+| FND-61302 | medium | `wire_decode` had no seed corpus, so the first campaign would have started from nothing. Nine seeds (five formulas, one proposition map, three malformed documents) are checked in and `tests/wire_decode_fuzz_seeds.rs` proves they reach both the accepting and refusing decoder paths. | fuzz/corpus/wire_decode, TC-036 |
+| FND-61303 | low | The unbounded-interval version boundary was asserted only in a unit test. `infinite_wire_decode` now also asserts, for every accepted document containing `[a,)`, that the bounded readers refuse it, including after its schema label, profile and clock are rewritten to the bounded forms. | fuzz/fuzz_targets/infinite_wire_decode.rs, TC-145, FR-289-AC-3 |
+| FND-61304 | low | No crash, timeout or out-of-memory result in any recorded run. Coverage was still growing at the end of every run, so no plateau is claimed. | campaign.json |
+| FND-61305 | low | On macOS libFuzzer counts the address sanitizer's freed memory toward RSS, so the default 2048 MB limit aborted runs whose live heap was tens of megabytes; recorded runs pass `-rss_limit_mb=8192`. Not a target defect. | fuzz/README |
 
 ## Limitations
 
