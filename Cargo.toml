@@ -14,6 +14,10 @@ name = "tl_syntax"
 path = "src/lib.rs"
 
 [[example]]
+name = "corpus_conformance"
+required-features = ["serde"]
+
+[[example]]
 name = "corpus_gate"
 required-features = ["serde"]
 

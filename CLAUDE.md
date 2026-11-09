@@ -9,6 +9,7 @@ make fmt              # format with rustfmt
 make fmt-check        # verify formatting (CI gate)
 make lint             # clippy with -D warnings
 make test             # cargo test
+make test-features    # tests under default, alloc, serde features
 make build            # release build
 make clean            # cargo clean
 make deny             # cargo-deny advisories, bans, licenses, and sources
