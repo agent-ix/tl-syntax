@@ -79,7 +79,7 @@ check-features:
 	$(CARGO) build --lib --no-default-features --features alloc --target $(EMBEDDED_TARGET)
 	$(CARGO) build --lib --no-default-features --features alloc,serde --target $(EMBEDDED_TARGET)
 
-# Feature matrix for the test suites (TC-163, NFR-001-AC-2): default (no features),
+# Feature matrix for the test suites (NFR-001-AC-2, TC-019): default (no features),
 # alloc, and serde (which implies alloc, so alloc+serde is the same build). Each
 # combination runs every lib, integration, example and doc test it enables.
 .PHONY: test-features
