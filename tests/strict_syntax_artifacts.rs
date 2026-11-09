@@ -262,14 +262,22 @@ fn caller_limits_lower_but_never_raise_owner_maxima() {
         document_bytes: usize::MAX,
         ..SyntaxArtifactLimits::default()
     };
-    let oversized = vec![b' '; SyntaxArtifactLimits::OWNER_MAXIMA.document_bytes + 1];
-    assert!(matches!(
-        FormulaDocument::from_json_bytes(&oversized, cannot_raise),
-        Err(StrictDocumentReadError::DocumentTooLarge {
-            limit,
-            ..
-        }) if limit == SyntaxArtifactLimits::OWNER_MAXIMA.document_bytes
-    ));
+    assert_eq!(
+        cannot_raise.constrained().document_bytes,
+        SyntaxArtifactLimits::OWNER_MAXIMA.document_bytes
+    );
+    // A 64 MiB buffer is too slow to interpret; the native run keeps this check.
+    #[cfg(not(miri))]
+    {
+        let oversized = vec![b' '; SyntaxArtifactLimits::OWNER_MAXIMA.document_bytes + 1];
+        assert!(matches!(
+            FormulaDocument::from_json_bytes(&oversized, cannot_raise),
+            Err(StrictDocumentReadError::DocumentTooLarge {
+                limit,
+                ..
+            }) if limit == SyntaxArtifactLimits::OWNER_MAXIMA.document_bytes
+        ));
+    }
 }
 
 // Trace: TC-075, FR-014-AC-4

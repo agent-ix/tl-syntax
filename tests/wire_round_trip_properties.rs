@@ -31,11 +31,16 @@ const CAMPAIGN: &[(&str, u8, u32)] = &[
     ("catalog_semantic_faults", 0x19, 1000),
 ];
 
+/// Cases per property under Miri, which interprets every instruction. The recorded
+/// campaign above runs in full natively.
+const MIRI_CASES: u32 = 4;
+
 fn run<S: Strategy>(name: &str, strategy: S, test: impl Fn(S::Value) -> Result<(), TestCaseError>) {
     let &(_, seed, cases) = CAMPAIGN
         .iter()
         .find(|row| row.0 == name)
         .expect("property is recorded in CAMPAIGN");
+    let cases = if cfg!(miri) { MIRI_CASES } else { cases };
     let config = Config {
         cases,
         failure_persistence: None,

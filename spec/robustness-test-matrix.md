@@ -13,13 +13,13 @@ relationships:
 
 | Functional Req | Acceptance Criteria | Test Cases | Status |
 |---|---|---|---|
-| FR-014 | FR-014-AC-2 (limits, through NFR-006-AC-3) | TC-165 | 🚧 planned |
+| FR-014 | FR-014-AC-2 (limits, through NFR-006-AC-3) | TC-165 | ✅ implemented |
 
 ## Non-Functional Requirement Coverage
 
 | Non-Functional Req | Verification Method | Evidence/Test Cases | Status |
 |---|---|---|---|
-| NFR-006 | NFR-006-AC-1, NFR-006-AC-2, NFR-006-AC-3, NFR-006-AC-4 | TC-163, TC-164, TC-165, TC-166 | 🚧 planned |
+| NFR-006 | NFR-006-AC-1, NFR-006-AC-2, NFR-006-AC-3, NFR-006-AC-4 | TC-163, TC-164, TC-165, TC-166 | ✅ implemented |
 
 A row becomes implemented only when its assertion executes against the real
 public API and passes. TC-163 can fail: the existing `tests/feature_boundary.rs`
@@ -32,10 +32,10 @@ the target's presence in the composite; it is not a Rust test.
 
 | Test ID | Title | Type | Priority | Traces To | Status |
 |---|---|---|---|---|---|
-| TC-163 | Build the library for `thumbv7em-none-eabi` with no default features, `alloc`, and `alloc,serde` | Compile | P0 | NFR-006-AC-1 | 🚧 planned |
-| TC-164 | Analyse the gate completion record for a clean Miri run of the unit and property suites | Analysis | P0 | NFR-006-AC-2 | 🚧 planned |
-| TC-165 | For every row of the NFR-006 limit contract table, a value equal to the limit is accepted; a value one past the limit is refused with the typed error that names that limit | Property | P0 | NFR-006-AC-3 | 🚧 planned |
-| TC-166 | Produce and assert every variant of every public error type in the NFR-006 error type table, or remove the variant | Unit | P0 | NFR-006-AC-4 | 🚧 planned |
+| TC-163 | Build the library for `thumbv7em-none-eabi` with no default features, `alloc`, and `alloc,serde` | Compile | P0 | NFR-006-AC-1 | ✅ implemented |
+| TC-164 | Analyse the gate completion record for a clean Miri run of the unit and property suites | Analysis | P0 | NFR-006-AC-2 | ✅ implemented |
+| TC-165 | For every row of the NFR-006 limit contract table, a value equal to the limit is accepted; a value one past the limit is refused with the typed error that names that limit | Property | P0 | NFR-006-AC-3 | ✅ implemented |
+| TC-166 | Produce and assert every variant of every public error type in the NFR-006 error type table, or remove the variant | Unit | P0 | NFR-006-AC-4 | ✅ implemented |
 
 ## Matrix Design Coverage
 

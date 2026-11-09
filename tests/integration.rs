@@ -526,28 +526,32 @@ fn public_proposition_map_reader_and_schema_are_strict_owner_artifacts() {
             .is_err()
     );
 
-    let mut oversized_population =
-        String::from(r#"{"schema_version":"tl-syntax.proposition-map/v1","propositions":["#);
-    for id in 0..=100_000_u32 {
-        if id != 0 {
-            oversized_population.push(',');
+    // 100,001 entries are too slow to interpret; the native run keeps this check.
+    #[cfg(not(miri))]
+    {
+        let mut oversized_population =
+            String::from(r#"{"schema_version":"tl-syntax.proposition-map/v1","propositions":["#);
+        for id in 0..=100_000_u32 {
+            if id != 0 {
+                oversized_population.push(',');
+            }
+            oversized_population.push_str(&format!(r#"{{"id":{id},"name":"p{id}"}}"#));
         }
-        oversized_population.push_str(&format!(r#"{{"id":{id},"name":"p{id}"}}"#));
+        oversized_population.push_str("]}");
+        let error = PropositionMapDocument::from_json_bytes(
+            oversized_population.as_bytes(),
+            SyntaxArtifactLimits::default(),
+        )
+        .unwrap_err();
+        assert!(matches!(
+            error,
+            tl_syntax::StrictDocumentReadError::ResourceLimitExceeded {
+                resource: "propositions",
+                actual: 100_001,
+                limit: 100_000,
+            }
+        ));
     }
-    oversized_population.push_str("]}");
-    let error = PropositionMapDocument::from_json_bytes(
-        oversized_population.as_bytes(),
-        SyntaxArtifactLimits::default(),
-    )
-    .unwrap_err();
-    assert!(matches!(
-        error,
-        tl_syntax::StrictDocumentReadError::ResourceLimitExceeded {
-            resource: "propositions",
-            actual: 100_001,
-            limit: 100_000,
-        }
-    ));
 }
 
 // Trace: TC-012, TC-013, TC-014, TC-032, FR-005-AC-1, FR-005-AC-2, FR-005-AC-3, FR-007-AC-5, NFR-002-AC-2, StR-002-VC-2

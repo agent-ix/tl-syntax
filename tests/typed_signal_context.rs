@@ -130,14 +130,19 @@ fn public_signal_catalog_reader_and_schema_are_strict_owner_artifacts() {
         SignalCatalogDocument::from_json_bytes(&trailing, SyntaxArtifactLimits::default()).is_err()
     );
 
-    let oversized = vec![b' '; MAX_TL_DOCUMENT_BYTES + 1];
-    assert!(matches!(
-        SignalCatalogDocument::from_json_bytes(&oversized, SyntaxArtifactLimits::default()),
-        Err(tl_syntax::StrictDocumentReadError::DocumentTooLarge {
-            actual,
-            limit: MAX_TL_DOCUMENT_BYTES,
-        }) if actual == MAX_TL_DOCUMENT_BYTES + 1
-    ));
+    // A 64 MiB buffer is too slow to interpret; limit_boundaries covers the
+    // lowered-limit twin of this check under Miri.
+    #[cfg(not(miri))]
+    {
+        let oversized = vec![b' '; MAX_TL_DOCUMENT_BYTES + 1];
+        assert!(matches!(
+            SignalCatalogDocument::from_json_bytes(&oversized, SyntaxArtifactLimits::default()),
+            Err(tl_syntax::StrictDocumentReadError::DocumentTooLarge {
+                actual,
+                limit: MAX_TL_DOCUMENT_BYTES,
+            }) if actual == MAX_TL_DOCUMENT_BYTES + 1
+        ));
+    }
 
     let deeply_nested = format!(
         "{{\"unexpected\":{}0{}}}",
@@ -263,32 +268,38 @@ fn every_catalog_refusal_has_a_neighboring_positive_control() {
         Err(SignalCatalogError::NonBooleanPropositionBinding { .. })
     ));
 
-    let too_many_signals = vec![boolean_signal(1, "same"); MAX_SIGNAL_CATALOG_SIGNALS + 1];
-    assert!(matches!(
-        catalog(&too_many_signals, &[]),
-        Err(SignalCatalogError::SignalLimitExceeded { .. })
-    ));
-    let too_many_bindings = vec![
-        PropositionBinding::new(PropositionId(1), SignalId(1));
-        MAX_SIGNAL_CATALOG_BINDINGS + 1
-    ];
-    assert!(matches!(
-        catalog(&valid_signals, &too_many_bindings),
-        Err(SignalCatalogError::BindingLimitExceeded { .. })
-    ));
+    // Populations of 100,000 are too slow to interpret; the native run keeps them.
+    #[cfg(not(miri))]
+    {
+        let too_many_signals = vec![boolean_signal(1, "same"); MAX_SIGNAL_CATALOG_SIGNALS + 1];
+        assert!(matches!(
+            catalog(&too_many_signals, &[]),
+            Err(SignalCatalogError::SignalLimitExceeded { .. })
+        ));
+        let too_many_bindings = vec![
+            PropositionBinding::new(PropositionId(1), SignalId(1));
+            MAX_SIGNAL_CATALOG_BINDINGS + 1
+        ];
+        assert!(matches!(
+            catalog(&valid_signals, &too_many_bindings),
+            Err(SignalCatalogError::BindingLimitExceeded { .. })
+        ));
 
-    let names: Vec<_> = (0..MAX_SIGNAL_CATALOG_SIGNALS)
-        .map(|index| format!("signal-{index:06}"))
-        .collect();
-    let maximum_signals: Vec<_> = names
-        .iter()
-        .enumerate()
-        .map(|(index, name)| boolean_signal(index as u32, name))
-        .collect();
-    let maximum_bindings: Vec<_> = (0..MAX_SIGNAL_CATALOG_BINDINGS)
-        .map(|index| PropositionBinding::new(PropositionId(index as u32), SignalId(index as u32)))
-        .collect();
-    assert!(catalog(&maximum_signals, &maximum_bindings).is_ok());
+        let names: Vec<_> = (0..MAX_SIGNAL_CATALOG_SIGNALS)
+            .map(|index| format!("signal-{index:06}"))
+            .collect();
+        let maximum_signals: Vec<_> = names
+            .iter()
+            .enumerate()
+            .map(|(index, name)| boolean_signal(index as u32, name))
+            .collect();
+        let maximum_bindings: Vec<_> = (0..MAX_SIGNAL_CATALOG_BINDINGS)
+            .map(|index| {
+                PropositionBinding::new(PropositionId(index as u32), SignalId(index as u32))
+            })
+            .collect();
+        assert!(catalog(&maximum_signals, &maximum_bindings).is_ok());
+    }
 
     let invalid_fixture = include_bytes!("fixtures/invalid-nonboolean-binding.json");
     assert!(serde_json::from_slice::<SignalCatalogDocument>(invalid_fixture).is_err());

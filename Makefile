@@ -9,6 +9,17 @@
 
 CARGO ?= cargo
 QUIRE ?= quire
+EMBEDDED_TARGET ?= thumbv7em-none-eabi
+# Miri runs on the pinned nightly named here; the unit and property suites run
+# with isolation off (property tests read their environment) and few cases.
+MIRI_TOOLCHAIN ?= nightly-2026-08-21
+MIRIFLAGS_TL ?= -Zmiri-disable-isolation
+# Unit tests plus the property and boundary suites. Tests that need up to 100,000
+# elements or a 64 MiB buffer are `cfg(not(miri))`; their small-limit twins run here.
+MIRI_TESTS ?= --lib --test props_fr_007 --test wire_round_trip_properties \
+	--test infinite_trace --test infinite_formula --test past_formula_v2 \
+	--test typed_signal_context --test future_lowering --test integration \
+	--test strict_syntax_artifacts --test limit_boundaries
 
 .PHONY: help
 help:
@@ -17,7 +28,8 @@ help:
 	@echo "  make fmt-check        - Verify formatting (CI gate)"
 	@echo "  make lint             - Clippy with -D warnings"
 	@echo "  make test             - cargo test"
-	@echo "  make check-features   - check no-default, alloc, serde, and all features"
+	@echo "  make check-features   - check no-default, alloc, serde, all features, and embedded builds"
+	@echo "  make miri             - run the unit and property suites under Miri"
 	@echo "  make check-corpus     - verify corpus schemas and derived oracles"
 	@echo "  make conformance      - replay the shared temporal corpus through the crate"
 	@echo "  make spec             - validate specs and report coverage"
@@ -57,6 +69,16 @@ check-features:
 	$(CARGO) check --lib --no-default-features --features alloc
 	$(CARGO) check --lib --no-default-features --features serde
 	$(CARGO) check --lib --all-features
+	$(CARGO) build --lib --no-default-features --target $(EMBEDDED_TARGET)
+	$(CARGO) build --lib --no-default-features --features alloc --target $(EMBEDDED_TARGET)
+	$(CARGO) build --lib --no-default-features --features alloc,serde --target $(EMBEDDED_TARGET)
+
+# Miri is the UB gate for the unit and property suites. Properties run with a
+# small case count and no failure-persistence files; the full counts run natively.
+.PHONY: miri
+miri:
+	MIRIFLAGS="$(MIRIFLAGS_TL)" PROPTEST_CASES=2 PROPTEST_DISABLE_FAILURE_PERSISTENCE=true \
+		$(CARGO) +$(MIRI_TOOLCHAIN) miri test --all-features $(MIRI_TESTS)
 
 .PHONY: check-default-dependencies
 check-default-dependencies:
@@ -135,4 +157,4 @@ rustdoc:
 # `spec-release` under Task-007 after planned roadmap rows have backing.
 .PHONY: ci
 ci: fmt-check check-features check-default-dependencies lint test check-corpus \
-	conformance deny fuzz-check spec msrv rustdoc
+	conformance deny fuzz-check spec msrv rustdoc miri

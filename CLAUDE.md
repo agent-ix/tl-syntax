@@ -16,6 +16,7 @@ make check-corpus     # corpus schemas, derived oracles, and their mutation prob
 make conformance      # replay the shared temporal corpus through the crate
 make spec             # validate the specification with Quire
 make msrv             # test every target and feature at Rust 1.98.1
+make miri             # unit and property suites under Miri (pinned nightly)
 make ci               # complete local gate set (hosted CI is manual-only)
 ```
 
@@ -51,9 +52,11 @@ src/lib.rs                     # crate root
 src/document.rs                # bounded owned/wire documents (alloc + serde)
 src/future.rs                  # allocation-free W/M admission, lowering, and reports
 src/syntax.rs                  # intervals, spans, nodes, profiles, borrowed validation
+src/error_variants.rs          # test-only: every public error variant is produced (NFR-006)
 examples/corpus_conformance.rs # the domain conformance runner over the shared corpus
 tests/integration.rs           # end-to-end domain tests
 tests/future_lowering.rs       # FR-008 traced lowering and refusal tests
+tests/limit_boundaries.rs      # NFR-006 accept-at-limit, refuse-one-past for every limit
 tests/future_operator_corpus.rs # TC-074 replay of the paired W/M corpus
 corpus/                        # formula schemas, fixtures, traces, and oracles
 corpus/future-operators/       # paired W/M source and canonical-graph corpus

@@ -9,6 +9,8 @@ extern crate alloc;
 mod bounded_string;
 mod context;
 pub mod contracts;
+#[cfg(all(test, feature = "serde"))]
+mod error_variants;
 pub mod formula;
 mod future;
 pub mod signal;

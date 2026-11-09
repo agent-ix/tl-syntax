@@ -71,6 +71,15 @@ impl<'a> SignalStorage<'a> {
         }
     }
 
+    /// Returns the declaration at `index`, which callers keep below `len()`.
+    fn at(self, index: usize) -> SignalDeclaration<'a> {
+        match self {
+            Self::Borrowed(signals) => signals[index],
+            #[cfg(feature = "alloc")]
+            Self::Owned(signals) => signals[index].as_borrowed(),
+        }
+    }
+
     fn get(self, index: usize) -> Option<SignalDeclaration<'a>> {
         match self {
             Self::Borrowed(signals) => signals.get(index).copied(),
@@ -141,11 +150,8 @@ impl<'a> SignalCatalog<'a> {
         }
 
         for index in 0..self.signals.len() {
-            let signal = self
-                .signals
-                .get(index)
-                .ok_or(SignalCatalogError::CatalogIndexOutOfRange { index })?;
-            if let Some(previous) = index.checked_sub(1).and_then(|item| self.signals.get(item)) {
+            let signal = self.signals.at(index);
+            if let Some(previous) = index.checked_sub(1).map(|item| self.signals.at(item)) {
                 if previous.id >= signal.id {
                     return Err(SignalCatalogError::SignalIdentityNotIncreasing {
                         previous: previous.id,
@@ -167,8 +173,9 @@ impl<'a> SignalCatalog<'a> {
 
         let name_order = &mut name_order_scratch[..self.signals.len()];
         for (index, slot) in name_order.iter_mut().enumerate() {
-            *slot = u32::try_from(index)
-                .map_err(|_| SignalCatalogError::CatalogIndexOutOfRange { index })?;
+            // `index` is below MAX_SIGNAL_CATALOG_SIGNALS, which the const
+            // assertion above fits in `u32`.
+            *slot = index as u32;
         }
         name_order.sort_unstable_by(|left, right| {
             let left = usize::try_from(*left)
@@ -187,19 +194,8 @@ impl<'a> SignalCatalog<'a> {
             }
         });
         for pair in name_order.windows(2) {
-            let first_index = usize::try_from(pair[0])
-                .map_err(|_| SignalCatalogError::ScratchIndexUnrepresentable { index: pair[0] })?;
-            let second_index = usize::try_from(pair[1])
-                .map_err(|_| SignalCatalogError::ScratchIndexUnrepresentable { index: pair[1] })?;
-            let first = self
-                .signals
-                .get(first_index)
-                .ok_or(SignalCatalogError::CatalogIndexOutOfRange { index: first_index })?;
-            let second = self.signals.get(second_index).ok_or(
-                SignalCatalogError::CatalogIndexOutOfRange {
-                    index: second_index,
-                },
-            )?;
+            let first = self.signals.at(pair[0] as usize);
+            let second = self.signals.at(pair[1] as usize);
             if first.name.as_bytes() == second.name.as_bytes() {
                 return Err(SignalCatalogError::DuplicateSignalName {
                     first: first.id,
@@ -327,6 +323,11 @@ impl<'a> Iterator for SignalIter<'a> {
 impl ExactSizeIterator for SignalIter<'_> {}
 impl FusedIterator for SignalIter<'_> {}
 
+// Validation stores declaration indices as `u32` scratch slots and widens them
+// back to `usize`; the limits and the pointer width make both casts lossless.
+const _: () = assert!(MAX_SIGNAL_CATALOG_SIGNALS <= u32::MAX as usize);
+const _: () = assert!(usize::BITS >= u32::BITS);
+
 /// Validation failure for a borrowed or owned signal catalog.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[non_exhaustive]
@@ -337,10 +338,6 @@ pub enum SignalCatalogError {
     BindingLimitExceeded { count: usize, limit: usize },
     /// Caller-owned name-order scratch has fewer slots than declarations.
     NameOrderScratchTooSmall { provided: usize, required: usize },
-    /// An internal catalog index could not address its validated storage.
-    CatalogIndexOutOfRange { index: usize },
-    /// A scratch identity cannot be represented on the target architecture.
-    ScratchIndexUnrepresentable { index: u32 },
     /// Signal identities are duplicated or not strictly increasing.
     SignalIdentityNotIncreasing {
         previous: SignalId,
@@ -389,13 +386,6 @@ impl fmt::Display for SignalCatalogError {
             Self::NameOrderScratchTooSmall { provided, required } => write!(
                 formatter,
                 "signal name-order scratch has {provided} slots but {required} are required"
-            ),
-            Self::CatalogIndexOutOfRange { index } => {
-                write!(formatter, "signal catalog index {index} is out of range")
-            }
-            Self::ScratchIndexUnrepresentable { index } => write!(
-                formatter,
-                "signal catalog scratch index {index} is not representable"
             ),
             Self::SignalIdentityNotIncreasing { previous, current } => write!(
                 formatter,
