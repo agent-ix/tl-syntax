@@ -16,27 +16,25 @@ relationships:
 
 ## Statement
 
-The crate shall build for a bare-metal embedded target, run its unit and
-property suites without undefined behavior under Miri, accept each declared
-resource limit exactly at the limit and refuse it one past the limit with that
-limit's typed error, and produce every variant of every public error enum from
-at least one test.
+The crate shall build for the bare-metal target `thumbv7em-none-eabi` in three feature configurations.
+
+The crate shall run its unit and property suites under Miri without reported undefined behavior.
+
+The crate shall enforce each declared resource limit so that a value equal to the limit is accepted; a value one past the limit is refused with the typed error that names that limit.
+
+The crate shall produce every variant of every public error type from at least one test.
 
 ## Scope
 
-- Applies to the library built with no default features, with `alloc`, and with
-  `alloc` plus `serde`, for `thumbv7em-none-eabi`.
-- Applies to the unit tests and property tests of the crate, run under Miri on
-  the host.
-- Applies to every public limit constant and every limit of
-  `SyntaxArtifactLimits`: `MAX_TL_DOCUMENT_BYTES`, `MAX_TL_DOCUMENT_DEPTH`,
-  the string, work, signal, binding, proposition and formula node and depth
-  ceilings, `MAX_SIGNAL_NAME_BYTES`, `MAX_REQUIREMENT_CONTEXT_FIELD_BYTES`,
-  `PAST_PROFILE_MANIFEST_MAX_BYTES`, `MAX_FUTURE_LOWERING_IDENTITY_BYTES` and
-  `MAX_FUTURE_LOWERING_KIND_BYTES`, and to every admission path that enforces
-  one of them.
-- Applies to every public enum whose name ends in `Error` or `Refusal`.
-- Does not change any limit value, wire format or error variant.
+- The embedded builds apply to the library at `thumbv7em-none-eabi` in exactly
+  the three configurations stated in NFR-006-AC-1.
+- Miri applies to the unit tests and property tests, run on the host.
+- The limit contract applies to the limits and error types enumerated in the
+  tables below, on every path that enforces them.
+- A variant that no test can produce because it is unreachable shall be
+  removed from its enum, with the owner's agreement, in the same change that
+  would otherwise leave it untested. Removal changes the public error enum;
+  no other limit value, wire format or variant changes.
 
 ## Rationale
 
@@ -49,32 +47,76 @@ no test produces can become unreachable or mislabeled unnoticed.
 
 | Metric | Target | Threshold | Method |
 |---|---|---|---|
-| Declared limits without an at-limit and a limit-plus-one test | 0 | 0 | Test (TC-165) |
-| Public error variants not produced by any test | 0 | 0 | Test (TC-166) |
-| Miri-reported undefined behavior in the unit and property suites | 0 | 0 | Test (TC-164) |
+| Declared limits without an accept test and a refuse test per enforcing path | 0 | 0 | Test (TC-165) |
+| Public error variants neither produced by a test nor removed | 0 | 0 | Test (TC-166) |
+| Miri-reported undefined behavior in the unit and property suites | 0 | 0 | Analysis (TC-164) |
 | Embedded-target feature builds that fail | 0 | 0 | Test (TC-163) |
+
+## Limit contract table
+
+Order is by source module. Contract for every row: a value equal to the limit
+is accepted; a value one past the limit is refused with the typed error that
+names that limit. "Caller input" says whether a caller-lowered
+`SyntaxArtifactLimits` field reaches the path (used by the Miri run, see
+NFR-006-AC-2).
+
+| # | Limit (value) | Typed error | Accept side | Reject side | Caller input |
+|---|---|---|---|---|---|
+| 1 | `MAX_TL_DOCUMENT_BYTES` (64 MiB) | `StrictDocumentReadError::DocumentTooLarge` | document of exactly the limit | limit + 1 bytes | `document_bytes` |
+| 2 | `MAX_TL_DOCUMENT_DEPTH` (64) | `StrictDocumentReadError::DepthLimitExceeded` | nesting of 64 | nesting of 65 | `json_depth` |
+| 3 | string bytes (64 KiB) | `StrictDocumentReadError::StringTooLarge` | string of 64 KiB | 64 KiB + 1 | `string_bytes` |
+| 4 | work (256 Mi units) | `StrictDocumentReadError::WorkLimitExceeded` | exact work | work + 1 | `work` |
+| 5 | `MAX_FORMULA_DOCUMENT_NODES` (100,000), reader | `StrictDocumentReadError::ResourceLimitExceeded` (formula nodes) | 100,000 nodes | 100,001 | `formula_nodes` |
+| 6 | `MAX_FORMULA_DOCUMENT_NODES`, `FormulaDocument::new`/`new_v2` | `FormulaError::TooManyNodes`, `DocumentNodeLimitExceeded` | 100,000 | 100,001 | none |
+| 7 | `MAX_FORMULA_DOCUMENT_NODES`, future lowering (3-node charge) | `FutureLoweringRefusal::DocumentNodeLimitExceeded` | fills to 100,000 | 100,001 | none |
+| 8 | `MAX_FORMULA_DOCUMENT_NODES`, infinite graph | `InfiniteFormulaError::NodeLimit` | 100,000 | 100,001 | none |
+| 9 | `MAX_FORMULA_DOCUMENT_NODES`, lasso positions | `LassoTraceError::PositionLimit` | 100,000 | 100,001 | none |
+| 10 | `MAX_FORMULA_DOCUMENT_NODES`, fairness roots | `FairnessPremisesError::ResourceLimit` | 100,000 | 100,001 | `formula_nodes` (reader) |
+| 11 | `MAX_FORMULA_DOCUMENT_DEPTH` (4,096), formula v2 | `FormulaError::DocumentDepthLimitExceeded` | depth 4,096 | depth 4,097 | none |
+| 12 | `MAX_FORMULA_DOCUMENT_DEPTH`, infinite graph | `InfiniteFormulaError::DepthLimit` | 4,096 | 4,097 | none |
+| 13 | `MAX_FORMULA_DOCUMENT_DEPTH`, reader | `StrictDocumentReadError::ResourceLimitExceeded` (formula depth) | 4,096 | 4,097 | `formula_depth` |
+| 14 | `MAX_SIGNAL_CATALOG_SIGNALS` (100,000), borrowed | `SignalCatalogError::SignalLimitExceeded` | 100,000 | 100,001 | none |
+| 15 | `MAX_SIGNAL_CATALOG_SIGNALS`, reader | `StrictDocumentReadError::ResourceLimitExceeded` (signals) | 100,000 | 100,001 | `signals` |
+| 16 | `MAX_SIGNAL_CATALOG_BINDINGS` (100,000), borrowed | `SignalCatalogError::BindingLimitExceeded` | 100,000 | 100,001 | none |
+| 17 | `MAX_SIGNAL_CATALOG_BINDINGS`, reader | `StrictDocumentReadError::ResourceLimitExceeded` (bindings) | 100,000 | 100,001 | `bindings` |
+| 18 | `MAX_PROPOSITION_MAP_ENTRIES` (100,000), reader | `StrictDocumentReadError::ResourceLimitExceeded` (propositions) | 100,000 | 100,001 | `propositions` |
+| 19 | `MAX_PROPOSITION_MAP_ENTRIES`, partial valuation | `PartialValuationError::ResourceLimit` | 100,000 | 100,001 | `propositions` (reader) |
+| 20 | `MAX_SIGNAL_NAME_BYTES` (255), borrowed and wire | `SignalCatalogError::SignalNameTooLong` | 255 bytes | 256 bytes | none |
+| 21 | `MAX_REQUIREMENT_CONTEXT_FIELD_BYTES` (1,024) | `RequirementContextError::FieldTooLong` | 1,024 bytes, each field | 1,025 | none |
+| 22 | `PAST_PROFILE_MANIFEST_MAX_BYTES` (64 KiB) | `PastProfileManifestError` (struct; `field()` is `"size"`) | exactly 64 KiB | 64 KiB + 1 | none |
+| 23 | `MAX_FUTURE_LOWERING_IDENTITY_BYTES` (128) | `FutureLoweringRefusal::RequestIdentityTooLong`, `OperatorProfileTooLong`, `SemanticProfileTooLong` | 128 bytes | 129 | none |
+| 24 | `MAX_FUTURE_LOWERING_KIND_BYTES` (16) | `FutureLoweringRefusal::KindTooLong` | 16 bytes | 17 | none |
+
+## Error type table
+
+Every variant of each of these types is produced by a test that asserts the exact
+variant (a per-enum exhaustive `match` fails to compile when a variant is added
+without a test): `RequirementContextError`, `FutureLoweringRefusal`,
+`StrictDocumentReadError`, `TemporalIntervalParseError`, `InfiniteClockError`,
+`InfiniteProfileError`, `InfiniteFormulaError`, `FormulaError`,
+`PropositionMapError`, `SignalDomainError`, `FormulaConversionError`,
+`PartialValuationError`, `LassoTraceError`, `FairnessPremisesError`,
+`FairnessReadError`, `SignalCatalogError`, `FormulaBindingError`. The struct
+`PastProfileManifestError` is not an enum; its every distinct `field()` refusal
+value is produced by a test.
 
 ## Verification
 
-The local gate builds the library for `thumbv7em-none-eabi` in the three
-feature configurations. A Miri target runs the unit and property suites with
-a reduced property case count. One boundary test per limit and path accepts
-the value at the limit and refuses it with the exact typed error one past the
-limit. Per-enum exhaustive `match` statements in the error test fail to compile
-when a variant is added without a test.
-
-Where an owner ceiling cannot be materialized under Miri, the native run
-exercises the owner value and the Miri run exercises the same code path through
-a caller-lowered limit; the native run is never skipped.
+TC-163 runs the three embedded builds through the `check-features` Make
+target, which the existing `tests/feature_boundary.rs` test executes; a failed
+build fails the test. TC-164 is an Analysis of the completion of the `miri`
+Make target inside `make ci`: a Miri-reported error fails the gate, and the
+analysis inspects the gate's exit status and the Miri target's presence in the
+composite. TC-165 and TC-166 are Rust tests.
 
 ## Acceptance Criteria
 
 | ID | Criteria | Verification |
 |---|---|---|
-| NFR-006-AC-1 | The library builds for `thumbv7em-none-eabi` with no default features, with `alloc`, and with `alloc` and `serde`, as part of the local gate. | Test (TC-163) |
-| NFR-006-AC-2 | The unit and property suites complete under Miri with no undefined behavior reported, and the Miri run is part of the local gate. | Test (TC-164) |
-| NFR-006-AC-3 | For every declared resource limit and each path that enforces it, a value equal to the limit is accepted and a value one past the limit is refused with that path's typed error. | Test (TC-165) |
-| NFR-006-AC-4 | Every variant of every public error enum is produced by at least one test that asserts the exact variant. | Test (TC-166) |
+| NFR-006-AC-1 | In addition to the host builds of NFR-001-AC-2, the library builds for `thumbv7em-none-eabi` with exactly three configurations: no default features, `alloc` only (`--features alloc`), and `alloc` plus `serde` (`--features alloc,serde`); the all-features configuration is excluded because `--all-features` equals `alloc,serde` in this crate and adds no distinct configuration. | Test (TC-163) |
+| NFR-006-AC-2 | The unit and property suites complete under Miri with no undefined behavior reported, as part of `make ci`. The native run uses the owner value and is never skipped. The Miri run uses a caller-lowered limit for the same code path for the limits that have a caller input in the table (rows 1 to 5, 10, 13, 15, 17, 18, 19), and the Miri run of the paths with no caller input (rows 6 to 9, 11, 12, 14, 16) is excluded with `#[cfg(not(miri))]` on those boundary tests only, while their smaller-input logic still runs under Miri through the unit suite; rows 20 to 24 are small enough to run at the owner value under Miri. | Analysis (TC-164) |
+| NFR-006-AC-3 | For every row of the limit contract table, a value equal to the limit is accepted; a value one past the limit is refused with the typed error that names that limit. | Test (TC-165) |
+| NFR-006-AC-4 | Every variant of every public error type in the error type table is produced by at least one test that asserts the exact variant, or is removed from the enum in the same change. | Test (TC-166) |
 
 ## Dependencies
 
