@@ -36,7 +36,7 @@ fn past_nodes() -> Vec<Node> {
     ]
 }
 
-// Trace: TC-054, FR-011-AC-1, FR-011-AC-5, FR-013-AC-1
+// Trace: TC-054, FR-013-AC-1
 #[test]
 fn formula_v2_round_trips_the_closed_past_profile_and_catalog() {
     assert_eq!(PAST_OPERATORS_V1, "tl-syntax.past-operators/v1");

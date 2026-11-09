@@ -77,26 +77,26 @@ qualification or adopter acceptance.
 
 ## License and Rights Analysis Procedure
 
-TC-072 binds its analysis population to the exact candidate and includes every
-tracked source file, emitted package member, `Cargo.lock` dependency, and
-generated or embedded third-party material. The authoritative evidence for each
-material is the repository license/notice set, the exact dependency package or
-release metadata, and any immutable registry or upstream notice selected by the
-review policy; every source is retained with its issuer, applicability basis,
-identity and digest.
+An independent rights reviewer binds the analysis population to the exact
+candidate. It includes every tracked source file, emitted package member,
+`Cargo.lock` dependency, and generated or embedded third-party material. The
+authoritative evidence for each material is the repository license/notice set,
+the exact dependency package or release metadata, and any immutable registry or
+upstream notice selected by the review policy; every source is retained with
+its issuer, applicability basis, identity and digest.
 
 SUITE-013 supplies dependency-license and dependency-source facts for the Rust
-closure. An independent rights reviewer reconciles those facts and the remaining
-material population against the authoritative evidence, records the exact
-candidate, tool/configuration identity, reviewer identity and policy, limitations
-and complete source set, and assigns one normalized SPDX expression per
-material. Missing disposition produces `incomplete`, incompatible resolutions
-produce `conflict`, and an unverifiable authority produces `refused`. The reviewer's reconciliation is a human review input recorded with the
-FR-018 decision evidence, not a test row; TC-072 tests how the package adapter
-consumes the resulting resolutions. The output
-is attributable engineering analysis; neither the automated check nor the
-review is represented as legal advice, certification or a transfer of release
-authority.
+closure. The reviewer reconciles those facts and the remaining material
+population against the authoritative evidence, records the exact candidate,
+tool/configuration identity, reviewer identity and policy, limitations and
+complete source set, and supplies one normalized SPDX expression per material.
+This reconciliation is a human review input recorded with the FR-018 decision
+evidence, not a test row. TC-072 tests the package adapter that consumes those
+resolutions: a missing disposition produces `incomplete`, incompatible
+resolutions produce `conflict`, and an unverifiable authority produces
+`refused`. The result is attributable engineering analysis; neither the
+automated check nor the review is represented as legal advice, certification or
+a transfer of release authority.
 
 ## Metadata
 

@@ -84,18 +84,13 @@ relationships:
 
 ## Delivery Status
 
-No M6 source-readiness implementation exists in tl-syntax, tl-parse,
-tl-rewrite or tl-mltl: there is no candidate binder, readiness state machine,
-FR-018 admission adapter, integrator-package adapter or executable-path census,
-and no `source_readiness_*` or `integrator_package` test target. TL-258, a
-separate FR-018 gate-check ticket, was canceled as a duplicate of the Task-013
-adapter (TL-21); the FR-018 decision rows are therefore unbuilt, not delivered
-elsewhere. Every criterion in this matrix is an unbuilt feature that stays
-planned or blocked on its named external prerequisite, so each remains
-unbacked under `quire coverage --strict` until its suite exists and carries
-trace tags. None is retired in this matrix; TC-072 was reshaped from a human
-analysis row to an adapter test, because a human review mints no source symbol
-and is recorded as FR-018 decision evidence instead.
+FR-018 and its adapters (candidate binder, readiness state machine, admission
+adapter, integrator-package adapter and executable-path census) are not yet
+implemented in any TL crate, and no `source_readiness_*` or `integrator_package`
+test target exists. Every criterion in this matrix is therefore planned or
+blocked, and remains unbacked under `quire coverage --strict` until its suite
+exists and carries trace tags. TC-072 is an adapter test; the human rights
+review it consumes is recorded as FR-018 decision evidence and is not a test row.
 
 ## Evidence Limits
 
