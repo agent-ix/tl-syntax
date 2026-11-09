@@ -91,7 +91,9 @@ material population against the authoritative evidence, records the exact
 candidate, tool/configuration identity, reviewer identity and policy, limitations
 and complete source set, and assigns one normalized SPDX expression per
 material. Missing disposition produces `incomplete`, incompatible resolutions
-produce `conflict`, and an unverifiable authority produces `refused`. The output
+produce `conflict`, and an unverifiable authority produces `refused`. The reviewer's reconciliation is a human review input recorded with the
+FR-018 decision evidence, not a test row; TC-072 tests how the package adapter
+consumes the resulting resolutions. The output
 is attributable engineering analysis; neither the automated check nor the
 review is represented as legal advice, certification or a transfer of release
 authority.

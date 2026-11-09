@@ -19,7 +19,7 @@ type: SuiteRegistry
 | SUITE-010 | Source-readiness fault and freshness tests | `cargo test --test source_readiness_failures --all-features` | planned Rust fault-injection harness | Integration |
 | SUITE-011 | Real shared source-readiness contract tests | `cargo test --test source_readiness_shared --all-features -- --ignored` | planned Rust integration harness plus released Engineering Assurance/Quire/Quoin | Integration |
 | SUITE-012 | Real integrator-package contract tests | `cargo test --test integrator_package --all-features -- --ignored` | planned Rust contract/state/concurrency harness plus released shared package | Integration |
-| SUITE-013 | Rust dependency license/source facts | `cargo deny check licenses sources` | cargo-deny input to the independent TC-072 rights-source review; not a complete material-population disposition by itself | Static |
+| SUITE-013 | Rust dependency license/source facts | `cargo deny check licenses sources` | cargo-deny input to the independent rights reviewer whose resolutions TC-072 feeds to the package adapter; not a complete material-population disposition by itself | Static |
 
 ## Notes
 

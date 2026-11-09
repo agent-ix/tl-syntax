@@ -96,7 +96,7 @@ fn formula_v2_round_trips_the_closed_past_profile_and_catalog() {
     );
 }
 
-// Trace: TC-054, FR-013-AC-1
+// Trace: TC-053, TC-054, FR-011-AC-4, FR-013-AC-1
 #[test]
 fn formula_profiles_fail_closed_without_changing_formula_v1() {
     let past = past_nodes();
@@ -210,7 +210,7 @@ fn existing_future_lowering_refuses_the_new_past_profile() {
     );
 }
 
-// Trace: TC-054, TC-057, FR-013-AC-1
+// Trace: TC-053, TC-054, TC-057, FR-011-AC-4, FR-013-AC-1
 #[test]
 fn v2_wire_refuses_unknown_malformed_and_profile_incompatible_values() {
     let documents = [
