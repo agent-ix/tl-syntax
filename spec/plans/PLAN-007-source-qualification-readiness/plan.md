@@ -105,7 +105,7 @@ copies are outside every seam.
 
 - [ ] **TC-061**: Round-trip source facts and distinct adopter subjects through the real package.
 - [ ] **TC-071**: Exercise idempotent retries and racing package writers.
-- [ ] **TC-072**: Complete independent, candidate-bound license/reuse-right analysis.
+- [ ] **TC-072**: Exercise the package adapter over reviewer-supplied license/reuse-right resolutions for the exact candidate.
 
 ## Remaining Work
 

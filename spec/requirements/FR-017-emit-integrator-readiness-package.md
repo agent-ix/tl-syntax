@@ -99,7 +99,7 @@ integrator's intended-use, deployment and validation decision open.
 | FR-017-AC-4 | Without a compatible released shared contract, package production is explicitly unavailable and no repository-local substitute exists. | Test (TC-066) |
 | FR-017-AC-5 | Every package-stage `ExecutionOutcome` maps exactly as MRS-004 specifies, retains its cause and exposes no partial/stale/mislabeled package; only a strictly read and verified candidate-bound temporary object becomes atomically visible. | Test (TC-068, IT-002) |
 | FR-017-AC-6 | Identical retries resolve to one verified object; attempt-identity reuse with different inputs and concurrent non-identical writers produce `conflict`, so neither input can win by timing. | Test (TC-071, IT-002) |
-| FR-017-AC-7 | Every included source/package material maps to one normalized applicable license/reuse-right resolution and its complete authoritative source set, preserving valid compound expressions; missing disposition is `incomplete`, incompatible expressions are `conflict`, and unverifiable authority is `refused` even when a notice round-trips unchanged. | Analysis (TC-072) |
+| FR-017-AC-7 | Every included source/package material maps to one normalized applicable license/reuse-right resolution and its complete authoritative source set, preserving valid compound expressions; missing disposition is `incomplete`, incompatible expressions are `conflict`, and unverifiable authority is `refused` even when a notice round-trips unchanged. | Test (TC-072) |
 
 ## Dependencies
 

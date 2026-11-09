@@ -94,7 +94,7 @@ only under the separate `tl-syntax.formula-unbounded/v1` edition and the
 
 | ID | Criteria | Verification |
 |---|---|---|
-| FR-009-AC-1 | `tl-parse.clean-ascii/v2` gives W/M the exact U/R precedence, associativity, interval and token/expression-span rules, rejects malformed or unrecognized forms, and normalizes only to primitive text; old v1 rejects derived input and accepts that output. | Test (TC-043, TC-047) |
+| FR-009-AC-1 | Withdrawn: re-homed to tl-parse, which owns and verifies the `tl-parse.clean-ascii/v2` grammar (tl-parse FR-008, `tests/clean_ascii_v2.rs`, `fuzz/fuzz_targets/clean_ascii_v2.rs`). tl-syntax tests lowering, not parsing. Original criterion: `tl-parse.clean-ascii/v2` gives W/M the exact U/R precedence, associativity, interval and token/expression-span rules, rejects malformed or unrecognized forms, and normalizes only to primitive text; old v1 rejects derived input and accepts that output. | Withdrawn |
 | FR-009-AC-2 | Lowered formulas use the unchanged primitive-only formula-v1 wire schema and preserve the selected existing semantic profile; operator-profile and source attribution remain in their owning non-wire or source-correspondence records. | Test (TC-040, TC-044) |
 | FR-009-AC-3 | A mutation in any derived spelling/lowering, canonical node, wire field, evaluation meaning, or diagnostic/report field requires the specified successor identity and cannot retain the old identity. | Test (TC-040, TC-043, TC-044) |
 | FR-009-AC-4 | Every strong/weak-next, past/mixed-time, interval/time/closure, derived-wire, malformed, or unknown-profile combination returns a distinct refusal on the owning axis before document construction. | Test (TC-046, TC-047) |

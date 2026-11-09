@@ -49,7 +49,7 @@ relationships:
 | TC-069 | Mutate repository/Git/materialized/admitted-root/path/mount identities and probe symlink escape/cycle/race/special/mount/bound cases | Property | P0 | FR-015-AC-6 | 🚧 planned |
 | TC-070 | Mutate supersession topology/bounds, conditional/deferred transitions and concurrent review/decision successors | Property | P0 | FR-016-AC-6, FR-018-AC-7 | 🚧 planned |
 | TC-071 | Race non-identical package writers and retry identical/different attempt identities | Integration | P0 | FR-017-AC-6 | 🚧 blocked on accepted shared contract |
-| TC-072 | An independent rights reviewer reconciles the exact candidate's tracked source, package contents, dependency closure and generated/embedded third-party material against identity-bound authoritative license and reuse-right sources | Analysis | P0 | FR-017-AC-7, IT-002-SC-07 | 🚧 planned |
+| TC-072 | Feed the package adapter reviewer-supplied license and reuse-right resolutions for every material of the exact candidate (tracked source, package members, dependency closure, generated/embedded third-party material) and mutate each: valid `AND`/`OR`/nested SPDX expressions are preserved, a missing disposition yields `incomplete`, incompatible resolutions yield `conflict`, an unverifiable authority yields `refused` even when the notice round-trips unchanged | Integration | P0 | FR-017-AC-7, IT-002-SC-07 | 🚧 blocked on accepted shared contract |
 | TC-073 | Mutate reviewer/decision policy, actor, contributor, conflict, delegation, revocation, quorum, event snapshot/cursor/completeness, evaluation time authority, head/base/configuration and evidence bindings | Property | P0 | FR-018-AC-2, FR-018-AC-5, FR-018-AC-6, FR-018-AC-7, NFR-005-AC-2 | 🚧 blocked on authoritative policy/event source |
 
 ## Planned Suite Allocation
@@ -62,7 +62,7 @@ relationships:
 | TC-065, TC-068 | SUITE-010 and, for package failures, SUITE-012 |
 | TC-061, TC-071 | SUITE-012 |
 | TC-067 | SUITE-011 |
-| TC-072 | SUITE-013 |
+| TC-072 | SUITE-012; SUITE-013 supplies dependency-license and source facts to the reviewer whose resolutions TC-072 consumes |
 
 ## Matrix Design Coverage
 
@@ -81,6 +81,16 @@ relationships:
 |---|---|---|---|---|---|
 | IT-001 | Source-grounded handoff through real released Engineering Assurance, Quire and Quoin | service | shared assurance stack | TC-059, TC-060, TC-062, TC-063, TC-066 through TC-070, TC-073 | 🚧 blocked on tl-syntax#16 release set and authoritative policy/event source |
 | IT-002 | Lossless future integrator-package handoff without transferred qualification | service | Engineering Assurance integrator package | TC-061, TC-062, TC-063, TC-066, TC-068, TC-070 through TC-072 | 🚧 blocked on accepted shared contract |
+
+## Delivery Status
+
+FR-018 and its adapters (candidate binder, readiness state machine, admission
+adapter, integrator-package adapter and executable-path census) are not yet
+implemented in any TL crate, and no `source_readiness_*` or `integrator_package`
+test target exists. Every criterion in this matrix is therefore planned or
+blocked, and remains unbacked under `quire coverage --strict` until its suite
+exists and carries trace tags. TC-072 is an adapter test; the human rights
+review it consumes is recorded as FR-018 decision evidence and is not a test row.
 
 ## Evidence Limits
 
