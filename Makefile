@@ -19,7 +19,8 @@ MIRIFLAGS_TL ?= -Zmiri-disable-isolation
 MIRI_TESTS ?= --lib --test props_fr_007 --test wire_round_trip_properties \
 	--test infinite_trace --test infinite_formula --test past_formula_v2 \
 	--test typed_signal_context --test future_lowering --test integration \
-	--test strict_syntax_artifacts --test limit_boundaries
+	--test strict_syntax_artifacts --test limit_boundaries \
+	--test strict_reject_classes
 
 .PHONY: help
 help:
