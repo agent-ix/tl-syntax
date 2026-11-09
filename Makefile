@@ -14,13 +14,19 @@ EMBEDDED_TARGET ?= thumbv7em-none-eabi
 # with isolation off (property tests read their environment) and few cases.
 MIRI_TOOLCHAIN ?= nightly-2026-08-21
 MIRIFLAGS_TL ?= -Zmiri-disable-isolation
-# Unit tests plus the property and boundary suites. Tests that need up to 100,000
-# elements or a 64 MiB buffer are `cfg(not(miri))`; their small-limit twins run here.
+# Unit tests plus the property, boundary, corpus and fuzz-seed suites. Tests that
+# need up to 100,000 elements or a 64 MiB buffer are `cfg(not(miri))`; their
+# small-limit twins run here. Isolation is off so the corpus suites read the
+# checked-in files. Excluded (NFR-006-AC-2): feature_boundary (spawns cargo) and
+# future_operator_corpus (its mutation tests replay the whole corpus dozens of
+# times; the suite took 58 minutes under Miri).
 MIRI_TESTS ?= --lib --test props_fr_007 --test wire_round_trip_properties \
 	--test infinite_trace --test infinite_formula --test past_formula_v2 \
 	--test typed_signal_context --test future_lowering --test integration \
 	--test strict_syntax_artifacts --test limit_boundaries \
-	--test strict_reject_classes
+	--test strict_reject_classes --test boundary_corpus --test infinite_fuzz_seeds \
+	--test infinite_trace_corpus --test mutation_survivors --test past_history_corpus \
+	--test past_profile_manifest --test wire_decode_fuzz_seeds
 
 .PHONY: help
 help:
