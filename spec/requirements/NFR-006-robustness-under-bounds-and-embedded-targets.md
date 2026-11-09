@@ -50,7 +50,7 @@ no test produces can become unreachable or mislabeled unnoticed.
 |---|---|---|---|
 | Declared limits without an accept test and a refuse test per enforcing path | 0 | 0 | Test (TC-165) |
 | Public error variants neither produced by a test nor removed | 0 | 0 | Test (TC-166) |
-| Miri-reported undefined behavior in the unit and property suites | 0 | 0 | Analysis (TC-164) |
+| Miri-reported undefined behavior in the unit and property suites | 0 | 0 | Test (TC-164) |
 | Embedded-target feature builds that fail | 0 | 0 | Test (TC-163) |
 
 ## Limit contract table
@@ -107,10 +107,9 @@ value is produced by a test.
 ## Verification
 
 TC-163 runs the three embedded builds through the `check-features` Make
-target, which `tests/feature_boundary.rs` executes; a failed build fails the test. TC-164 is an Analysis of the completion of the `miri`
-Make target inside `make ci`: a Miri-reported error fails the gate, and the
-analysis inspects the gate's exit status and the Miri target's presence in the
-composite. TC-165 is `tests/limit_boundaries.rs`; TC-166 is `src/error_variants.rs` plus the
+target, which `tests/feature_boundary.rs` executes; a failed build fails the test. TC-164 is `tests/miri_gate.rs`, which reads the Makefile and asserts that the `miri`
+Make target is a `make ci` prerequisite, runs on the pinned nightly and sets `MIRIFLAGS`;
+a Miri-reported error fails the gate. TC-165 is `tests/limit_boundaries.rs`; TC-166 is `src/error_variants.rs` plus the
 manifest refusal-field test in `tests/past_profile_manifest.rs`.
 
 ## Acceptance Criteria
@@ -118,7 +117,7 @@ manifest refusal-field test in `tests/past_profile_manifest.rs`.
 | ID | Criteria | Verification |
 |---|---|---|
 | NFR-006-AC-1 | In addition to the host builds of NFR-001-AC-2, the library builds for `thumbv7em-none-eabi` with exactly three configurations: no default features, `alloc` only (`--features alloc`), and `alloc` plus `serde` (`--features alloc,serde`); the all-features configuration is excluded because `--all-features` equals `alloc,serde` in this crate and adds no distinct configuration. | Test (TC-163) |
-| NFR-006-AC-2 | The unit and property suites complete under Miri with no undefined behavior reported, as part of `make ci`. The native run uses the owner value and is never skipped. The Miri run uses a caller-lowered limit for the same code path for the limits that have a caller input in the table (rows 1 to 5, 13, 15, 17, 18), and the Miri run of the paths with no caller input (rows 6 to 12, 14, 16, 19) is excluded with `#[cfg(not(miri))]` on those boundary tests only, while their smaller-input logic still runs under Miri through the unit suite; rows 20 to 24 are small enough to run at the owner value under Miri. Besides `--lib`, the Miri run covers the property, boundary, corpus and fuzz-seed integration suites named in `MIRI_TESTS` in the Makefile. Two suites stay excluded, each with its reason: `feature_boundary` starts cargo processes, and `future_operator_corpus` is a genuinely exhaustive corpus replay whose mutation tests replay the whole corpus dozens of times (the suite took 58 minutes under Miri without reducing the corpus, which would weaken it); both run natively in `make ci`. The `cfg(not(miri))` and `cfg_attr(miri, ignore)` tests are the owner-ceiling tests with no caller-supplied limit (the 100,000-element and 64 MiB inputs), excluded for size and run natively. | Analysis (TC-164) |
+| NFR-006-AC-2 | The unit and property suites complete under Miri with no undefined behavior reported, as part of `make ci`. The native run uses the owner value and is never skipped. The Miri run uses a caller-lowered limit for the same code path for the limits that have a caller input in the table (rows 1 to 5, 13, 15, 17, 18), and the Miri run of the paths with no caller input (rows 6 to 12, 14, 16, 19) is excluded with `#[cfg(not(miri))]` on those boundary tests only, while their smaller-input logic still runs under Miri through the unit suite; rows 20 to 24 are small enough to run at the owner value under Miri. Besides `--lib`, the Miri run covers the property, boundary, corpus and fuzz-seed integration suites named in `MIRI_TESTS` in the Makefile. Two suites stay excluded, each with its reason: `feature_boundary` starts cargo processes, and `future_operator_corpus` is a genuinely exhaustive corpus replay whose mutation tests replay the whole corpus dozens of times (the suite took 58 minutes under Miri without reducing the corpus, which would weaken it); both run natively in `make ci`. The `cfg(not(miri))` and `cfg_attr(miri, ignore)` tests are the owner-ceiling tests with no caller-supplied limit (the 100,000-element and 64 MiB inputs), excluded for size and run natively. | Test (TC-164) |
 | NFR-006-AC-3 | For every row of the limit contract table, a value equal to the limit is accepted; a value one past the limit is refused with the typed error that names that limit. | Test (TC-165) |
 | NFR-006-AC-4 | Every variant of every public error type in the error type table is produced by at least one test that asserts the exact variant, or is removed from the enum in the same change. | Test (TC-166) |
 

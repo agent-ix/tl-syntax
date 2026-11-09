@@ -24,16 +24,14 @@ relationships:
 A row becomes implemented only when its assertion executes against the real
 public API and passes. TC-163 can fail: the existing `tests/feature_boundary.rs`
 test runs the `check-features` target, which builds the embedded
-configurations. TC-164 is an Analysis of the gate completion record: the `miri`
-target runs inside `make ci` and the analysis reads the gate's exit status and
-the target's presence in the composite; it is not a Rust test.
+configurations. TC-164 is `tests/miri_gate.rs`: the `miri` target runs inside `make ci`, and the test reads the Makefile to assert that the target is a `ci` prerequisite, runs on the pinned nightly and sets `MIRIFLAGS`; it does not run Miri itself, and a Miri-reported error fails the gate.
 
 ## Test Case Summary
 
 | Test ID | Title | Type | Priority | Traces To | Status |
 |---|---|---|---|---|---|
 | TC-163 | Build the library for `thumbv7em-none-eabi` with no default features, `alloc`, and `alloc,serde` | Compile | P0 | NFR-006-AC-1 | ✅ implemented |
-| TC-164 | Analyse the gate completion record for a clean Miri run of the unit and property suites | Analysis | P0 | NFR-006-AC-2 | ✅ implemented |
+| TC-164 | Assert the `miri` target is a `ci` prerequisite, runs on the pinned nightly and sets `MIRIFLAGS`, so the gate that checks the unit and property suites for undefined behavior is wired | Unit | P0 | NFR-006-AC-2 | ✅ implemented |
 | TC-165 | For every row of the NFR-006 limit contract table, a value equal to the limit is accepted; a value one past the limit is refused with the typed error that names that limit | Property | P0 | NFR-006-AC-3 | ✅ implemented |
 | TC-166 | Produce and assert every variant of every public error type in the NFR-006 error type table, or remove the variant | Unit | P0 | NFR-006-AC-4 | ✅ implemented |
 
