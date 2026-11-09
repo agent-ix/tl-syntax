@@ -24,6 +24,10 @@ MIRI_TESTS ?= --lib --test props_fr_007 --test wire_round_trip_properties \
 .PHONY: help
 help:
 	@echo "Available targets:"
+	@echo "  make mutants          - Full cargo-mutants run + kill-rate thresholds (hours, weekly)"
+	@echo "  make mutants-diff     - cargo-mutants on the diff against origin/main + gate"
+	@echo "  make coverage         - llvm-cov line/function/region coverage (stable) with floor"
+	@echo "  make coverage-branch  - llvm-cov line + branch coverage (nightly)"
 	@echo "  make fmt              - Format with rustfmt"
 	@echo "  make fmt-check        - Verify formatting (CI gate)"
 	@echo "  make lint             - Clippy with -D warnings"
@@ -148,6 +152,44 @@ msrv:
 .PHONY: rustdoc
 rustdoc:
 	RUSTDOCFLAGS=-Dwarnings $(CARGO) doc --no-deps --all-features
+
+# =============================================================================
+# Verification effectiveness (TL-231, TL-234). Heavy, so deliberately outside
+# `make ci`; see docs/verification-tooling.md for budgets and measured numbers.
+# =============================================================================
+
+PYTHON ?= python3
+MUTANTS_OUT ?= target/mutants
+MUTANTS_JOBS ?= 4
+MUTANTS_BASE ?= origin/main
+COVERAGE_MIN_LINES ?= 87
+# The skipped test builds for thumbv7em-none-eabi, which the coverage toolchain
+# does not install and which instrumented builds cannot target.
+COVERAGE_IGNORE = '(ci_guard)'
+
+# The wrapper accepts cargo-mutants' "survivors found" status and judges the
+# result against mutation-thresholds.toml (see scripts/run_mutants.py).
+.PHONY: mutants
+mutants:
+	$(PYTHON) scripts/run_mutants.py --jobs $(MUTANTS_JOBS) $(MUTANTS_OUT)
+
+.PHONY: mutants-diff
+mutants-diff:
+	$(PYTHON) scripts/run_mutants.py --jobs $(MUTANTS_JOBS) --diff-base $(MUTANTS_BASE) $(MUTANTS_OUT)
+
+.PHONY: coverage
+coverage:
+	$(CARGO) llvm-cov --all-features --summary-only \
+		--ignore-filename-regex $(COVERAGE_IGNORE) \
+		--fail-under-lines $(COVERAGE_MIN_LINES) \
+		-- --skip no_std_feature_matrix_and_default_dependency_gate_execute
+
+.PHONY: coverage-branch
+coverage-branch:
+	$(CARGO) +nightly llvm-cov --all-features --branch --summary-only \
+		--ignore-filename-regex $(COVERAGE_IGNORE) \
+		--fail-under-lines $(COVERAGE_MIN_LINES) \
+		-- --skip no_std_feature_matrix_and_default_dependency_gate_execute
 
 # =============================================================================
 # Composite
