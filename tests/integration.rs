@@ -386,6 +386,7 @@ fn checked_values_and_graphs_reject_malformed_wire_data() {
 
 // Trace: TC-020, FR-004-AC-4
 #[test]
+#[cfg_attr(miri, ignore = "100,000-node tables; run natively")]
 fn formula_wire_decode_stops_at_the_document_node_limit() {
     let mut formula = String::from(
         r#"{"schema_version":"tl-syntax.formula/v1","semantic_profile":"mltl.closed-trace/v1","root":0,"nodes":["#,
@@ -472,6 +473,7 @@ fn unknown_node_fields_and_invalid_proposition_maps_are_rejected_on_decode() {
 
 // Trace: TC-020, FR-004-AC-4
 #[test]
+#[cfg_attr(miri, ignore = "100,000-node tables; run natively")]
 fn programmatic_formula_documents_obey_the_wire_node_limit() {
     let nodes = vec![Node::new(NodeKind::True); tl_syntax::MAX_FORMULA_DOCUMENT_NODES + 1];
     let formula = Formula::new(SemanticProfile::ClosedTraceV1, NodeId(0), &nodes).unwrap();

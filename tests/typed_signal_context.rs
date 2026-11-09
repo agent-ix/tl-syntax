@@ -348,15 +348,19 @@ fn catalog_wire_refuses_unknown_and_over_limit_forms() {
         );
     }
 
-    let repeated_signal = r#"{"id":1,"name":"ready","domain":{"kind":"boolean"}}"#;
-    let signals = std::iter::repeat_n(repeated_signal, MAX_SIGNAL_CATALOG_SIGNALS + 1)
-        .collect::<Vec<_>>()
-        .join(",");
-    let oversized = format!(
-        r#"{{"schema_version":"tl-syntax.signal-catalog/v1","signals":[{signals}],"bindings":[]}}"#
-    );
-    let error = serde_json::from_str::<SignalCatalogDocument>(&oversized).unwrap_err();
-    assert!(error.to_string().contains("wire limit"));
+    // 100,001-element documents are too slow to interpret; the native run keeps them.
+    #[cfg(not(miri))]
+    {
+        let repeated_signal = r#"{"id":1,"name":"ready","domain":{"kind":"boolean"}}"#;
+        let signals = std::iter::repeat_n(repeated_signal, MAX_SIGNAL_CATALOG_SIGNALS + 1)
+            .collect::<Vec<_>>()
+            .join(",");
+        let oversized = format!(
+            r#"{{"schema_version":"tl-syntax.signal-catalog/v1","signals":[{signals}],"bindings":[]}}"#
+        );
+        let error = serde_json::from_str::<SignalCatalogDocument>(&oversized).unwrap_err();
+        assert!(error.to_string().contains("wire limit"));
+    }
 
     let maximum_name = "x".repeat(MAX_SIGNAL_NAME_BYTES);
     let maximum_name_document = format!(
@@ -372,15 +376,18 @@ fn catalog_wire_refuses_unknown_and_over_limit_forms() {
         serde_json::from_str::<SignalCatalogDocument>(&oversized_name_document).unwrap_err();
     assert!(error.to_string().contains("signal name"));
 
-    let repeated_binding = r#"{"proposition":1,"signal":1}"#;
-    let bindings = std::iter::repeat_n(repeated_binding, MAX_SIGNAL_CATALOG_BINDINGS + 1)
-        .collect::<Vec<_>>()
-        .join(",");
-    let oversized = format!(
-        r#"{{"schema_version":"tl-syntax.signal-catalog/v1","signals":[],"bindings":[{bindings}]}}"#
-    );
-    let error = serde_json::from_str::<SignalCatalogDocument>(&oversized).unwrap_err();
-    assert!(error.to_string().contains("wire limit"));
+    #[cfg(not(miri))]
+    {
+        let repeated_binding = r#"{"proposition":1,"signal":1}"#;
+        let bindings = std::iter::repeat_n(repeated_binding, MAX_SIGNAL_CATALOG_BINDINGS + 1)
+            .collect::<Vec<_>>()
+            .join(",");
+        let oversized = format!(
+            r#"{{"schema_version":"tl-syntax.signal-catalog/v1","signals":[],"bindings":[{bindings}]}}"#
+        );
+        let error = serde_json::from_str::<SignalCatalogDocument>(&oversized).unwrap_err();
+        assert!(error.to_string().contains("wire limit"));
+    }
 }
 
 // Trace: TC-030, FR-007-AC-3, StR-003-VC-1
