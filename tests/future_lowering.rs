@@ -830,6 +830,7 @@ fn refused_profile_combinations_identify_their_axis() {
 
 // Trace: TC-044, TC-046, FR-008-AC-1, FR-008-AC-3
 #[test]
+#[cfg_attr(miri, ignore = "100,000-node tables; run natively")]
 fn document_node_limit_is_fixed_and_charged_three_nodes() {
     let fits = vec![Node::new(NodeKind::True); MAX_FORMULA_DOCUMENT_NODES - 3];
     let formula = Formula::new(SemanticProfile::OnlinePrefixV1, NodeId(0), &fits).unwrap();

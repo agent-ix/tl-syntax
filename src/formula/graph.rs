@@ -395,11 +395,7 @@ impl<'a> Formula<'a> {
                 node_count: nodes.len(),
             });
         }
-        if u32::try_from(nodes.len() - 1).is_err() {
-            return Err(FormulaError::TooManyNodes {
-                node_count: nodes.len(),
-            });
-        }
+        check_node_count(nodes.len())?;
 
         for (index, node) in nodes.iter().enumerate() {
             for operand in node.kind.operands().into_iter().flatten() {
@@ -466,6 +462,17 @@ impl<'a> Formula<'a> {
     pub fn node(self, id: NodeId) -> Option<&'a Node> {
         id.as_usize().and_then(|index| self.nodes.get(index))
     }
+}
+
+/// Refuses a node table whose last index cannot be a `NodeId`.
+///
+/// The length is only ever `nodes.len()`; it is a parameter so the refusal can be
+/// exercised without allocating a table of more than `u32::MAX` nodes.
+pub(crate) fn check_node_count(node_count: usize) -> Result<(), FormulaError> {
+    if u32::try_from(node_count.saturating_sub(1)).is_err() {
+        return Err(FormulaError::TooManyNodes { node_count });
+    }
+    Ok(())
 }
 
 /// Structural validation failure for a formula node table.

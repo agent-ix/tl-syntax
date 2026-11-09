@@ -26,7 +26,7 @@ fn accepted_dependency_manifest_authorizes_the_exact_implementation_dag() {
     assert_eq!(parsed_manifest()["format"], PAST_PROFILE_IMPLEMENTATION_V1);
 }
 
-// Trace: TC-058, FR-013-AC-5
+// Trace: TC-058, TC-165, TC-166, FR-013-AC-5, NFR-006-AC-3, NFR-006-AC-4
 #[test]
 fn dependency_manifest_wire_and_resource_bounds_fail_closed() {
     for malformed in [b"{".as_slice(), b"[]", b"null"] {
@@ -49,7 +49,7 @@ fn dependency_manifest_wire_and_resource_bounds_fail_closed() {
     );
 }
 
-// Trace: TC-058, FR-013-AC-5
+// Trace: TC-058, TC-165, TC-166, FR-013-AC-5, NFR-006-AC-3, NFR-006-AC-4
 #[test]
 fn every_dependency_manifest_axis_fails_closed_with_a_stable_refusal() {
     for (pointer, replacement, field) in [

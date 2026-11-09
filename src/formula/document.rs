@@ -16,8 +16,8 @@ use crate::{
     SyntaxArtifactLimits,
 };
 use crate::{
-    Formula, FormulaError, Node, NodeId, PastOperatorKind, SemanticProfile,
-    MAX_FORMULA_DOCUMENT_DEPTH, MAX_FORMULA_DOCUMENT_NODES,
+    Formula, FormulaError, Node, NodeId, SemanticProfile, MAX_FORMULA_DOCUMENT_DEPTH,
+    MAX_FORMULA_DOCUMENT_NODES,
 };
 
 #[cfg(feature = "serde")]
@@ -81,18 +81,6 @@ pub enum FormulaConversionError {
         /// Rejected profile.
         profile: SemanticProfile,
     },
-    /// Formula-v1 cannot represent this past-time node.
-    PastNodeUnsupported {
-        /// First rejected node in topological order.
-        node: NodeId,
-        /// Past operator found there.
-        operator: PastOperatorKind,
-    },
-    /// A node position cannot be represented by the stable `NodeId` type.
-    NodeIdentityOutOfRange {
-        /// Number of nodes in the document.
-        node_count: usize,
-    },
 }
 
 impl fmt::Display for FormulaConversionError {
@@ -102,16 +90,6 @@ impl fmt::Display for FormulaConversionError {
                 formatter,
                 "formula-v1 cannot represent semantic profile {}",
                 profile.as_str()
-            ),
-            Self::PastNodeUnsupported { node, operator } => write!(
-                formatter,
-                "formula-v1 cannot represent {} at node {}",
-                operator.semantic_name(),
-                node.0
-            ),
-            Self::NodeIdentityOutOfRange { node_count } => write!(
-                formatter,
-                "formula node table length {node_count} exceeds the NodeId range"
             ),
         }
     }
@@ -431,18 +409,12 @@ impl FormulaDocument {
                 profile: self.semantic_profile,
             });
         }
-        if let Some((index, operator)) =
-            self.nodes.iter().enumerate().find_map(|(index, node)| {
-                node.kind.past_operator().map(|operator| (index, operator))
-            })
-        {
-            let node = u32::try_from(index).map(NodeId).map_err(|_| {
-                FormulaConversionError::NodeIdentityOutOfRange {
-                    node_count: self.nodes.len(),
-                }
-            })?;
-            return Err(FormulaConversionError::PastNodeUnsupported { node, operator });
-        }
+        // Only the history and infinite profiles admit past nodes, and both were
+        // refused above, so a validated document has none to down-convert.
+        debug_assert!(self
+            .nodes
+            .iter()
+            .all(|node| node.kind.past_operator().is_none()));
         Ok(Self {
             schema_version: FormulaSchemaVersion::V1,
             semantic_profile: self.semantic_profile,

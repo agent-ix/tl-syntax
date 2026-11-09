@@ -78,8 +78,6 @@ pub enum PartialValuationError {
         /// Missing identity.
         proposition: PropositionId,
     },
-    /// The map identity differs from the enclosing trace.
-    MapIdentityMismatch,
     /// The entry count exceeds the owner bound.
     ResourceLimit,
 }
@@ -313,8 +311,6 @@ pub enum LassoTraceError {
         /// Supplied position.
         actual: u32,
     },
-    /// Materialized positions exceed `u32`.
-    PositionLimit,
     /// A valuation names another proposition map.
     MapIdentityMismatch,
     /// A valuation has the wrong proposition population.
@@ -416,15 +412,12 @@ impl LassoTraceDocument {
         if loop_observations.is_empty() {
             return Err(LassoTraceError::EmptyLoop);
         }
-        let total = prefix
-            .len()
-            .checked_add(loop_observations.len())
-            .ok_or(LassoTraceError::PositionLimit)?;
+        let total = prefix.len().saturating_add(loop_observations.len());
         if total > crate::MAX_FORMULA_DOCUMENT_NODES {
             return Err(LassoTraceError::ResourceLimit);
         }
-        let mut expected = 0_u32;
-        for observation in prefix.iter().chain(&loop_observations) {
+        // `total` is at most MAX_FORMULA_DOCUMENT_NODES, so positions fit in `u32`.
+        for (expected, observation) in (0_u32..).zip(prefix.iter().chain(&loop_observations)) {
             if observation.position != expected {
                 return Err(LassoTraceError::Position {
                     expected,
@@ -440,9 +433,6 @@ impl LassoTraceDocument {
                 observation.valuation.entries().to_vec(),
             )
             .map_err(LassoTraceError::Valuation)?;
-            expected = expected
-                .checked_add(1)
-                .ok_or(LassoTraceError::PositionLimit)?;
         }
         Ok(Self {
             schema_version: LassoTraceSchema::V1,
@@ -722,7 +712,7 @@ impl FairnessPremisesDocument {
         Ok(value)
     }
     #[cfg(feature = "serde")]
-    fn new_unchecked_graph(
+    pub(crate) fn new_unchecked_graph(
         profile: SemanticProfile,
         clock: InfiniteClock,
         graph_identity: String,

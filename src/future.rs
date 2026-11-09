@@ -858,7 +858,7 @@ fn checked_span(
 /// The length is only ever `Formula::nodes().len()`; it is a parameter so every
 /// branch stays testable. The overflow branch is unreachable with a real table,
 /// and the identity-range branch needs a table longer than `u32::MAX - 2` nodes.
-fn preflight_node_ids(
+pub(crate) fn preflight_node_ids(
     node_count: usize,
 ) -> Result<[NodeId; FUTURE_LOWERING_NODE_CHARGE], FutureLoweringRefusal> {
     let Some(lowered_count) = node_count.checked_add(FUTURE_LOWERING_NODE_CHARGE) else {

@@ -386,6 +386,7 @@ fn checked_values_and_graphs_reject_malformed_wire_data() {
 
 // Trace: TC-020, FR-004-AC-4
 #[test]
+#[cfg_attr(miri, ignore = "100,000-node tables; run natively")]
 fn formula_wire_decode_stops_at_the_document_node_limit() {
     let mut formula = String::from(
         r#"{"schema_version":"tl-syntax.formula/v1","semantic_profile":"mltl.closed-trace/v1","root":0,"nodes":["#,
@@ -472,6 +473,7 @@ fn unknown_node_fields_and_invalid_proposition_maps_are_rejected_on_decode() {
 
 // Trace: TC-020, FR-004-AC-4
 #[test]
+#[cfg_attr(miri, ignore = "100,000-node tables; run natively")]
 fn programmatic_formula_documents_obey_the_wire_node_limit() {
     let nodes = vec![Node::new(NodeKind::True); tl_syntax::MAX_FORMULA_DOCUMENT_NODES + 1];
     let formula = Formula::new(SemanticProfile::ClosedTraceV1, NodeId(0), &nodes).unwrap();
@@ -526,28 +528,32 @@ fn public_proposition_map_reader_and_schema_are_strict_owner_artifacts() {
             .is_err()
     );
 
-    let mut oversized_population =
-        String::from(r#"{"schema_version":"tl-syntax.proposition-map/v1","propositions":["#);
-    for id in 0..=100_000_u32 {
-        if id != 0 {
-            oversized_population.push(',');
+    // 100,001 entries are too slow to interpret; the native run keeps this check.
+    #[cfg(not(miri))]
+    {
+        let mut oversized_population =
+            String::from(r#"{"schema_version":"tl-syntax.proposition-map/v1","propositions":["#);
+        for id in 0..=100_000_u32 {
+            if id != 0 {
+                oversized_population.push(',');
+            }
+            oversized_population.push_str(&format!(r#"{{"id":{id},"name":"p{id}"}}"#));
         }
-        oversized_population.push_str(&format!(r#"{{"id":{id},"name":"p{id}"}}"#));
+        oversized_population.push_str("]}");
+        let error = PropositionMapDocument::from_json_bytes(
+            oversized_population.as_bytes(),
+            SyntaxArtifactLimits::default(),
+        )
+        .unwrap_err();
+        assert!(matches!(
+            error,
+            tl_syntax::StrictDocumentReadError::ResourceLimitExceeded {
+                resource: "propositions",
+                actual: 100_001,
+                limit: 100_000,
+            }
+        ));
     }
-    oversized_population.push_str("]}");
-    let error = PropositionMapDocument::from_json_bytes(
-        oversized_population.as_bytes(),
-        SyntaxArtifactLimits::default(),
-    )
-    .unwrap_err();
-    assert!(matches!(
-        error,
-        tl_syntax::StrictDocumentReadError::ResourceLimitExceeded {
-            resource: "propositions",
-            actual: 100_001,
-            limit: 100_000,
-        }
-    ));
 }
 
 // Trace: TC-012, TC-013, TC-014, TC-032, FR-005-AC-1, FR-005-AC-2, FR-005-AC-3, FR-007-AC-5, NFR-002-AC-2, StR-002-VC-2

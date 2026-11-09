@@ -3,6 +3,32 @@
 All notable user-visible changes to `tl-syntax` are recorded here. The crate is
 distributed as a git source release (`publish = false`); versions are git tags.
 
+## Unreleased
+
+### Removed
+
+Error variants that no code path could produce, deleted before any release used them:
+
+- `SignalCatalogError::CatalogIndexOutOfRange` and `ScratchIndexUnrepresentable`:
+  validation indexes declarations below the 100,000-signal ceiling, so the `u32`
+  scratch slot and `usize` index conversions cannot fail.
+- `FormulaConversionError::PastNodeUnsupported` and `NodeIdentityOutOfRange`: only
+  the history and infinite profiles admit past nodes, and `try_to_v1` already
+  refuses both profiles; owned documents hold at most 100,000 nodes.
+- `LassoTraceError::PositionLimit`: observations are capped at 100,000 before
+  positions are assigned.
+- `PartialValuationError::MapIdentityMismatch`: never constructed; a mismatched
+  map identity is reported as `LassoTraceError::MapIdentityMismatch`.
+
+### Added
+
+- `make miri` runs the unit and property suites under Miri on the pinned nightly;
+  `make ci` includes it. `make check-features` also builds the library for
+  `thumbv7em-none-eabi` with no features, `alloc`, and `alloc,serde`.
+- `tests/limit_boundaries.rs` and `src/error_variants.rs` (NFR-006): every declared
+  limit is accepted at the limit and refused one past it, and every public error
+  variant is produced by a test.
+
 ## 0.3.0
 
 First coordinated release of the MLTL crates (`tl-syntax`, `tl-parse`,
