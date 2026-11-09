@@ -34,6 +34,7 @@ help:
 	@echo "  make lint             - Clippy with -D warnings"
 	@echo "  make test             - cargo test"
 	@echo "  make check-features   - check no-default, alloc, serde, all features, and embedded builds"
+	@echo "  make test-features    - run the test suites under default, alloc, and serde features"
 	@echo "  make miri             - run the unit and property suites under Miri"
 	@echo "  make check-corpus     - verify corpus schemas and derived oracles"
 	@echo "  make conformance      - replay the shared temporal corpus through the crate"
@@ -77,6 +78,18 @@ check-features:
 	$(CARGO) build --lib --no-default-features --target $(EMBEDDED_TARGET)
 	$(CARGO) build --lib --no-default-features --features alloc --target $(EMBEDDED_TARGET)
 	$(CARGO) build --lib --no-default-features --features alloc,serde --target $(EMBEDDED_TARGET)
+
+# Feature matrix for the test suites (TC-163, NFR-001-AC-2): default (no features),
+# alloc, and serde (which implies alloc, so alloc+serde is the same build). Each
+# combination runs every lib, integration, example and doc test it enables.
+.PHONY: test-features
+test-features:
+	$(CARGO) test --locked --all-targets
+	$(CARGO) test --locked --all-targets --features alloc
+	$(CARGO) test --locked --all-targets --features serde
+	$(CARGO) test --locked --doc
+	$(CARGO) test --locked --doc --features alloc
+	$(CARGO) test --locked --doc --features serde
 
 # Miri is the UB gate for the unit and property suites. Properties run with a
 # small case count and no failure-persistence files; the full counts run natively.
@@ -199,5 +212,5 @@ coverage-branch:
 # `ci` is the development composite. A release candidate additionally runs
 # `spec-release` under Task-007 after planned roadmap rows have backing.
 .PHONY: ci
-ci: fmt-check check-features check-default-dependencies lint test check-corpus \
+ci: fmt-check check-features check-default-dependencies lint test test-features check-corpus \
 	conformance deny fuzz-check spec msrv rustdoc miri
