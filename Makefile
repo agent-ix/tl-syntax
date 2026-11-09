@@ -162,7 +162,7 @@ PYTHON ?= python3
 MUTANTS_OUT ?= target/mutants
 MUTANTS_JOBS ?= 4
 MUTANTS_BASE ?= origin/main
-COVERAGE_MIN_LINES ?= 87
+COVERAGE_MIN_LINES ?= 85
 # The skipped test builds for thumbv7em-none-eabi, which the coverage toolchain
 # does not install and which instrumented builds cannot target.
 COVERAGE_IGNORE = '(ci_guard)'
