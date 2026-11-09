@@ -26,7 +26,7 @@ MIRI_TESTS ?= --lib --test props_fr_007 --test wire_round_trip_properties \
 	--test strict_syntax_artifacts --test limit_boundaries \
 	--test strict_reject_classes --test boundary_corpus --test infinite_fuzz_seeds \
 	--test infinite_trace_corpus --test mutation_survivors --test past_history_corpus \
-	--test past_profile_manifest --test wire_decode_fuzz_seeds
+	--test past_profile_manifest --test wire_decode_fuzz_seeds --test miri_gate
 
 .PHONY: help
 help:
