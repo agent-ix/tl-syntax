@@ -16,7 +16,7 @@ use tl_syntax::{
     PropositionEntry, PropositionId, PropositionMapDocument, RequirementContextDocument,
     SemanticProfile, SignalCatalogDocument, SignalDomain, SignalId, SourceSpan,
     StrictDocumentReadError, SyntaxArtifactLimits, TemporalInterval, TraceObservation,
-    UnboundedInterval, ValuationEntry, MAX_REQUIREMENT_CONTEXT_FIELD_BYTES,
+    UnboundedInterval, ValuationEntry, MAX_REQUIREMENT_CONTEXT_FIELD_BYTES, MAX_TL_DOCUMENT_DEPTH,
 };
 
 type ReadOutcome = Result<(), StrictDocumentReadError>;
@@ -250,7 +250,7 @@ fn every_reader_refuses_each_structural_and_encoding_class() {
                 Expect::Invalid(Category::Syntax, "invalid unicode code point"),
             ),
             (
-                "lone continuation byte after the document",
+                "trailing data: stray continuation byte after the document",
                 [valid, b"\x80"].concat(),
                 Expect::Invalid(Category::Syntax, "trailing characters"),
             ),
@@ -313,6 +313,7 @@ fn every_reader_refuses_each_structural_and_encoding_class() {
                 Expect::Invalid(Category::Data, "unknown variant"),
             ),
             (
+                // serde_json reports a non-string enum tag as a syntax-level "expected value".
                 "schema version of the wrong JSON type",
                 mutate(valid, &member, "\"schema_version\":7"),
                 Expect::Invalid(Category::Syntax, "expected value"),
@@ -404,10 +405,16 @@ fn preflight_scanner_edge_cases_are_exact_for_every_reader() {
         );
 
         // Nesting past the owner ceiling is refused before any parsing.
-        let deep = format!("{}{}", "[".repeat(65), "]".repeat(65));
+        let nesting = MAX_TL_DOCUMENT_DEPTH + 1;
+        let deep = format!("{}{}", "[".repeat(nesting), "]".repeat(nesting));
         match (reader.read)(deep.as_bytes(), SyntaxArtifactLimits::default()) {
             Err(StrictDocumentReadError::DepthLimitExceeded { actual, limit }) => {
-                assert_eq!((actual, limit), (65, 64), "{}", reader.name);
+                assert_eq!(
+                    (actual, limit),
+                    (nesting, MAX_TL_DOCUMENT_DEPTH),
+                    "{}",
+                    reader.name
+                );
             }
             other => panic!("{} / over-depth: {other:?}", reader.name),
         }
@@ -450,7 +457,7 @@ fn byte_and_work_budgets_refuse_with_exact_charges_for_every_reader() {
             }
             other => panic!("{} / over-bytes: {other:?}", reader.name),
         }
-        // The fixed admission charge is three work units per input byte.
+        // The fixed admission charge is three work units per input byte (no exported constant).
         let starved = SyntaxArtifactLimits {
             work: length * 3 - 1,
             ..SyntaxArtifactLimits::default()
@@ -524,6 +531,9 @@ fn array_population_scanner_charges_only_real_array_items() {
 // Trace: TC-075, FR-014-AC-2
 #[test]
 fn trace_documents_refuse_each_semantic_reject_class_with_its_typed_error() {
+    // The admission errors (`PartialValuationError`, `LassoTraceError`) are wrapped into
+    // `serde_json::Error` by the `try_from` wire types, so their Display text (which embeds
+    // the variant and its fields) is the only observable form through the strict reader.
     let limits = SyntaxArtifactLimits::default();
     let valuation_bytes = valuation().canonical_json_bytes().unwrap();
     let lasso_bytes = lasso().canonical_json_bytes().unwrap();
@@ -653,6 +663,8 @@ fn trace_documents_refuse_each_semantic_reject_class_with_its_typed_error() {
 // Trace: TC-075, FR-014-AC-2
 #[test]
 fn fairness_reader_refuses_each_binding_reject_class_with_its_typed_error() {
+    // Root order/duplicate and graph-identity errors are raised in the wire `try_from` and so
+    // reach the caller wrapped in serde; only formula-bound errors surface as `Binding(..)`.
     let limits = SyntaxArtifactLimits::default();
     let formula = infinite_formula();
     let valid = fairness().canonical_json_bytes().unwrap();
@@ -814,7 +826,7 @@ fn requirement_context_document_refuses_each_reject_class() {
             "inverted source span",
             context_json(ok, "{\"start\":5,\"end\":2}", version),
             Category::Data,
-            "source span".into(),
+            "source span start 5 exceeds end 2".into(),
         ),
         (
             "unknown schema version",
@@ -876,7 +888,9 @@ fn requirement_context_document_refuses_each_reject_class() {
     }
 
     // The span type itself refuses an inverted range by value, independent of the wire.
-    assert!(SourceSpan::new(5, 2).is_err());
+    let inverted = SourceSpan::new(5, 2).unwrap_err();
+    assert_eq!((inverted.start, inverted.end), (5, 2));
+    assert_eq!(inverted.to_string(), "source span start 5 exceeds end 2");
 }
 
 type PopulationRow = (&'static str, ReadOutcome, (&'static str, usize, usize));
