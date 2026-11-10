@@ -5,6 +5,10 @@ distributed as a git source release (`publish = false`); versions are git tags.
 
 ## Unreleased
 
+### Changed
+
+- The mutation gate and the cargo-mutants runner are one Rust tool, `tools/tl-gate`, replacing `scripts/mutation_gate.py` and `scripts/run_mutants.py`. tl-parse, tl-rewrite and tl-mltl build it from this repository instead of keeping copies (TL-370).
+
 ### Removed
 
 Error variants that no code path could produce, deleted before any release used them:

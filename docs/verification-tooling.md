@@ -12,7 +12,7 @@ llvm-tools), Python 3.11 or newer (the gate reads TOML with `tomllib`).
 
 | Target | What it does |
 | --- | --- |
-| `make mutants` | Full cargo-mutants run (`--no-shuffle`, so the population and order are fixed), then `scripts/mutation_gate.py` against `mutation-thresholds.toml`. Takes hours; run it weekly. |
+| `make mutants` | Full cargo-mutants run (`--no-shuffle`, so the population and order are fixed), then `tl-gate gate` against `mutation-thresholds.toml`. Takes hours; run it weekly. |
 | `make mutants-diff` | cargo-mutants on `git diff $(MUTANTS_BASE)...HEAD` (default `origin/main`) only; every mutant in the diff must be killed. Only committed changes are mutated; uncommitted edits are not. |
 | `make coverage` | `cargo llvm-cov` line, function and region coverage on the pinned toolchain, failing below `COVERAGE_MIN_LINES`. |
 | `make coverage-branch` | The same on nightly, adding branch coverage. |
@@ -29,10 +29,12 @@ baseline failed. The campaign targets are a core group and a whole-crate group (
 
 Excluded from every threshold: nothing (the crate has no CI-plumbing module). One equivalent mutant family is listed in `exclude_re`: `minimum` in `src/contracts/limits.rs` returns the same value for `<` and `<=`.
 
-`scripts/run_mutants.py` accepts cargo-mutants exit statuses 0, 2 (survivors) and 3 (timeouts) so that
+`tl-gate mutants` accepts cargo-mutants exit statuses 0, 2 (survivors) and 3 (timeouts) so that
 the gate always runs and prints its table; any other status is passed on.
-`scripts/mutation_gate.py` and `scripts/run_mutants.py` are the same in tl-syntax, tl-parse, tl-rewrite and
-tl-mltl (tl-mltl alone has `--source-env`); a shared copy is a separate follow-up.
+The gate and the runner are one Rust package, `tools/tl-gate` in this repository; tl-parse, tl-rewrite and tl-mltl
+build it through a `tools/gate` shim that names this repository's revision in its `Cargo.toml`. `--source-env` is used
+only by tl-mltl. A thresholds file may set `require_survivor_reasons = true` to demand a `[[survivor]]` entry with a
+reason for every missed or timed-out mutant.
 
 ## Limits of the recorded measurements
 

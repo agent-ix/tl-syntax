@@ -66,14 +66,17 @@ fmt:
 .PHONY: fmt-check
 fmt-check:
 	$(CARGO) fmt --all -- --check
+	$(CARGO) fmt --manifest-path tools/tl-gate/Cargo.toml -- --check
 
 .PHONY: lint
 lint:
 	$(CARGO) clippy --all-targets --all-features -- -D warnings
+	$(CARGO) clippy --manifest-path tools/tl-gate/Cargo.toml --all-targets -- -D warnings
 
 .PHONY: test
 test:
 	$(CARGO) test --all-features
+	$(CARGO) test --manifest-path tools/tl-gate/Cargo.toml
 
 .PHONY: check-features
 check-features:
@@ -179,6 +182,7 @@ rustdoc:
 # =============================================================================
 
 PYTHON ?= python3
+GATE ?= $(CARGO) run --quiet --manifest-path tools/tl-gate/Cargo.toml --
 MUTANTS_OUT ?= target/mutants
 MUTANTS_JOBS ?= 4
 MUTANTS_BASE ?= origin/main
@@ -188,14 +192,14 @@ COVERAGE_MIN_LINES ?= 85
 COVERAGE_IGNORE = '(ci_guard)'
 
 # The wrapper accepts cargo-mutants' "survivors found" status and judges the
-# result against mutation-thresholds.toml (see scripts/run_mutants.py).
+# result against mutation-thresholds.toml (see tools/tl-gate).
 .PHONY: mutants
 mutants:
-	$(PYTHON) scripts/run_mutants.py --jobs $(MUTANTS_JOBS) $(MUTANTS_OUT)
+	$(GATE) mutants --jobs $(MUTANTS_JOBS) $(MUTANTS_OUT)
 
 .PHONY: mutants-diff
 mutants-diff:
-	$(PYTHON) scripts/run_mutants.py --jobs $(MUTANTS_JOBS) --diff-base $(MUTANTS_BASE) $(MUTANTS_OUT)
+	$(GATE) mutants --jobs $(MUTANTS_JOBS) --diff-base $(MUTANTS_BASE) $(MUTANTS_OUT)
 
 .PHONY: coverage
 coverage:
