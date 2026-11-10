@@ -18,6 +18,7 @@ mod gate;
 mod runner;
 
 pub use gate::{judge, Judgement, Mode};
+pub use runner::{mutants_in, Options};
 use std::process::ExitCode;
 
 const USAGE: &str = "usage:

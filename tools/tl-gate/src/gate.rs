@@ -70,8 +70,8 @@ struct Counts {
     unviable: u64,
 }
 
-/// Shell-style match (`*`, `?`, `[...]`); `*` also crosses `/`, as Python's
-/// `fnmatch` does, so the thresholds files keep their meaning.
+/// Shell-style match (`*`, `?`, `[...]`); `*` also crosses `/`, as fnmatch(3) does
+/// without FNM_PATHNAME, so the thresholds files keep their meaning.
 fn fnmatch(pattern: &[char], text: &[char]) -> bool {
     match pattern.first() {
         None => text.is_empty(),
