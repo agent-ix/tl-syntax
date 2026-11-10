@@ -1,5 +1,7 @@
 //! TL-371: behavior tests for wire readers, identities and messages that the first full
 //! cargo-mutants run showed were not asserted. Each test pins an exact value or boundary.
+//! The file name sorts first so cargo runs it before the heavy suites: a mutant that hangs a later
+//! suite is still killed by a test here.
 #![cfg(all(feature = "alloc", feature = "serde"))]
 
 use std::str::FromStr;
@@ -761,6 +763,14 @@ mod signals {
         assert_eq!(document.bindings()[1].signal(), SignalId(2));
         let bytes = document.canonical_json_bytes().unwrap();
         assert!(bytes.starts_with(b"{\"schema_version\":\"tl-syntax.signal-catalog/v1\""));
+        let mut preimage = tl_syntax::CONTENT_IDENTITY_DOMAIN_V1.to_vec();
+        preimage.extend_from_slice(SignalCatalogSchemaVersion::V1.as_str().as_bytes());
+        preimage.push(0);
+        preimage.extend_from_slice(&bytes);
+        assert_eq!(
+            document.content_identity().unwrap(),
+            format!("{:x}", <sha2::Sha256 as sha2::Digest>::digest(&preimage))
+        );
         assert!(!document.content_identity().unwrap().is_empty());
         let limits = |signals, bindings| SyntaxArtifactLimits {
             signals,
