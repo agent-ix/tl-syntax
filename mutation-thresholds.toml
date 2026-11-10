@@ -1,22 +1,50 @@
-# Kill-rate thresholds checked by tl-gate gate (TL-231).
+# Kill-rate thresholds checked by tl-gate (TL-231, TL-371).
 # Kill rate = caught / (caught + missed + timeout); unviable mutants count on
-# neither side. `min_kill_percent` is the measured baseline floor (a ratchet:
-# raise it when survivors are killed, never lower it). The campaign targets are
-# 95% for the core group and 85% for the whole crate; a group whose floor is
-# below its target has recorded survivors listed in docs/verification-tooling.md.
+# neither side. `min_kill_percent` is the floor measured by the first full
+# `make mutants` run (a ratchet: raise it when survivors are killed, never
+# lower it). The campaign targets are 95% for the core group and 85% for the
+# whole crate. With `require_survivor_reasons`, every mutant that is missed or
+# times out must be listed in a `[[survivor]]` table below with a one-line
+# reason (FR-022-AC-5). Equivalent mutants are excluded in .cargo/mutants.toml.
 # `diff_min_kill_percent` applies to `make mutants-diff`: every mutant in the
 # changed code must be killed.
 diff_min_kill_percent = 100.0
+require_survivor_reasons = true
 exclude = []
 
 # future lowering, formula graph and interval arithmetic
 [[group]]
 name = "core"
 globs = ["src/future.rs", "src/formula/graph.rs"]
-min_kill_percent = 95.0
+min_kill_percent = 100.0
 
 # whole crate
 [[group]]
 name = "crate"
 globs = ["src/*.rs", "src/*/*.rs"]
-min_kill_percent = 76.0
+min_kill_percent = 97.5
+
+[[survivor]]
+file = "src/contracts/reader.rs"
+reason = "non-terminating: the mutated scan never advances or never reaches the end of its input, so the suite hangs and the timeout is the detection; no assertion can run"
+names = [
+    "replace count_array_items -> (usize, usize) with (0, 0)",
+    "replace count_array_items -> (usize, usize) with (0, 1)",
+    "replace count_array_items -> (usize, usize) with (1, 0)",
+    "replace count_array_items -> (usize, usize) with (1, 1)",
+    "replace scan_json_string -> Result<usize, StrictDocumentReadError> with Ok(0)",
+    "replace scan_json_string -> Result<usize, StrictDocumentReadError> with Ok(1)",
+    "replace scan_string_end -> usize with 0",
+    "replace scan_string_end -> usize with 1",
+    "replace skip_json_whitespace -> usize with 0",
+    "replace skip_json_whitespace -> usize with 1",
+]
+
+[[survivor]]
+file = "src/signal/catalog.rs"
+reason = "non-terminating: the mutated binary search never narrows its range, so the suite hangs and the timeout is the detection; no assertion can run"
+names = [
+    "replace < with <= in SignalCatalog<'a>::signal",
+    "replace + with * in SignalCatalog<'a>::signal",
+    "replace + with - in SignalCatalog<'a>::signal",
+]
