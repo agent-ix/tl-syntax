@@ -181,7 +181,6 @@ rustdoc:
 # `make ci`; see docs/verification-tooling.md for budgets and measured numbers.
 # =============================================================================
 
-PYTHON ?= python3
 GATE ?= $(CARGO) run --quiet --manifest-path tools/tl-gate/Cargo.toml --
 MUTANTS_OUT ?= target/mutants
 MUTANTS_JOBS ?= 4
