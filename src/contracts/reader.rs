@@ -460,5 +460,8 @@ mod tests {
         assert_eq!(array_field_population(br#"{"a": [1, ]}"#, b"a"), 1);
         assert_eq!(array_field_population(br#"{"a": [1,  2 , 3]}"#, b"a"), 3);
         assert_eq!(array_field_population(br#"{"a": []}"#, b"a"), 0);
+        // An array cut off by the end of the input counts only the items a comma closed.
+        assert_eq!(array_field_population(br#"{"a": [1, 2"#, b"a"), 1);
+        assert_eq!(array_field_population(br#"{"a": ["#, b"a"), 0);
     }
 }
