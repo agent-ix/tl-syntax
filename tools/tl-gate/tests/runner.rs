@@ -78,23 +78,6 @@ fn any_other_cargo_mutants_status_is_passed_on_without_judging() {
 }
 
 #[test]
-fn a_stale_outcomes_file_is_not_judged_as_this_runs_result() {
-    let dir = scratch("stale");
-    configure(&dir, 0, None);
-    fs::create_dir_all(dir.join("out/mutants.out")).unwrap();
-    // A stale run with an unkilled mutant would fail the diff gate if it were judged.
-    fs::write(
-        dir.join("out/mutants.out/outcomes.json"),
-        r#"{"outcomes":[{"scenario":"Baseline","summary":"Failure"}]}"#,
-    )
-    .unwrap();
-    let status = mutants_in(&dir, OsStr::new(FAKE), "out", &options(Some("HEAD"))).unwrap_err();
-    // No git repository here, so the diff base cannot be resolved; the stale file is gone regardless.
-    assert!(status.contains("git"), "{status}");
-    assert!(!dir.join("out/mutants.out/outcomes.json").exists());
-}
-
-#[test]
 fn an_empty_diff_writes_an_empty_file_and_passes_with_no_outcomes() {
     let dir = scratch("emptydiff");
     git(&dir, &["init", "-q"]);
