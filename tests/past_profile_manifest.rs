@@ -145,3 +145,33 @@ fn every_dependency_manifest_axis_fails_closed_with_a_stable_refusal() {
         "predecessor_order"
     );
 }
+
+// Trace: TC-058, FR-013-AC-5
+#[test]
+fn a_refusal_names_its_task_and_renders_the_code_field_and_task() {
+    let mut value = parsed_manifest();
+    *value.pointer_mut("/tasks/0/owner").unwrap() = json!("mutated");
+    let error =
+        validate_past_profile_implementation(&serde_json::to_vec(&value).unwrap()).unwrap_err();
+    let task = error.task().unwrap().to_owned();
+    assert!(task.contains('#'), "{task}");
+    assert_eq!(
+        error.to_string(),
+        format!("past_profile_dependency_manifest_invalid: owner ({task})")
+    );
+
+    let mut value = parsed_manifest();
+    value
+        .pointer_mut("/tasks")
+        .unwrap()
+        .as_array_mut()
+        .unwrap()
+        .pop();
+    let error =
+        validate_past_profile_implementation(&serde_json::to_vec(&value).unwrap()).unwrap_err();
+    assert_eq!(error.task(), None);
+    assert_eq!(
+        error.to_string(),
+        "past_profile_dependency_manifest_invalid: tasks"
+    );
+}

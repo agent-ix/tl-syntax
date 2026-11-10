@@ -6,11 +6,19 @@
 # exercise them.
 additional_cargo_args = ["--all-features"]
 
-minimum_test_timeout = 60
+# The floor is high so that a slow test run on a loaded machine is not reported as a hang;
+# a timeout counts as unkilled either way (SR-231 records the measurement).
+minimum_test_timeout = 300
 timeout_multiplier = 3.0
+
+# tests/feature_boundary.rs rebuilds the crate for every feature set and takes minutes; it checks
+# feature gating, which no mutant changes, so mutation runs skip it.
+additional_cargo_test_args = ["--", "--skip", "no_std_feature_matrix_and_default_dependency_gate_execute"]
 
 # Equivalent mutants (one-line reason each).
 exclude_re = [
     # `minimum` returns the same value for `<` and `<=`: equal operands give equal results.
     'limits\.rs:\d+:\d+: replace < with <= in minimum',
+    # Test-support code: `error_variants.rs` is compiled only under cfg(test) and holds the helper that checks the variant tests; it is not production behavior.
+    '^src/error_variants\.rs:\d+:\d+: replace Seen::complete with \(\)$',
 ]

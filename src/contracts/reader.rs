@@ -347,3 +347,118 @@ fn skip_json_whitespace(bytes: &[u8], mut index: usize) -> usize {
     }
     index
 }
+
+#[cfg(all(test, feature = "serde"))]
+mod tests {
+    use super::*;
+    use alloc::vec::Vec;
+
+    /// A JSON escape written with `@` for the backslash, so the sources stay readable.
+    fn json(text: &str) -> Vec<u8> {
+        text.replace('@', "\\").into_bytes()
+    }
+
+    fn decoded(text: &str, limit: usize) -> Result<usize, usize> {
+        let bytes = json(text);
+        match scan_json_string(&bytes, 0, limit) {
+            Ok(end) => Ok(end),
+            Err(StrictDocumentReadError::StringTooLarge { actual, .. }) => Err(actual),
+            Err(other) => panic!("unexpected {other:?}"),
+        }
+    }
+
+    #[test]
+    fn a_string_is_charged_the_utf8_width_of_each_escape() {
+        // One ASCII, two-byte, three-byte and surrogate-pair escape cost 1, 2, 3 and 4 bytes.
+        for (text, width) in [
+            ("@u0041\"", 1),
+            ("@u007f\"", 1),
+            ("@u0080\"", 2),
+            ("@u07ff\"", 2),
+            ("@u0800\"", 3),
+            ("@u20ac\"", 3),
+            ("@ud83d@ude00\"", 4),
+            ("@ud83d\"", 3),
+            ("@udc00\"", 3),
+            ("@ud83dX\"", 4),
+            ("@ud83d@n\"", 4),
+            ("@ud83d@u0041\"", 4),
+            ("@ud83d@ue000\"", 6),
+            ("@n\"", 1),
+            ("abc\"", 3),
+        ] {
+            let end = json(text).len() - 1;
+            assert_eq!(decoded(text, width), Ok(end), "{text} within {width}");
+            assert_eq!(decoded(text, width - 1), Err(width), "{text} past {width}");
+        }
+        // An escape with bad hex digits decodes to nothing and its digits are ordinary bytes.
+        assert_eq!(decoded("@uzzzz\"", 4), Ok(6));
+        assert_eq!(decoded("@uzzzz\"", 3), Err(4));
+    }
+
+    #[test]
+    fn an_escape_ending_the_input_is_not_charged_past_the_end() {
+        assert_eq!(decoded("ab@", 5), Ok(3));
+    }
+
+    #[test]
+    fn unicode_escapes_decode_to_their_width_and_consumed_length() {
+        for (text, expected) in [
+            ("@u0041", (1, 4)),
+            ("@u007f", (1, 4)),
+            ("@u0080", (2, 4)),
+            ("@u07ff", (2, 4)),
+            ("@u0800", (3, 4)),
+            ("@ud7ff", (3, 4)),
+            ("@ud800", (3, 4)),
+            ("@udbff", (3, 4)),
+            ("@udc00", (3, 4)),
+            ("@ud800@udc00", (4, 10)),
+            ("@udbff@udfff", (4, 10)),
+            ("@ud800@udbff", (3, 4)),
+            ("@ud800@ue000", (3, 4)),
+            ("@ud800Xudc00", (3, 4)),
+            ("@ud800@Xdc00", (3, 4)),
+            ("@ud800@udc0", (3, 4)),
+            ("@uzzzz", (0, 0)),
+            ("@u00", (0, 0)),
+        ] {
+            assert_eq!(decoded_unicode_escape(&json(text), 1), expected, "{text}");
+        }
+    }
+
+    #[test]
+    fn hex_quads_accept_exactly_hexadecimal_digits() {
+        assert_eq!(parse_hex_quad(b"0000", 0), Some(0));
+        assert_eq!(parse_hex_quad(b"0001", 0), Some(1));
+        assert_eq!(parse_hex_quad(b"0009", 0), Some(9));
+        assert_eq!(parse_hex_quad(b"000a", 0), Some(10));
+        assert_eq!(parse_hex_quad(b"000f", 0), Some(15));
+        assert_eq!(parse_hex_quad(b"000A", 0), Some(10));
+        assert_eq!(parse_hex_quad(b"000F", 0), Some(15));
+        assert_eq!(parse_hex_quad(b"09afAF", 0), Some(0x09af));
+        assert_eq!(parse_hex_quad(b"x1234", 1), Some(0x1234));
+        assert_eq!(parse_hex_quad(b"ffff", 0), Some(0xffff));
+        for bad in [
+            &b"000/"[..],
+            b"000:",
+            b"000g",
+            b"000G",
+            b"000@",
+            b"000`",
+            b"00",
+        ] {
+            assert_eq!(parse_hex_quad(bad, 0), None, "{bad:?}");
+        }
+        assert_eq!(parse_hex_quad(b"0000", usize::MAX), None);
+        assert_eq!(parse_hex_quad(b"0000", 1), None);
+    }
+
+    #[test]
+    fn array_population_ignores_whitespace_only_items() {
+        assert_eq!(array_field_population(br#"{"a": [ ]}"#, b"a"), 0);
+        assert_eq!(array_field_population(br#"{"a": [1, ]}"#, b"a"), 1);
+        assert_eq!(array_field_population(br#"{"a": [1,  2 , 3]}"#, b"a"), 3);
+        assert_eq!(array_field_population(br#"{"a": []}"#, b"a"), 0);
+    }
+}

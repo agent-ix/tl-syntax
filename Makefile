@@ -222,4 +222,4 @@ coverage-branch:
 # `spec-release` under Task-007 after planned roadmap rows have backing.
 .PHONY: ci
 ci: fmt-check check-features check-default-dependencies lint test test-features check-corpus \
-	conformance deny fuzz-check spec msrv rustdoc miri
+	conformance deny fuzz-check spec msrv rustdoc miri mutants-diff
