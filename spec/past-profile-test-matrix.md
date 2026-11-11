@@ -52,6 +52,6 @@ dropped; each row names where the evidence runs.
 
 | Criterion here | Owner | Evidence |
 |---|---|---|
-| FR-011-AC-1, AC-2, AC-3, AC-5 (O/H/S/T and strong-Previous evaluation) | tl-mltl | `tests/past_history.rs`; tl-mltl has no counterpart requirement or trace tags yet; TL-378 adds them, and the criterion text is preserved in the withdrawn rows until then |
-| FR-012-AC-1, FR-012-AC-2, FR-012-AC-5 (history admission, required-history analysis, clocks and owner non-values) | tl-mltl | `tests/past_history.rs`, `tests/past_readers.rs`; TL-378 |
+| FR-011-AC-1, AC-2, AC-3, AC-5 (O/H/S/T and strong-Previous evaluation) | tl-mltl | tl-mltl FR-042 (`spec/requirements/FR-042-past-profile-evaluation.md`), traced in `tests/past_history.rs`; the criterion text is preserved in the withdrawn rows here |
+| FR-012-AC-1, FR-012-AC-2, FR-012-AC-5 (history admission, required-history analysis, clocks and owner non-values) | tl-mltl | tl-mltl FR-042 (`spec/requirements/FR-042-past-profile-evaluation.md`), traced in `tests/past_history.rs` and `tests/past_readers.rs` |
 | FR-013-AC-2 (`tl-parse.clean-ascii/v3`) | tl-parse | tl-parse FR-009, `tests/clean_ascii_v3.rs` (traced there as FR-009-AC-1 through AC-5) |
