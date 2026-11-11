@@ -22,7 +22,7 @@ min_kill_percent = 100.0
 [[group]]
 name = "crate"
 globs = ["src/*.rs", "src/*/*.rs"]
-min_kill_percent = 97.5
+min_kill_percent = 98.2
 
 [[survivor]]
 file = "src/contracts/reader.rs"
@@ -40,11 +40,3 @@ names = [
     "replace skip_json_whitespace -> usize with 1",
 ]
 
-[[survivor]]
-file = "src/signal/catalog.rs"
-reason = "non-terminating: the mutated binary search never narrows its range, so the suite hangs and the timeout is the detection; no assertion can run"
-names = [
-    "replace < with <= in SignalCatalog<'a>::signal",
-    "replace + with * in SignalCatalog<'a>::signal",
-    "replace + with - in SignalCatalog<'a>::signal",
-]

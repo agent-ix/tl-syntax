@@ -23,9 +23,4 @@ exclude_re = [
     '^src/formula/trace\.rs:197:\d+: replace > with >= in PartialValuation::admit_without_map$',
     # Equivalent: adjacent equal roots were already refused as duplicates, so `>=` never sees an equal pair.
     '^src/formula/trace\.rs:737:\d+: replace > with >= in FairnessPremisesDocument::new_unchecked_graph$',
-    # Unreachable: serde_json reports no size hint for an array, so the pre-check never runs; the length check inside the loop enforces the same limit.
-    '^src/signal/proposition\.rs:103:\d+: replace > with (==|<|>=) in deserialize_propositions',
-    '^src/signal/document\.rs:308:\d+: replace > with (==|<|>=) in deserialize_bounded_vec',
-    # Test-support code: `error_variants.rs` is compiled only under cfg(test) and holds the helper that checks the variant tests; it is not production behavior.
-    '^src/error_variants\.rs:\d+:\d+: replace Seen::complete with \(\)$',
 ]

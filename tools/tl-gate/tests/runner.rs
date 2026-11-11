@@ -113,3 +113,29 @@ fn the_diff_is_written_byte_for_byte() {
     assert_eq!(written, expected);
     assert!(written.windows(2).any(|w| w == b"\xff\xfe"));
 }
+
+const MISSED: &str = r#"{"outcomes":[{"scenario":"Baseline","summary":"Success"},{"scenario":{"Mutant":{"file":"src/lib.rs","name":"src/lib.rs:1:1: x"}},"summary":"MissedMutant"}]}"#;
+
+// cargo-mutants writes no outcomes when the diff holds no mutable code; the previous run's file
+// must not then be judged as this run's result (SR-231 FND-2314).
+#[test]
+fn a_previous_runs_outcomes_are_not_judged_when_this_run_writes_none() {
+    let dir = scratch("stale");
+    git(&dir, &["init", "-q"]);
+    git(&dir, &["add", "-A"]);
+    git(&dir, &["commit", "-q", "-m", "base"]);
+    fs::create_dir_all(dir.join("out/mutants.out")).unwrap();
+    fs::write(dir.join("out/mutants.out/outcomes.json"), MISSED).unwrap();
+    configure(&dir, 0, None);
+    let status = mutants_in(&dir, OsStr::new(FAKE), "out", &options(Some("HEAD"))).unwrap();
+    assert_eq!(status, 0);
+
+    // Control: the same file is a failing verdict when this run produces it.
+    let control = scratch("stale-control");
+    git(&control, &["init", "-q"]);
+    git(&control, &["add", "-A"]);
+    git(&control, &["commit", "-q", "-m", "base"]);
+    configure(&control, 2, Some(MISSED));
+    let status = mutants_in(&control, OsStr::new(FAKE), "out", &options(Some("HEAD"))).unwrap();
+    assert_ne!(status, 0);
+}

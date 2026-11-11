@@ -972,3 +972,19 @@ fn signal_catalog_and_binding_errors() {
     );
     seen.complete(BINDING, &[]);
 }
+
+#[test]
+fn the_completeness_check_accepts_a_full_set() {
+    let mut full = Seen::default();
+    full.0.insert("A");
+    full.0.insert("B");
+    full.complete(&["A", "B"], &[]);
+}
+
+#[test]
+#[should_panic]
+fn the_completeness_check_panics_when_a_variant_was_not_produced() {
+    let mut seen = Seen::default();
+    seen.0.insert("A");
+    seen.complete(&["A", "B"], &[]);
+}

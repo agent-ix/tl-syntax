@@ -13,7 +13,7 @@ TL-231 and TL-234 add a reproducible cargo-mutants configuration, a kill-rate ga
 line and branch coverage reporting to tl-syntax. TL-371 (2026-11-09 and 2026-11-10) replaces the sampled floors with
 the first full run, requires a reason for every surviving mutant and puts `make mutants-diff` in `make ci`. This
 record is the dated evidence; `docs/verification-tooling.md` carries no figures. The core group is at 100.00% and the
-crate at 97.53%; floors are 100.0 and 97.5.
+crate at 98.23%; floors are 100.0 and 98.2.
 
 ## Findings
 
@@ -21,7 +21,7 @@ crate at 97.53%; floors are 100.0 and 97.5.
 | --- | --- | --- | --- |
 | FND-2311 | medium | First full `make mutants` (cargo-mutants 27.0.0, `--no-shuffle`, 2026-11-09): 764 mutants, 367 caught, 22 missed, 184 timeouts, 189 unviable. Crate kill rate 64.05%. Wall time 42795 s. The 184 timeouts were mostly not hangs: `tests/feature_boundary.rs` rebuilds the crate for every feature set and takes minutes under load, and cargo runs it before the later test binaries, so any mutant killed in a later binary ran past the 300 s limit. | `mutation-thresholds.toml` |
 | FND-2312 | low | `.cargo/mutants.toml` now skips `no_std_feature_matrix_and_default_dependency_gate_execute` in mutation test runs (it checks feature gating, which no mutant changes). `tests/early_mutation_survivors.rs` and unit tests in `src/contracts/reader.rs` add behavior tests for the strict scanner (escape widths, hex digits, array population), the wire readers (exact work charged, limit at and one past, limits enforced on the decoded document when a field name hides from the byte scan), content identities, error messages and schema identities, the catalog lookup and iterator, and the manifest refusal. The test file name sorts first so a mutant that hangs a later suite is still killed. The retest of every missed and timed-out mutant took 29663 s for the main pass and 3025 s for the last nine. | `tests/early_mutation_survivors.rs` |
-| FND-2313 | low | Result after the new tests, equivalent mutants excluded as `.cargo/mutants.toml` now does: core 100.00% (99 caught, 0 missed, 0 timeout, 37 unviable), crate 97.53% (552 caught, 0 missed, 14 timeout, 192 unviable). Floors are the measured rates truncated: core 100.0, crate 97.5. Nine mutants are excluded as equivalent, unreachable or test-support code, each with a reason in `.cargo/mutants.toml`. | `mutation-thresholds.toml`, `.cargo/mutants.toml` |
+| FND-2313 | low | Result after the new tests, equivalent mutants excluded as `.cargo/mutants.toml` now does: core 100.00% (99 caught, 0 missed, 0 timeout, 37 unviable), crate 98.23% (556 caught, 0 missed, 10 timeout, 192 unviable). Floors are the measured rates truncated: core 100.0, crate 98.2. Two mutants are excluded as equivalent, each with a reason in `.cargo/mutants.toml`. | `mutation-thresholds.toml`, `.cargo/mutants.toml` |
 | FND-2314 | low | The gate and the runner are `tools/tl-gate` (TL-370). With `require_survivor_reasons`, a missed or timed-out mutant that is not listed with a reason fails the gate. The stale-outcomes file is cleared before each `make mutants-diff`. `make coverage COVERAGE_MIN_LINES=99` exits non-zero. | `tools/tl-gate` |
 | FND-2315 | low | Coverage re-measured from a clean `target/llvm-cov-target` on 2026-11-09, all features, `ci_guard` excluded. Stable `make coverage`: 91.53% lines / 90.88% regions / 89.00% functions. Nightly `make coverage-branch`: 87.93% lines / 68.61% regions / 89.28% functions / 84.20% branches. The two toolchains report different line totals and the nightly region figure is much lower, so `COVERAGE_MIN_LINES` is 85, below the lower line figure; both targets pass at that floor. A reviewer measured lower totals on a fresh clone than these; the difference could not be reproduced here, so the floor sits below both readings that were available. | `Makefile` |
 
@@ -38,9 +38,9 @@ killed, so the merge is the rate a fresh full run would report.
 
 ## Survivors
 
-Fourteen mutants are neither killed nor equivalent. Each makes the suite hang, so the timeout is the detection and no
+Ten mutants are neither killed nor equivalent. Each makes the suite hang, so the timeout is the detection and no
 assertion can run; they are listed with that reason under `[[survivor]]` in `mutation-thresholds.toml`:
 `count_array_items`, `scan_json_string`, `scan_string_end` and `skip_json_whitespace` in `src/contracts/reader.rs`
-returning a constant, and four arithmetic or comparison changes in the binary search of `SignalCatalog::signal`.
+returning a constant. The four binary-search mutants of `SignalCatalog::signal` that also hung are now killed by a lookup test that runs on a thread and fails after 20 s, so the hang becomes a failure.
 They count against the rates above. The Campaign runner cannot contain `make mutants` (TL-28, 2026-09-24);
 `make mutants` is the supported path.

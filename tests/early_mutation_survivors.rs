@@ -657,6 +657,38 @@ mod signals {
         assert_eq!(rest, ["c", "d", "e"]);
     }
 
+    /// A lookup that never narrows its range would spin forever; running it on a thread that is
+    /// abandoned on timeout turns that hang into an immediate test failure.
+    #[test]
+    fn catalog_lookup_terminates_and_answers_for_present_and_absent_ids() {
+        let (sender, receiver) = std::sync::mpsc::channel();
+        std::thread::spawn(move || {
+            let names = ["a", "b", "c", "d", "e", "f", "g"];
+            let signals: Vec<_> = names
+                .iter()
+                .enumerate()
+                .map(|(index, name)| boolean(index as u32 * 2 + 1, name))
+                .collect();
+            let mut scratch = [0_u32; 7];
+            let catalog = SignalCatalog::new(&signals, &[], &mut scratch).unwrap();
+            let found: Vec<_> = (0..16)
+                .map(|id| {
+                    catalog
+                        .signal(SignalId(id))
+                        .map(|signal| signal.name().to_owned())
+                })
+                .collect();
+            let _ = sender.send(found);
+        });
+        let found = receiver
+            .recv_timeout(std::time::Duration::from_secs(20))
+            .expect("the lookup must terminate");
+        for (id, name) in found.iter().enumerate() {
+            let expected =
+                (id % 2 == 1 && id < 14).then(|| ["a", "b", "c", "d", "e", "f", "g"][id / 2]);
+            assert_eq!(name.as_deref(), expected, "id {id}");
+        }
+    }
     #[test]
     fn catalog_finds_duplicate_names_that_are_not_adjacent_by_identity() {
         let signals = [boolean(1, "b"), boolean(2, "a"), boolean(3, "b")];
@@ -826,5 +858,94 @@ mod signals {
         assert_eq!(read.bindings().len(), 2);
         let empty_name = replace(&bytes, "\"name\":\"a\"", b"\"name\":\"\"");
         assert!(SignalCatalogDocument::from_json_bytes(&empty_name, OWNER).is_err());
+    }
+}
+
+/// A deserializer that reports a size hint (`serde_json::from_value`) reaches the readers' array
+/// pre-check; the exact limit is admitted and one more is refused.
+mod hinted_arrays {
+    use serde_json::{json, Value};
+    use tl_syntax::{
+        OwnedSignalDeclaration, PropositionBinding, PropositionEntry, PropositionId,
+        PropositionMapDocument, SignalCatalogDocument, SignalDomain, SignalId,
+        MAX_PROPOSITION_MAP_ENTRIES, MAX_SIGNAL_CATALOG_SIGNALS,
+    };
+
+    fn to_value<T: serde::Serialize>(document: &T) -> Value {
+        serde_json::to_value(document).unwrap()
+    }
+
+    #[test]
+    fn a_hinted_proposition_array_is_admitted_up_to_the_limit_and_refused_past_it() {
+        let small = PropositionMapDocument::new(vec![PropositionEntry {
+            id: PropositionId(0),
+            name: "p".into(),
+        }])
+        .unwrap();
+        let parsed: PropositionMapDocument = serde_json::from_value(to_value(&small)).unwrap();
+        assert_eq!(parsed, small);
+
+        let full = PropositionMapDocument::new(
+            (0..u32::try_from(MAX_PROPOSITION_MAP_ENTRIES).unwrap())
+                .map(|id| PropositionEntry {
+                    id: PropositionId(id),
+                    name: format!("p{id}"),
+                })
+                .collect(),
+        )
+        .unwrap();
+        let mut value = to_value(&full);
+        let parsed: PropositionMapDocument = serde_json::from_value(value.clone()).unwrap();
+        assert_eq!(parsed.propositions().len(), MAX_PROPOSITION_MAP_ENTRIES);
+
+        value["propositions"].as_array_mut().unwrap().push(
+            json!({"id": u32::try_from(MAX_PROPOSITION_MAP_ENTRIES).unwrap(), "name": "extra"}),
+        );
+        let error = serde_json::from_value::<PropositionMapDocument>(value).unwrap_err();
+        assert!(
+            error
+                .to_string()
+                .contains("exceed the 100000-item wire limit"),
+            "{error}"
+        );
+    }
+
+    #[test]
+    fn a_hinted_signal_array_is_admitted_up_to_the_limit_and_refused_past_it() {
+        // Names are unique in a catalog, so every declaration gets its own.
+        let named = |count: usize| -> Vec<OwnedSignalDeclaration> {
+            (0..u32::try_from(count).unwrap())
+                .map(|id| {
+                    OwnedSignalDeclaration::new(
+                        SignalId(id),
+                        format!("s{id}"),
+                        SignalDomain::Boolean,
+                    )
+                })
+                .collect()
+        };
+        let small = SignalCatalogDocument::new(
+            named(2),
+            vec![PropositionBinding::new(PropositionId(0), SignalId(1))],
+        )
+        .unwrap();
+        let parsed: SignalCatalogDocument = serde_json::from_value(to_value(&small)).unwrap();
+        assert_eq!(parsed, small);
+
+        let full =
+            SignalCatalogDocument::new(named(MAX_SIGNAL_CATALOG_SIGNALS), Vec::new()).unwrap();
+        let mut value = to_value(&full);
+        let parsed: SignalCatalogDocument = serde_json::from_value(value.clone()).unwrap();
+        assert_eq!(parsed.signals().len(), MAX_SIGNAL_CATALOG_SIGNALS);
+
+        let extra = value["signals"][0].clone();
+        value["signals"].as_array_mut().unwrap().push(extra);
+        let error = serde_json::from_value::<SignalCatalogDocument>(value).unwrap_err();
+        assert!(
+            error
+                .to_string()
+                .contains("signal declarations exceed the 100000-item wire limit"),
+            "{error}"
+        );
     }
 }
