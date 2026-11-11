@@ -42,7 +42,7 @@ fn assert_bounded_readers_refuse(data: &[u8], limits: SyntaxArtifactLimits) {
     }
 }
 
-// Trace: TC-181, FR-046-AC-1. Each successful strict read must survive the
+// Trace: TC-145, TC-154, TC-157, FR-289-AC-2, FR-022-AC-1, FR-023-AC-1. Each successful strict read must survive the
 // owner operation and a second strict read without losing canonical identity.
 fuzz_target!(|data: &[u8]| {
     let limits = SyntaxArtifactLimits::default();

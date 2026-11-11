@@ -6,7 +6,7 @@ use tl_syntax::{
     InfiniteFormulaDocument, LassoTraceDocument, PartialValuation, SyntaxArtifactLimits,
 };
 
-// Trace: TC-181, FR-046-AC-1. Fuzz seeds must reach successful strict owner
+// Trace: TC-145, TC-154, TC-157, FR-289-AC-2, FR-022-AC-1, FR-023-AC-1. Fuzz seeds must reach successful strict owner
 // readers as well as a malformed refusal, so the target cannot be vacuous.
 #[test]
 fn infinite_wire_fuzz_seeds_reach_the_intended_reader_paths() {
