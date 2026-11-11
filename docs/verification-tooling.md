@@ -13,12 +13,12 @@ llvm-tools).
 | Target | What it does |
 | --- | --- |
 | `make mutants` | Full cargo-mutants run (`--no-shuffle`, so the population and order are fixed), then `tl-gate gate` against `mutation-thresholds.toml`. Takes hours; run it weekly. |
-| `make mutants-diff` | cargo-mutants on `git diff $(MUTANTS_BASE)...HEAD` (default `origin/main`) only; every mutant in the diff must be killed. Only committed changes are mutated; uncommitted edits are not. |
+| `make mutants-diff` | A gate in `make ci`. cargo-mutants on `git diff $(MUTANTS_BASE)...HEAD` (default `origin/main`) only; every mutant in the diff must be killed. Only committed changes are mutated; uncommitted edits are not. |
 | `make coverage` | `cargo llvm-cov` line, function and region coverage on the pinned toolchain, failing below `COVERAGE_MIN_LINES`. |
 | `make coverage-branch` | The same on nightly, adding branch coverage. |
 
 
-None of the mutation or coverage targets is part of `make ci`.
+`make mutants-diff` is part of `make ci`, so a change cannot add logic its tests would not notice; `make mutants` and the coverage targets are not.
 
 ## Mutation gate
 
@@ -27,7 +27,7 @@ count on neither side. Each group in `mutation-thresholds.toml` has a floor; the
 exits 1 when a group is below its floor, when a group has no viable mutants, or when the unmutated
 baseline failed. The campaign targets are a core group and a whole-crate group (the core is `src/future.rs` and `src/formula/graph.rs` (future lowering, formula graph, interval arithmetic)).
 
-Excluded from every threshold: nothing (the crate has no CI-plumbing module). One equivalent mutant family is listed in `exclude_re`: `minimum` in `src/contracts/limits.rs` returns the same value for `<` and `<=`.
+Excluded from every threshold: nothing (the crate has no CI-plumbing module). Mutants that cannot change behavior are excluded in `exclude_re` of `.cargo/mutants.toml`, each with a one-line reason, so they are never generated.
 
 `tl-gate mutants` accepts cargo-mutants exit statuses 0, 2 (survivors) and 3 (timeouts) so that
 the gate always runs and prints its table; any other status is passed on.
@@ -38,9 +38,16 @@ reason for every missed or timed-out mutant.
 
 ## Limits of the recorded measurements
 
-Crate-wide kill rates recorded so far are core plus one `--shard 0/3` file sample, not a full run, and the
-floors are the sampled rate minus a margin. The first full `make mutants` run should replace them, and floors
-only ratchet up. In the recorded run the core met its mutation target after `tests/mutation_survivors.rs` was added; the crate-wide figure is a file sample, not a full run (see SR-231). Open survivors are listed in SR-231.
+The floors are the rates of the first full `make mutants` run (SR-231), and they only ratchet up.
+The Campaign runner cannot contain `make mutants` (TL-28, 2026-09-24): cargo-mutants starts its own Cargo child
+in a new process group, and the runner refuses a descendant whose process group differs from its producer. That
+containment is unresolved, so `make mutants` is the supported way to run the mutation gate.
+
+The cargo-mutants test-timeout floor is 300 s (`minimum_test_timeout` in `.cargo/mutants.toml`); a mutant times out
+when its test run exceeds the larger of that floor and three times the baseline. The floor cannot tell a hang from a
+run that a loaded host slowed past it, so run `make mutants` on an unloaded machine. Timeouts count as unkilled.
+Mutation runs skip `tests/feature_boundary.rs`, which rebuilds the crate for every feature set and checks feature
+gating, not behavior.
 
 ## Coverage
 

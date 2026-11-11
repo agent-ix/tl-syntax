@@ -78,23 +78,6 @@ fn any_other_cargo_mutants_status_is_passed_on_without_judging() {
 }
 
 #[test]
-fn a_stale_outcomes_file_is_not_judged_as_this_runs_result() {
-    let dir = scratch("stale");
-    configure(&dir, 0, None);
-    fs::create_dir_all(dir.join("out/mutants.out")).unwrap();
-    // A stale run with an unkilled mutant would fail the diff gate if it were judged.
-    fs::write(
-        dir.join("out/mutants.out/outcomes.json"),
-        r#"{"outcomes":[{"scenario":"Baseline","summary":"Failure"}]}"#,
-    )
-    .unwrap();
-    let status = mutants_in(&dir, OsStr::new(FAKE), "out", &options(Some("HEAD"))).unwrap_err();
-    // No git repository here, so the diff base cannot be resolved; the stale file is gone regardless.
-    assert!(status.contains("git"), "{status}");
-    assert!(!dir.join("out/mutants.out/outcomes.json").exists());
-}
-
-#[test]
 fn an_empty_diff_writes_an_empty_file_and_passes_with_no_outcomes() {
     let dir = scratch("emptydiff");
     git(&dir, &["init", "-q"]);
@@ -129,4 +112,30 @@ fn the_diff_is_written_byte_for_byte() {
         .stdout;
     assert_eq!(written, expected);
     assert!(written.windows(2).any(|w| w == b"\xff\xfe"));
+}
+
+const MISSED: &str = r#"{"outcomes":[{"scenario":"Baseline","summary":"Success"},{"scenario":{"Mutant":{"file":"src/lib.rs","name":"src/lib.rs:1:1: x"}},"summary":"MissedMutant"}]}"#;
+
+// cargo-mutants writes no outcomes when the diff holds no mutable code; the previous run's file
+// must not then be judged as this run's result (SR-231 FND-2314).
+#[test]
+fn a_previous_runs_outcomes_are_not_judged_when_this_run_writes_none() {
+    let dir = scratch("stale");
+    git(&dir, &["init", "-q"]);
+    git(&dir, &["add", "-A"]);
+    git(&dir, &["commit", "-q", "-m", "base"]);
+    fs::create_dir_all(dir.join("out/mutants.out")).unwrap();
+    fs::write(dir.join("out/mutants.out/outcomes.json"), MISSED).unwrap();
+    configure(&dir, 0, None);
+    let status = mutants_in(&dir, OsStr::new(FAKE), "out", &options(Some("HEAD"))).unwrap();
+    assert_eq!(status, 0);
+
+    // Control: the same file is a failing verdict when this run produces it.
+    let control = scratch("stale-control");
+    git(&control, &["init", "-q"]);
+    git(&control, &["add", "-A"]);
+    git(&control, &["commit", "-q", "-m", "base"]);
+    configure(&control, 2, Some(MISSED));
+    let status = mutants_in(&control, OsStr::new(FAKE), "out", &options(Some("HEAD"))).unwrap();
+    assert_ne!(status, 0);
 }
