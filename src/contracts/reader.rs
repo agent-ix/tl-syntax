@@ -467,8 +467,9 @@ mod tests {
 
     extern crate std;
 
-    /// Runs `work` on a thread that is abandoned on timeout, so a scan that never advances fails
-    /// the test at once instead of hanging the suite until the mutation timeout.
+    /// Runs `work` on a thread and aborts the whole test process if it does not finish. A scan that
+    /// never advances also hangs every other test that reaches it, so failing this one test would
+    /// still leave the process running until an outer timeout; aborting fails the run at once.
     fn within_seconds<T: Send + 'static>(
         seconds: u64,
         work: impl FnOnce() -> T + Send + 'static,
@@ -477,9 +478,13 @@ mod tests {
         std::thread::spawn(move || {
             let _ = sender.send(work());
         });
-        receiver
-            .recv_timeout(std::time::Duration::from_secs(seconds))
-            .expect("the scan must terminate")
+        match receiver.recv_timeout(std::time::Duration::from_secs(seconds)) {
+            Ok(value) => value,
+            Err(_) => {
+                std::eprintln!("a reader scan did not terminate within {seconds} s");
+                std::process::abort()
+            }
+        }
     }
 
     #[test]
