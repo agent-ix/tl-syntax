@@ -22,21 +22,5 @@ min_kill_percent = 100.0
 [[group]]
 name = "crate"
 globs = ["src/*.rs", "src/*/*.rs"]
-min_kill_percent = 98.2
-
-[[survivor]]
-file = "src/contracts/reader.rs"
-reason = "non-terminating: the mutated scan never advances or never reaches the end of its input, so the suite hangs and the timeout is the detection; no assertion can run"
-names = [
-    "replace count_array_items -> (usize, usize) with (0, 0)",
-    "replace count_array_items -> (usize, usize) with (0, 1)",
-    "replace count_array_items -> (usize, usize) with (1, 0)",
-    "replace count_array_items -> (usize, usize) with (1, 1)",
-    "replace scan_json_string -> Result<usize, StrictDocumentReadError> with Ok(0)",
-    "replace scan_json_string -> Result<usize, StrictDocumentReadError> with Ok(1)",
-    "replace scan_string_end -> usize with 0",
-    "replace scan_string_end -> usize with 1",
-    "replace skip_json_whitespace -> usize with 0",
-    "replace skip_json_whitespace -> usize with 1",
-]
+min_kill_percent = 100.0
 

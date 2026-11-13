@@ -464,4 +464,74 @@ mod tests {
         assert_eq!(array_field_population(br#"{"a": [1, 2"#, b"a"), 1);
         assert_eq!(array_field_population(br#"{"a": ["#, b"a"), 0);
     }
+
+    extern crate std;
+
+    /// Runs `work` on a thread and aborts the whole test process if it does not finish. A scan that
+    /// never advances also hangs every other test that reaches it, so failing this one test would
+    /// still leave the process running until an outer timeout; aborting fails the run at once.
+    fn within_seconds<T: Send + 'static>(
+        seconds: u64,
+        work: impl FnOnce() -> T + Send + 'static,
+    ) -> T {
+        let (sender, receiver) = std::sync::mpsc::channel();
+        std::thread::spawn(move || {
+            let _ = sender.send(work());
+        });
+        match receiver.recv_timeout(std::time::Duration::from_secs(seconds)) {
+            Ok(value) => value,
+            Err(_) => {
+                std::eprintln!("a reader scan did not terminate within {seconds} s");
+                std::process::abort()
+            }
+        }
+    }
+
+    #[test]
+    fn scan_string_end_stops_at_the_first_unescaped_quote_and_terminates() {
+        within_seconds(20, || {
+            assert_eq!(scan_string_end(b"ab\"cd", 0), 2);
+            assert_eq!(scan_string_end(b"ab\"cd", 3), 5);
+            assert_eq!(scan_string_end(b"a\\\"b\"c", 0), 4);
+            assert_eq!(scan_string_end(b"a\\\\\"c", 0), 3);
+            assert_eq!(scan_string_end(b"abc", 0), 3);
+            assert_eq!(scan_string_end(b"", 0), 0);
+        });
+    }
+
+    #[test]
+    fn skip_json_whitespace_stops_at_the_first_other_byte_and_terminates() {
+        within_seconds(20, || {
+            assert_eq!(skip_json_whitespace(b"  \t\n x", 0), 5);
+            assert_eq!(skip_json_whitespace(b"  x ", 3), 4);
+            assert_eq!(skip_json_whitespace(b"x", 0), 0);
+            assert_eq!(skip_json_whitespace(b"   ", 0), 3);
+            assert_eq!(skip_json_whitespace(b"", 0), 0);
+        });
+    }
+
+    #[test]
+    fn count_array_items_reports_the_population_and_the_closing_bracket_and_terminates() {
+        within_seconds(20, || {
+            assert_eq!(count_array_items(b"1, 2, 3]", 0), (3, 7));
+            assert_eq!(count_array_items(b"]", 0), (0, 0));
+            assert_eq!(count_array_items(b" ,]", 0), (1, 2));
+            assert_eq!(
+                count_array_items(b"\"a,]\", [1, 2], {\"k\": [3]}]", 0),
+                (3, 25)
+            );
+            assert_eq!(count_array_items(b"1, 2", 0), (1, 4));
+            assert_eq!(count_array_items(b"x]tail", 0), (1, 1));
+        });
+    }
+
+    #[test]
+    fn scan_json_string_and_the_preflight_that_calls_it_terminate() {
+        within_seconds(20, || {
+            assert_eq!(scan_json_string(b"ab\"cd", 0, 10).ok(), Some(2));
+            assert_eq!(scan_json_string(b"ab\"cd", 3, 10).ok(), Some(5));
+            let limits = crate::SyntaxArtifactLimits::default();
+            preflight_document(br#"{"a":"x","b":["y","z"],"c":"w"}"#, limits).unwrap();
+        });
+    }
 }
