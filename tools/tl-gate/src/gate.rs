@@ -228,6 +228,12 @@ pub fn judge(outcomes: &[Value], thresholds_text: &str, mode: Mode) -> Result<Ju
         .collect();
     if !baseline_ok {
         lines.push("FAIL baseline: the unmutated tree did not pass its tests".into());
+        // A campaign whose baseline fails measures nothing: report the refusal and no kill rate.
+        return Ok(Judgement {
+            status: 1,
+            lines,
+            errors,
+        });
     }
     for group in &groups {
         let c = &counts[group.name.as_str()];

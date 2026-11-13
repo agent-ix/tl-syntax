@@ -152,3 +152,23 @@ fn survivor_listing_is_required_only_when_the_thresholds_ask_for_it() {
     .unwrap();
     assert_eq!(gate(false, &dir, &path).status, 0);
 }
+
+#[test]
+fn a_failing_baseline_refuses_the_campaign_and_prints_no_kill_rate() {
+    let dir = scratch("baseline");
+    fs::write(
+        dir.join("outcomes.json"),
+        format!(
+            r#"{{"outcomes":[{{"scenario":"Baseline","summary":"Failure"}},{}]}}"#,
+            outcome("CaughtMutant", "x")
+        ),
+    )
+    .unwrap();
+    let toml = thresholds(&dir, 0.0, "");
+    for diff in [false, true] {
+        let run = gate(diff, &dir, &toml);
+        assert_eq!(run.status, 1, "diff={diff}");
+        assert!(run.stdout.contains("FAIL baseline"), "{}", run.stdout);
+        assert!(!run.stdout.contains("kill"), "{}", run.stdout);
+    }
+}
