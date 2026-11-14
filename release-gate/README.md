@@ -27,7 +27,7 @@ The proposed tag names are checked only after an attributed human decision;
 the checker does not create or push tags.
 
 The API lane requires `cargo-semver-checks` 0.50.0 (set `TL_SEMVER_CHECKS` to
-its binary path if it is not on `PATH`). It checks every crate against its
+its binary path if it is not on `PATH`). If the tool is absent the lane fails with "cargo-semver-checks not found"; it is never skipped. It checks every crate against its
 `previous_tag` with all features and a minor-release diagnostic scan, which
 exposes breaking findings even for a planned 0.3-to-0.4 release. Every unique
 lint and affected symbol must have exactly one line in the candidate version's
