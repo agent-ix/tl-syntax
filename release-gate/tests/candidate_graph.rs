@@ -508,9 +508,9 @@ fn api_finding_symbols_drop_the_item_kind() {
     .is_err());
 }
 
-const REWRITE_DECLARED: &str = "[[decoder_break]]\nrepo = \"tl-rewrite\"\nfixture = \"rewrite\"\nproof = \"refused_names_field\"\nremoved_fields = [\"syntaxRevision\"]\nidentity = \"tl-rewrite.report/v1\"\nmeasured_against = \"v0.3.0\"\nreason = \"field removed\"\n";
+const REWRITE_DECLARED: &str = "[[decoder_break]]\nrepo = \"tl-rewrite\"\nfixture = \"rewrite\"\nremoved_fields = [\"syntaxRevision\"]\nidentity = \"tl-rewrite.report/v1\"\nmeasured_against = \"v0.3.0\"\nreason = \"field removed\"\n";
 
-const DECLARED: &str = "[[decoder_break]]\nrepo = \"tl-parse\"\nfixture = \"parse\"\nproof = \"strip_decode\"\nremoved_fields = [\"tl_syntax_revision\"]\nidentity = \"tl-parse.diagnostics/v1\"\nmeasured_against = \"v0.3.0\"\nreason = \"field removed\"\n";
+const DECLARED: &str = "[[decoder_break]]\nrepo = \"tl-parse\"\nfixture = \"parse\"\nremoved_fields = [\"tl_syntax_revision\"]\nidentity = \"tl-parse.diagnostics/v1\"\nmeasured_against = \"v0.3.0\"\nreason = \"field removed\"\n";
 
 /// TC-176: a declared decoder break is replayed as a required refusal and must
 /// be documented in the candidate CHANGELOG with a migration note.
@@ -519,7 +519,7 @@ fn declared_decoder_breaks_are_replayed_and_changelog_enforced() {
     let declared = parse_declared_decoder_breaks(DECLARED).unwrap();
     assert_eq!(
         declared_break_fixtures("tl-parse", "v0.3.0", &declared),
-        ["parse:strip_decode:tl_syntax_revision"]
+        ["parse:tl_syntax_revision"]
     );
     assert!(declared_break_fixtures("tl-parse", "v0.4.0", &declared).is_empty());
     assert!(declared_break_fixtures("tl-mltl", "v0.3.0", &declared).is_empty());
@@ -528,8 +528,8 @@ fn declared_decoder_breaks_are_replayed_and_changelog_enforced() {
     assert_eq!(
         declared_break_fixtures("tl-rewrite", "v0.3.0", &rewrite),
         [
-            "rewrite:refused_names_field:syntaxRevision",
-            "conformance:strip_decode:evaluatorRevision+syntaxRevision"
+            "rewrite:syntaxRevision",
+            "conformance:evaluatorRevision+syntaxRevision"
         ]
     );
     let documented = "## 0.4.0\n- Removed `tl_syntax_revision`. `tl-parse.diagnostics/v1` Migration: regenerate old reports.\n## 0.3.0\n";
@@ -559,19 +559,12 @@ fn declared_decoder_breaks_are_replayed_and_changelog_enforced() {
         format!("{DECLARED}\n{DECLARED}"),
         DECLARED.replace("tl_syntax_revision", " "),
         DECLARED.replace("tl-parse.diagnostics/v1", "tl-parse.past-parse-report/v1"),
-        DECLARED.replace("proof = \"strip_decode\"", "proof = \"other\""),
-        DECLARED.replace(
-            "proof = \"strip_decode\"",
-            "proof = \"refused_names_field\"\nextra = 1",
-        ),
         DECLARED.replace("[\"tl_syntax_revision\"]", "[\"a\", \"a\"]"),
         DECLARED.replace("[\"tl_syntax_revision\"]", "[]"),
-        DECLARED
-            .replace(
-                "proof = \"strip_decode\"",
-                "proof = \"refused_names_field\"",
-            )
-            .replace("[\"tl_syntax_revision\"]", "[\"a\", \"b\"]"),
+        DECLARED.replace("[\"tl_syntax_revision\"]", "[\"a:b\"]"),
+        DECLARED.replace("[\"tl_syntax_revision\"]", "[\"a,b\"]"),
+        DECLARED.replace("[\"tl_syntax_revision\"]", "[\"a+b\"]"),
+        DECLARED.replace("[\"tl_syntax_revision\"]", "[\"a\\\"b\"]"),
         DECLARED.replace("\"parse\"", "\"rewrite\""),
         REWRITE_DECLARED.replace("tl-rewrite.report/v1", "tl-rewrite.conformance/v1"),
         REWRITE_DECLARED.replace("tl-rewrite\"", "tl-parse\""),
@@ -590,9 +583,10 @@ fn candidate_replay_enforces_the_declared_refusal() {
     for needle in [
         "decode(bytes).is_err()",
         "candidate accepts old {name} bytes",
-        "object.remove(field)",
+        "strip_member(&stripped, field)",
+        "strip_member(br#",
         "declared removed field",
-        "message.contains(field.as_str())",
+        "assert_eq!(serde_json::to_value(&old).unwrap(), source)",
         "declaration(&declared, \"rewrite\")",
         "declaration(&declared, \"conformance\")",
         "ReplayReport::from_json_bytes(&replay",

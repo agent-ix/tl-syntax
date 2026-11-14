@@ -9,85 +9,123 @@ use tl_rewrite::{
 };
 use tl_syntax::{FormulaDocument, SemanticProfile, SyntaxArtifactLimits};
 
-/// One declared decoder break read from `TL_DECLARED_BREAKS`.
-struct Declaration {
-    proof: String,
-    fields: Vec<String>,
-}
-
-/// `TL_DECLARED_BREAKS` lists `fixture:proof:field+field` entries, comma
-/// separated; `declared-decoder-breaks.toml` documents the proofs.
-fn declaration(declared: &str, fixture: &str) -> Option<Declaration> {
+/// `TL_DECLARED_BREAKS` lists `fixture:field+field` entries, comma separated;
+/// `declared-decoder-breaks.toml` documents the proof.
+fn declaration(declared: &str, fixture: &str) -> Option<Vec<String>> {
     declared.split(',').find_map(|entry| {
-        let mut parts = entry.splitn(3, ':');
-        if parts.next()? != fixture {
-            return None;
-        }
-        let proof = parts.next()?.to_owned();
-        let fields = parts.next()?.split('+').map(str::to_owned).collect();
-        Some(Declaration { proof, fields })
+        let (name, fields) = entry.split_once(':')?;
+        (name == fixture).then(|| fields.split('+').map(str::to_owned).collect())
     })
 }
 
+/// Returns `bytes` without the top-level member `key`, with every other byte,
+/// including the key order, unchanged. `None` when the member is absent.
+fn strip_member(bytes: &[u8], key: &str) -> Option<Vec<u8>> {
+    let needle = format!("\"{key}\":");
+    let (mut depth, mut in_string, mut escaped) = (0usize, false, false);
+    let mut start = None;
+    for (index, &byte) in bytes.iter().enumerate() {
+        if in_string {
+            match (escaped, byte) {
+                (true, _) => escaped = false,
+                (false, b'\\') => escaped = true,
+                (false, b'"') => in_string = false,
+                _ => {}
+            }
+            continue;
+        }
+        match byte {
+            b'{' | b'[' => depth += 1,
+            b'}' | b']' => depth -= 1,
+            b'"' => {
+                let after_separator = index > 0 && matches!(bytes[index - 1], b'{' | b',');
+                if depth == 1 && after_separator && bytes[index..].starts_with(needle.as_bytes()) {
+                    start = Some(index);
+                    break;
+                }
+                in_string = true;
+            }
+            _ => {}
+        }
+    }
+    let start = start?;
+    let (mut depth, mut in_string, mut escaped) = (0usize, false, false);
+    let mut end = start + needle.len();
+    while end < bytes.len() {
+        let byte = bytes[end];
+        if in_string {
+            match (escaped, byte) {
+                (true, _) => escaped = false,
+                (false, b'\\') => escaped = true,
+                (false, b'"') => in_string = false,
+                _ => {}
+            }
+        } else {
+            match byte {
+                b'"' => in_string = true,
+                b'{' | b'[' => depth += 1,
+                b'}' | b']' if depth == 0 => break,
+                b'}' | b']' => depth -= 1,
+                b',' if depth == 0 => break,
+                _ => {}
+            }
+        }
+        end += 1;
+    }
+    let (from, to) = if bytes.get(end) == Some(&b',') {
+        (start, end + 1)
+    } else if bytes[start - 1] == b',' {
+        (start - 1, end)
+    } else {
+        (start, end)
+    };
+    Some([&bytes[..from], &bytes[to..]].concat())
+}
+
 /// Decodes one fixture under its declaration and returns the decoded value and
-/// the JSON it was decoded from when the content checks should run.
+/// the bytes it was decoded from when the content checks should run.
 ///
 /// Undeclared, the candidate must accept the previous release's bytes, decoded
-/// from the raw bytes so duplicate keys stay refused. `strip_decode` requires
-/// the bytes to be refused as they are and to decode once the declared removed
-/// fields are stripped, so the refusal comes from exactly those fields.
-/// `refused_names_field` requires the refusal message to name the single
-/// declared field and runs no content checks.
+/// from the raw bytes so duplicate keys stay refused. Declared, the bytes must
+/// be refused as they are and must decode once the declared removed fields are
+/// stripped from the raw bytes, so the refusal comes from exactly those fields.
 fn replay_fixture<T>(
     name: &str,
     bytes: &[u8],
-    declaration: Option<&Declaration>,
+    declaration: Option<&[String]>,
     decode: impl Fn(&[u8]) -> Result<T, String>,
-) -> Option<(T, Value)> {
-    let json = || serde_json::from_slice::<Value>(bytes).unwrap();
-    let Some(declaration) = declaration else {
-        let decoded =
-            decode(bytes).unwrap_or_else(|error| panic!("candidate accepts old {name} bytes: {error}"));
-        return Some((decoded, json()));
+) -> (T, Vec<u8>) {
+    let Some(fields) = declaration else {
+        let decoded = decode(bytes)
+            .unwrap_or_else(|error| panic!("candidate accepts old {name} bytes: {error}"));
+        return (decoded, bytes.to_vec());
     };
-    match declaration.proof.as_str() {
-        "refused_names_field" => {
-            let [field] = declaration.fields.as_slice() else {
-                panic!("declared {name} break: refused_names_field names exactly one field");
-            };
-            let Err(message) = decode(bytes) else {
-                panic!("declared {name} break: the candidate unexpectedly accepts old {name} bytes");
-            };
-            assert!(
-                message.contains(field.as_str()),
-                "declared {name} break: the refusal does not name {field}: {message}"
-            );
-            None
-        }
-        "strip_decode" => {
-            assert!(
-                decode(bytes).is_err(),
-                "declared {name} break: the candidate unexpectedly accepts old {name} bytes"
-            );
-            let mut json = json();
-            for field in &declaration.fields {
-                let removed = json.as_object_mut().and_then(|object| object.remove(field));
-                assert!(
-                    removed.is_some(),
-                    "declared removed field {field} is absent from the old {name} bytes"
-                );
-            }
-            let stripped = serde_json::to_vec(&json).unwrap();
-            let decoded = decode(&stripped).unwrap_or_else(|error| {
-                panic!("declared {name} break: stripped bytes are still refused: {error}")
-            });
-            Some((decoded, json))
-        }
-        other => panic!("declared {name} break has unknown proof {other}"),
+    assert!(
+        decode(bytes).is_err(),
+        "declared {name} break: the candidate unexpectedly accepts old {name} bytes"
+    );
+    let mut stripped = bytes.to_vec();
+    for field in fields {
+        stripped = strip_member(&stripped, field).unwrap_or_else(|| {
+            panic!("declared removed field {field} is absent from the old {name} bytes")
+        });
     }
+    let decoded = decode(&stripped).unwrap_or_else(|error| {
+        panic!("declared {name} break: stripped bytes are still refused: {error}")
+    });
+    (decoded, stripped)
 }
 
 fn main() {
+    assert_eq!(
+        strip_member(br#"{"a":1,"b":{"b":"x,}\"","c":[2]},"d":3}"#, "b").unwrap(),
+        br#"{"a":1,"d":3}"#
+    );
+    assert_eq!(strip_member(br#"{"a":1,"b":2}"#, "b").unwrap(), br#"{"a":1}"#);
+    assert_eq!(strip_member(br#"{"b":2,"a":1}"#, "b").unwrap(), br#"{"a":1}"#);
+    assert_eq!(strip_member(br#"{"b":2}"#, "b").unwrap(), br#"{}"#);
+    assert!(strip_member(br#"{"a":{"b":2},"c":"\"b\":"}"#, "b").is_none());
+
     let directory = PathBuf::from(env::var_os("TL_LEGACY_DIR").expect("fixture directory"));
     let declared = env::var("TL_DECLARED_BREAKS").unwrap_or_default();
     let syntax = fs::read(directory.join("syntax.json")).unwrap();
@@ -99,20 +137,18 @@ fn main() {
     assert!(FormulaDocument::from_json_bytes(&damaged, SyntaxArtifactLimits::default()).is_err());
 
     let parser_bytes = fs::read(directory.join("parse.json")).unwrap();
-    let decoded = replay_fixture(
+    let (old, used) = replay_fixture(
         "parse-report",
         &parser_bytes,
-        declaration(&declared, "parse").as_ref(),
+        declaration(&declared, "parse").as_deref(),
         |bytes| serde_json::from_slice::<ParseReport>(bytes).map_err(|error| error.to_string()),
     );
-    if let Some((old, json)) = decoded {
-        assert_eq!(old.schema_version, "tl-parse.diagnostics/v1");
-        assert!(old.diagnostics.is_empty());
-        assert_eq!(old.document.as_ref(), Some(&formula));
-        let mut wrong_parse = json;
-        wrong_parse["document"] = Value::Bool(true);
-        assert!(serde_json::from_value::<ParseReport>(wrong_parse).is_err());
-    }
+    assert_eq!(old.schema_version, "tl-parse.diagnostics/v1");
+    assert!(old.diagnostics.is_empty());
+    assert_eq!(old.document.as_ref(), Some(&formula));
+    let mut wrong_parse: Value = serde_json::from_slice(&used).unwrap();
+    wrong_parse["document"] = Value::Bool(true);
+    assert!(serde_json::from_value::<ParseReport>(wrong_parse).is_err());
     let current = parse("p0", SemanticProfile::ClosedTraceV1, ParseLimits::default());
     assert!(current.diagnostics.is_empty());
     assert_eq!(current.document.as_ref(), Some(&formula));
@@ -128,40 +164,41 @@ fn main() {
     assert!(ValidatedTrace::from_json_bytes(&damaged, OwnerLimits::default()).is_err());
 
     let rewrite = fs::read(directory.join("rewrite.json")).unwrap();
-    let rewrite_declaration = declaration(&declared, "rewrite");
-    let decoded = replay_fixture("rewrite-report", &rewrite, rewrite_declaration.as_ref(), |bytes| {
-        RewriteReport::from_json_bytes(bytes, RecordLimits::default())
-            .map_err(|error| error.to_string())
-    });
-    if let Some((decoded, _)) = decoded {
-        assert_eq!(decoded.schema_version, "tl-rewrite.report/v1");
-        assert_eq!(decoded.status, RewriteStatus::Unchanged);
-        assert_eq!(decoded.output.as_ref(), Some(&formula));
-    }
-    if rewrite_declaration.is_none() {
-        let mut damaged = rewrite.clone();
-        damaged.push(b'!');
-        assert!(RewriteReport::from_json_bytes(&damaged, RecordLimits::default()).is_err());
-    }
+    let (decoded, used) = replay_fixture(
+        "rewrite-report",
+        &rewrite,
+        declaration(&declared, "rewrite").as_deref(),
+        |bytes| {
+            RewriteReport::from_json_bytes(bytes, RecordLimits::default())
+                .map_err(|error| error.to_string())
+        },
+    );
+    assert_eq!(decoded.schema_version, "tl-rewrite.report/v1");
+    assert_eq!(decoded.status, RewriteStatus::Unchanged);
+    assert_eq!(decoded.output.as_ref(), Some(&formula));
+    let mut damaged = used;
+    damaged.push(b'!');
+    assert!(RewriteReport::from_json_bytes(&damaged, RecordLimits::default()).is_err());
 
     let conformance = fs::read(directory.join("conformance.json")).unwrap();
-    let decoded = replay_fixture(
+    let (old, used) = replay_fixture(
         "conformance-report",
         &conformance,
-        declaration(&declared, "conformance").as_ref(),
+        declaration(&declared, "conformance").as_deref(),
         |bytes| {
             serde_json::from_slice::<ConformanceReport>(bytes).map_err(|error| error.to_string())
         },
     );
-    if let Some((old, json)) = decoded {
-        assert_eq!(old.schema_version, "tl-rewrite.conformance/v1");
-        assert_eq!(old.comparison_id, "legacy-cmp");
-        assert_eq!(old.semantic_profile, "mltl.closed-trace/v1");
-        assert_eq!(old.original_sha256, old.rewritten_sha256);
-        let mut wrong = json;
-        wrong["schemaVersion"] = Value::Bool(true);
-        assert!(serde_json::from_value::<ConformanceReport>(wrong).is_err());
-    }
+    assert_eq!(old.schema_version, "tl-rewrite.conformance/v1");
+    assert_eq!(old.comparison_id, "legacy-cmp");
+    assert_eq!(old.semantic_profile, "mltl.closed-trace/v1");
+    assert_eq!(old.original_sha256, old.rewritten_sha256);
+    // Every decoded field must equal the bytes it came from.
+    let source: Value = serde_json::from_slice(&used).unwrap();
+    assert_eq!(serde_json::to_value(&old).unwrap(), source);
+    let mut wrong = source;
+    wrong["schemaVersion"] = Value::Bool(true);
+    assert!(serde_json::from_value::<ConformanceReport>(wrong).is_err());
 
     // No declared break covers the replay report: it must stay accepted.
     let replay = fs::read(directory.join("replay.json")).unwrap();

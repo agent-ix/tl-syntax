@@ -981,33 +981,10 @@ pub fn reconcile_breaking_exceptions(
     failures
 }
 
-/// How the replay proves a declared decoder break.
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq)]
-#[serde(rename_all = "snake_case")]
-pub enum DecoderBreakProof {
-    /// The candidate refuses the old bytes as they are; the same bytes with the
-    /// removed fields stripped decode and pass the fixture's content checks.
-    /// The refusal is proven to come from the declared removal alone.
-    StripDecode,
-    /// The candidate refuses the old bytes and the refusal message names the
-    /// declared removed field. Used where the stripped bytes still fail for a
-    /// reason that cannot be separated from the removal (a digest preimage that
-    /// covered the field), so only the refusal and its named cause are proven.
-    RefusedNamesField,
-}
-
-impl DecoderBreakProof {
-    fn as_str(self) -> &'static str {
-        match self {
-            Self::StripDecode => "strip_decode",
-            Self::RefusedNamesField => "refused_names_field",
-        }
-    }
-}
-
 /// One declared break of a decoder against bytes the previous release wrote.
 /// The legacy decoder replay expects the candidate to refuse the named fixture
-/// as `proof` says and fails if the candidate accepts it.
+/// as it is, to decode it once the removed fields are stripped from the raw
+/// bytes with key order kept, and fails if the candidate accepts the bytes.
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DeclaredDecoderBreak {
@@ -1015,10 +992,9 @@ pub struct DeclaredDecoderBreak {
     /// Replay fixture name: `parse` (parser report), `rewrite` (rewrite report)
     /// or `conformance` (conformance report).
     pub fixture: String,
-    /// How the replay proves the refusal.
-    pub proof: DecoderBreakProof,
-    /// Wire names of the top-level JSON keys the candidate removed. A
-    /// `refused_names_field` proof takes exactly one.
+    /// Wire names of the top-level JSON keys the candidate removed. The replay
+    /// strips them from the old bytes and requires the rest to decode, so the
+    /// refusal is proven to come from this removal alone.
     pub removed_fields: Vec<String>,
     /// Schema identity whose old bytes the candidate refuses.
     pub identity: String,
@@ -1068,18 +1044,12 @@ pub fn parse_declared_decoder_breaks(text: &str) -> Result<Vec<DeclaredDecoderBr
             || entry
                 .removed_fields
                 .iter()
-                .any(|field| field.trim().is_empty())
+                .any(|field| field.trim().is_empty() || field.contains([':', ',', '+', '"', '\\']))
             || entry.removed_fields.iter().collect::<BTreeSet<_>>().len()
                 != entry.removed_fields.len()
         {
             return Err(format!(
-                "declared decoder break {} needs distinct, non-empty removed fields",
-                entry.identity
-            ));
-        }
-        if entry.proof == DecoderBreakProof::RefusedNamesField && entry.removed_fields.len() != 1 {
-            return Err(format!(
-                "declared decoder break {} uses refused_names_field, which names exactly one removed field",
+                "declared decoder break {} needs distinct, non-empty removed fields without `:`, `,`, `+`, quotes or backslashes",
                 entry.identity
             ));
         }
@@ -1108,7 +1078,7 @@ pub fn parse_declared_decoder_breaks(text: &str) -> Result<Vec<DeclaredDecoderBr
 
 /// The replay fixtures this repo and tag declare broken, as the entries the
 /// legacy-candidate program reads from `TL_DECLARED_BREAKS`:
-/// `fixture:proof:field+field`, comma separated.
+/// `fixture:field+field`, comma separated.
 pub fn declared_break_fixtures(
     repo: &str,
     previous_tag: &str,
@@ -1117,14 +1087,7 @@ pub fn declared_break_fixtures(
     declared
         .iter()
         .filter(|entry| entry.repo == repo && entry.measured_against == previous_tag)
-        .map(|entry| {
-            format!(
-                "{}:{}:{}",
-                entry.fixture,
-                entry.proof.as_str(),
-                entry.removed_fields.join("+")
-            )
-        })
+        .map(|entry| format!("{}:{}", entry.fixture, entry.removed_fields.join("+")))
         .collect()
 }
 
