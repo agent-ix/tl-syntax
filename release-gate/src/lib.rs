@@ -142,6 +142,8 @@ pub struct CorpusLaneFact {
 
 #[derive(Clone, Debug, Serialize)]
 pub struct LegacyDecoderFact {
+    /// Replay fixtures the candidate was required to refuse (declared breaks).
+    pub declared_breaks: Vec<String>,
     pub previous_revisions: Vec<String>,
     pub candidate_revisions: Vec<String>,
     pub result: String,
@@ -189,13 +191,8 @@ pub fn parse_semver_findings(output: &str) -> Result<Vec<ApiFinding>, String> {
             }
             in_findings = true;
         } else if in_findings && line.starts_with("  ") {
-            let text = line.trim();
-            let text = text.strip_prefix("variant ").unwrap_or(text);
-            let symbol = text
-                .split_whitespace()
-                .next()
-                .ok_or("empty semver finding")?;
-            let symbol = symbol.trim_end_matches(',');
+            let symbol = finding_symbol(line.trim())?;
+            let symbol = symbol.as_str();
             if symbol.is_empty() || symbol.contains('/') {
                 return Err(format!("semver finding has invalid symbol: {symbol}"));
             }
@@ -208,6 +205,38 @@ pub fn parse_semver_findings(output: &str) -> Result<Vec<ApiFinding>, String> {
         }
     }
     Ok(findings.into_iter().collect())
+}
+
+/// Extract the affected symbol from one `Failed in:` line. The tool prefixes some
+/// lines with the item kind (`variant A::B, previously in ...`, `function p::f,
+/// previously in ...`, `field f of struct S, previously in ...`); the kind is
+/// dropped and a field is keyed as `Struct::field`. Other lines keep their first
+/// token (`X:Y in ...`, `TL_CONST in file ...`, `Type::Variant moved ...`).
+fn finding_symbol(text: &str) -> Result<String, String> {
+    let mut words = text.split_whitespace();
+    let first = words.next().ok_or("empty semver finding")?;
+    let clean = |word: &str| word.trim_end_matches(',').to_owned();
+    match first {
+        "variant" | "function" | "struct" | "enum" | "trait" | "module" | "constant" | "static"
+        | "type" => words
+            .next()
+            .map(clean)
+            .ok_or_else(|| format!("semver finding lacks a symbol after {first}")),
+        "field" | "method" => {
+            let name = words
+                .next()
+                .map(clean)
+                .ok_or("semver {first} finding lacks a name")?;
+            let (Some("of"), Some(_kind), Some(owner)) = (words.next(), words.next(), words.next())
+            else {
+                return Err(format!(
+                    "semver {first} finding is not `{first} F of <kind> S`: {text}"
+                ));
+            };
+            Ok(format!("{}::{name}", clean(owner)))
+        }
+        _ => Ok(clean(first)),
+    }
 }
 
 /// Match every observed API break to exactly one migration entry in this
@@ -946,6 +975,148 @@ pub fn reconcile_breaking_exceptions(
             failures.push(format!(
                 "breaking golden exception {}: CHANGELOG {heading} has no entry naming `{}` with a Migration: note",
                 entry.path, entry.path
+            ));
+        }
+    }
+    failures
+}
+
+/// One declared break of a decoder against bytes the previous release wrote.
+/// The legacy decoder replay expects the candidate to refuse the named fixture
+/// and fails if the candidate accepts it.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct DeclaredDecoderBreak {
+    pub repo: String,
+    /// Replay fixture name: `parse` for the parser report bytes.
+    pub fixture: String,
+    /// Top-level JSON key the candidate removed. The replay strips it from the
+    /// old bytes and requires the rest to decode, so the refusal is proven to
+    /// come from this removal alone.
+    pub removed_field: String,
+    /// Schema identity whose old bytes the candidate refuses.
+    pub identity: String,
+    pub measured_against: String,
+    pub reason: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct DeclaredDecoderBreakFile {
+    #[serde(default)]
+    decoder_break: Vec<DeclaredDecoderBreak>,
+}
+
+/// Parse the checked-in declared decoder breaks. Every entry needs a known
+/// repo and fixture, a schema identity, a tag and a reason.
+pub fn parse_declared_decoder_breaks(text: &str) -> Result<Vec<DeclaredDecoderBreak>, String> {
+    let file: DeclaredDecoderBreakFile =
+        toml::from_str(text).map_err(|error| format!("declared decoder breaks: {error}"))?;
+    let mut seen = BTreeSet::new();
+    for entry in &file.decoder_break {
+        if !CRATES.contains(&entry.repo.as_str()) {
+            return Err(format!(
+                "declared decoder break names unknown repo {}",
+                entry.repo
+            ));
+        }
+        if !matches!(entry.fixture.as_str(), "parse") {
+            return Err(format!(
+                "declared decoder break {} names unknown fixture {}",
+                entry.identity, entry.fixture
+            ));
+        }
+        let expected = match entry.fixture.as_str() {
+            "parse" => "tl-parse.diagnostics/v1",
+            _ => unreachable!("fixture validated above"),
+        };
+        if entry.identity != expected {
+            return Err(format!(
+                "declared decoder break fixture {} carries identity {expected}, not {}",
+                entry.fixture, entry.identity
+            ));
+        }
+        if entry.removed_field.trim().is_empty() {
+            return Err(format!(
+                "declared decoder break {} lacks a removed field",
+                entry.identity
+            ));
+        }
+        if entry.identity.trim().is_empty()
+            || entry.measured_against.trim().is_empty()
+            || entry.reason.trim().is_empty()
+        {
+            return Err(format!(
+                "declared decoder break {} lacks an identity, tag or reason",
+                entry.repo
+            ));
+        }
+        if !seen.insert((
+            entry.repo.clone(),
+            entry.fixture.clone(),
+            entry.measured_against.clone(),
+        )) {
+            return Err(format!(
+                "declared decoder break {}:{} is declared twice",
+                entry.repo, entry.fixture
+            ));
+        }
+    }
+    Ok(file.decoder_break)
+}
+
+/// `fixture:removed_field` pairs the replay must see refused for this repo and tag.
+pub fn declared_break_fixtures(
+    repo: &str,
+    previous_tag: &str,
+    declared: &[DeclaredDecoderBreak],
+) -> Vec<String> {
+    declared
+        .iter()
+        .filter(|entry| entry.repo == repo && entry.measured_against == previous_tag)
+        .map(|entry| format!("{}:{}", entry.fixture, entry.removed_field))
+        .collect()
+}
+
+/// For every declared decoder break that applies to this repo and tag, the
+/// candidate version's CHANGELOG section must carry a line naming the schema
+/// identity in backticks followed by `Migration:` and non-empty guidance, the
+/// same enforcement as a breaking golden exception.
+pub fn reconcile_declared_decoder_breaks(
+    repo: &str,
+    previous_tag: &str,
+    version: &str,
+    changelog: &str,
+    declared: &[DeclaredDecoderBreak],
+) -> Vec<String> {
+    let applicable: Vec<_> = declared
+        .iter()
+        .filter(|entry| entry.repo == repo && entry.measured_against == previous_tag)
+        .collect();
+    if applicable.is_empty() {
+        return Vec::new();
+    }
+    let heading = format!("## {version}");
+    let Some(section) = changelog.split(&heading).nth(1) else {
+        return vec![format!(
+            "CHANGELOG lacks {heading} release section for declared decoder break {}",
+            applicable[0].identity
+        )];
+    };
+    let section = section.split("\n## ").next().unwrap_or(section);
+    let mut failures = Vec::new();
+    for entry in applicable {
+        let needle = format!("`{}`", entry.identity);
+        let documented = section.lines().any(|line| {
+            line.contains(&needle)
+                && line
+                    .split_once("Migration:")
+                    .is_some_and(|(_, note)| !note.trim().is_empty())
+        });
+        if !documented {
+            failures.push(format!(
+                "declared decoder break {}: CHANGELOG {heading} has no entry naming `{}` with a Migration: note",
+                entry.identity, entry.identity
             ));
         }
     }

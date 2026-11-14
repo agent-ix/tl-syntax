@@ -49,7 +49,7 @@ identity. Such an exception sets `breaking = true`, and the gate then requires t
 owning crate's CHANGELOG section for the candidate version to carry a line naming
 the exception path with a `Migration:` note; a missing entry fails the gate. The
 `breaking` flag is the declared-break marker: the gate does not detect whether an
-unflagged change to a schema is itself a break, so a reviewer checks that. Tool failure or an absent prior tag is a failed
+unflagged change to a schema is itself a break, so a reviewer checks that. A decoder that refuses bytes the previous tag wrote is likewise a break and passes the replay only when declared in `release-gate/declared-decoder-breaks.toml` (repo, replay fixture, removed field, schema identity, tag, reason): the replay then requires the candidate to refuse those bytes, to decode them once the declared removed field is stripped, and fails if it accepts them as they are, and the CHANGELOG must name the schema identity with a `Migration:` note. The replay covers one fixture per crate, so it proves that fixture only. Tool failure or an absent prior tag is a failed
 gate, not a pass.
 
 ## Acceptance Criteria
@@ -57,7 +57,7 @@ gate, not a pass.
 | ID | Criteria | Verification |
 |---|---|---|
 | FR-031-AC-1 | `cargo-semver-checks` compares each candidate to the preceding immutable release tag, and every break maps to one CHANGELOG break and migration note. | Test (TC-175) |
-| FR-031-AC-2 | Every retained golden file is byte identical to the previous tag unless declared in the exceptions file with a reason; an undeclared or stale difference, an absent schema, or a changed legacy decoder fails. A declared exception may record an in-place schema break (`breaking = true`) when the candidate version's CHANGELOG carries an entry naming its path with a migration note. | Test (TC-176) |
+| FR-031-AC-2 | Every retained golden file is byte identical to the previous tag unless declared in the exceptions file with a reason; an undeclared or stale difference, an absent schema, or a changed legacy decoder fails. A declared exception may record an in-place schema break (`breaking = true`) when the candidate version's CHANGELOG carries an entry naming its path with a migration note. A decoder that refuses previous-tag bytes passes only when declared in `release-gate/declared-decoder-breaks.toml` and named with a migration note in the CHANGELOG; the replay requires the declared refusal, requires the bytes to decode once the declared removed field is stripped (so the refusal comes from that change alone), and fails if the candidate accepts the original bytes. Only the replayed fixture is proven by the replay. | Test (TC-176) |
 
 ## Dependencies
 

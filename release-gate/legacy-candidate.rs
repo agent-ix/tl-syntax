@@ -16,19 +16,41 @@ fn main() {
     damaged.push(b'!');
     assert!(FormulaDocument::from_json_bytes(&damaged, SyntaxArtifactLimits::default()).is_err());
 
+    // `TL_DECLARED_BREAKS` lists `fixture:removed_field` pairs.
+    let declared = env::var("TL_DECLARED_BREAKS").unwrap_or_default();
+    let removed_field = declared
+        .split(',')
+        .find_map(|pair| pair.strip_prefix("parse:"));
     let parser_bytes = fs::read(directory.join("parse.json")).unwrap();
-    let old: ParseReport = serde_json::from_slice(&parser_bytes)
+    let mut parser_json: serde_json::Value = serde_json::from_slice(&parser_bytes).unwrap();
+    if let Some(field) = removed_field {
+        // A declared break: the candidate must refuse the previous release's bytes
+        // as they are, and the refusal must come from exactly the declared
+        // removed field, so the same bytes without that key still decode.
+        assert!(
+            serde_json::from_slice::<ParseReport>(&parser_bytes).is_err(),
+            "declared parse-report break: the candidate unexpectedly accepts old parse-report bytes"
+        );
+        let removed = parser_json
+            .as_object_mut()
+            .and_then(|object| object.remove(field));
+        assert!(
+            removed.is_some(),
+            "declared removed field {field} is absent from the old parse-report bytes"
+        );
+    }
+    let old: ParseReport = serde_json::from_value(parser_json.clone())
         .expect("candidate accepts old parse-report bytes");
     assert_eq!(old.schema_version, "tl-parse.diagnostics/v1");
     assert!(old.diagnostics.is_empty());
     assert_eq!(old.document.as_ref(), Some(&formula));
+    let mut wrong_parse = parser_json;
+    wrong_parse["document"] = serde_json::Value::Bool(true);
+    assert!(serde_json::from_value::<ParseReport>(wrong_parse).is_err());
     let current = parse("p0", SemanticProfile::ClosedTraceV1, ParseLimits::default());
     assert!(current.diagnostics.is_empty());
     assert_eq!(current.document.as_ref(), Some(&formula));
     assert_eq!(format_document(&formula, FormatLimits::default()).text.as_deref(), Some("p0"));
-    let mut wrong_parse: serde_json::Value = serde_json::from_slice(&parser_bytes).unwrap();
-    wrong_parse["document"] = serde_json::Value::Bool(true);
-    assert!(serde_json::from_value::<ParseReport>(wrong_parse).is_err());
 
     let trace = fs::read(directory.join("mltl.json")).unwrap();
     let decoded = ValidatedTrace::from_json_bytes(&trace, OwnerLimits::default())

@@ -6,10 +6,11 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use tl_release_gate::{
     check, compare_goldens_with_exceptions, consumer_lock_differences, consumer_manifest,
-    duplicated_owner_blobs, parse_golden_exceptions, reconcile_breaking_exceptions,
+    declared_break_fixtures, duplicated_owner_blobs, parse_declared_decoder_breaks,
+    parse_golden_exceptions, reconcile_breaking_exceptions, reconcile_declared_decoder_breaks,
     test_target_has_executed_cases, BuildFact, Candidate, CandidateFact, CandidateInput,
-    CandidateSet, CorpusLaneFact, CorpusOwnershipFact, CrateWireFact, LegacyDecoderFact, SmokeFact,
-    WireFact,
+    CandidateSet, CorpusLaneFact, CorpusOwnershipFact, CrateWireFact, DeclaredDecoderBreak,
+    LegacyDecoderFact, SmokeFact, WireFact,
 };
 
 fn git_bytes(path: &Path, args: &[&str]) -> Result<Vec<u8>, String> {
@@ -245,7 +246,19 @@ fn run_consumer_smoke(candidates: &[CandidateFact], msrv: &str) -> Result<SmokeF
     })
 }
 
-fn run_legacy_decoder_replay(set: &CandidateSet, msrv: &str) -> Result<LegacyDecoderFact, String> {
+fn run_legacy_decoder_replay(
+    set: &CandidateSet,
+    msrv: &str,
+    declared: &[DeclaredDecoderBreak],
+) -> Result<LegacyDecoderFact, String> {
+    let mut refused = Vec::new();
+    for candidate in &set.candidates {
+        refused.extend(declared_break_fixtures(
+            &candidate.name,
+            &candidate.previous_tag,
+            declared,
+        ));
+    }
     let mut previous = Vec::new();
     for candidate in &set.candidates {
         let revision = git(
@@ -312,6 +325,14 @@ fn run_legacy_decoder_replay(set: &CandidateSet, msrv: &str) -> Result<LegacyDec
         let output = Command::new(cargo)
             .env("RUSTC", rustc)
             .env("TL_LEGACY_DIR", &fixtures)
+            .env(
+                "TL_DECLARED_BREAKS",
+                if name == "candidate" {
+                    refused.join(",")
+                } else {
+                    String::new()
+                },
+            )
             .args(["run", "--locked", "--quiet"])
             .current_dir(&project)
             .output()
@@ -324,6 +345,7 @@ fn run_legacy_decoder_replay(set: &CandidateSet, msrv: &str) -> Result<LegacyDec
         }
     }
     Ok(LegacyDecoderFact {
+        declared_breaks: refused,
         previous_revisions: previous.into_iter().map(|fact| fact.commit).collect(),
         candidate_revisions: current.into_iter().map(|fact| fact.commit).collect(),
         result: "passed".to_owned(),
@@ -524,6 +546,14 @@ fn run(path: &Path) -> Result<bool, String> {
             Vec::new()
         }
     };
+    let declared_breaks =
+        match parse_declared_decoder_breaks(include_str!("../declared-decoder-breaks.toml")) {
+            Ok(declared) => declared,
+            Err(error) => {
+                report.failures.push(error);
+                Vec::new()
+            }
+        };
     for candidate in &set.candidates {
         match (
             golden_files(candidate, &candidate.previous_tag),
@@ -560,6 +590,17 @@ fn run(path: &Path) -> Result<bool, String> {
                             report
                                 .failures
                                 .push(format!("{} wire golden: {failure}", candidate.name));
+                        }
+                        for failure in reconcile_declared_decoder_breaks(
+                            &candidate.name,
+                            &candidate.previous_tag,
+                            &version,
+                            &changelog,
+                            &declared_breaks,
+                        ) {
+                            report
+                                .failures
+                                .push(format!("{} decoder break: {failure}", candidate.name));
                         }
                     }
                     Err(error) => report.failures.push(error),
@@ -771,7 +812,7 @@ fn run(path: &Path) -> Result<bool, String> {
             }
         }
         if report.failures.is_empty() {
-            match run_legacy_decoder_replay(&set, msrv) {
+            match run_legacy_decoder_replay(&set, msrv, &declared_breaks) {
                 Ok(replay) => report.legacy_decoder_replay = Some(replay),
                 Err(error) => report
                     .failures
@@ -828,7 +869,13 @@ mod tests {
         let path = std::env::var("TL_LEGACY_CANDIDATE_SET").expect("candidate set path");
         let bytes = fs::read(path).unwrap();
         let set: CandidateSet = serde_json::from_slice(&bytes).unwrap();
-        let fact = run_legacy_decoder_replay(&set, "1.98.1").unwrap();
+        let fact = run_legacy_decoder_replay(
+            &set,
+            "1.98.1",
+            &parse_declared_decoder_breaks(include_str!("../declared-decoder-breaks.toml"))
+                .unwrap(),
+        )
+        .unwrap();
         assert_eq!(fact.previous_revisions.len(), 4);
         assert_eq!(fact.candidate_revisions.len(), 4);
         assert_eq!(fact.result, "passed");
