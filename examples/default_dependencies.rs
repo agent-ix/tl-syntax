@@ -81,7 +81,7 @@ mod tests {
     // Trace: NFR-001-AC-1, NFR-001-AC-2
     #[test]
     fn dependency_graph_rejects_an_added_normal_dependency() {
-        assert!(check_tree("tl-syntax v0.3.0\n").is_ok());
-        assert!(check_tree("tl-syntax v0.3.0\nserde v1.0\n").is_err());
+        assert!(check_tree("tl-syntax v0.4.0\n").is_ok());
+        assert!(check_tree("tl-syntax v0.4.0\nserde v1.0\n").is_err());
     }
 }

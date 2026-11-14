@@ -293,6 +293,9 @@ fn api_findings_require_matching_migration_entries() {
     assert!(reconcile_api_migrations(&empty, "0.4.0", &findings)
         .iter()
         .any(|failure| failure.contains("empty migration")));
+    // cargo-semver-checks prints removed variants as `variant A::B, previously in file ...`.
+    let removed = parse_semver_findings("--- failure enum_variant_missing: gone ---\nFailed in:\n  variant A::B, previously in file /tmp/x.rs:1\n").unwrap();
+    assert_eq!(removed[0].symbol, "A::B");
     assert!(parse_semver_findings("Failed in:\n  variant X:Y in /tmp/x.rs:1").is_err());
 }
 

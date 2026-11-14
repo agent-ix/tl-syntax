@@ -195,6 +195,7 @@ pub fn parse_semver_findings(output: &str) -> Result<Vec<ApiFinding>, String> {
                 .split_whitespace()
                 .next()
                 .ok_or("empty semver finding")?;
+            let symbol = symbol.trim_end_matches(',');
             if symbol.is_empty() || symbol.contains('/') {
                 return Err(format!("semver finding has invalid symbol: {symbol}"));
             }

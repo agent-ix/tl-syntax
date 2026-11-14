@@ -3,15 +3,43 @@
 All notable user-visible changes to `tl-syntax` are recorded here. The crate is
 distributed as a git source release (`publish = false`); versions are git tags.
 
-## Unreleased
+## 0.4.0
+
+Second coordinated release of the MLTL crates (`tl-syntax`, `tl-parse`,
+`tl-mltl`, `tl-rewrite`). All four crates move to 0.4.0 together. Changes are
+relative to v0.3.0. This is a breaking 0.x release; the API migration inventory
+below lists every break reported by `cargo-semver-checks` 0.50.0.
+
+### Added
+
+- **Infinite-trace profile (TL-15).** `SemanticProfile::InfiniteTraceV1`
+  (`mltl.infinite-trace/v1`), the unbounded formula graph (`InfiniteFormula`,
+  `InfiniteFormulaDocument`, `InfiniteNode`, `TemporalInterval`,
+  `UnboundedInterval`, schema `FORMULA_UNBOUNDED_V1`), `lower_infinite_future` and
+  `select_infinite_profile`, the lasso trace, fairness-premise and partial-valuation
+  documents (`LassoTraceDocument`, `FairnessPremisesDocument`, `PartialValuation`),
+  and the liveness capability registration and settlement (`settle_liveness`,
+  `LivenessBackend`, `LIVENESS_CAPABILITY_V1`). `SemanticProfile::ALL` now has four
+  entries. The `corpus/infinite-trace` corpus and the `infinite_wire_decode` fuzz
+  target cover the new wire documents.
+- The coordinated release gate (TL-213, FR-029..033, NFR-007): the `release-gate`
+  checker verifies the candidate graph, pins and MSRV, golden files against the
+  previous tag, and the API lane (`cargo-semver-checks` 0.50.0).
+- `make miri` runs the unit and property suites under Miri on the pinned nightly;
+  `make ci` includes it. `make check-features` also builds the library for
+  `thumbv7em-none-eabi` with no features, `alloc`, and `alloc,serde`.
+- `tests/limit_boundaries.rs` and `src/error_variants.rs` (NFR-006): every declared
+  limit is accepted at the limit and refused one past it, and every public error
+  variant is produced by a test.
 
 ### Changed
 
 - The mutation gate and the cargo-mutants runner are one Rust tool, `tools/tl-gate`, replacing `scripts/mutation_gate.py` and `scripts/run_mutants.py`. tl-parse, tl-rewrite and tl-mltl build it from this repository instead of keeping copies (TL-370).
+- Strict reader reject-class tables, a feature-combination test lane and a bounded-reader refusal of `[a,)` intervals under fuzz harden the readers (TL-364, TL-363, TL-219).
 
 ### Removed
 
-Error variants that no code path could produce, deleted before any release used them:
+Error variants that no code path could produce:
 
 - `SignalCatalogError::CatalogIndexOutOfRange` and `ScratchIndexUnrepresentable`:
   validation indexes declarations below the 100,000-signal ceiling, so the `u32`
@@ -19,19 +47,30 @@ Error variants that no code path could produce, deleted before any release used 
 - `FormulaConversionError::PastNodeUnsupported` and `NodeIdentityOutOfRange`: only
   the history and infinite profiles admit past nodes, and `try_to_v1` already
   refuses both profiles; owned documents hold at most 100,000 nodes.
-- `LassoTraceError::PositionLimit`: observations are capped at 100,000 before
-  positions are assigned.
-- `PartialValuationError::MapIdentityMismatch`: never constructed; a mismatched
-  map identity is reported as `LassoTraceError::MapIdentityMismatch`.
 
-### Added
+### API migration inventory
 
-- `make miri` runs the unit and property suites under Miri on the pinned nightly;
-  `make ci` includes it. `make check-features` also builds the library for
-  `thumbv7em-none-eabi` with no features, `alloc`, and `alloc,serde`.
-- `tests/limit_boundaries.rs` and `src/error_variants.rs` (NFR-006): every declared
-  limit is accepted at the limit and refused one past it, and every public error
-  variant is produced by a test.
+- `enum_no_repr_variant_discriminant_changed` `FormulaError::FormulaV1NodeUnsupported`: Migration: do not cast `FormulaError` variants to integers with `as`; their discriminants shifted when variants were removed or added, so match on the variant or use an explicit mapping.
+- `enum_no_repr_variant_discriminant_changed` `SignalCatalogError::SignalIdentityNotIncreasing`: Migration: do not cast `SignalCatalogError` variants to integers with `as`; their discriminants shifted when variants were removed or added, so match on the variant or use an explicit mapping.
+- `enum_no_repr_variant_discriminant_changed` `SignalCatalogError::EmptySignalName`: Migration: do not cast `SignalCatalogError` variants to integers with `as`; their discriminants shifted when variants were removed or added, so match on the variant or use an explicit mapping.
+- `enum_no_repr_variant_discriminant_changed` `SignalCatalogError::SignalNameTooLong`: Migration: do not cast `SignalCatalogError` variants to integers with `as`; their discriminants shifted when variants were removed or added, so match on the variant or use an explicit mapping.
+- `enum_no_repr_variant_discriminant_changed` `SignalCatalogError::DuplicateSignalName`: Migration: do not cast `SignalCatalogError` variants to integers with `as`; their discriminants shifted when variants were removed or added, so match on the variant or use an explicit mapping.
+- `enum_no_repr_variant_discriminant_changed` `SignalCatalogError::BindingIdentityNotIncreasing`: Migration: do not cast `SignalCatalogError` variants to integers with `as`; their discriminants shifted when variants were removed or added, so match on the variant or use an explicit mapping.
+- `enum_no_repr_variant_discriminant_changed` `SignalCatalogError::BindingTargetMissing`: Migration: do not cast `SignalCatalogError` variants to integers with `as`; their discriminants shifted when variants were removed or added, so match on the variant or use an explicit mapping.
+- `enum_no_repr_variant_discriminant_changed` `SignalCatalogError::NonBooleanPropositionBinding`: Migration: do not cast `SignalCatalogError` variants to integers with `as`; their discriminants shifted when variants were removed or added, so match on the variant or use an explicit mapping.
+- `enum_variant_added` `SemanticProfile:InfiniteTraceV1`: Migration: add a match arm for `SemanticProfile::InfiniteTraceV1` or a wildcard arm, and use `SemanticProfile::ALL` (now four entries) instead of a fixed three-element list.
+- `enum_variant_missing` `FormulaConversionError::PastNodeUnsupported`: Migration: delete the match arm; `try_to_v1` reports past nodes through the profile error, and this variant was never produced.
+- `enum_variant_missing` `FormulaConversionError::NodeIdentityOutOfRange`: Migration: delete the match arm; owned documents hold at most 100,000 nodes, so this variant was never produced.
+- `enum_variant_missing` `SignalCatalogError::CatalogIndexOutOfRange`: Migration: delete the match arm; validation indexes below the 100,000-signal ceiling, so this variant was never produced.
+- `enum_variant_missing` `SignalCatalogError::ScratchIndexUnrepresentable`: Migration: delete the match arm; the scratch slot conversions cannot fail, so this variant was never produced.
+- `partial_ord_enum_variants_reordered` `FormulaError::FormulaV1NodeUnsupported`: Migration: do not rely on the derived `PartialOrd` order of `FormulaError`; sort by an explicit key such as the error's display text.
+- `partial_ord_enum_variants_reordered` `SignalCatalogError::SignalIdentityNotIncreasing`: Migration: do not rely on the derived `PartialOrd` order of `SignalCatalogError`; sort by an explicit key.
+- `partial_ord_enum_variants_reordered` `SignalCatalogError::EmptySignalName`: Migration: do not rely on the derived `PartialOrd` order of `SignalCatalogError`; sort by an explicit key.
+- `partial_ord_enum_variants_reordered` `SignalCatalogError::SignalNameTooLong`: Migration: do not rely on the derived `PartialOrd` order of `SignalCatalogError`; sort by an explicit key.
+- `partial_ord_enum_variants_reordered` `SignalCatalogError::DuplicateSignalName`: Migration: do not rely on the derived `PartialOrd` order of `SignalCatalogError`; sort by an explicit key.
+- `partial_ord_enum_variants_reordered` `SignalCatalogError::BindingIdentityNotIncreasing`: Migration: do not rely on the derived `PartialOrd` order of `SignalCatalogError`; sort by an explicit key.
+- `partial_ord_enum_variants_reordered` `SignalCatalogError::BindingTargetMissing`: Migration: do not rely on the derived `PartialOrd` order of `SignalCatalogError`; sort by an explicit key.
+- `partial_ord_enum_variants_reordered` `SignalCatalogError::NonBooleanPropositionBinding`: Migration: do not rely on the derived `PartialOrd` order of `SignalCatalogError`; sort by an explicit key.
 
 ## 0.3.0
 
