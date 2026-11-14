@@ -13,10 +13,9 @@ require_survivor_reasons = true
 exclude = []
 
 # The unmutated suite runs `baseline_runs` times (default 2) before the campaign; the campaign is
-# refused unless every run passes (FR-022-AC-2). `baseline_args` are the arguments of the baseline
-# `cargo` command and must keep the test selection of .cargo/mutants.toml.
+# refused unless every run passes. cargo-mutants' own baseline is one run; the extra
+# runs use the test command derived from .cargo/mutants.toml.
 baseline_runs = 2
-baseline_args = ["test", "--all-features", "--", "--skip", "no_std_feature_matrix_and_default_dependency_gate_execute"]
 
 # future lowering, formula graph and interval arithmetic
 [[group]]

@@ -9,6 +9,15 @@ use std::{env, fs, process::exit};
 
 fn main() {
     let args: Vec<String> = env::args().skip(1).collect();
+    if args.iter().any(|a| a == "--list") {
+        // `cargo mutants --list`: print `fake-list.txt` (one mutant per line) or a single mutant.
+        print!(
+            "{}",
+            fs::read_to_string("fake-list.txt")
+                .unwrap_or_else(|_| "src/lib.rs:1:1: x\n".to_owned())
+        );
+        exit(0);
+    }
     if args.first().map(String::as_str) != Some("mutants") {
         baseline_run();
     }
@@ -37,5 +46,7 @@ fn baseline_run() -> ! {
         .map(|s| s.trim().parse().unwrap())
         .unwrap_or(0);
     fs::write("fake-baseline.count", (done + 1).to_string()).unwrap();
+    let args: Vec<String> = env::args().skip(1).collect();
+    fs::write("fake-baseline.args", args.join(" ")).unwrap();
     exit(statuses.get(done).copied().unwrap_or(0));
 }

@@ -49,32 +49,26 @@ struct Thresholds {
     /// `[[survivor]]` with a non-empty reason (FR-022-AC-5).
     #[serde(default)]
     require_survivor_reasons: bool,
-    /// How many times the unmutated test command runs before the campaign (default 2, at least 1).
+    /// How many times the unmutated suite must pass before the campaign (default 2, at least 1);
+    /// cargo-mutants' own baseline is one of them and the rest run the test command derived from
+    /// `.cargo/mutants.toml`.
     /// The campaign is refused unless every run passes: a baseline that passes only
     /// intermittently is not green (FR-022-AC-2).
     #[serde(default = "default_baseline_runs")]
     baseline_runs: u32,
-    /// Arguments of the `cargo` baseline test command (default `["test"]`). Keep the test
-    /// selection equal to `.cargo/mutants.toml` so the baseline measures what the campaign runs.
-    #[serde(default = "default_baseline_args")]
-    baseline_args: Vec<String>,
 }
 
 fn default_baseline_runs() -> u32 {
     2
 }
 
-fn default_baseline_args() -> Vec<String> {
-    vec!["test".to_owned()]
-}
-
-/// The baseline plan of a thresholds file: run count and `cargo` arguments.
-pub(crate) fn baseline_plan(thresholds_text: &str) -> Result<(u32, Vec<String>), String> {
+/// The number of unmutated baseline runs a thresholds file asks for.
+pub(crate) fn baseline_runs(thresholds_text: &str) -> Result<u32, String> {
     let thresholds: Thresholds = toml::from_str(thresholds_text).map_err(|e| e.to_string())?;
     if thresholds.baseline_runs == 0 {
         return Err("baseline_runs must be at least 1".to_owned());
     }
-    Ok((thresholds.baseline_runs, thresholds.baseline_args))
+    Ok(thresholds.baseline_runs)
 }
 
 /// Result of judging one run.
