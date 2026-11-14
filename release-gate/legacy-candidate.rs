@@ -16,19 +16,28 @@ fn main() {
     damaged.push(b'!');
     assert!(FormulaDocument::from_json_bytes(&damaged, SyntaxArtifactLimits::default()).is_err());
 
+    let declared = env::var("TL_DECLARED_BREAKS").unwrap_or_default();
     let parser_bytes = fs::read(directory.join("parse.json")).unwrap();
-    let old: ParseReport = serde_json::from_slice(&parser_bytes)
-        .expect("candidate accepts old parse-report bytes");
-    assert_eq!(old.schema_version, "tl-parse.diagnostics/v1");
-    assert!(old.diagnostics.is_empty());
-    assert_eq!(old.document.as_ref(), Some(&formula));
+    if declared.split(',').any(|name| name == "parse") {
+        // A declared break: the candidate must refuse the previous release's bytes.
+        assert!(
+            serde_json::from_slice::<ParseReport>(&parser_bytes).is_err(),
+            "declared parse-report break: the candidate unexpectedly accepts old parse-report bytes"
+        );
+    } else {
+        let old: ParseReport = serde_json::from_slice(&parser_bytes)
+            .expect("candidate accepts old parse-report bytes");
+        assert_eq!(old.schema_version, "tl-parse.diagnostics/v1");
+        assert!(old.diagnostics.is_empty());
+        assert_eq!(old.document.as_ref(), Some(&formula));
+        let mut wrong_parse: serde_json::Value = serde_json::from_slice(&parser_bytes).unwrap();
+        wrong_parse["document"] = serde_json::Value::Bool(true);
+        assert!(serde_json::from_value::<ParseReport>(wrong_parse).is_err());
+    }
     let current = parse("p0", SemanticProfile::ClosedTraceV1, ParseLimits::default());
     assert!(current.diagnostics.is_empty());
     assert_eq!(current.document.as_ref(), Some(&formula));
     assert_eq!(format_document(&formula, FormatLimits::default()).text.as_deref(), Some("p0"));
-    let mut wrong_parse: serde_json::Value = serde_json::from_slice(&parser_bytes).unwrap();
-    wrong_parse["document"] = serde_json::Value::Bool(true);
-    assert!(serde_json::from_value::<ParseReport>(wrong_parse).is_err());
 
     let trace = fs::read(directory.join("mltl.json")).unwrap();
     let decoded = ValidatedTrace::from_json_bytes(&trace, OwnerLimits::default())

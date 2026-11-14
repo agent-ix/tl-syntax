@@ -17,6 +17,8 @@ the four candidate public decoders. The checker also refuses byte-identical vend
 of the syntax owner's infinite corpus in any downstream repository and runs
 the three owner-corpus test targets at the exact candidate revisions.
 
+The decoder replay expects the candidate to accept every previous-tag byte string unless the break is declared in `declared-decoder-breaks.toml` (repo, replay fixture, schema identity, tag measured against, reason). Today only the `parse` fixture (parser report bytes) can be declared. For a declared fixture the candidate decoder must refuse the old bytes; if it accepts them the replay fails, so a declaration cannot go stale silently. Each declaration also needs a line in the candidate version's `CHANGELOG.md` section naming the schema identity in backticks with a `Migration:` note. The replay checks one fixture per crate, so a declaration proves only that fixture's refusal; other schema identities changed by the same edit are named in the CHANGELOG and checked by a reviewer, not by the gate.
+
 After the graph and MSRV lanes pass, a separate scratch consumer is generated
 with four exact Git commit dependencies and no path overrides. It asserts
 public parsing, rewriting, signal binding, trace evaluation, and C2PO mapping,

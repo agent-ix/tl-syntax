@@ -1,0 +1,16 @@
+# Declared breaks of a candidate decoder against bytes the previous release
+# wrote. The legacy decoder replay expects the candidate to REFUSE the named
+# replay fixture and fails if it accepts the bytes, so an entry goes stale the
+# moment the break is undone. Each entry also requires a line in the candidate
+# CHANGELOG release section naming the schema identity in backticks with a
+# `Migration:` note. Entries measured against an older tag are ignored. Only the
+# fixtures listed in `parse_declared_decoder_breaks` are replayed; other
+# identities affected by the same change are covered by the CHANGELOG review,
+# not by this replay.
+
+[[decoder_break]]
+repo = "tl-parse"
+fixture = "parse"
+identity = "tl-parse.diagnostics/v1"
+measured_against = "v0.3.0"
+reason = "tl-parse 0.4.0 removed the tl_syntax_revision field from ParseReport; the report types reject unknown fields, so v0.3.0 parser report bytes are refused. The schema identity is unchanged by decision for the pre-release 0.x line. Regenerate old reports."

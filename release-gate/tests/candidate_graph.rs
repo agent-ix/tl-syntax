@@ -3,8 +3,9 @@ use std::path::PathBuf;
 
 use tl_release_gate::{
     authorized_tag_plan, check, compare_goldens_with_exceptions, compare_legacy_goldens,
-    consumer_lock_differences, consumer_manifest, duplicated_owner_blobs, parse_golden_exceptions,
-    parse_semver_findings, reconcile_api_migrations, reconcile_breaking_exceptions,
+    consumer_lock_differences, consumer_manifest, declared_break_fixtures, duplicated_owner_blobs,
+    parse_declared_decoder_breaks, parse_golden_exceptions, parse_semver_findings,
+    reconcile_api_migrations, reconcile_breaking_exceptions, reconcile_declared_decoder_breaks,
     test_target_has_executed_cases, Candidate, CandidateFact, CandidateInput, CandidateSet,
     HistoricalLane, HumanReleaseDecision, CRATES,
 };
@@ -480,4 +481,83 @@ fn breaking_exceptions_need_a_changelog_migration_entry() {
         &other_repo
     )
     .is_empty());
+}
+
+/// TC-175: every item-kind line shape the tool prints maps to the real symbol.
+#[test]
+fn api_finding_symbols_drop_the_item_kind() {
+    let output = "--- failure function_missing: gone ---\nFailed in:\n  function tl_parse::dialect_document_digest, previously in file /tmp/x.rs:1\n  function tl_parse::attribution_document_digest, previously in file /tmp/x.rs:2\n\n--- failure struct_pub_field_missing: gone ---\nFailed in:\n  field tl_syntax_revision of struct ParseReport, previously in file /tmp/x.rs:3\n  field tl_syntax_revision of struct PastParseReport, previously in file /tmp/x.rs:4\n\n--- failure pub_module_level_const_missing: gone ---\nFailed in:\n  TL_SYNTAX_REVISION in file /tmp/x.rs:5\n";
+    let findings = parse_semver_findings(output).unwrap();
+    let keys: Vec<String> = findings
+        .iter()
+        .map(|finding| format!("{} {}", finding.lint, finding.symbol))
+        .collect();
+    assert_eq!(
+        keys,
+        [
+            "function_missing tl_parse::attribution_document_digest",
+            "function_missing tl_parse::dialect_document_digest",
+            "pub_module_level_const_missing TL_SYNTAX_REVISION",
+            "struct_pub_field_missing ParseReport::tl_syntax_revision",
+            "struct_pub_field_missing PastParseReport::tl_syntax_revision",
+        ]
+    );
+    assert!(parse_semver_findings(
+        "--- failure struct_pub_field_missing: x ---\nFailed in:\n  field only_a_name\n"
+    )
+    .is_err());
+}
+
+const DECLARED: &str = "[[decoder_break]]\nrepo = \"tl-parse\"\nfixture = \"parse\"\nidentity = \"tl-parse.diagnostics/v1\"\nmeasured_against = \"v0.3.0\"\nreason = \"field removed\"\n";
+
+/// TC-176: a declared decoder break is replayed as a required refusal and must
+/// be documented in the candidate CHANGELOG with a migration note.
+#[test]
+fn declared_decoder_breaks_are_replayed_and_changelog_enforced() {
+    let declared = parse_declared_decoder_breaks(DECLARED).unwrap();
+    assert_eq!(
+        declared_break_fixtures("tl-parse", "v0.3.0", &declared),
+        ["parse"]
+    );
+    assert!(declared_break_fixtures("tl-parse", "v0.4.0", &declared).is_empty());
+    assert!(declared_break_fixtures("tl-mltl", "v0.3.0", &declared).is_empty());
+    let documented = "## 0.4.0\n- Removed `tl_syntax_revision`. `tl-parse.diagnostics/v1` Migration: regenerate old reports.\n## 0.3.0\n";
+    assert!(reconcile_declared_decoder_breaks(
+        "tl-parse", "v0.3.0", "0.4.0", documented, &declared
+    )
+    .is_empty());
+    for changelog in [
+        "## 0.4.0\n- `tl-parse.diagnostics/v1` removed.\n## 0.3.0\n",
+        "## 0.4.0\n- `tl-parse.diagnostics/v1` Migration: \n## 0.3.0\n",
+        "## 0.3.0\n- `tl-parse.diagnostics/v1` Migration: old.\n",
+    ] {
+        assert_eq!(
+            reconcile_declared_decoder_breaks("tl-parse", "v0.3.0", "0.4.0", changelog, &declared)
+                .len(),
+            1,
+            "{changelog}"
+        );
+    }
+    assert!(
+        reconcile_declared_decoder_breaks("tl-mltl", "v0.3.0", "0.4.0", "", &declared).is_empty()
+    );
+    for bad in [
+        DECLARED.replace("tl-parse\"", "tl-other\""),
+        DECLARED.replace("\"parse\"", "\"mltl\""),
+        DECLARED.replace("field removed", " "),
+        format!("{DECLARED}\n{DECLARED}"),
+    ] {
+        assert!(parse_declared_decoder_breaks(&bad).is_err(), "{bad}");
+    }
+    parse_declared_decoder_breaks(include_str!("../declared-decoder-breaks.toml")).unwrap();
+}
+
+/// TC-176: the candidate replay refuses (not tolerates) a declared break and
+/// still insists on acceptance for every other fixture.
+#[test]
+fn candidate_replay_enforces_the_declared_refusal() {
+    let source = include_str!("../legacy-candidate.rs");
+    assert!(source.contains("TL_DECLARED_BREAKS"));
+    assert!(source.contains("serde_json::from_slice::<ParseReport>(&parser_bytes).is_err()"));
+    assert!(source.contains("candidate accepts old parse-report bytes"));
 }
