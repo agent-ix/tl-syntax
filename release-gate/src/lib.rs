@@ -785,3 +785,118 @@ pub fn compare_legacy_goldens(
     }
     differences
 }
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum GoldenChange {
+    Changed,
+    Deleted,
+}
+
+/// One declared, reasoned difference between a retained golden file and the
+/// same path at the tag it is measured against.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct GoldenException {
+    pub repo: String,
+    pub path: String,
+    pub kind: GoldenChange,
+    pub measured_against: String,
+    pub reason: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct GoldenExceptionFile {
+    #[serde(default)]
+    exception: Vec<GoldenException>,
+}
+
+/// Parse the checked-in exceptions file. Every entry needs a known repo, a
+/// non-empty path and a non-empty reason.
+pub fn parse_golden_exceptions(text: &str) -> Result<Vec<GoldenException>, String> {
+    let file: GoldenExceptionFile =
+        toml::from_str(text).map_err(|error| format!("golden exceptions: {error}"))?;
+    let mut seen = BTreeSet::new();
+    for entry in &file.exception {
+        if !CRATES.contains(&entry.repo.as_str()) {
+            return Err(format!(
+                "golden exception names unknown repo {}",
+                entry.repo
+            ));
+        }
+        if entry.path.is_empty() || entry.measured_against.is_empty() {
+            return Err(format!(
+                "golden exception {} lacks a path or tag",
+                entry.repo
+            ));
+        }
+        if entry.reason.trim().is_empty() {
+            return Err(format!(
+                "golden exception {}:{} lacks a reason",
+                entry.repo, entry.path
+            ));
+        }
+        if !seen.insert((
+            entry.repo.clone(),
+            entry.path.clone(),
+            entry.measured_against.clone(),
+        )) {
+            return Err(format!(
+                "golden exception {}:{} is declared twice",
+                entry.repo, entry.path
+            ));
+        }
+    }
+    Ok(file.exception)
+}
+
+/// Compare every retained golden to the previous tag. A changed or deleted file
+/// passes only when declared for this repo and tag with the matching kind; an
+/// undeclared difference or a declared exception that no longer differs fails.
+/// Exceptions measured against a different tag belong to an older release and
+/// are ignored.
+pub fn compare_goldens_with_exceptions(
+    repo: &str,
+    previous_tag: &str,
+    previous: &BTreeMap<String, Vec<u8>>,
+    candidate: &BTreeMap<String, Vec<u8>>,
+    exceptions: &[GoldenException],
+) -> Vec<String> {
+    let mut failures = Vec::new();
+    if previous.is_empty() {
+        failures.push("previous release has no legacy golden files".to_owned());
+    }
+    let declared: BTreeMap<&str, &GoldenException> = exceptions
+        .iter()
+        .filter(|entry| entry.repo == repo && entry.measured_against == previous_tag)
+        .map(|entry| (entry.path.as_str(), entry))
+        .collect();
+    let mut observed = BTreeSet::new();
+    for (path, old) in previous {
+        let kind = match candidate.get(path) {
+            None => GoldenChange::Deleted,
+            Some(new) if new != old => GoldenChange::Changed,
+            Some(_) => continue,
+        };
+        observed.insert(path.as_str());
+        match declared.get(path.as_str()) {
+            Some(entry) if entry.kind == kind => {}
+            Some(entry) => failures.push(format!(
+                "{path}: golden was {kind:?} but the exception declares {:?}",
+                entry.kind
+            )),
+            None => failures.push(format!(
+                "{path}: undeclared golden difference ({kind:?}) against {previous_tag}"
+            )),
+        }
+    }
+    for path in declared.keys() {
+        if !observed.contains(path) {
+            failures.push(format!(
+                "{path}: stale golden exception, the file no longer differs from {previous_tag}"
+            ));
+        }
+    }
+    failures
+}

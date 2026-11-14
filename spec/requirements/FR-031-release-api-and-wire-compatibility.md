@@ -36,7 +36,15 @@ unmatched tool finding blocks the release. A declared breaking release may
 contain documented breaks; the gate does not misstate them as compatible.
 Existing versioned wire formats retain byte-identical golden files and
 decoding semantics. New versions use new schema identities rather than
-rewriting prior-version bytes. Tool failure or an absent prior tag is a failed
+rewriting prior-version bytes. The gate compares every retained golden file
+against the previous release tag. A changed or deleted file passes only when it
+is declared in the checked-in exceptions file `release-gate/golden-exceptions.toml`
+with its repo, path, kind (changed or deleted), the tag it is measured against
+and a one-sentence reason. An undeclared difference, an exception of the wrong
+kind, or a declared exception whose file no longer differs from that tag (stale)
+fails the gate; an exception measured against an older tag is ignored. A
+wire-bearing difference is never excused as bookkeeping; its reason must name
+the break. Tool failure or an absent prior tag is a failed
 gate, not a pass.
 
 ## Acceptance Criteria
@@ -44,7 +52,7 @@ gate, not a pass.
 | ID | Criteria | Verification |
 |---|---|---|
 | FR-031-AC-1 | `cargo-semver-checks` compares each candidate to the preceding immutable release tag, and every break maps to one CHANGELOG break and migration note. | Test (TC-175) |
-| FR-031-AC-2 | Existing golden wire files are byte identical to the previous tag; altered bytes, absent schema, or a changed legacy decoder fail. | Test (TC-176) |
+| FR-031-AC-2 | Every retained golden file is byte identical to the previous tag unless declared in the exceptions file with a reason; an undeclared or stale difference, an absent schema, or a changed legacy decoder fails. | Test (TC-176) |
 
 ## Dependencies
 

@@ -10,8 +10,7 @@ tests at the MSRV. The JSON report names every static inconsistent edge and
 marks builds `not-run` when the graph is already invalid.
 
 Every crate compares retained legacy corpus bytes with its `previous_tag`
-(initially `v0.3.0`). New wire editions may add paths; old paths may neither
-disappear nor change; tl-mltl's retained `schemas/` are included. A separate
+(initially `v0.3.0`). New wire editions may add paths; old paths may neither disappear nor change, except as declared in `golden-exceptions.toml` (repo, path, kind changed or deleted, the tag measured against, and a reason). An undeclared difference, a wrong-kind exception or a stale one (the file no longer differs) fails; exceptions measured against an older tag are ignored. tl-mltl's retained `schemas/` are included. A separate
 external replay produces formula, parser report, trace and rewrite report bytes
 using the four preceding tagged crates, then admits those same bytes through
 the four candidate public decoders. The checker also refuses byte-identical vendored copies

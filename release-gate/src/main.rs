@@ -5,10 +5,10 @@ use std::process::{Command, ExitCode};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use tl_release_gate::{
-    check, compare_legacy_goldens, consumer_lock_differences, consumer_manifest,
-    duplicated_owner_blobs, test_target_has_executed_cases, BuildFact, Candidate, CandidateFact,
-    CandidateInput, CandidateSet, CorpusLaneFact, CorpusOwnershipFact, CrateWireFact,
-    LegacyDecoderFact, SmokeFact, WireFact,
+    check, compare_goldens_with_exceptions, consumer_lock_differences, consumer_manifest,
+    duplicated_owner_blobs, parse_golden_exceptions, test_target_has_executed_cases, BuildFact,
+    Candidate, CandidateFact, CandidateInput, CandidateSet, CorpusLaneFact, CorpusOwnershipFact,
+    CrateWireFact, LegacyDecoderFact, SmokeFact, WireFact,
 };
 
 fn git_bytes(path: &Path, args: &[&str]) -> Result<Vec<u8>, String> {
@@ -516,13 +516,26 @@ fn run(path: &Path) -> Result<bool, String> {
             Err(error) => report.failures.push(error),
         }
     }
+    let exceptions = match parse_golden_exceptions(include_str!("../golden-exceptions.toml")) {
+        Ok(exceptions) => exceptions,
+        Err(error) => {
+            report.failures.push(error);
+            Vec::new()
+        }
+    };
     for candidate in &set.candidates {
         match (
             golden_files(candidate, &candidate.previous_tag),
             golden_files(candidate, &candidate.commit),
         ) {
             (Ok(previous), Ok(current)) => {
-                let differences = compare_legacy_goldens(&previous, &current);
+                let differences = compare_goldens_with_exceptions(
+                    &candidate.name,
+                    &candidate.previous_tag,
+                    &previous,
+                    &current,
+                    &exceptions,
+                );
                 for difference in &differences {
                     report
                         .failures

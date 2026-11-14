@@ -34,7 +34,7 @@ remain outside automation.
 |---|---|---|---|
 | FR-029 | FR-029-AC-1 through FR-029-AC-3 | TC-170 through TC-172 | ✅ checker logic implemented and mutation-tested; first run on a real candidate graph pending |
 | FR-030 | FR-030-AC-1 through FR-030-AC-2 | TC-173, TC-174 | 🚧 planned (release-time replay lane; only the empty-population refusal is unit-tested) |
-| FR-031 | FR-031-AC-1 through FR-031-AC-2 | TC-175, TC-176 | 🚧 planned (blocked at release time on cargo-semver-checks and the candidate tags; byte comparison and migration reconciliation are unit-tested) |
+| FR-031 | FR-031-AC-1 through FR-031-AC-2 | TC-175, TC-176 | 🚧 planned (blocked at release time on cargo-semver-checks and the candidate tags; byte comparison with declared exceptions and migration reconciliation are unit-tested) |
 | FR-032 | FR-032-AC-1 through FR-032-AC-2 | TC-177, TC-178 | 🚧 planned (blocked on four candidate commits; manifest and lock binding is unit-tested) |
 | FR-033 | FR-033-AC-1 through FR-033-AC-2 | TC-179 | ✅ tag-plan refusal and ordering implemented and tested; the human decision itself is external |
 | NFR-007 | NFR-007-AC-1 | TC-179 | 🚧 planned (report identity binding is exercised only by a real run) |
@@ -49,7 +49,7 @@ remain outside automation.
 | TC-173 | Replay all applicable owner corpus cases across four candidate crates | Integration | P0 | FR-030-AC-1 | 🚧 planned (release-time lane) |
 | TC-174 | Reject missing, changed, skipped or disagreeing corpus cases | Integration | P0 | FR-030-AC-2 | 🚧 planned (`corpus_target_cannot_pass_with_an_empty_or_ignored_population` covers the empty-population refusal only) |
 | TC-175 | Compare public APIs to preceding tags and reconcile breaks to migration notes | Integration | P0 | FR-031-AC-1 | 🚧 planned (blocked at release time on cargo-semver-checks; reconciliation is unit-tested) |
-| TC-176 | Compare legacy wire goldens byte for byte and reject changed decoders | Integration | P0 | FR-031-AC-2 | 🚧 planned (byte comparison unit-tested; decoder replay runs against the preceding tags at release time) |
+| TC-176 | Compare legacy wire goldens byte for byte, allowing only declared reasoned exceptions (undeclared and stale ones fail), and reject changed decoders | Integration | P0 | FR-031-AC-2 | 🚧 planned (byte comparison and the declared-exception rule (`golden_differences_need_matching_declared_exceptions`) unit-tested; decoder replay runs against the preceding tags at release time) |
 | TC-177 | Exercise all public downstream consumer operations at exact pins | Integration | P0 | FR-032-AC-1 | 🚧 planned (release-time lane) |
 | TC-178 | Build and run one locked consumer at MSRV and stable; reject wrong pins | Integration | P0 | FR-032-AC-2 | 🚧 planned (manifest and lock binding unit-tested; builds are release-time) |
 | TC-179 | Refuse tags absent exact human decision and reproducible bound evidence | Integration | P0 | FR-033-AC-1, FR-033-AC-2, NFR-007-AC-1 | ✅ for FR-033-AC-1 and FR-033-AC-2 (`exact_human_decision_only_yields_dependency_ordered_tag_plan`); NFR-007-AC-1 planned |

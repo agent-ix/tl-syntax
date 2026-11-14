@@ -2,10 +2,10 @@ use std::collections::BTreeMap;
 use std::path::PathBuf;
 
 use tl_release_gate::{
-    authorized_tag_plan, check, compare_legacy_goldens, consumer_lock_differences,
-    consumer_manifest, duplicated_owner_blobs, parse_semver_findings, reconcile_api_migrations,
-    test_target_has_executed_cases, Candidate, CandidateFact, CandidateInput, CandidateSet,
-    HistoricalLane, HumanReleaseDecision, CRATES,
+    authorized_tag_plan, check, compare_goldens_with_exceptions, compare_legacy_goldens,
+    consumer_lock_differences, consumer_manifest, duplicated_owner_blobs, parse_golden_exceptions,
+    parse_semver_findings, reconcile_api_migrations, test_target_has_executed_cases, Candidate,
+    CandidateFact, CandidateInput, CandidateSet, HistoricalLane, HumanReleaseDecision, CRATES,
 };
 
 fn sha(digit: char) -> String {
@@ -384,4 +384,62 @@ fn corpus_target_cannot_pass_with_an_empty_or_ignored_population() {
     assert!(!test_target_has_executed_cases(
         "running 1 test\ntest result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out"
     ));
+}
+
+fn exception(path: &str, kind: &str, tag: &str) -> String {
+    format!(
+        "[[exception]]\nrepo = \"tl-syntax\"\npath = \"{path}\"\nkind = \"{kind}\"\nmeasured_against = \"{tag}\"\nreason = \"fixture reason\"\n"
+    )
+}
+
+/// TC-176: a changed or deleted golden passes only when declared with its kind;
+/// undeclared, wrong-kind and stale declarations fail.
+#[test]
+fn golden_differences_need_matching_declared_exceptions() {
+    let previous = BTreeMap::from([
+        ("corpus/a.json".to_owned(), b"old".to_vec()),
+        ("corpus/b.json".to_owned(), b"keep".to_vec()),
+    ]);
+    let run = |current: &BTreeMap<String, Vec<u8>>, text: &str| {
+        let declared = parse_golden_exceptions(text).unwrap();
+        compare_goldens_with_exceptions("tl-syntax", "v0.3.0", &previous, current, &declared)
+    };
+    let unchanged = previous.clone();
+    let mut changed = previous.clone();
+    changed.insert("corpus/a.json".to_owned(), b"new".to_vec());
+    let mut deleted = previous.clone();
+    deleted.remove("corpus/a.json");
+
+    // undeclared change fails
+    let failures = run(&changed, "");
+    assert!(failures.iter().any(|f| f.contains("undeclared")));
+    // declared change passes
+    assert!(run(&changed, &exception("corpus/a.json", "changed", "v0.3.0")).is_empty());
+    // declared deletion passes
+    assert!(run(&deleted, &exception("corpus/a.json", "deleted", "v0.3.0")).is_empty());
+    // an exception of the wrong kind fails
+    assert!(!run(&deleted, &exception("corpus/a.json", "changed", "v0.3.0")).is_empty());
+    // a declared exception whose file no longer differs is stale
+    let stale = run(&unchanged, &exception("corpus/a.json", "changed", "v0.3.0"));
+    assert!(stale.iter().any(|f| f.contains("stale")));
+    // an exception for another repo does not excuse this one
+    let other = exception("corpus/a.json", "changed", "v0.3.0").replace("tl-syntax", "tl-parse");
+    assert!(!run(&changed, &other).is_empty());
+    // an exception measured against an older tag neither excuses nor goes stale
+    let older = exception("corpus/a.json", "changed", "v0.2.0");
+    assert!(!run(&changed, &older).is_empty());
+    assert!(run(&unchanged, &older).is_empty());
+    // malformed declarations are refused
+    assert!(parse_golden_exceptions(
+        &exception("x", "changed", "v0.3.0").replace("fixture reason", " ")
+    )
+    .is_err());
+    assert!(parse_golden_exceptions(&exception("x", "renamed", "v0.3.0")).is_err());
+}
+
+/// The checked-in exceptions file parses and every entry is for this release.
+#[test]
+fn checked_in_golden_exceptions_parse() {
+    let declared = parse_golden_exceptions(include_str!("../golden-exceptions.toml")).unwrap();
+    assert_eq!(declared.len(), 9);
 }
