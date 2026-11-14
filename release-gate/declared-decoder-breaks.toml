@@ -5,19 +5,45 @@
 # CHANGELOG release section naming the schema identity in backticks with a
 # `Migration:` note. Entries measured against an older tag are ignored.
 #
-# `removed_field` is the top-level key the candidate dropped: the replay strips
-# it from the old bytes and requires the rest to decode, so the refusal is proven
-# to come from that removal alone. The identity must be the one the fixture
-# carries (`parse` is `tl-parse.diagnostics/v1`).
+# `removed_fields` are the wire names of the top-level keys the candidate
+# dropped. `proof` says what the replay shows about the refusal:
+#   strip_decode        the old bytes are refused as they are, and the same bytes
+#                       with the removed fields stripped decode and pass the
+#                       fixture's content checks, so the refusal comes from
+#                       exactly that removal;
+#   refused_names_field the old bytes are refused and the refusal message names
+#                       the (single) removed field. Used where the stripped bytes
+#                       still fail because a digest preimage covered the field.
 #
-# Only the fixtures listed in `parse_declared_decoder_breaks` are replayed; other
-# identities affected by the same change are covered by the CHANGELOG review,
-# not by this replay.
+# The identity must be the one the fixture carries: `parse` is
+# `tl-parse.diagnostics/v1`, `rewrite` is `tl-rewrite.report/v1` and
+# `conformance` is `tl-rewrite.conformance/v1`. Only those fixtures are replayed
+# (`replay.json` is replayed as required-accepted); other identities affected by
+# the same change are covered by the CHANGELOG review, not by this replay.
 
 [[decoder_break]]
 repo = "tl-parse"
 fixture = "parse"
-removed_field = "tl_syntax_revision"
+proof = "strip_decode"
+removed_fields = ["tl_syntax_revision"]
 identity = "tl-parse.diagnostics/v1"
 measured_against = "v0.3.0"
 reason = "tl-parse 0.4.0 removed the tl_syntax_revision field from ParseReport; the report types reject unknown fields, so v0.3.0 parser report bytes are refused. The schema identity is unchanged by decision for the pre-release 0.x line. Regenerate old reports."
+
+[[decoder_break]]
+repo = "tl-rewrite"
+fixture = "rewrite"
+proof = "refused_names_field"
+removed_fields = ["syntaxRevision"]
+identity = "tl-rewrite.report/v1"
+measured_against = "v0.3.0"
+reason = "tl-rewrite 0.4.0 removed the syntaxRevision field from RewriteReport; the record decoder rejects unknown fields, so v0.3.0 rewrite report bytes are refused with the field named. The report digest preimage covered the field, so the stripped bytes are refused too and only the named refusal is proven. The schema identity is unchanged by decision for the pre-release 0.x line. Regenerate old reports."
+
+[[decoder_break]]
+repo = "tl-rewrite"
+fixture = "conformance"
+proof = "strip_decode"
+removed_fields = ["evaluatorRevision", "syntaxRevision"]
+identity = "tl-rewrite.conformance/v1"
+measured_against = "v0.3.0"
+reason = "tl-rewrite 0.4.0 removed the evaluatorRevision and syntaxRevision fields from ConformanceReport; the report rejects unknown fields, so v0.3.0 conformance report bytes are refused. The schema identity is unchanged by decision for the pre-release 0.x line. Regenerate old reports."
