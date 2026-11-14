@@ -139,3 +139,140 @@ fn a_previous_runs_outcomes_are_not_judged_when_this_run_writes_none() {
     let status = mutants_in(&control, OsStr::new(FAKE), "out", &options(Some("HEAD"))).unwrap();
     assert_ne!(status, 0);
 }
+
+fn set_baseline(dir: &Path, statuses: &str) {
+    fs::write(dir.join("fake-baseline.txt"), statuses).unwrap();
+}
+
+fn set_runs(dir: &Path, runs: u32) {
+    let path = dir.join("mutation-thresholds.toml");
+    let text = fs::read_to_string(&path).unwrap();
+    fs::write(&path, format!("baseline_runs = {runs}\n{text}")).unwrap();
+}
+
+/// Extra baseline runs the fake `cargo test` counted; `None` when it never ran.
+fn extra_runs(dir: &Path) -> Option<String> {
+    fs::read_to_string(dir.join("fake-baseline.count")).ok()
+}
+
+#[test]
+fn cargo_mutants_keeps_its_own_baseline_and_one_extra_run_is_added_by_default() {
+    let dir = scratch("baseline-default");
+    configure(&dir, 0, Some(CAUGHT));
+    assert_eq!(
+        mutants_in(&dir, OsStr::new(FAKE), "out", &options(None)).unwrap(),
+        0
+    );
+    assert_eq!(extra_runs(&dir).as_deref(), Some("1"));
+    let args = fs::read_to_string(dir.join("out/args.txt")).unwrap();
+    assert!(!args.contains("--baseline"), "{args}");
+}
+
+#[test]
+fn baseline_runs_is_read_from_the_thresholds_file() {
+    let dir = scratch("baseline-three");
+    set_runs(&dir, 3);
+    configure(&dir, 0, Some(CAUGHT));
+    mutants_in(&dir, OsStr::new(FAKE), "out", &options(None)).unwrap();
+    assert_eq!(extra_runs(&dir).as_deref(), Some("2"));
+}
+
+#[test]
+fn a_single_baseline_run_adds_no_extra_run() {
+    let dir = scratch("baseline-one");
+    set_runs(&dir, 1);
+    configure(&dir, 0, Some(CAUGHT));
+    mutants_in(&dir, OsStr::new(FAKE), "out", &options(None)).unwrap();
+    assert_eq!(extra_runs(&dir), None);
+}
+
+#[test]
+fn an_intermittent_extra_baseline_refuses_the_campaign_without_running_it() {
+    for statuses in ["0 1", "1 0", "1 1"] {
+        for base in [None, Some("HEAD")] {
+            let dir = scratch("baseline-flaky");
+            set_runs(&dir, 3);
+            git(&dir, &["init", "-q"]);
+            git(&dir, &["add", "-A"]);
+            git(&dir, &["commit", "-q", "-m", "base"]);
+            set_baseline(&dir, statuses);
+            configure(&dir, 0, Some(CAUGHT));
+            let status = mutants_in(&dir, OsStr::new(FAKE), "out", &options(base)).unwrap();
+            assert_eq!(status, 1, "{statuses} base={base:?}");
+            assert!(!dir.join("out/args.txt").exists(), "campaign ran");
+        }
+    }
+}
+
+#[test]
+fn a_failing_single_extra_baseline_refuses_the_campaign() {
+    let dir = scratch("baseline-fails");
+    set_baseline(&dir, "1");
+    configure(&dir, 0, Some(CAUGHT));
+    assert_eq!(
+        mutants_in(&dir, OsStr::new(FAKE), "out", &options(None)).unwrap(),
+        1
+    );
+    assert!(!dir.join("out/args.txt").exists(), "campaign ran");
+}
+
+#[test]
+fn a_diff_with_no_mutants_pays_for_no_extra_baseline_run() {
+    let dir = scratch("baseline-no-mutants");
+    git(&dir, &["init", "-q"]);
+    git(&dir, &["add", "-A"]);
+    git(&dir, &["commit", "-q", "-m", "base"]);
+    fs::write(dir.join("fake-list.txt"), "").unwrap();
+    configure(&dir, 0, None);
+    let status = mutants_in(&dir, OsStr::new(FAKE), "out", &options(Some("HEAD"))).unwrap();
+    assert_eq!(status, 0);
+    assert_eq!(extra_runs(&dir), None);
+}
+
+#[test]
+fn a_diff_with_mutants_pays_for_the_extra_baseline_run() {
+    let dir = scratch("baseline-diff-mutants");
+    git(&dir, &["init", "-q"]);
+    git(&dir, &["add", "-A"]);
+    git(&dir, &["commit", "-q", "-m", "base"]);
+    configure(&dir, 0, Some(CAUGHT));
+    mutants_in(&dir, OsStr::new(FAKE), "out", &options(Some("HEAD"))).unwrap();
+    assert_eq!(extra_runs(&dir).as_deref(), Some("1"));
+}
+
+#[test]
+fn the_extra_run_command_is_derived_from_a_tl_mltl_shaped_config() {
+    // Shaped like tl-mltl's .cargo/mutants.toml: extra cargo args, test args after `--`, and keys
+    // that do not affect the test selection.
+    let config = r#"
+exclude_globs = ["src/ci_guard.rs"]
+additional_cargo_args = ["--all-features"]
+minimum_test_timeout = 300
+timeout_multiplier = 3.0
+exclude_re = ['^src/a\.rs:\d+:\d+: replace < with <= in f$']
+additional_cargo_test_args = ["--", "--skip", "external_consumer_feature_tree_and_complete_bounded_bytes", "--skip", "mutation_gate_"]
+"#;
+    let dir = scratch("derived");
+    fs::create_dir_all(dir.join(".cargo")).unwrap();
+    fs::write(dir.join(".cargo/mutants.toml"), config).unwrap();
+    configure(&dir, 0, Some(CAUGHT));
+    mutants_in(&dir, OsStr::new(FAKE), "out", &options(None)).unwrap();
+    let ran = fs::read_to_string(dir.join("fake-baseline.args")).unwrap();
+    assert_eq!(
+        ran,
+        "test --all-features -- --skip external_consumer_feature_tree_and_complete_bounded_bytes --skip mutation_gate_"
+    );
+}
+
+#[test]
+fn a_config_the_extra_runs_cannot_reproduce_is_refused_before_any_run() {
+    for config in ["test_tool = \"nextest\"\n", "test_package = [\"a\"]\n"] {
+        let dir = scratch("irreproducible");
+        fs::create_dir_all(dir.join(".cargo")).unwrap();
+        fs::write(dir.join(".cargo/mutants.toml"), config).unwrap();
+        configure(&dir, 0, Some(CAUGHT));
+        let error = mutants_in(&dir, OsStr::new(FAKE), "out", &options(None)).unwrap_err();
+        assert!(error.contains("not supported"), "{error}");
+        assert!(!dir.join("out/args.txt").exists(), "campaign ran");
+    }
+}

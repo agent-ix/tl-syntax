@@ -12,6 +12,11 @@ diff_min_kill_percent = 100.0
 require_survivor_reasons = true
 exclude = []
 
+# The unmutated suite runs `baseline_runs` times (default 2) before the campaign; the campaign is
+# refused unless every run passes. cargo-mutants' own baseline is one run; the extra
+# runs use the test command derived from .cargo/mutants.toml.
+baseline_runs = 2
+
 # future lowering, formula graph and interval arithmetic
 [[group]]
 name = "core"

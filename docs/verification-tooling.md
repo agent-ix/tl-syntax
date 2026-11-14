@@ -25,7 +25,10 @@ llvm-tools).
 Kill rate is `caught / (caught + missed + timeout)`: a timeout counts as not killed, and unviable mutants
 count on neither side. Each group in `mutation-thresholds.toml` has a floor; the gate prints a table and
 exits 1 when a group is below its floor, when a group has no viable mutants, or when the unmutated
-baseline failed. The campaign targets are a core group and a whole-crate group (the core is `src/future.rs` and `src/formula/graph.rs` (future lowering, formula graph, interval arithmetic)).
+baseline failed or was unstable. The unmutated suite must pass `baseline_runs` times (default 2). cargo-mutants'
+own baseline is one run; `tl-gate mutants` first runs the other `baseline_runs - 1` itself, with the test command
+derived from `.cargo/mutants.toml` (a test tool other than `cargo test` or a key it cannot reproduce is refused),
+and skips them when a diff run has no mutants. An unstable baseline refuses the campaign with no kill rate. The campaign targets are a core group and a whole-crate group (the core is `src/future.rs` and `src/formula/graph.rs` (future lowering, formula graph, interval arithmetic)).
 
 Excluded from every threshold: nothing (the crate has no CI-plumbing module). Mutants that cannot change behavior are excluded in `exclude_re` of `.cargo/mutants.toml`, each with a one-line reason, so they are never generated.
 

@@ -172,3 +172,72 @@ fn a_failing_baseline_refuses_the_campaign_and_prints_no_kill_rate() {
         assert!(!run.stdout.contains("kill"), "{}", run.stdout);
     }
 }
+
+/// Outcomes with one Baseline entry per element of `baselines` ("Success" or "Failure").
+fn write_baselines(dir: &Path, baselines: &[&str]) {
+    let all: Vec<String> = baselines
+        .iter()
+        .map(|s| format!(r#"{{"scenario":"Baseline","summary":"{s}"}}"#))
+        .chain([outcome("CaughtMutant", "x")])
+        .collect();
+    fs::write(
+        dir.join("outcomes.json"),
+        format!(r#"{{"outcomes":[{}]}}"#, all.join(",")),
+    )
+    .unwrap();
+}
+
+#[test]
+fn a_baseline_that_passes_every_run_is_judged_normally() {
+    let dir = scratch("baseline-all-pass");
+    write_baselines(&dir, &["Success", "Success"]);
+    let toml = thresholds(&dir, 50.0, "");
+    for diff in [false, true] {
+        let run = gate(diff, &dir, &toml);
+        assert_eq!(run.status, 0, "diff={diff}: {}", run.stdout);
+        assert!(run.stdout.contains("kill"), "{}", run.stdout);
+        assert!(!run.stdout.contains("baseline"), "{}", run.stdout);
+    }
+}
+
+#[test]
+fn a_baseline_that_fails_every_run_is_not_called_unstable() {
+    let dir = scratch("baseline-all-fail");
+    write_baselines(&dir, &["Failure", "Failure"]);
+    let toml = thresholds(&dir, 0.0, "");
+    for diff in [false, true] {
+        let run = gate(diff, &dir, &toml);
+        assert_eq!(run.status, 1, "diff={diff}");
+        assert!(
+            run.stdout
+                .contains("FAIL baseline: the unmutated tree did not pass its tests"),
+            "{}",
+            run.stdout
+        );
+        assert!(!run.stdout.contains("kill"), "{}", run.stdout);
+    }
+}
+
+#[test]
+fn a_baseline_that_passes_only_some_runs_is_unstable_and_prints_no_kill_rate() {
+    let dir = scratch("baseline-mixed");
+    let toml = thresholds(&dir, 0.0, "");
+    for runs in [
+        &["Success", "Failure"][..],
+        &["Failure", "Success"],
+        &["Success", "Success", "Failure"],
+    ] {
+        write_baselines(&dir, runs);
+        let passed = runs.iter().filter(|s| **s == "Success").count();
+        for diff in [false, true] {
+            let run = gate(diff, &dir, &toml);
+            assert_eq!(run.status, 1, "diff={diff} {runs:?}");
+            let line = format!(
+                "FAIL baseline: unstable (passed {passed} of {} runs)",
+                runs.len()
+            );
+            assert!(run.stdout.contains(&line), "{}", run.stdout);
+            assert!(!run.stdout.contains("kill"), "{}", run.stdout);
+        }
+    }
+}

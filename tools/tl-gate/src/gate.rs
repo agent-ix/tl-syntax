@@ -49,6 +49,26 @@ struct Thresholds {
     /// `[[survivor]]` with a non-empty reason (FR-022-AC-5).
     #[serde(default)]
     require_survivor_reasons: bool,
+    /// How many times the unmutated suite must pass before the campaign (default 2, at least 1);
+    /// cargo-mutants' own baseline is one of them and the rest run the test command derived from
+    /// `.cargo/mutants.toml`.
+    /// The campaign is refused unless every run passes: a baseline that passes only
+    /// intermittently is not green (FR-022-AC-2).
+    #[serde(default = "default_baseline_runs")]
+    baseline_runs: u32,
+}
+
+fn default_baseline_runs() -> u32 {
+    2
+}
+
+/// The number of unmutated baseline runs a thresholds file asks for.
+pub(crate) fn baseline_runs(thresholds_text: &str) -> Result<u32, String> {
+    let thresholds: Thresholds = toml::from_str(thresholds_text).map_err(|e| e.to_string())?;
+    if thresholds.baseline_runs == 0 {
+        return Err("baseline_runs must be at least 1".to_owned());
+    }
+    Ok(thresholds.baseline_runs)
 }
 
 /// Result of judging one run.
@@ -158,12 +178,14 @@ pub fn judge(outcomes: &[Value], thresholds_text: &str, mode: Mode) -> Result<Ju
         })
         .collect();
 
-    let mut baseline_ok = true;
+    let mut baseline_runs = 0_u32;
+    let mut baseline_passed = 0_u32;
     let mut merged: BTreeMap<(String, String), &Value> = BTreeMap::new();
     for outcome in outcomes {
         let scenario = &outcome["scenario"];
         if scenario == "Baseline" {
-            baseline_ok &= outcome["summary"] == "Success";
+            baseline_runs += 1;
+            baseline_passed += u32::from(outcome["summary"] == "Success");
             continue;
         }
         let mutant = &scenario["Mutant"];
@@ -221,13 +243,17 @@ pub fn judge(outcomes: &[Value], thresholds_text: &str, mode: Mode) -> Result<Ju
         }
     }
 
-    let mut failed = !baseline_ok || !unreasoned.is_empty();
+    let mut failed = !unreasoned.is_empty();
     let mut lines: Vec<String> = unreasoned
         .iter()
         .map(|s| format!("FAIL survivor without a reason: {s}"))
         .collect();
-    if !baseline_ok {
-        lines.push("FAIL baseline: the unmutated tree did not pass its tests".into());
+    if baseline_passed != baseline_runs {
+        lines.push(if baseline_passed == 0 {
+            "FAIL baseline: the unmutated tree did not pass its tests".to_owned()
+        } else {
+            format!("FAIL baseline: unstable (passed {baseline_passed} of {baseline_runs} runs)")
+        });
         // A campaign whose baseline fails measures nothing: report the refusal and no kill rate.
         return Ok(Judgement {
             status: 1,
