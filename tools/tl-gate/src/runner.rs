@@ -99,35 +99,81 @@ pub fn mutants_in(
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
         Err(e) => return Err(format!("{}: {e}", stale.display())),
     }
-    let mut command = Command::new(cargo);
-    command.current_dir(dir).args([
-        "mutants",
-        "-j",
-        &options.jobs,
-        "--no-shuffle",
-        "--output",
-        out_dir,
-    ]);
+    let thresholds_path = dir.join("mutation-thresholds.toml");
+    let thresholds_text = fs::read_to_string(&thresholds_path)
+        .map_err(|e| format!("{}: {e}", thresholds_path.display()))?;
+    let (runs, baseline_args) = gate::baseline_plan(&thresholds_text)?;
+    let mut envs: Vec<(&str, String)> = Vec::new();
     if options.source_env {
         let dirty = capture(
             dir,
             "git",
             &["status", "--porcelain", "--untracked-files=no"],
         )?;
-        command
-            .env(
-                "TL_MLTL_SOURCE_REVISION",
-                capture(dir, "git", &["rev-parse", "HEAD"])?,
-            )
-            .env(
-                "TL_MLTL_SOURCE_STATE",
-                if dirty.is_empty() {
-                    "clean"
-                } else {
-                    "modified"
-                },
-            );
+        envs.push((
+            "TL_MLTL_SOURCE_REVISION",
+            capture(dir, "git", &["rev-parse", "HEAD"])?,
+        ));
+        envs.push((
+            "TL_MLTL_SOURCE_STATE",
+            if dirty.is_empty() {
+                "clean"
+            } else {
+                "modified"
+            }
+            .to_owned(),
+        ));
     }
+
+    // The unmutated suite runs `runs` times before the campaign; every run is recorded as a
+    // Baseline outcome so the gate sees disagreement. cargo-mutants then skips its own baseline.
+    let baseline_dir = out_path.join("baseline");
+    fs::create_dir_all(&baseline_dir).map_err(|e| format!("{}: {e}", baseline_dir.display()))?;
+    let mut recorded = Vec::new();
+    let mut passed = 0_u32;
+    for _ in 0..runs {
+        let status = Command::new(cargo)
+            .current_dir(dir)
+            .args(&baseline_args)
+            .envs(envs.iter().map(|(k, v)| (*k, v)))
+            .status()
+            .map_err(|e| format!("{}: {e}", cargo.to_string_lossy()))?;
+        let ok = status.success();
+        passed += u32::from(ok);
+        recorded.push(format!(
+            r#"{{"scenario":"Baseline","summary":"{}"}}"#,
+            if ok { "Success" } else { "Failure" }
+        ));
+    }
+    let baseline_file = baseline_dir.join("outcomes.json");
+    fs::write(
+        &baseline_file,
+        format!(r#"{{"outcomes":[{}]}}"#, recorded.join(",")),
+    )
+    .map_err(|e| format!("{}: {e}", baseline_file.display()))?;
+    let baseline_gate = baseline_dir.to_string_lossy().into_owned();
+    let thresholds_arg = thresholds_path.to_string_lossy().into_owned();
+    let diff_flag = options.diff_base.is_some().then(|| "--diff".to_owned());
+    if passed != runs {
+        eprintln!("run_mutants: baseline passed {passed} of {runs} runs; the campaign is not run");
+        let args = diff_flag.into_iter().chain([baseline_gate, thresholds_arg]);
+        return Ok(gate::command(args.collect()));
+    }
+
+    let mut command = Command::new(cargo);
+    command
+        .current_dir(dir)
+        .envs(envs.iter().map(|(k, v)| (*k, v)))
+        .args([
+            "mutants",
+            "-j",
+            &options.jobs,
+            "--no-shuffle",
+            "--baseline",
+            "skip",
+            "--output",
+            out_dir,
+        ]);
     if let Some(base) = &options.diff_base {
         let diff = Command::new("git")
             .current_dir(dir)
@@ -155,15 +201,9 @@ pub fn mutants_in(
             return Ok(other.map_or(1, |c| u8::try_from(c).unwrap_or(1)));
         }
     }
-    let mut gate_args = Vec::new();
-    if options.diff_base.is_some() {
-        gate_args.push("--diff".to_owned());
-    }
-    gate_args.push(out_path.join("mutants.out").to_string_lossy().into_owned());
-    gate_args.push(
-        dir.join("mutation-thresholds.toml")
-            .to_string_lossy()
-            .into_owned(),
-    );
-    Ok(gate::command(gate_args))
+    let mutants_out = out_path.join("mutants.out").to_string_lossy().into_owned();
+    let args = diff_flag
+        .into_iter()
+        .chain([format!("{baseline_gate},{mutants_out}"), thresholds_arg]);
+    Ok(gate::command(args.collect()))
 }

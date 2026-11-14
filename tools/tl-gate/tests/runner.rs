@@ -139,3 +139,55 @@ fn a_previous_runs_outcomes_are_not_judged_when_this_run_writes_none() {
     let status = mutants_in(&control, OsStr::new(FAKE), "out", &options(Some("HEAD"))).unwrap();
     assert_ne!(status, 0);
 }
+
+fn set_baseline(dir: &Path, statuses: &str) {
+    fs::write(dir.join("fake-baseline.txt"), statuses).unwrap();
+}
+
+fn baseline_runs_done(dir: &Path) -> String {
+    fs::read_to_string(dir.join("fake-baseline.count")).unwrap()
+}
+
+#[test]
+fn the_baseline_runs_twice_by_default_before_the_campaign() {
+    let dir = scratch("baseline-default");
+    configure(&dir, 0, Some(CAUGHT));
+    assert_eq!(
+        mutants_in(&dir, OsStr::new(FAKE), "out", &options(None)).unwrap(),
+        0
+    );
+    assert_eq!(baseline_runs_done(&dir), "2");
+    let args = fs::read_to_string(dir.join("out/args.txt")).unwrap();
+    assert!(args.contains("--baseline\nskip"), "{args}");
+}
+
+#[test]
+fn baseline_runs_is_read_from_the_thresholds_file() {
+    let dir = scratch("baseline-three");
+    let path = dir.join("mutation-thresholds.toml");
+    let text = fs::read_to_string(&path).unwrap();
+    fs::write(&path, format!("baseline_runs = 3\n{text}")).unwrap();
+    configure(&dir, 0, Some(CAUGHT));
+    mutants_in(&dir, OsStr::new(FAKE), "out", &options(None)).unwrap();
+    assert_eq!(baseline_runs_done(&dir), "3");
+}
+
+#[test]
+fn an_intermittent_baseline_refuses_the_campaign_without_running_it() {
+    for statuses in ["0 1", "1 0", "1 1"] {
+        let dir = scratch("baseline-flaky");
+        set_baseline(&dir, statuses);
+        configure(&dir, 0, Some(CAUGHT));
+        for base in [None, Some("HEAD")] {
+            if base.is_some() {
+                git(&dir, &["init", "-q"]);
+                git(&dir, &["add", "-A"]);
+                git(&dir, &["commit", "-q", "-m", "base"]);
+                fs::remove_file(dir.join("fake-baseline.count")).unwrap();
+            }
+            let status = mutants_in(&dir, OsStr::new(FAKE), "out", &options(base)).unwrap();
+            assert_eq!(status, 1, "{statuses} base={base:?}");
+            assert!(!dir.join("out/args.txt").exists(), "campaign ran");
+        }
+    }
+}
