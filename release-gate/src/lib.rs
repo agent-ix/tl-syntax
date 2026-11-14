@@ -217,20 +217,20 @@ fn finding_symbol(text: &str) -> Result<String, String> {
     let first = words.next().ok_or("empty semver finding")?;
     let clean = |word: &str| word.trim_end_matches(',').to_owned();
     match first {
-        "variant" | "function" | "method" | "struct" | "enum" | "trait" | "module" | "constant"
-        | "static" | "type" => words
+        "variant" | "function" | "struct" | "enum" | "trait" | "module" | "constant" | "static"
+        | "type" => words
             .next()
             .map(clean)
             .ok_or_else(|| format!("semver finding lacks a symbol after {first}")),
-        "field" => {
+        "field" | "method" => {
             let name = words
                 .next()
                 .map(clean)
-                .ok_or("semver field finding lacks a name")?;
+                .ok_or("semver {first} finding lacks a name")?;
             let (Some("of"), Some(_kind), Some(owner)) = (words.next(), words.next(), words.next())
             else {
                 return Err(format!(
-                    "semver field finding is not `field F of struct S`: {text}"
+                    "semver {first} finding is not `{first} F of <kind> S`: {text}"
                 ));
             };
             Ok(format!("{}::{name}", clean(owner)))
@@ -990,6 +990,10 @@ pub struct DeclaredDecoderBreak {
     pub repo: String,
     /// Replay fixture name: `parse` for the parser report bytes.
     pub fixture: String,
+    /// Top-level JSON key the candidate removed. The replay strips it from the
+    /// old bytes and requires the rest to decode, so the refusal is proven to
+    /// come from this removal alone.
+    pub removed_field: String,
     /// Schema identity whose old bytes the candidate refuses.
     pub identity: String,
     pub measured_against: String,
@@ -1022,6 +1026,22 @@ pub fn parse_declared_decoder_breaks(text: &str) -> Result<Vec<DeclaredDecoderBr
                 entry.identity, entry.fixture
             ));
         }
+        let expected = match entry.fixture.as_str() {
+            "parse" => "tl-parse.diagnostics/v1",
+            _ => unreachable!("fixture validated above"),
+        };
+        if entry.identity != expected {
+            return Err(format!(
+                "declared decoder break fixture {} carries identity {expected}, not {}",
+                entry.fixture, entry.identity
+            ));
+        }
+        if entry.removed_field.trim().is_empty() {
+            return Err(format!(
+                "declared decoder break {} lacks a removed field",
+                entry.identity
+            ));
+        }
         if entry.identity.trim().is_empty()
             || entry.measured_against.trim().is_empty()
             || entry.reason.trim().is_empty()
@@ -1045,7 +1065,7 @@ pub fn parse_declared_decoder_breaks(text: &str) -> Result<Vec<DeclaredDecoderBr
     Ok(file.decoder_break)
 }
 
-/// Fixture names the replay must see refused for this repo and tag.
+/// `fixture:removed_field` pairs the replay must see refused for this repo and tag.
 pub fn declared_break_fixtures(
     repo: &str,
     previous_tag: &str,
@@ -1054,7 +1074,7 @@ pub fn declared_break_fixtures(
     declared
         .iter()
         .filter(|entry| entry.repo == repo && entry.measured_against == previous_tag)
-        .map(|entry| entry.fixture.clone())
+        .map(|entry| format!("{}:{}", entry.fixture, entry.removed_field))
         .collect()
 }
 

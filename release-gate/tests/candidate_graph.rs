@@ -508,7 +508,7 @@ fn api_finding_symbols_drop_the_item_kind() {
     .is_err());
 }
 
-const DECLARED: &str = "[[decoder_break]]\nrepo = \"tl-parse\"\nfixture = \"parse\"\nidentity = \"tl-parse.diagnostics/v1\"\nmeasured_against = \"v0.3.0\"\nreason = \"field removed\"\n";
+const DECLARED: &str = "[[decoder_break]]\nrepo = \"tl-parse\"\nfixture = \"parse\"\nremoved_field = \"tl_syntax_revision\"\nidentity = \"tl-parse.diagnostics/v1\"\nmeasured_against = \"v0.3.0\"\nreason = \"field removed\"\n";
 
 /// TC-176: a declared decoder break is replayed as a required refusal and must
 /// be documented in the candidate CHANGELOG with a migration note.
@@ -517,7 +517,7 @@ fn declared_decoder_breaks_are_replayed_and_changelog_enforced() {
     let declared = parse_declared_decoder_breaks(DECLARED).unwrap();
     assert_eq!(
         declared_break_fixtures("tl-parse", "v0.3.0", &declared),
-        ["parse"]
+        ["parse:tl_syntax_revision"]
     );
     assert!(declared_break_fixtures("tl-parse", "v0.4.0", &declared).is_empty());
     assert!(declared_break_fixtures("tl-mltl", "v0.3.0", &declared).is_empty());
@@ -546,6 +546,8 @@ fn declared_decoder_breaks_are_replayed_and_changelog_enforced() {
         DECLARED.replace("\"parse\"", "\"mltl\""),
         DECLARED.replace("field removed", " "),
         format!("{DECLARED}\n{DECLARED}"),
+        DECLARED.replace("tl_syntax_revision", " "),
+        DECLARED.replace("tl-parse.diagnostics/v1", "tl-parse.past-parse-report/v1"),
     ] {
         assert!(parse_declared_decoder_breaks(&bad).is_err(), "{bad}");
     }
@@ -560,4 +562,22 @@ fn candidate_replay_enforces_the_declared_refusal() {
     assert!(source.contains("TL_DECLARED_BREAKS"));
     assert!(source.contains("serde_json::from_slice::<ParseReport>(&parser_bytes).is_err()"));
     assert!(source.contains("candidate accepts old parse-report bytes"));
+    assert!(source.contains("object.remove(field)"));
+    assert!(source.contains("declared removed field"));
+}
+
+/// `method M of <kind> O` findings key as `O::M`, like fields.
+#[test]
+fn method_findings_are_keyed_by_owner() {
+    let output = "--- failure method_missing: gone ---\nFailed in:\n  method render of struct Formatter, previously in file /tmp/x.rs:1\n  method new of enum Mode, previously in file /tmp/x.rs:2\n";
+    let findings = parse_semver_findings(output).unwrap();
+    let symbols: Vec<&str> = findings
+        .iter()
+        .map(|finding| finding.symbol.as_str())
+        .collect();
+    assert_eq!(symbols, ["Formatter::render", "Mode::new"]);
+    assert!(parse_semver_findings(
+        "--- failure method_missing: x ---\nFailed in:\n  method render\n"
+    )
+    .is_err());
 }
