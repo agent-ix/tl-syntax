@@ -38,6 +38,7 @@ repo = "tl-mltl"
 path = "schemas/past-evaluation-v1.schema.json"
 kind = "changed"
 measured_against = "v0.3.0"
+breaking = true
 reason = "DECLARED BREAKING CHANGE (tl-mltl #119 removed the syntaxRevision field): v0.3.0 records carrying syntaxRevision are rejected by the new schema (additionalProperties:false) and new records are rejected by the 0.3.0 schema. The schema identity is unchanged by decision for the pre-release 0.x line. Migration: drop syntaxRevision from records. The release CHANGELOG of tl-mltl must carry the matching entry."
 
 [[exception]]

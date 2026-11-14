@@ -803,6 +803,10 @@ pub struct GoldenException {
     pub kind: GoldenChange,
     pub measured_against: String,
     pub reason: String,
+    /// Marks a declared in-place break of a wire format; the release CHANGELOG
+    /// must then name the path with a migration note.
+    #[serde(default)]
+    pub breaking: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -895,6 +899,52 @@ pub fn compare_goldens_with_exceptions(
         if !observed.contains(path) {
             failures.push(format!(
                 "{path}: stale golden exception, the file no longer differs from {previous_tag}"
+            ));
+        }
+    }
+    failures
+}
+
+/// For every exception flagged `breaking` that applies to this repo and tag, the
+/// candidate version's CHANGELOG section must carry a line naming the exception
+/// path in backticks followed by `Migration:` and non-empty guidance. Flagging
+/// is the declared-break marker; whether an unflagged change is also a break is
+/// a reviewer judgement, not detected here.
+pub fn reconcile_breaking_exceptions(
+    repo: &str,
+    previous_tag: &str,
+    version: &str,
+    changelog: &str,
+    exceptions: &[GoldenException],
+) -> Vec<String> {
+    let breaking: Vec<_> = exceptions
+        .iter()
+        .filter(|e| e.breaking && e.repo == repo && e.measured_against == previous_tag)
+        .collect();
+    if breaking.is_empty() {
+        return Vec::new();
+    }
+    let heading = format!("## {version}");
+    let Some(section) = changelog.split(&heading).nth(1) else {
+        return vec![format!(
+            "CHANGELOG lacks {heading} release section for breaking exception {}",
+            breaking[0].path
+        )];
+    };
+    let section = section.split("\n## ").next().unwrap_or(section);
+    let mut failures = Vec::new();
+    for entry in breaking {
+        let needle = format!("`{}`", entry.path);
+        let documented = section.lines().any(|line| {
+            line.contains(&needle)
+                && line
+                    .split_once("Migration:")
+                    .is_some_and(|(_, note)| !note.trim().is_empty())
+        });
+        if !documented {
+            failures.push(format!(
+                "breaking golden exception {}: CHANGELOG {heading} has no entry naming `{}` with a Migration: note",
+                entry.path, entry.path
             ));
         }
     }

@@ -6,9 +6,10 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use tl_release_gate::{
     check, compare_goldens_with_exceptions, consumer_lock_differences, consumer_manifest,
-    duplicated_owner_blobs, parse_golden_exceptions, test_target_has_executed_cases, BuildFact,
-    Candidate, CandidateFact, CandidateInput, CandidateSet, CorpusLaneFact, CorpusOwnershipFact,
-    CrateWireFact, LegacyDecoderFact, SmokeFact, WireFact,
+    duplicated_owner_blobs, parse_golden_exceptions, reconcile_breaking_exceptions,
+    test_target_has_executed_cases, BuildFact, Candidate, CandidateFact, CandidateInput,
+    CandidateSet, CorpusLaneFact, CorpusOwnershipFact, CrateWireFact, LegacyDecoderFact, SmokeFact,
+    WireFact,
 };
 
 fn git_bytes(path: &Path, args: &[&str]) -> Result<Vec<u8>, String> {
@@ -540,6 +541,28 @@ fn run(path: &Path) -> Result<bool, String> {
                     report
                         .failures
                         .push(format!("{} wire golden: {difference}", candidate.name));
+                }
+                let version = report
+                    .candidates
+                    .iter()
+                    .find(|fact| fact.name == candidate.name)
+                    .map(|fact| fact.version.clone())
+                    .unwrap_or_default();
+                match tracked(candidate, "CHANGELOG.md") {
+                    Ok(changelog) => {
+                        for failure in reconcile_breaking_exceptions(
+                            &candidate.name,
+                            &candidate.previous_tag,
+                            &version,
+                            &changelog,
+                            &exceptions,
+                        ) {
+                            report
+                                .failures
+                                .push(format!("{} wire golden: {failure}", candidate.name));
+                        }
+                    }
+                    Err(error) => report.failures.push(error),
                 }
                 if candidate.name == "tl-syntax" {
                     report.syntax_wire_golden = Some(WireFact {

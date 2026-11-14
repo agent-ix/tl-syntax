@@ -45,8 +45,11 @@ kind, or a declared exception whose file no longer differs from that tag (stale)
 fails the gate; an exception measured against an older tag is ignored. A
 wire-bearing difference is never excused as bookkeeping. A declared exception may
 record an in-place break of an existing schema identity instead of a new
-identity, provided its reason names the break and the migration, and the release
-CHANGELOG of the owning crate carries a matching entry with a migration note. Tool failure or an absent prior tag is a failed
+identity. Such an exception sets `breaking = true`, and the gate then requires the
+owning crate's CHANGELOG section for the candidate version to carry a line naming
+the exception path with a `Migration:` note; a missing entry fails the gate. The
+`breaking` flag is the declared-break marker: the gate does not detect whether an
+unflagged change to a schema is itself a break, so a reviewer checks that. Tool failure or an absent prior tag is a failed
 gate, not a pass.
 
 ## Acceptance Criteria
@@ -54,7 +57,7 @@ gate, not a pass.
 | ID | Criteria | Verification |
 |---|---|---|
 | FR-031-AC-1 | `cargo-semver-checks` compares each candidate to the preceding immutable release tag, and every break maps to one CHANGELOG break and migration note. | Test (TC-175) |
-| FR-031-AC-2 | Every retained golden file is byte identical to the previous tag unless declared in the exceptions file with a reason; an undeclared or stale difference, an absent schema, or a changed legacy decoder fails. A declared exception may record an in-place schema break when its reason names the break and the release CHANGELOG carries a matching migration note. | Test (TC-176) |
+| FR-031-AC-2 | Every retained golden file is byte identical to the previous tag unless declared in the exceptions file with a reason; an undeclared or stale difference, an absent schema, or a changed legacy decoder fails. A declared exception may record an in-place schema break (`breaking = true`) when the candidate version's CHANGELOG carries an entry naming its path with a migration note. | Test (TC-176) |
 
 ## Dependencies
 

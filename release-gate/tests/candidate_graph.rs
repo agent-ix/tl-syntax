@@ -4,8 +4,9 @@ use std::path::PathBuf;
 use tl_release_gate::{
     authorized_tag_plan, check, compare_goldens_with_exceptions, compare_legacy_goldens,
     consumer_lock_differences, consumer_manifest, duplicated_owner_blobs, parse_golden_exceptions,
-    parse_semver_findings, reconcile_api_migrations, test_target_has_executed_cases, Candidate,
-    CandidateFact, CandidateInput, CandidateSet, HistoricalLane, HumanReleaseDecision, CRATES,
+    parse_semver_findings, reconcile_api_migrations, reconcile_breaking_exceptions,
+    test_target_has_executed_cases, Candidate, CandidateFact, CandidateInput, CandidateSet,
+    HistoricalLane, HumanReleaseDecision, CRATES,
 };
 
 fn sha(digit: char) -> String {
@@ -442,4 +443,38 @@ fn golden_differences_need_matching_declared_exceptions() {
 fn checked_in_golden_exceptions_parse() {
     let declared = parse_golden_exceptions(include_str!("../golden-exceptions.toml")).unwrap();
     assert_eq!(declared.len(), 9);
+}
+
+/// TC-176: an exception flagged breaking needs a CHANGELOG entry for the
+/// candidate version that names its path and carries a migration note.
+#[test]
+fn breaking_exceptions_need_a_changelog_migration_entry() {
+    let breaking = parse_golden_exceptions(
+        &(exception("schemas/x.schema.json", "changed", "v0.3.0") + "breaking = true\n"),
+    )
+    .unwrap();
+    let run = |changelog: &str| {
+        reconcile_breaking_exceptions("tl-syntax", "v0.3.0", "0.4.0", changelog, &breaking)
+    };
+    let good = "## 0.4.0\n- `schemas/x.schema.json`: field removed. Migration: drop the field.\n\n## 0.3.0\n";
+    assert!(run(good).is_empty());
+    assert!(!run("## 0.4.0\n- nothing\n\n## 0.3.0\n").is_empty());
+    assert!(!run("## 0.4.0\n- `schemas/x.schema.json`: field removed.\n\n## 0.3.0\n").is_empty());
+    assert!(!run("## 0.4.0\n- `schemas/x.schema.json`: removed. Migration:   \n").is_empty());
+    assert!(!run("## 0.3.0\n- `schemas/x.schema.json`: Migration: old release entry\n").is_empty());
+    let plain =
+        parse_golden_exceptions(&exception("schemas/x.schema.json", "changed", "v0.3.0")).unwrap();
+    assert!(
+        reconcile_breaking_exceptions("tl-syntax", "v0.3.0", "0.4.0", "no changelog", &plain)
+            .is_empty()
+    );
+    let other_repo = breaking.clone();
+    assert!(reconcile_breaking_exceptions(
+        "tl-parse",
+        "v0.3.0",
+        "0.4.0",
+        "no changelog",
+        &other_repo
+    )
+    .is_empty());
 }
