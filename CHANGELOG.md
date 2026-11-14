@@ -47,10 +47,6 @@ Error variants that no code path could produce:
 - `FormulaConversionError::PastNodeUnsupported` and `NodeIdentityOutOfRange`: only
   the history and infinite profiles admit past nodes, and `try_to_v1` already
   refuses both profiles; owned documents hold at most 100,000 nodes.
-- `LassoTraceError::PositionLimit`: observations are capped at 100,000 before
-  positions are assigned.
-- `PartialValuationError::MapIdentityMismatch`: never constructed; a mismatched
-  map identity is reported as `LassoTraceError::MapIdentityMismatch`.
 
 ### API migration inventory
 
