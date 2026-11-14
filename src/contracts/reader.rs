@@ -475,12 +475,17 @@ mod tests {
         work: impl FnOnce() -> T + Send + 'static,
     ) -> T {
         let (sender, receiver) = std::sync::mpsc::channel();
-        std::thread::spawn(move || {
+        let worker = std::thread::spawn(move || {
             let _ = sender.send(work());
         });
         match receiver.recv_timeout(std::time::Duration::from_secs(seconds)) {
             Ok(value) => value,
-            Err(_) => {
+            // The worker dropped its sender without a result: an assertion inside it panicked.
+            Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => match worker.join() {
+                Err(panic) => std::panic::resume_unwind(panic),
+                Ok(()) => unreachable!("the worker finished without sending a result"),
+            },
+            Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {
                 std::eprintln!("a reader scan did not terminate within {seconds} s");
                 std::process::abort()
             }
