@@ -226,7 +226,7 @@ fn finding_symbol(text: &str) -> Result<String, String> {
             let name = words
                 .next()
                 .map(clean)
-                .ok_or("semver {first} finding lacks a name")?;
+                .ok_or_else(|| format!("semver {first} finding lacks a name"))?;
             let (Some("of"), Some(_kind), Some(owner)) = (words.next(), words.next(), words.next())
             else {
                 return Err(format!(
@@ -983,17 +983,19 @@ pub fn reconcile_breaking_exceptions(
 
 /// One declared break of a decoder against bytes the previous release wrote.
 /// The legacy decoder replay expects the candidate to refuse the named fixture
-/// and fails if the candidate accepts it.
+/// as it is, to decode it once the removed fields are stripped from the raw
+/// bytes with key order kept, and fails if the candidate accepts the bytes.
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct DeclaredDecoderBreak {
     pub repo: String,
-    /// Replay fixture name: `parse` for the parser report bytes.
+    /// Replay fixture name: `parse` (parser report), `rewrite` (rewrite report)
+    /// or `conformance` (conformance report).
     pub fixture: String,
-    /// Top-level JSON key the candidate removed. The replay strips it from the
-    /// old bytes and requires the rest to decode, so the refusal is proven to
-    /// come from this removal alone.
-    pub removed_field: String,
+    /// Wire names of the top-level JSON keys the candidate removed. The replay
+    /// strips them from the old bytes and requires the rest to decode, so the
+    /// refusal is proven to come from this removal alone.
+    pub removed_fields: Vec<String>,
     /// Schema identity whose old bytes the candidate refuses.
     pub identity: String,
     pub measured_against: String,
@@ -1020,25 +1022,34 @@ pub fn parse_declared_decoder_breaks(text: &str) -> Result<Vec<DeclaredDecoderBr
                 entry.repo
             ));
         }
-        if !matches!(entry.fixture.as_str(), "parse") {
+        let Some((owner, expected)) = declared_fixture_identity(&entry.fixture) else {
             return Err(format!(
                 "declared decoder break {} names unknown fixture {}",
                 entry.identity, entry.fixture
             ));
-        }
-        let expected = match entry.fixture.as_str() {
-            "parse" => "tl-parse.diagnostics/v1",
-            _ => unreachable!("fixture validated above"),
         };
+        if entry.repo != owner {
+            return Err(format!(
+                "declared decoder break fixture {} belongs to {owner}, not {}",
+                entry.fixture, entry.repo
+            ));
+        }
         if entry.identity != expected {
             return Err(format!(
                 "declared decoder break fixture {} carries identity {expected}, not {}",
                 entry.fixture, entry.identity
             ));
         }
-        if entry.removed_field.trim().is_empty() {
+        if entry.removed_fields.is_empty()
+            || entry
+                .removed_fields
+                .iter()
+                .any(|field| field.trim().is_empty() || field.contains([':', ',', '+', '"', '\\']))
+            || entry.removed_fields.iter().collect::<BTreeSet<_>>().len()
+                != entry.removed_fields.len()
+        {
             return Err(format!(
-                "declared decoder break {} lacks a removed field",
+                "declared decoder break {} needs distinct, non-empty removed fields without `:`, `,`, `+`, quotes or backslashes",
                 entry.identity
             ));
         }
@@ -1065,7 +1076,9 @@ pub fn parse_declared_decoder_breaks(text: &str) -> Result<Vec<DeclaredDecoderBr
     Ok(file.decoder_break)
 }
 
-/// `fixture:removed_field` pairs the replay must see refused for this repo and tag.
+/// The replay fixtures this repo and tag declare broken, as the entries the
+/// legacy-candidate program reads from `TL_DECLARED_BREAKS`:
+/// `fixture:field+field`, comma separated.
 pub fn declared_break_fixtures(
     repo: &str,
     previous_tag: &str,
@@ -1074,8 +1087,18 @@ pub fn declared_break_fixtures(
     declared
         .iter()
         .filter(|entry| entry.repo == repo && entry.measured_against == previous_tag)
-        .map(|entry| format!("{}:{}", entry.fixture, entry.removed_field))
+        .map(|entry| format!("{}:{}", entry.fixture, entry.removed_fields.join("+")))
         .collect()
+}
+
+/// Owner repo and schema identity of a replay fixture a break may be declared on.
+fn declared_fixture_identity(fixture: &str) -> Option<(&'static str, &'static str)> {
+    match fixture {
+        "parse" => Some(("tl-parse", "tl-parse.diagnostics/v1")),
+        "rewrite" => Some(("tl-rewrite", "tl-rewrite.report/v1")),
+        "conformance" => Some(("tl-rewrite", "tl-rewrite.conformance/v1")),
+        _ => None,
+    }
 }
 
 /// For every declared decoder break that applies to this repo and tag, the

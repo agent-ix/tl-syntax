@@ -3,7 +3,7 @@ use std::{env, fs, path::PathBuf};
 
 use tl_mltl::{TraceDocument, TraceSchemaVersion};
 use tl_parse::{parse, report_json, ParseLimits};
-use tl_rewrite::{rewrite, RewriteOptions, RewriteStatus};
+use tl_rewrite::{check_equivalence, replay, rewrite, ConformanceOptions, RewriteOptions, RewriteStatus};
 use tl_syntax::{PropositionId, SemanticProfile};
 
 fn main() {
@@ -23,4 +23,8 @@ fn main() {
     let rewritten = rewrite(formula, "legacy-one", RewriteOptions::default(), "v0.3.0");
     assert_eq!(rewritten.status, RewriteStatus::Unchanged);
     fs::write(directory.join("rewrite.json"), serde_json::to_vec(&rewritten).unwrap()).unwrap();
+    let replayed = replay(formula, &rewritten);
+    fs::write(directory.join("replay.json"), serde_json::to_vec(&replayed).unwrap()).unwrap();
+    let conformance = check_equivalence(formula, formula, "legacy-cmp", ConformanceOptions::default());
+    fs::write(directory.join("conformance.json"), serde_json::to_vec(&conformance).unwrap()).unwrap();
 }
