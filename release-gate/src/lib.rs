@@ -1,0 +1,952 @@
+//! Exact candidate graph admission for a four-crate TL release.
+//!
+//! All manifest and lockfile facts come from the specified Git commits. The
+//! executable additionally checks tag targets and builds at the shared MSRV.
+
+use std::collections::{BTreeMap, BTreeSet};
+use std::path::PathBuf;
+
+use serde::{Deserialize, Serialize};
+
+pub const CRATES: [&str; 4] = ["tl-syntax", "tl-parse", "tl-mltl", "tl-rewrite"];
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Candidate {
+    pub name: String,
+    pub path: PathBuf,
+    pub commit: String,
+    #[serde(default)]
+    pub proposed_tag: Option<String>,
+    pub previous_tag: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct HistoricalLane {
+    pub owner: String,
+    pub alias: String,
+    pub package: String,
+    pub revision: String,
+    pub version: String,
+    /// The owner test target run with `cargo test --locked --test <test_target>`.
+    pub test_target: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct CandidateSet {
+    pub candidates: Vec<Candidate>,
+    #[serde(default)]
+    pub historical_lanes: Vec<HistoricalLane>,
+    /// Enable only when checking an already created proposed tag.
+    #[serde(default)]
+    pub require_tags: bool,
+}
+
+/// An already authenticated FR-018 owner decision supplied by the release
+/// process. This crate checks scope and expiry; it never authenticates a person.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct HumanReleaseDecision {
+    pub decision_id: String,
+    pub human_actor: String,
+    pub accepted: bool,
+    pub expires_unix_seconds: u64,
+    pub candidate_revisions: BTreeMap<String, String>,
+    pub evidence_sha256: String,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+pub struct TagAction {
+    pub name: String,
+    pub tag: String,
+    pub commit: String,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct CandidateFact {
+    pub name: String,
+    pub commit: String,
+    pub version: String,
+    pub msrv: String,
+    pub proposed_tag: Option<String>,
+    pub tag_commit: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct EdgeFact {
+    pub owner: String,
+    pub alias: String,
+    pub package: String,
+    pub scope: String,
+    pub version: Option<String>,
+    pub revision: Option<String>,
+    pub source: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct GateReport {
+    pub schema: &'static str,
+    pub candidates: Vec<CandidateFact>,
+    pub edges: Vec<EdgeFact>,
+    pub failures: Vec<String>,
+    /// Candidate builds executed by the CLI after the static graph passes.
+    pub msrv_builds: Vec<BuildFact>,
+    /// Byte-level result for the syntax owner's retained legacy golden files.
+    pub syntax_wire_golden: Option<WireFact>,
+    /// Previous-release corpus bytes for every crate, not just the syntax owner.
+    pub wire_goldens: Vec<CrateWireFact>,
+    /// Owner-corpus isolation at the exact selected source revisions.
+    pub corpus_ownership: Vec<CorpusOwnershipFact>,
+    /// Exact external consumer, including its locked graph and two toolchains.
+    pub consumer_smoke: Option<SmokeFact>,
+    /// Owner-corpus replay targets run from each exact downstream candidate.
+    pub corpus_lanes: Vec<CorpusLaneFact>,
+    /// Old tagged public wire producers replayed through candidate readers.
+    pub legacy_decoder_replay: Option<LegacyDecoderFact>,
+    /// Public API comparison against each immutable preceding tag.
+    pub api_compatibility: Vec<ApiCompatibilityFact>,
+    pub accepted: bool,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct CrateWireFact {
+    pub name: String,
+    pub previous_tag: String,
+    pub checked_files: usize,
+    pub differences: Vec<String>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct CorpusOwnershipFact {
+    pub name: String,
+    pub owner_files: usize,
+    pub duplicated_owner_blobs: Vec<String>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct SmokeFact {
+    pub candidate_revisions: Vec<String>,
+    pub lock_result: String,
+    pub msrv_result: String,
+    pub stable_result: String,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct CorpusLaneFact {
+    pub name: String,
+    pub target: &'static str,
+    pub result: String,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct LegacyDecoderFact {
+    pub previous_revisions: Vec<String>,
+    pub candidate_revisions: Vec<String>,
+    pub result: String,
+}
+
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Serialize)]
+pub struct ApiFinding {
+    pub lint: String,
+    pub symbol: String,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct ApiCompatibilityFact {
+    pub name: String,
+    pub previous_tag: String,
+    pub tool_version: String,
+    pub findings: Vec<ApiFinding>,
+    pub result: String,
+}
+
+/// Parse the stable lint headings and affected symbols in cargo-semver-checks
+/// 0.50 output. Duplicate findings from multiple rustdoc paths collapse.
+pub fn parse_semver_findings(output: &str) -> Result<Vec<ApiFinding>, String> {
+    let mut findings = BTreeSet::new();
+    let mut lint = None;
+    let mut in_findings = false;
+    for line in output.lines() {
+        if let Some(rest) = line
+            .strip_prefix("--- failure ")
+            .or_else(|| line.strip_prefix("--- warning "))
+        {
+            let (id, _) = rest.split_once(':').ok_or("semver heading lacks lint id")?;
+            if id.is_empty()
+                || !id.chars().all(|character| {
+                    character.is_ascii_lowercase() || character.is_ascii_digit() || character == '_'
+                })
+            {
+                return Err(format!("semver heading has invalid lint id: {id}"));
+            }
+            lint = Some(id.to_owned());
+            in_findings = false;
+        } else if line == "Failed in:" {
+            if lint.is_none() {
+                return Err("semver finding has no lint heading".to_owned());
+            }
+            in_findings = true;
+        } else if in_findings && line.starts_with("  ") {
+            let text = line.trim();
+            let text = text.strip_prefix("variant ").unwrap_or(text);
+            let symbol = text
+                .split_whitespace()
+                .next()
+                .ok_or("empty semver finding")?;
+            if symbol.is_empty() || symbol.contains('/') {
+                return Err(format!("semver finding has invalid symbol: {symbol}"));
+            }
+            findings.insert(ApiFinding {
+                lint: lint.clone().ok_or("semver finding has no lint")?,
+                symbol: symbol.to_owned(),
+            });
+        } else if !line.is_empty() {
+            in_findings = false;
+        }
+    }
+    Ok(findings.into_iter().collect())
+}
+
+/// Match every observed API break to exactly one migration entry in this
+/// candidate's version section. Stale entries are also refused.
+pub fn reconcile_api_migrations(
+    changelog: &str,
+    version: &str,
+    findings: &[ApiFinding],
+) -> Vec<String> {
+    let mut failures = Vec::new();
+    let heading = format!("## {version}");
+    let Some(section) = changelog.split(&heading).nth(1) else {
+        return vec![format!("CHANGELOG lacks {heading} release section")];
+    };
+    let section = section.split("\n## ").next().unwrap_or(section);
+    let Some(inventory) = section.split("### API migration inventory").nth(1) else {
+        return vec![format!("CHANGELOG {heading} lacks API migration inventory")];
+    };
+    let inventory = inventory.split("\n### ").next().unwrap_or(inventory);
+    let mut documented = BTreeSet::new();
+    for line in inventory.lines().filter(|line| line.starts_with("- `")) {
+        let Some((lint, rest)) = line[3..].split_once("` `") else {
+            failures.push(format!("malformed API migration entry: {line}"));
+            continue;
+        };
+        let Some((symbol, migration)) = rest.split_once("`: Migration: ") else {
+            failures.push(format!("API migration entry lacks a migration: {line}"));
+            continue;
+        };
+        if migration.trim().is_empty() {
+            failures.push(format!("API migration entry has empty migration: {line}"));
+        }
+        let finding = ApiFinding {
+            lint: lint.to_owned(),
+            symbol: symbol.to_owned(),
+        };
+        if !documented.insert(finding.clone()) {
+            failures.push(format!(
+                "duplicate API migration: {} {}",
+                finding.lint, finding.symbol
+            ));
+        }
+    }
+    let observed: BTreeSet<_> = findings.iter().cloned().collect();
+    for missing in observed.difference(&documented) {
+        failures.push(format!(
+            "unmapped API finding: {} {}",
+            missing.lint, missing.symbol
+        ));
+    }
+    for stale in documented.difference(&observed) {
+        failures.push(format!(
+            "stale API migration entry: {} {}",
+            stale.lint, stale.symbol
+        ));
+    }
+    failures
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct WireFact {
+    pub previous_tag: String,
+    pub checked_files: usize,
+    pub differences: Vec<String>,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct BuildFact {
+    pub name: String,
+    pub result: String,
+}
+
+#[derive(Clone, Debug)]
+pub struct CandidateInput {
+    pub fact: CandidateFact,
+    pub manifest: toml::Value,
+    pub lockfile: toml::Value,
+    pub toolchain: toml::Value,
+}
+
+fn tl_package(alias: &str, value: &toml::Value) -> Option<String> {
+    let name = value
+        .as_table()
+        .and_then(|table| table.get("package"))
+        .and_then(toml::Value::as_str)
+        .unwrap_or(alias);
+    let source_names_tl = value
+        .as_table()
+        .and_then(|table| table.get("git"))
+        .and_then(toml::Value::as_str)
+        .is_some_and(|url| {
+            CRATES
+                .iter()
+                .any(|crate_name| url == format!("https://github.com/agent-ix/{crate_name}.git"))
+        });
+    (CRATES.contains(&name) || CRATES.contains(&alias) || source_names_tl).then(|| name.to_owned())
+}
+
+fn read_edges(owner: &str, table: &toml::map::Map<String, toml::Value>, edges: &mut Vec<EdgeFact>) {
+    for (key, scope) in [
+        ("dependencies", "normal"),
+        ("build-dependencies", "build"),
+        ("dev-dependencies", "dev"),
+    ] {
+        if let Some(deps) = table.get(key).and_then(toml::Value::as_table) {
+            for (alias, value) in deps {
+                let Some(package) = tl_package(alias, value) else {
+                    continue;
+                };
+                let attrs = value.as_table();
+                let string = |key| {
+                    attrs
+                        .and_then(|table| table.get(key))
+                        .and_then(toml::Value::as_str)
+                        .map(str::to_owned)
+                };
+                edges.push(EdgeFact {
+                    owner: owner.to_owned(),
+                    alias: alias.to_owned(),
+                    package,
+                    scope: scope.to_owned(),
+                    version: string("version").or_else(|| value.as_str().map(str::to_owned)),
+                    revision: string("rev"),
+                    source: string("git"),
+                });
+            }
+        }
+    }
+    if let Some(targets) = table.get("target").and_then(toml::Value::as_table) {
+        for (_, target) in targets {
+            if let Some(target) = target.as_table() {
+                read_edges(owner, target, edges);
+            }
+        }
+    }
+}
+
+fn package_field<'a>(value: &'a toml::Value, key: &str) -> Option<&'a str> {
+    value.get("package")?.as_table()?.get(key)?.as_str()
+}
+
+#[derive(Clone, Debug)]
+struct LockedEntry {
+    version: String,
+    source: String,
+    revision: String,
+}
+
+fn locked_entries(lock: &toml::Value, name: &str) -> Vec<LockedEntry> {
+    lock.get("package")
+        .and_then(toml::Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter(|entry| entry.get("name").and_then(toml::Value::as_str) == Some(name))
+        .filter_map(|entry| {
+            let version = entry.get("version")?.as_str()?.to_owned();
+            let source = entry.get("source")?.as_str()?.to_owned();
+            let revision = source.rsplit_once('#')?.1.to_owned();
+            Some(LockedEntry {
+                version,
+                source,
+                revision,
+            })
+        })
+        .collect()
+}
+
+/// Validates the supplied immutable Git facts, all four manifests and lockfiles.
+/// It collects every inconsistent edge rather than stopping at the first one.
+pub fn check(set: &CandidateSet, inputs: &[CandidateInput]) -> GateReport {
+    let mut failures = Vec::new();
+    let mut selected = BTreeMap::new();
+    let mut facts = Vec::new();
+    let mut edges = Vec::new();
+    for name in CRATES {
+        let matches: Vec<_> = inputs
+            .iter()
+            .filter(|input| input.fact.name == name)
+            .collect();
+        if matches.len() != 1 {
+            failures.push(format!(
+                "{name}: expected exactly one candidate, found {}",
+                matches.len()
+            ));
+            continue;
+        }
+        let input = matches[0];
+        let fact = &input.fact;
+        let declarations: Vec<_> = set
+            .candidates
+            .iter()
+            .filter(|candidate| candidate.name == name)
+            .collect();
+        if declarations.len() != 1
+            || declarations[0].commit != fact.commit
+            || declarations[0].proposed_tag != fact.proposed_tag
+        {
+            failures.push(format!(
+                "{name}: observed candidate differs from declaration"
+            ));
+        }
+        if !valid_sha(&fact.commit) {
+            failures.push(format!("{name}: candidate commit is not a full SHA-1"));
+        }
+        if set.require_tags && fact.tag_commit.as_deref() != Some(fact.commit.as_str()) {
+            failures.push(format!(
+                "{name}: proposed tag is absent or does not target candidate {}",
+                fact.commit
+            ));
+        }
+        if package_field(&input.manifest, "name") != Some(name)
+            || package_field(&input.manifest, "version") != Some(fact.version.as_str())
+            || package_field(&input.manifest, "rust-version") != Some(fact.msrv.as_str())
+        {
+            failures.push(format!(
+                "{name}: candidate package identity/version/MSRV differs from its manifest"
+            ));
+        }
+        let channel = input
+            .toolchain
+            .get("toolchain")
+            .and_then(|value| value.get("channel"))
+            .and_then(toml::Value::as_str);
+        if channel != Some(fact.msrv.as_str()) {
+            failures.push(format!(
+                "{name}: rust-toolchain channel disagrees with MSRV {}",
+                fact.msrv
+            ));
+        }
+        selected.insert(name.to_owned(), fact.clone());
+        facts.push(fact.clone());
+        if let Some(table) = input.manifest.as_table() {
+            read_edges(name, table, &mut edges);
+        } else {
+            failures.push(format!("{name}: Cargo.toml is not a table"));
+        }
+    }
+    if set.candidates.len() != CRATES.len() || inputs.len() != CRATES.len() {
+        failures.push("candidate set must contain exactly the four TL crates".to_owned());
+    }
+    if let Some(first) = facts.first() {
+        for fact in facts.iter().skip(1) {
+            if fact.msrv != first.msrv {
+                failures.push(format!(
+                    "{}: MSRV {} differs from {}",
+                    fact.name, fact.msrv, first.msrv
+                ));
+            }
+        }
+    }
+    let declared_lanes: BTreeSet<_> = set
+        .historical_lanes
+        .iter()
+        .map(|lane| (&lane.owner, &lane.alias, &lane.package, &lane.revision))
+        .collect();
+    let mut used_lanes = BTreeSet::new();
+    for edge in &edges {
+        let Some(target) = selected.get(&edge.package) else {
+            failures.push(format!(
+                "{}:{}: target {} has no selected candidate",
+                edge.owner, edge.alias, edge.package
+            ));
+            continue;
+        };
+        let expected_source = format!("https://github.com/agent-ix/{}.git", edge.package);
+        if edge.source.as_deref() != Some(expected_source.as_str()) {
+            failures.push(format!(
+                "{}:{}: TL edge must use exact canonical Git source",
+                edge.owner, edge.alias
+            ));
+        }
+        let mut historical = None;
+        if edge.revision.as_deref() != Some(target.commit.as_str()) {
+            let lane = (
+                &edge.owner,
+                &edge.alias,
+                &edge.package,
+                edge.revision.as_ref().unwrap_or(&target.commit),
+            );
+            if edge.scope == "dev" && declared_lanes.contains(&lane) {
+                used_lanes.insert(lane);
+                historical = set.historical_lanes.iter().find(|candidate| {
+                    candidate.owner == edge.owner
+                        && candidate.alias == edge.alias
+                        && candidate.package == edge.package
+                        && edge.revision.as_deref() == Some(candidate.revision.as_str())
+                });
+            } else {
+                failures.push(format!(
+                    "{}:{}: {} edge revision {:?} differs from selected {}",
+                    edge.owner, edge.alias, edge.scope, edge.revision, target.commit
+                ));
+            }
+        }
+        let expected_version =
+            historical.map_or(target.version.as_str(), |lane| lane.version.as_str());
+        if edge.version.as_deref() != Some(format!("={expected_version}").as_str()) {
+            failures.push(format!(
+                "{}:{}: exact version does not match selected {} {}",
+                edge.owner, edge.alias, edge.package, expected_version
+            ));
+        }
+    }
+    for lane in &set.historical_lanes {
+        if lane.test_target.is_empty() {
+            failures.push(format!(
+                "{}:{}: historical lane has no test target",
+                lane.owner, lane.alias
+            ));
+        }
+        if !used_lanes.contains(&(&lane.owner, &lane.alias, &lane.package, &lane.revision)) {
+            failures.push(format!(
+                "{}:{}: declared historical lane is absent or leaks into production",
+                lane.owner, lane.alias
+            ));
+        }
+    }
+    for input in inputs {
+        for edge in edges.iter().filter(|edge| edge.owner == input.fact.name) {
+            let resolved = locked_entries(&input.lockfile, &edge.package);
+            if !resolved
+                .iter()
+                .any(|entry| edge.revision.as_deref() == Some(entry.revision.as_str()))
+            {
+                failures.push(format!(
+                    "{}:{}: lockfile lacks edge revision {:?}",
+                    edge.owner, edge.alias, edge.revision
+                ));
+            }
+            if edge.scope != "dev" {
+                if let Some(target) = selected.get(&edge.package) {
+                    if !resolved.iter().any(|entry| entry.revision == target.commit) {
+                        failures.push(format!(
+                            "{}:{}: lockfile lacks selected {} {}",
+                            edge.owner, edge.alias, edge.package, target.commit
+                        ));
+                    }
+                }
+            }
+        }
+        for name in CRATES {
+            if name == input.fact.name {
+                continue;
+            }
+            let actual = locked_entries(&input.lockfile, name);
+            let expected = selected.get(name);
+            for entry in actual {
+                let revision = entry.revision;
+                let historical = set.historical_lanes.iter().any(|lane| {
+                    lane.owner == input.fact.name
+                        && lane.package == name
+                        && lane.revision == revision
+                });
+                let expected_version = if historical {
+                    set.historical_lanes
+                        .iter()
+                        .find(|lane| {
+                            lane.owner == input.fact.name
+                                && lane.package == name
+                                && lane.revision == revision
+                        })
+                        .map(|lane| lane.version.as_str())
+                } else {
+                    expected.map(|fact| fact.version.as_str())
+                };
+                if expected_version.is_some_and(|version| entry.version != version) {
+                    failures.push(format!(
+                        "{}: lockfile resolves {name} at version {} instead of expected {}",
+                        input.fact.name,
+                        entry.version,
+                        expected_version.unwrap_or("absent")
+                    ));
+                }
+                let canonical =
+                    format!("git+https://github.com/agent-ix/{name}.git?rev={revision}#{revision}");
+                if entry.source != canonical {
+                    failures.push(format!(
+                        "{}: lockfile resolves {name} from noncanonical source {}",
+                        input.fact.name, entry.source
+                    ));
+                }
+                if expected.is_some_and(|fact| revision != fact.commit) && !historical {
+                    failures.push(format!(
+                        "{}: lockfile resolves {name} at undeclared revision {revision}",
+                        input.fact.name
+                    ));
+                }
+            }
+        }
+    }
+    failures.sort();
+    failures.dedup();
+    GateReport {
+        schema: "tl-release-gate/graph-v1",
+        candidates: facts,
+        edges,
+        msrv_builds: Vec::new(),
+        syntax_wire_golden: None,
+        wire_goldens: Vec::new(),
+        corpus_ownership: Vec::new(),
+        consumer_smoke: None,
+        corpus_lanes: Vec::new(),
+        legacy_decoder_replay: None,
+        api_compatibility: Vec::new(),
+        accepted: failures.is_empty(),
+        failures,
+    }
+}
+
+/// Refuse byte-for-byte copies of the syntax-owned corpus in a consumer.
+/// Git blob identities are hashes of the bytes, independent of the path used
+/// by a consumer to hide a copy. The caller supplies blobs from exact commits.
+pub fn duplicated_owner_blobs(
+    owner: &BTreeMap<String, String>,
+    consumer: &BTreeMap<String, String>,
+) -> Vec<String> {
+    let owned: BTreeSet<_> = owner.values().collect();
+    consumer
+        .iter()
+        .filter(|(_, blob)| owned.contains(blob))
+        .map(|(path, _)| path.clone())
+        .collect()
+}
+
+/// Build an external consumer manifest from the already checked candidate
+/// commits. The smoke project has no path overrides or workspace membership.
+pub fn consumer_manifest(candidates: &[CandidateFact]) -> Result<String, String> {
+    if candidates.len() != CRATES.len() {
+        return Err("consumer requires all four TL candidates".to_owned());
+    }
+    let mut manifest = "[package]\nname = \"tl-release-smoke\"\nversion = \"0.0.0\"\nedition = \"2021\"\npublish = false\n\n[dependencies]\n".to_owned();
+    for name in CRATES {
+        let matches: Vec<_> = candidates
+            .iter()
+            .filter(|candidate| candidate.name == name)
+            .collect();
+        if matches.len() != 1 || !valid_sha(&matches[0].commit) {
+            return Err(format!(
+                "{name}: missing or invalid exact candidate revision"
+            ));
+        }
+        let candidate = matches[0];
+        manifest.push_str(&format!(
+            "{name} = {{ version = \"={}\", git = \"https://github.com/agent-ix/{name}.git\", rev = \"{}\" }}\n",
+            candidate.version, candidate.commit
+        ));
+    }
+    Ok(manifest)
+}
+
+/// Refuse duplicate, absent or substituted TL revisions in the external lock.
+pub fn consumer_lock_differences(lock: &toml::Value, candidates: &[CandidateFact]) -> Vec<String> {
+    let mut differences = Vec::new();
+    for name in CRATES {
+        let Some(candidate) = candidates.iter().find(|candidate| candidate.name == name) else {
+            differences.push(format!("{name}: candidate is absent"));
+            continue;
+        };
+        let entries: Vec<_> = lock
+            .get("package")
+            .and_then(toml::Value::as_array)
+            .into_iter()
+            .flatten()
+            .filter(|entry| entry.get("name").and_then(toml::Value::as_str) == Some(name))
+            .collect();
+        let source = format!(
+            "git+https://github.com/agent-ix/{name}.git?rev={}#{}",
+            candidate.commit, candidate.commit
+        );
+        if entries.len() != 1
+            || entries[0].get("version").and_then(toml::Value::as_str)
+                != Some(candidate.version.as_str())
+            || entries[0].get("source").and_then(toml::Value::as_str) != Some(source.as_str())
+        {
+            differences.push(format!(
+                "{name}: external lock differs from exact candidate"
+            ));
+        }
+    }
+    differences
+}
+
+/// Produce a read-only ordered tag plan only for the exact accepted graph.
+/// Tag creation remains an attributed human action outside this checker.
+pub fn authorized_tag_plan(
+    candidates: &[CandidateFact],
+    decision: Option<&HumanReleaseDecision>,
+    required_gates_passed: bool,
+    now_unix_seconds: u64,
+) -> Result<Vec<TagAction>, String> {
+    if !required_gates_passed {
+        return Err("required release gates are incomplete".to_owned());
+    }
+    let decision = decision.ok_or("current human release decision is absent")?;
+    if !decision.accepted
+        || decision.decision_id.is_empty()
+        || decision.human_actor.is_empty()
+        || decision.expires_unix_seconds <= now_unix_seconds
+        || decision.evidence_sha256.len() != 64
+        || !decision
+            .evidence_sha256
+            .bytes()
+            .all(|byte| byte.is_ascii_hexdigit())
+    {
+        return Err("human release decision is rejected, expired or unattributed".to_owned());
+    }
+    if candidates.len() != CRATES.len() || decision.candidate_revisions.len() != CRATES.len() {
+        return Err("decision does not bind the four candidate revisions".to_owned());
+    }
+    let mut actions = Vec::new();
+    for name in CRATES {
+        let matches: Vec<_> = candidates
+            .iter()
+            .filter(|candidate| candidate.name == name)
+            .collect();
+        if matches.len() != 1 {
+            return Err(format!("{name}: expected exactly one candidate"));
+        }
+        let candidate = matches[0];
+        if decision.candidate_revisions.get(name) != Some(&candidate.commit) {
+            return Err(format!("{name}: human decision names a different commit"));
+        }
+        let tag = candidate
+            .proposed_tag
+            .as_ref()
+            .ok_or_else(|| format!("{name}: proposed tag is absent"))?;
+        if let Some(existing) = candidate.tag_commit.as_deref() {
+            return Err(format!(
+                "{name}: proposed tag {tag} already exists at {existing}"
+            ));
+        }
+        actions.push(TagAction {
+            name: name.to_owned(),
+            tag: tag.clone(),
+            commit: candidate.commit.clone(),
+        });
+    }
+    Ok(actions)
+}
+
+/// A Cargo integration target counts only when a real test ran successfully.
+/// A target with every case ignored exits zero, so exit status alone is not a
+/// corpus gate.
+pub fn test_target_has_executed_cases(output: &str) -> bool {
+    output.lines().any(|line| {
+        line.trim()
+            .strip_prefix("test result: ok. ")
+            .and_then(|result| result.split_once(" passed; "))
+            .and_then(|(count, rest)| count.parse::<usize>().ok().map(|count| (count, rest)))
+            .is_some_and(|(count, rest)| count > 0 && rest.starts_with("0 failed; 0 ignored;"))
+    })
+}
+
+pub fn valid_sha(value: &str) -> bool {
+    value.len() == 40 && value.bytes().all(|byte| byte.is_ascii_hexdigit())
+}
+
+/// Every old golden path must still exist with identical bytes. New paths are
+/// allowed because a new schema edition has its own distinct identity.
+pub fn compare_legacy_goldens(
+    previous: &BTreeMap<String, Vec<u8>>,
+    candidate: &BTreeMap<String, Vec<u8>>,
+) -> Vec<String> {
+    let mut differences = Vec::new();
+    if previous.is_empty() {
+        differences.push("previous release has no legacy golden files".to_owned());
+    }
+    for (path, old) in previous {
+        match candidate.get(path) {
+            None => differences.push(format!("{path}: legacy golden is missing")),
+            Some(new) if new != old => {
+                differences.push(format!("{path}: legacy golden bytes changed"))
+            }
+            Some(_) => {}
+        }
+    }
+    differences
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum GoldenChange {
+    Changed,
+    Deleted,
+}
+
+/// One declared, reasoned difference between a retained golden file and the
+/// same path at the tag it is measured against.
+#[derive(Clone, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct GoldenException {
+    pub repo: String,
+    pub path: String,
+    pub kind: GoldenChange,
+    pub measured_against: String,
+    pub reason: String,
+    /// Marks a declared in-place break of a wire format; the release CHANGELOG
+    /// must then name the path with a migration note.
+    #[serde(default)]
+    pub breaking: bool,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct GoldenExceptionFile {
+    #[serde(default)]
+    exception: Vec<GoldenException>,
+}
+
+/// Parse the checked-in exceptions file. Every entry needs a known repo, a
+/// non-empty path and a non-empty reason.
+pub fn parse_golden_exceptions(text: &str) -> Result<Vec<GoldenException>, String> {
+    let file: GoldenExceptionFile =
+        toml::from_str(text).map_err(|error| format!("golden exceptions: {error}"))?;
+    let mut seen = BTreeSet::new();
+    for entry in &file.exception {
+        if !CRATES.contains(&entry.repo.as_str()) {
+            return Err(format!(
+                "golden exception names unknown repo {}",
+                entry.repo
+            ));
+        }
+        if entry.path.is_empty() || entry.measured_against.is_empty() {
+            return Err(format!(
+                "golden exception {} lacks a path or tag",
+                entry.repo
+            ));
+        }
+        if entry.reason.trim().is_empty() {
+            return Err(format!(
+                "golden exception {}:{} lacks a reason",
+                entry.repo, entry.path
+            ));
+        }
+        if !seen.insert((
+            entry.repo.clone(),
+            entry.path.clone(),
+            entry.measured_against.clone(),
+        )) {
+            return Err(format!(
+                "golden exception {}:{} is declared twice",
+                entry.repo, entry.path
+            ));
+        }
+    }
+    Ok(file.exception)
+}
+
+/// Compare every retained golden to the previous tag. A changed or deleted file
+/// passes only when declared for this repo and tag with the matching kind; an
+/// undeclared difference or a declared exception that no longer differs fails.
+/// Exceptions measured against a different tag belong to an older release and
+/// are ignored.
+pub fn compare_goldens_with_exceptions(
+    repo: &str,
+    previous_tag: &str,
+    previous: &BTreeMap<String, Vec<u8>>,
+    candidate: &BTreeMap<String, Vec<u8>>,
+    exceptions: &[GoldenException],
+) -> Vec<String> {
+    let mut failures = Vec::new();
+    if previous.is_empty() {
+        failures.push("previous release has no legacy golden files".to_owned());
+    }
+    let declared: BTreeMap<&str, &GoldenException> = exceptions
+        .iter()
+        .filter(|entry| entry.repo == repo && entry.measured_against == previous_tag)
+        .map(|entry| (entry.path.as_str(), entry))
+        .collect();
+    let mut observed = BTreeSet::new();
+    for (path, old) in previous {
+        let kind = match candidate.get(path) {
+            None => GoldenChange::Deleted,
+            Some(new) if new != old => GoldenChange::Changed,
+            Some(_) => continue,
+        };
+        observed.insert(path.as_str());
+        match declared.get(path.as_str()) {
+            Some(entry) if entry.kind == kind => {}
+            Some(entry) => failures.push(format!(
+                "{path}: golden was {kind:?} but the exception declares {:?}",
+                entry.kind
+            )),
+            None => failures.push(format!(
+                "{path}: undeclared golden difference ({kind:?}) against {previous_tag}"
+            )),
+        }
+    }
+    for path in declared.keys() {
+        if !observed.contains(path) {
+            failures.push(format!(
+                "{path}: stale golden exception, the file no longer differs from {previous_tag}"
+            ));
+        }
+    }
+    failures
+}
+
+/// For every exception flagged `breaking` that applies to this repo and tag, the
+/// candidate version's CHANGELOG section must carry a line naming the exception
+/// path in backticks followed by `Migration:` and non-empty guidance. Flagging
+/// is the declared-break marker; whether an unflagged change is also a break is
+/// a reviewer judgement, not detected here.
+pub fn reconcile_breaking_exceptions(
+    repo: &str,
+    previous_tag: &str,
+    version: &str,
+    changelog: &str,
+    exceptions: &[GoldenException],
+) -> Vec<String> {
+    let breaking: Vec<_> = exceptions
+        .iter()
+        .filter(|e| e.breaking && e.repo == repo && e.measured_against == previous_tag)
+        .collect();
+    if breaking.is_empty() {
+        return Vec::new();
+    }
+    let heading = format!("## {version}");
+    let Some(section) = changelog.split(&heading).nth(1) else {
+        return vec![format!(
+            "CHANGELOG lacks {heading} release section for breaking exception {}",
+            breaking[0].path
+        )];
+    };
+    let section = section.split("\n## ").next().unwrap_or(section);
+    let mut failures = Vec::new();
+    for entry in breaking {
+        let needle = format!("`{}`", entry.path);
+        let documented = section.lines().any(|line| {
+            line.contains(&needle)
+                && line
+                    .split_once("Migration:")
+                    .is_some_and(|(_, note)| !note.trim().is_empty())
+        });
+        if !documented {
+            failures.push(format!(
+                "breaking golden exception {}: CHANGELOG {heading} has no entry naming `{}` with a Migration: note",
+                entry.path, entry.path
+            ));
+        }
+    }
+    failures
+}

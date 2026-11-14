@@ -16,6 +16,8 @@ make deny             # cargo-deny advisories, bans, licenses, and sources
 make check-corpus     # corpus schemas, derived oracles, and their mutation probe
 make conformance      # replay the shared temporal corpus through the crate
 make spec             # validate the specification with Quire
+make release-gate-test  # fmt, clippy and tests of the coordinated-release checker (in ci)
+make release-gate RELEASE_CANDIDATES=set.json  # release-time gates FR-029..033 (not in ci)
 make msrv             # test every target and feature at Rust 1.98.1
 make miri             # unit and property suites under Miri (pinned nightly)
 make ci               # complete local gate set (hosted CI is manual-only)

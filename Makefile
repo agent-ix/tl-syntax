@@ -46,6 +46,8 @@ help:
 	@echo "  make conformance      - replay the shared temporal corpus through the crate"
 	@echo "  make spec             - validate specs and report coverage"
 	@echo "  make spec-release     - require every active specification row to be backed"
+	@echo "  make release-gate-test - fmt, clippy and tests of the release-gate checker (part of ci)"
+	@echo "  make release-gate RELEASE_CANDIDATES=<json> - coordinated release gates FR-029..FR-033 (release time, not in ci)"
 	@echo "  make msrv             - test all targets and features with Rust 1.98.1"
 	@echo "  make rustdoc          - build warning-free public documentation"
 	@echo "  make build            - Release build"
@@ -77,6 +79,22 @@ lint:
 test:
 	$(CARGO) test --all-features
 	$(CARGO) test --manifest-path tools/tl-gate/Cargo.toml
+
+# The coordinated-release checker (FR-029..FR-033) is its own standalone crate.
+# Its self-test needs no candidates, so `ci` runs it. `release-gate` itself needs
+# four immutable release candidates and is a release-time step, not part of `ci`.
+RELEASE_CANDIDATES ?=
+
+.PHONY: release-gate-test
+release-gate-test:
+	$(CARGO) fmt --manifest-path release-gate/Cargo.toml -- --check
+	$(CARGO) clippy --manifest-path release-gate/Cargo.toml --all-targets --locked -- -D warnings
+	$(CARGO) test --manifest-path release-gate/Cargo.toml --locked
+
+.PHONY: release-gate
+release-gate:
+	@test -n "$(RELEASE_CANDIDATES)" || { echo "usage: make release-gate RELEASE_CANDIDATES=<candidate-set.json> (see release-gate/README.md)"; exit 2; }
+	$(CARGO) run --quiet --manifest-path release-gate/Cargo.toml --locked -- $(RELEASE_CANDIDATES)
 
 .PHONY: check-features
 check-features:
@@ -221,5 +239,5 @@ coverage-branch:
 # `ci` is the development composite. A release candidate additionally runs
 # `spec-release` under Task-007 after planned roadmap rows have backing.
 .PHONY: ci
-ci: fmt-check check-features check-default-dependencies lint test test-features check-corpus \
+ci: fmt-check release-gate-test check-features check-default-dependencies lint test test-features check-corpus \
 	conformance deny fuzz-check spec msrv rustdoc miri mutants-diff
