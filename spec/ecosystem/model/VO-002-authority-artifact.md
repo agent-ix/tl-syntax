@@ -3,7 +3,7 @@ id: VO-002
 title: "Authority artifact"
 type: value_object
 relationships:
-  - { target: ix://agent-ix/quire-contract-ir/FR-028, type: references }
+  - { target: ix://agent-ix/filament-contract-ir/FR-028, type: references }
 ---
 # [VO-002] Authority artifact
 

@@ -3,7 +3,7 @@ id: VO-001
 title: "Contract selection"
 type: value_object
 relationships:
-  - { target: ix://agent-ix/quire-contract-ir/FR-028, type: implemented_by }
+  - { target: ix://agent-ix/filament-contract-ir/FR-028, type: implemented_by }
 ---
 # [VO-001] Contract selection
 

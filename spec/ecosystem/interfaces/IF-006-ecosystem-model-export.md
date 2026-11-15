@@ -3,7 +3,7 @@ id: IF-006
 title: "Non-authoritative ecosystem model export"
 type: interface
 relationships:
-  - { target: ix://agent-ix/quire-contract-ir/FR-027, type: implemented_by }
+  - { target: ix://agent-ix/filament-contract-ir/FR-027, type: implemented_by }
 ---
 # [IF-006] Non-authoritative ecosystem model export
 

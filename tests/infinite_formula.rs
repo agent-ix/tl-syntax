@@ -134,16 +134,16 @@ fn infinite_profile_is_fourth_distinct_tl_identity() {
         .collect();
     assert_eq!(identities.len(), 4);
     assert!(identities.contains("mltl.infinite-trace/v1"));
-    assert!(!identities.contains("quire.temporal.infinite-trace/v1"));
+    assert!(!identities.contains("filament.temporal.infinite-trace/v1"));
     assert!(
-        serde_json::from_str::<SemanticProfile>("\"quire.temporal.infinite-trace/v1\"").is_err()
+        serde_json::from_str::<SemanticProfile>("\"filament.temporal.infinite-trace/v1\"").is_err()
     );
     assert_eq!(
         select_infinite_profile(None),
         Err(InfiniteProfileError::Missing)
     );
     assert_eq!(
-        select_infinite_profile(Some("quire.temporal.infinite-trace/v1")),
+        select_infinite_profile(Some("filament.temporal.infinite-trace/v1")),
         Err(InfiniteProfileError::Unknown)
     );
     assert_eq!(

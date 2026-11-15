@@ -9,11 +9,11 @@ relationships:
     type: depends_on
   - target: ix://agent-ix/tl-syntax/FR-011
     type: depends_on
-  - target: ix://agent-ix/quire-specification/FR-090
+  - target: ix://agent-ix/filament-specification/FR-090
     type: depends_on
-  - target: ix://agent-ix/quire-specification/FR-205
+  - target: ix://agent-ix/filament-specification/FR-205
     type: depends_on
-  - target: ix://agent-ix/quire-specification/FR-252
+  - target: ix://agent-ix/filament-specification/FR-252
     type: depends_on
 ---
 
@@ -32,9 +32,9 @@ result at that anchor from progress at later anchors or superseding late data.
 - Evaluation anchor, formula/profile identity, proposition-map identity, and
   evaluator identity/revision.
 - A declared event-position clock or an exactly mapped fixed-sample clock
-  admitted under `ix://agent-ix/quire-specification/FR-090`, with an opaque,
+  admitted under `ix://agent-ix/filament-specification/FR-090`, with an opaque,
   bounded unit name and exact normalized epoch/positive period values from
-  `ix://agent-ix/quire-specification/FR-205` and `FR-252`.
+  `ix://agent-ix/filament-specification/FR-205` and `FR-252`.
 
 ## Outputs
 
@@ -108,7 +108,7 @@ creates a separate original result, not an implicit predecessor edge. No prior
 bytes are edited. A history declared complete through an anchor cannot
 simultaneously claim an unresolved gap there.
 
-Capture and typed-predicate evaluation remain outside TL. A native Quire bridge
+Capture and typed-predicate evaluation remain outside TL. A FSL bridge
 resolves captures, anchors, clocks, and total Boolean propositions before
 constructing the history. TL accepts only the resulting admitted total Boolean
 valuations. It preserves the owner-produced incomplete, unavailable,
@@ -130,6 +130,6 @@ false proposition or fabricated history row.
 
 FR-003 supplies source/profile identity and FR-011 supplies operator semantics.
 The native clock/capture/predicate correspondence remains owned by
-quire-contract-ir #64 and its prerequisites. Clock value and classification
-semantics are consumed from `ix://agent-ix/quire-specification/FR-090`, `FR-092`,
+filament-contract-ir #64 and its prerequisites. Clock value and classification
+semantics are consumed from `ix://agent-ix/filament-specification/FR-090`, `FR-092`,
 `FR-205`, and `FR-252`, rather than restated as a competing native contract.

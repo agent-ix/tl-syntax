@@ -21,9 +21,9 @@ the `mltl.infinite-trace/v1` profile as a separate, co-existing
 formula edition, leaving the closed `tl-syntax.formula/v1` schema exactly as
 it stands.
 
-Native Quire is the only editable formal-clause language. TL text and formula
+FSL is the only editable formal-clause language. TL text and formula
 documents are derived interchange and evaluator inputs. Nothing in this
-specification creates a second Quire authoring path or grants TL source text
+specification creates a second FSL authoring path or grants TL source text
 independent clause authority.
 
 ## Scope
@@ -39,7 +39,7 @@ independent clause authority.
 - Explicit refusal of unknown spellings and unsupported profile combinations.
 - An unbounded interval (no upper bound) on `F/G/U/R/O/H/S/T` and, by
   inherited lowering, `W/M`, admitted only under `mltl.infinite-trace/v1` as a
-  co-existing formula edition. `quire.temporal.infinite-trace/v1` is the QSL
+  co-existing formula edition. `filament.temporal.infinite-trace/v1` is the FSL
   correspondence, not a TL identity or lowering target.
 
 ### Out of scope
@@ -50,7 +50,7 @@ independent clause authority.
   profile; the infinite-trace edition may carry past canonical nodes.
 - Strong- or weak-next operators, dense or timestamped time, duration-unit
   conversion, and mixed future/past profiles.
-- Typed predicates, native Quire grammar, production monitoring, and claims of
+- Typed predicates, FSL grammar, production monitoring, and claims of
   FRETish, R2U2, or C2PO equivalence.
 - Evaluating an infinite-trace formula. `tl-mltl` owns liveness/lasso/fairness
   evaluation; this profile owns only the admitted grammar and the liveness
@@ -68,7 +68,7 @@ infinite-trace profile: `tl-syntax` owns the unbounded interval grammar and the
 liveness-capability identity a backend registers against; it does not evaluate,
 and admitting the grammar makes no liveness, lasso, or fairness claim.
 
-The native Quire temporal bridge in `quire-contract-ir` may produce the same
+The FSL temporal bridge in `filament-contract-ir` may produce the same
 canonical graph when its separately reviewed correspondence profile admits the
 source clause. It does not consume the TL textual dialect and does not delegate
 source authority to this profile.
@@ -101,8 +101,8 @@ semantic-profile combination to its required downstream evidence.
 - [Infinite-trace facet ticket](https://github.com/agent-ix/tl-syntax/issues/75)
   and its implementation follow-on,
   [tl-syntax#73](https://github.com/agent-ix/tl-syntax/issues/73).
-- [quire-specification#112](https://github.com/agent-ix/quire-specification/issues/112)
-  mints the `quire.temporal.infinite-trace/v1` facet member this profile
+- [filament-specification#112](https://github.com/agent-ix/filament-specification/issues/112)
+  mints the `filament.temporal.infinite-trace/v1` facet member this profile
   admits under.
 - Kosaian, Wang, Sloan, and Rozier, *Formalizing MLTL Formula Progression in
   Isabelle/HOL*, arXiv:2410.03465. This is a non-normative semantic cross-check;

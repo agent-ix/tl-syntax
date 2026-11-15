@@ -19,9 +19,9 @@ deferred boundary for transferring those facts to a future shared integrator
 package. It extends the v0.1 source-release boundary without retroactively
 blocking useful pre-stable delivery.
 
-“Source” means the Rust repository candidate. Native Quire remains the sole
+“Source” means the Rust repository candidate. FSL remains the sole
 editable formal-clause language. TL text and formula documents are internal
-interchange/evaluator inputs and never a second user-authored Quire source
+interchange/evaluator inputs and never a second user-authored FSL source
 profile.
 
 ## Scope
@@ -40,7 +40,7 @@ profile.
 
 ### Out of Scope
 
-- Native Quire language qualification or an editable TL/FRETish source path.
+- Native FSL qualification or an editable TL/FRETish source path.
 - Automatic release/publication decisions, crates.io publication, universal
   trusted-tool status, certification, accreditation, authorization or
   non-repudiation.
@@ -64,7 +64,7 @@ intended use, deployment/configuration and validation decision.
 ### Intended Users
 
 The human tl-syntax release owner, independent specification/code/gap reviewers,
-TL ecosystem maintainers, native Quire bridge maintainers and future
+TL ecosystem maintainers, FSL bridge maintainers and future
 consuming-system integrators.
 
 ## Lifecycle Vocabulary
@@ -187,7 +187,7 @@ implementation node remains unavailable at an external resume condition.
 
 - [M6 parent](https://github.com/agent-ix/tl-syntax/issues/31) and
   [specification ticket](https://github.com/agent-ix/tl-syntax/issues/34).
-- [Cross-repository source-release campaign](https://github.com/agent-ix/quire-contract-ir/issues/4).
+- [Cross-repository source-release campaign](https://github.com/agent-ix/filament-contract-ir/issues/4).
 - [Source-grounding consumer gate](https://github.com/agent-ix/tl-syntax/issues/16).
 - [Use-specific qualification](https://github.com/agent-ix/engineering-assurance/issues/11)
   and [Rust producer execution](https://github.com/agent-ix/engineering-assurance/issues/34).

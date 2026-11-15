@@ -1,23 +1,23 @@
 ---
 id: StR-003
-title: Native Quire temporal bridges need typed signals and attributable source context
+title: FSL temporal bridges need typed signals and attributable source context
 type: StR
 relationships:
   - target: ix://agent-ix/tl-syntax/FR-007
     type: satisfied_by
 ---
 
-# StR-003: Native Quire temporal bridges need typed signals and attributable source context
+# StR-003: FSL temporal bridges need typed signals and attributable source context
 
 ## Stakeholder Need
 
-Native Quire temporal-bridge maintainers require that the bridge shall preserve
+FSL temporal-bridge maintainers require that the bridge shall preserve
 stable named total-Boolean signal bindings and the exact native requirement
 revision, clause, anchor, and source span through internal MLTL evaluation.
 
 ## Rationale
 
-`agent-ix/quire-contract-ir#63` projects total Boolean predicates from a typed
+`agent-ix/filament-contract-ir#63` projects total Boolean predicates from a typed
 native semantic IR package. An id-to-name proposition map cannot prove that a
 free variable came from an admitted bounded field, and a formula id cannot
 prove which requirement revision or clause produced a temporal result. The
@@ -33,12 +33,12 @@ evidence systems themselves.
 
 ## Stakeholders
 
-Maintainers of `quire-contract-ir#63`, tl-parse, tl-rewrite, tl-mltl, R2U2/C2PO
+Maintainers of `filament-contract-ir#63`, tl-parse, tl-rewrite, tl-mltl, R2U2/C2PO
 adapters, and human assurance reviewers.
 
 ## Context and Assumptions
 
-The native Quire frontend owns IR-field derivation and typed predicate lowering.
+The FSL frontend owns IR-field derivation and typed predicate lowering.
 tl-syntax owns only the internal parser-independent identity, bounded-domain,
 binding, and source-context contract. A non-Boolean source field may participate
 through an explicitly derived total Boolean signal, but this crate does not

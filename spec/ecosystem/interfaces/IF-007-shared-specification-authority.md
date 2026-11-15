@@ -3,7 +3,7 @@ id: IF-007
 title: "Shared specification authority interface"
 type: interface
 relationships:
-  - { target: ix://agent-ix/quire-specification/FR-200, type: implemented_by }
+  - { target: ix://agent-ix/filament-specification/FR-200, type: implemented_by }
 ---
 # [IF-007] Shared specification authority interface
 

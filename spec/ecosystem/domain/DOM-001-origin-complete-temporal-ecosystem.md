@@ -20,32 +20,32 @@ relationships:
 
 ## Bounded Context
 
-This context owns the deterministic path from an authority-checked native Quire
+This context owns the deterministic path from an authority-checked FSL
 temporal definition and immutable observations to versioned TL artifacts,
 bounded TL evaluation, canonical protocol results, and an exact native/TL
 correspondence decision. It includes the `tl-syntax`, `tl-parse`, `tl-mltl`,
-`tl-rewrite`, `quire-contract-ir`, `quire-spec-language`,
-`quire-observation`, and `quire-protocol` crates as one application composed of
-separately versioned owner subsystems. `quire-specification` is the ninth,
+`tl-rewrite`, `filament-contract-ir`, `filament-spec-language`,
+`filament-observation`, and `filament-protocol` crates as one application composed of
+separately versioned owner subsystems. `filament-specification` is the ninth,
 non-runtime subsystem: it owns the shared semantic objects and vocabularies
 that those eight executable crates implement or map without restatement.
 
-The context owns no alternative editable requirements language: native Quire is
+The context owns no alternative editable requirements language: FSL is
 the sole source language. It owns no ambient monitoring transport, scheduler,
 wall clock, evidence store, accreditation decision, or external target
 semantics. Those concerns may supply exact immutable inputs or consume exact
 outputs only through reviewed contracts.
 
-Within the context, each semantic noun has one authority. `quire-specification`
+Within the context, each semantic noun has one authority. `filament-specification`
 owns the cross-repository meaning of protocol/temporal/observation objects and
 closed vocabularies; `tl-syntax` owns the
 canonical TL graph, profile and signal/proposition contracts; `tl-parse` owns
 only internal text dialects; `tl-mltl` owns history, request and evaluator
 semantics; `tl-rewrite` owns declared equivalence-preserving rewrites;
-`quire-spec-language` owns checked native definitions, temporal subjects and
+`filament-spec-language` owns checked native definitions, temporal subjects and
 canonical native temporal evaluation requests/results;
-`quire-observation` owns observation, clock/capture, progress, completeness and
-availability assertions; `quire-protocol` owns canonical native assessment
+`filament-observation` owns observation, clock/capture, progress, completeness and
+availability assertions; `filament-protocol` owns canonical native assessment
 results; and the Contract IR repository owns a dependency-free model-foundation
 package plus the compatibility bridge package that owns deterministic derived
 correspondences, joins and the non-authoritative bounded ecosystem-model export

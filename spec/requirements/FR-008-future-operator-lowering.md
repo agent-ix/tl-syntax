@@ -52,7 +52,7 @@ Successful admission produces a private typed request containing the exact
 in its node table, checked `[a,b]`, checked paired spans, and preflighted counts.
 The total lowerer accepts only that typed value.
 
-Under the `quire.temporal.infinite-trace/v1` facet the checked interval in that
+Under the `filament.temporal.infinite-trace/v1` facet the checked interval in that
 typed request, and in the report it produces, is either `[a,b]` or the
 [FR-289](./FR-289-infinite-trace-interval-grammar.md) `UnboundedInterval`. The
 lowering equations below apply unchanged to both.

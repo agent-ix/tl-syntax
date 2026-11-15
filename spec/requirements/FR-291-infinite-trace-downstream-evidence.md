@@ -50,7 +50,7 @@ Dependency order:
    document, and the `tl-syntax.liveness/v1` registration boundary FR-289 and
    FR-290 specify.
 2. [STD-13](https://linear.app/agent-ix/issue/STD-13)
-   mints the corresponding QSL member and owns the native-side
+   mints the corresponding FSL member and owns the native-side
    settlement-basis mapping; it does not mint the TL profile.
 3. [TL-13](https://linear.app/agent-ix/issue/TL-13) and
    [TL-7](https://linear.app/agent-ix/issue/TL-7) register and qualify the first

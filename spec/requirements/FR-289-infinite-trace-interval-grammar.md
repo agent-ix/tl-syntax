@@ -11,7 +11,7 @@ relationships:
     type: depends_on
   - target: ix://agent-ix/tl-syntax/FR-009
     type: depends_on
-  - target: ix://agent-ix/quire-specification/FR-250
+  - target: ix://agent-ix/filament-specification/FR-250
     type: depends_on
 ---
 
@@ -23,7 +23,7 @@ When a temporal primitive (`F`, `G`, `U`, `R`, `O`, `H`, `S`, `T`) or, by FR-008
 lowering, a derived operator (`W`, `M`) is bound to the TL-native
 `mltl.infinite-trace/v1` profile, tl-syntax shall accept an interval whose
 upper bound is absent in addition to the existing closed `[a,b]` form from
-FR-001. The QSL `quire.temporal.infinite-trace/v1` member is a separately
+FR-001. The FSL `filament.temporal.infinite-trace/v1` member is a separately
 owned correspondence, not a TL profile identity or a lowering target.
 
 ## Inputs

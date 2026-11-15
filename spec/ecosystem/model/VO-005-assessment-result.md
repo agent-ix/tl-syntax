@@ -3,7 +3,7 @@ id: VO-005
 title: "Canonical assessment result"
 type: value_object
 relationships:
-  - { target: ix://agent-ix/quire-protocol/FR-042, type: implemented_by }
+  - { target: ix://agent-ix/filament-protocol/FR-042, type: implemented_by }
 ---
 # [VO-005] Canonical assessment result
 

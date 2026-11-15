@@ -38,14 +38,14 @@ The runtime dependency direction is:
 ```text
 tl-syntax <- tl-parse
 tl-syntax <- tl-mltl <- tl-rewrite
-quire-contract-model -> quire-spec-language -> quire-protocol
-quire-spec-language -----\
-quire-observation --------+-> quire-contract-ir -> consumers
-quire-protocol -----------/
+filament-contract-model -> filament-spec-language -> filament-protocol
+filament-spec-language -----\
+filament-observation --------+-> filament-contract-ir -> consumers
+filament-protocol -----------/
 tl-syntax + tl-mltl -----/
 ```
 
-The normative dependency direction is `quire-specification -> every owner and
+The normative dependency direction is `filament-specification -> every owner and
 bridge specification`. It is a specification/reference edge, not a Cargo edge:
 the shared repository fixes meaning, identity composition and closed
 vocabularies, while each executable owner keeps the one canonical wire type and
@@ -62,19 +62,19 @@ accepted wire/profile identity:
 
 | Repository | Target semantic modules |
 | --- | --- |
-| `quire-specification` | shared `objects::{foundation,temporal,observation,protocol}` rulings, with no executable consumer wire crate |
+| `filament-specification` | shared `objects::{foundation,temporal,observation,protocol}` rulings, with no executable consumer wire crate |
 | `tl-syntax` | `formula::{graph,profile,document}`, `signal::{domain,catalog,binding,document}`, `contracts::{limits,manifest}` |
 | `tl-parse` | `dialect::{v1,v2,v3}`, `lexer`, `parser`, `formatter`, `diagnostic`, with shared traversal separated from dialect policy |
 | `tl-mltl` | `future`, `past::{history,requirement,evaluate,result}`, `wire::{trace,request,report}`, `clock`, `mapping` |
 | `tl-rewrite` | `catalog`, `engine::{future,past}`, `equivalence`, `report`, `replay` |
-| `quire-spec-language` | existing compiler/runtime subsystems plus `protocol_artifact::{checked_predicate,temporal_subject,native_temporal::{request,result}}`; checked definitions derive only from admitted v2 packages and native result truth derives only from its evaluator |
-| `quire-observation` | `authority::{observation,population,position,clock,capture,progress,closure,completeness,availability}` over qualified immutable observation state |
-| `quire-protocol` | `result::{record,reader,global,lineage,contract_ir}` plus the existing separate refusal subsystem |
-| `quire-contract-ir` repository | cycle-free `quire-contract-model` package containing the existing shared substrate; compatibility-reexporting `quire-contract-ir` package with `predicate::{admission,definition,artifacts,valuation,decision,reader}`, `temporal::{admission,formula,valuation,request,correspondence,join,decision,reader}`, and observational `ecosystem_model::{manifest,graph,document,reader}` |
+| `filament-spec-language` | existing compiler/runtime subsystems plus `protocol_artifact::{checked_predicate,temporal_subject,native_temporal::{request,result}}`; checked definitions derive only from admitted v2 packages and native result truth derives only from its evaluator |
+| `filament-observation` | `authority::{observation,population,position,clock,capture,progress,closure,completeness,availability}` over qualified immutable observation state |
+| `filament-protocol` | `result::{record,reader,global,lineage,contract_ir}` plus the existing separate refusal subsystem |
+| `filament-contract-ir` repository | cycle-free `filament-contract-model` package containing the existing shared substrate; compatibility-reexporting `filament-contract-ir` package with `predicate::{admission,definition,artifacts,valuation,decision,reader}`, `temporal::{admission,formula,valuation,request,correspondence,join,decision,reader}`, and observational `ecosystem_model::{manifest,graph,document,reader}` |
 
-The package split is required by the real graph: QSL already consumes Contract
-IR's foundational types, while the new bridge must consume QSL's
-constructor-private owner views. QSL therefore pins `quire-contract-model`
+The package split is required by the real graph: FSL already consumes Contract
+IR's foundational types, while the new bridge must consume FSL's
+constructor-private owner views. FSL therefore pins `filament-contract-model`
 under its existing dependency key, preserving Rust imports, and the bridge
 package depends on both. Keeping the foundation and bridge in one package would
 form a Cargo cycle; copying either side's wire types would form a second
@@ -123,7 +123,7 @@ Where valid owner result vocabularies differ, Contract IR consumes
 owner-published constructor-private result/mapping views selected by exact
 contract. The QProtocol mapping consumed by FR-025 is predicate-leaf-bound and
 supplies explicit valuation cells. It is not a native temporal result and is
-never compared to a TL formula result. QSL therefore owns a canonical
+never compared to a TL formula result. FSL therefore owns a canonical
 formula-wide native request/result sibling to the TL request/result; Contract IR
 constructs both inputs from the same admitted observations and compares the two
 formula-wide results without invoking either evaluator. It does not require an
