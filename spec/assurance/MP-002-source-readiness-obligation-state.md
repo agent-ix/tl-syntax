@@ -51,7 +51,7 @@ this plan can establish source readiness.
 
 The observation informs the human release owner whether one exact candidate and
 configuration has a complete, current and reviewable source-readiness fact set.
-It does not approve release, certify a tool, qualify native Quire/TL semantics,
+It does not approve release, certify a tool, qualify FSL/TL semantics,
 publish a crate or accept an integrator's use.
 
 ## Population

@@ -9,7 +9,7 @@ relationships:
     type: depends_on
   - target: ix://agent-ix/tl-syntax/FR-289
     type: depends_on
-  - target: ix://agent-ix/quire-specification/FR-250
+  - target: ix://agent-ix/filament-specification/FR-250
     type: references
 ---
 
@@ -19,8 +19,8 @@ relationships:
 
 When an infinite-trace formula or trace crosses a TL boundary, tl-syntax shall
 identify it with `mltl.infinite-trace/v1` and preserve its exact position-clock
-binding. QSL's `quire.temporal.infinite-trace/v1` is a correspondence used for
-result comparison; QSL infinite-trace clauses do not lower into a TL target.
+binding. FSL's `filament.temporal.infinite-trace/v1` is a correspondence used for
+result comparison; FSL infinite-trace clauses do not lower into a TL target.
 
 ## Inputs
 
@@ -38,7 +38,7 @@ result comparison; QSL infinite-trace clauses do not lower into a TL target.
 
 `mltl.infinite-trace/v1` is distinct from `mltl.closed-trace/v1`,
 `mltl.online-prefix/v1`, and `mltl.origin-complete-history/v1`. A caller
-selects it explicitly; neither an unbounded spelling nor a QSL member name
+selects it explicitly; neither an unbounded spelling nor a FSL member name
 selects it implicitly. Formula v1/v2 and their existing profile identities
 retain their serialized bytes and meaning.
 
@@ -53,9 +53,9 @@ fairness premises, and result attribution must name the same clock identity.
 
 | ID | Criteria | Verification |
 |---|---|---|
-| FR-020-AC-1 | The four TL profile identities remain distinct; selecting the QSL member name or omitting the TL profile refuses instead of silently choosing `mltl.infinite-trace/v1`. | Test (TC-148) |
+| FR-020-AC-1 | The four TL profile identities remain distinct; selecting the FSL member name or omitting the TL profile refuses instead of silently choosing `mltl.infinite-trace/v1`. | Test (TC-148) |
 | FR-020-AC-2 | `event_position` is preserved across formula, trace, fairness, and result attribution; fixed-sample, dense, timestamped, or mismatched clock selections refuse on the clock axis before evaluation. | Test (TC-149) |
-| FR-020-AC-3 | Existing formula v1/v2 golden bytes remain identical and QSL-to-TL infinite-trace correspondence is recorded as result comparison, never lowering. | Test (TC-150), Inspection |
+| FR-020-AC-3 | Existing formula v1/v2 golden bytes remain identical and FSL-to-TL infinite-trace correspondence is recorded as result comparison, never lowering. | Test (TC-150), Inspection |
 
 ## Dependencies
 

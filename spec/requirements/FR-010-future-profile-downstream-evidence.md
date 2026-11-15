@@ -70,8 +70,8 @@ not dependencies or alternate evaluators. FRETish remains output-only. No Java,
 Node, Electron, or other foreign runtime enters a production or qualification
 path.
 
-Native Quire remains the only editable formal-clause authority. Its
-quire-contract-ir bridge may produce the canonical graph only when that
+FSL remains the only editable formal-clause authority. Its
+filament-contract-ir bridge may produce the canonical graph only when that
 bridge's separately reviewed correspondence profile admits the native clause;
 it does not consume the TL text dialect. TL text and formula-v1 documents remain
 derived interchange/evaluator inputs.
@@ -113,6 +113,6 @@ Each issue names M0 closure and the preceding issue identities as hard
 predecessors. These links route work; they do not authorize implementation
 before the acceptance gates above are satisfied.
 
-quire-contract-ir's native bridge consumes a reviewed canonical profile but is
+filament-contract-ir's native bridge consumes a reviewed canonical profile but is
 blocked independently on its total-Boolean predicate projection and native
 temporal source profile. It is not a prerequisite for the internal lowering.

@@ -57,18 +57,18 @@
       ]
     },
     {
-      "repository": "agent-ix/quire-contract-ir",
+      "repository": "agent-ix/filament-contract-ir",
       "issue": 70,
-      "owner": "quire-contract-ir",
-      "predecessors": ["agent-ix/quire-contract-ir#63"]
+      "owner": "filament-contract-ir",
+      "predecessors": ["agent-ix/filament-contract-ir#63"]
     },
     {
-      "repository": "agent-ix/quire-contract-ir",
+      "repository": "agent-ix/filament-contract-ir",
       "issue": 71,
-      "owner": "quire-contract-ir",
+      "owner": "filament-contract-ir",
       "predecessors": [
-        "agent-ix/quire-contract-ir#64",
-        "agent-ix/quire-contract-ir#70",
+        "agent-ix/filament-contract-ir#64",
+        "agent-ix/filament-contract-ir#70",
         "agent-ix/tl-syntax#54"
       ]
     }

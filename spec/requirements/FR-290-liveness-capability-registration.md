@@ -7,7 +7,7 @@ relationships:
     type: implements
   - target: ix://agent-ix/tl-syntax/FR-289
     type: depends_on
-  - target: ix://agent-ix/quire-specification/FR-161
+  - target: ix://agent-ix/filament-specification/FR-161
     type: references
 ---
 
@@ -33,7 +33,7 @@ rather than a hold, block, or refusal error.
 ## Outputs
 
 - Either the registered backend's settlement (`proved`, `refuted`,
-  `inconclusive`, `unsupported`, or `failed` per quire-specification FR-341), or,
+  `inconclusive`, `unsupported`, or `failed` per filament-specification FR-341), or,
   absent a registration, an `unsupported` settlement carrying a warning that
   names `tl-syntax.liveness/v1`.
 - No mutation of a prior settlement and no partial or silently-downgraded
@@ -60,10 +60,10 @@ request names its subject scope. A complete lasso can support a claim about
 that exact trace; it does not prove a transition/model subject. A backend
 without a model-wide procedure returns `unsupported` for a model request,
 even if it can decide a lasso. The result retains the selected subject kind
-and identity so the QSL correspondence cannot widen a trace claim.
+and identity so the FSL correspondence cannot widen a trace claim.
 
 Absence of a registered backend is never a hold, never a blocker, and never a
-refusal error: this is the solver-absence path QSL establishes, and tl-syntax's
+refusal error: this is the solver-absence path FSL establishes, and tl-syntax's
 liveness capability follows the same contract. A `tl-syntax.formula-unbounded/v1`
 document handed to settlement with no backend registered for
 `tl-syntax.liveness/v1` settles `unsupported`, carrying a warning that names

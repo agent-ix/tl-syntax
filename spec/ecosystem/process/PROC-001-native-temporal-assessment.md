@@ -1,9 +1,9 @@
 ---
 id: PROC-001
-title: "Native Quire to canonical TL assessment"
+title: "FSL to canonical TL assessment"
 type: process
 ---
-# [PROC-001] Native Quire to canonical TL assessment
+# [PROC-001] FSL to canonical TL assessment
 
 This process is the complete application path under epic #52. Each boundary
 passes exact immutable artifacts through the public reader selected before the
@@ -30,8 +30,8 @@ assign per-step artifact names, so Consumes and Emits remain unspecified.
 
 ```mermaid
 flowchart TD
-    Source[Native Quire source and model authorities] --> Compile[QSL parse link check and compiled protocol v2 admission]
-    Compile --> NativeView[QSL checked predicate and temporal subject owner artifacts]
+    Source[FSL source and model authorities] --> Compile[FSL parse link check and compiled protocol v2 admission]
+    Compile --> NativeView[FSL checked predicate and temporal subject owner artifacts]
     Observation[Qualified observation clock capture progress completeness and availability] --> ObservationView[Observation owner strict readers]
     NativeView --> PredicateProjection[Contract IR predicate correspondence]
     ObservationView --> PredicateValuation[Contract IR predicate valuation]

@@ -115,5 +115,5 @@ interpreting either one.
 Depends on stable proposition identities and source spans from
 [FR-003](./FR-003-identities-and-profiles.md). It is the dependency root for
 `agent-ix/tl-parse#20`, `agent-ix/tl-rewrite#21`, and
-`agent-ix/tl-mltl#24`; `agent-ix/quire-contract-ir#57` owns the later IR and
+`agent-ix/tl-mltl#24`; `agent-ix/filament-contract-ir#57` owns the later IR and
 FRETish adapter.

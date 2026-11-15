@@ -3,7 +3,7 @@ id: IF-002
 title: "Observation authority interface"
 type: interface
 relationships:
-  - { target: ix://agent-ix/quire-observation/FR-004, type: implemented_by }
+  - { target: ix://agent-ix/filament-observation/FR-004, type: implemented_by }
 ---
 # [IF-002] Observation authority interface
 

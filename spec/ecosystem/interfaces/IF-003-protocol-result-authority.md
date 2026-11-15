@@ -3,7 +3,7 @@ id: IF-003
 title: "Canonical protocol result authority interface"
 type: interface
 relationships:
-  - { target: ix://agent-ix/quire-protocol/FR-042, type: implemented_by }
+  - { target: ix://agent-ix/filament-protocol/FR-042, type: implemented_by }
 ---
 # [IF-003] Canonical protocol result authority interface
 
@@ -33,7 +33,7 @@ invariants:
   - producer-owned source model configuration and assertion identities are retained in their original domains
   - decision-scope and surrounding-execution progress and closure remain independent
   - only a valid completed final result can carry a Boolean
-  - a predicate-bound mapping supplies an FR-025 valuation and cannot substitute for the formula-wide QSL result in FR-026
+  - a predicate-bound mapping supplies an FR-025 valuation and cannot substitute for the formula-wide FSL result in FR-026
   - refusal identity is independent of rendering and no failed operation returns partial canonical bytes
 dispatch: exact result ContractSelection
 ```

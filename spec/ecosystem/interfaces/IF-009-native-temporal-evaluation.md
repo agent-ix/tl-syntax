@@ -3,7 +3,7 @@ id: IF-009
 title: "Canonical native temporal evaluation interface"
 type: interface
 relationships:
-  - { target: ix://agent-ix/quire-spec-language/FR-052, type: implemented_by }
+  - { target: ix://agent-ix/filament-spec-language/FR-052, type: implemented_by }
 ---
 # [IF-009] Canonical native temporal evaluation interface
 

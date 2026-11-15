@@ -62,7 +62,7 @@ integrator's intended-use, deployment and validation decision open.
   adapter shall produce `conflict`.
 - If a license/reuse-right authority is unverifiable, then the tl-syntax Rust
   package adapter shall produce `refused` without repair by copying a notice.
-- The package shall not claim native Quire source-language qualification,
+- The package shall not claim FSL source-language qualification,
   R2U2/C2PO monitor qualification, consuming-system certification,
   accreditation, authorization or non-repudiation.
 - If the compatible released integrator-package contract is absent, then

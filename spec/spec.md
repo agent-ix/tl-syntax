@@ -30,7 +30,7 @@ authoritative requirements boundary for tl-syntax v0.1.
 - Formula rewriting or normalization.
 - Finite-trace evaluation and horizon computation algorithms.
 - Production stream monitoring.
-- A user-authored TL or FRETish source language; native Quire is the sole
+- A user-authored TL or FRETish source language; FSL is the sole
   editable formal-clause authority.
 - Automatic release approval, tool certification, consuming-system
   qualification, monitor qualification, crates.io publication, or a local
@@ -64,9 +64,9 @@ inspection evidence.
 ## References
 
 - [tl-syntax epic](https://github.com/agent-ix/tl-syntax/issues/5).
-- [Contract-derived verification program](https://github.com/agent-ix/quire-contract-ir/issues/1).
-- [Native Quire typed-predicate bridge](https://github.com/agent-ix/quire-contract-ir/issues/63).
-- [Export-only FRETish mapping](https://github.com/agent-ix/quire-contract-ir/issues/57).
+- [Contract-derived verification program](https://github.com/agent-ix/filament-contract-ir/issues/1).
+- [FSL typed-predicate bridge](https://github.com/agent-ix/filament-contract-ir/issues/63).
+- [Export-only FRETish mapping](https://github.com/agent-ix/filament-contract-ir/issues/57).
 - [Typed signal and source-context child](https://github.com/agent-ix/tl-syntax/issues/15).
 - [Post-v0.1 future operator-profile specification](./future-profile.md).
 - [Post-v0.1 past/history profile specification](./past-profile.md).

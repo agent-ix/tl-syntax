@@ -9,7 +9,7 @@ relationships:
     type: depends_on
   - target: ix://agent-ix/tl-syntax/FR-002
     type: depends_on
-  - target: ix://agent-ix/quire-specification/FR-092
+  - target: ix://agent-ix/filament-specification/FR-092
     type: depends_on
 ---
 
@@ -43,7 +43,7 @@ and Boolean operators plus:
 |---|---|
 | `Once[a,b] p` / internal text `O[a,b] p` | true iff some offset `j` in `[a,b]` makes `p` true at `t-j` |
 | `Historically[a,b] p` / internal text `H[a,b] p` | true iff every offset `j` in `[a,b]` makes `p` true at `t-j` |
-| `StrongPrevious p` / internal text `Y p` | exactly the `Once[1,1] p` truth relation selected by `ix://agent-ix/quire-specification/FR-092`; it is primitive and does not imply a weak or physical-position-existence boundary |
+| `StrongPrevious p` / internal text `Y p` | exactly the `Once[1,1] p` truth relation selected by `ix://agent-ix/filament-specification/FR-092`; it is primitive and does not imply a weak or physical-position-existence boundary |
 | `p Since[a,b] q` / internal text `p S[a,b] q` | true iff some witness offset `j` in `[a,b]` makes `q` true at `t-j` and `p` is true at every offset `k` in `[a,j)` |
 | `p Triggered[a,b] q` / internal text `p T[a,b] q` | exactly the Boolean dual `not((not p) S[a,b] (not q))` |
 

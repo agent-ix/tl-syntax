@@ -24,7 +24,7 @@ source-grounded static export. Quoin owns the shared evidence-retention and
 orchestration contract; current workspace bytes remain transient until an exact
 backend/handle lifecycle passes retrieval.
 GitHub branch protection/review history and the human release owner remain
-external authorities. Native Quire is the only editable formal-clause language;
+external authorities. FSL is the only editable formal-clause language;
 tl-syntax is internal representation infrastructure.
 
 ## Views

@@ -3,7 +3,7 @@ id: VO-004
 title: "Immutable observation context"
 type: value_object
 relationships:
-  - { target: ix://agent-ix/quire-observation/FR-004, type: implemented_by }
+  - { target: ix://agent-ix/filament-observation/FR-004, type: implemented_by }
 ---
 # [VO-004] Immutable observation context
 

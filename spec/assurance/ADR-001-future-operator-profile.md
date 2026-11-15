@@ -25,7 +25,7 @@ surface conveniences as new graph nodes would require duplicate evaluator,
 horizon, rewrite, schema, corpus, and interoperability semantics and would make
 old formula-v1 consumers face new wire variants.
 
-Native Quire is the sole editable formal-clause language. TL notation is an
+FSL is the sole editable formal-clause language. TL notation is an
 internal interchange convenience and may not become a second clause authority.
 
 ## Decision
@@ -70,5 +70,5 @@ become observable at the lowering boundary, so the three-node expansion charge a
 all-or-nothing failure are normative. Target-specific loss remains visible.
 
 This decision authorizes specifications and routed implementation tickets only.
-It does not authorize a native Quire grammar change, a monitor runtime, a
+It does not authorize a FSL grammar change, a monitor runtime, a
 release, or an equivalence claim for an external tool.

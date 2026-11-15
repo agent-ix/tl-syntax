@@ -49,7 +49,7 @@ reported as maximum reverse offset, not minimum physical trace length.
 - Weak Previous as a dual of strong Previous: rejected because the authoritative
   native v1 contract specifies only strong Previous. Strong Previous is the
   primitive `Y` node and has exactly the `Once[1,1]` truth relation selected by
-  `ix://agent-ix/quire-specification/FR-092`; no physical-position-existence
+  `ix://agent-ix/filament-specification/FR-092`; no physical-position-existence
   condition or weak boundary value is inferred.
 - Foreign-runtime differential qualification: rejected by the native-language
   ruling and because none has an accepted exact profile correspondence.
@@ -63,5 +63,5 @@ it with future nodes. Native clocks/captures/predicates are resolved before TL.
 
 The owner-approved implementation epic `agent-ix/tl-syntax#52` authorizes the
 routed Rust implementation after this profile lands on `main`. It does not
-authorize native Quire grammar, production deployment, external qualification,
+authorize FSL grammar, production deployment, external qualification,
 or release.

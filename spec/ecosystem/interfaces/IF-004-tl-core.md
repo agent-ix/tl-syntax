@@ -53,7 +53,7 @@ operations:
     output: rewritten Formula plus RewriteReport or TlError
     semantics: apply only declared profile-preserving equivalences and retain replay identity
 invariants:
-  - native Quire remains the only editable formal language
+  - FSL remains the only editable formal language
   - formula v1 and established future profiles retain bytes and semantics
   - no mixed profile is admitted unless a successor profile explicitly specifies it
   - every accepted wire family has canonical schema bytes and a bounded public strict reader

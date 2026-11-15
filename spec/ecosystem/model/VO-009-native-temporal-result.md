@@ -3,7 +3,7 @@ id: VO-009
 title: "Native temporal evaluation request and result"
 type: value_object
 relationships:
-  - { target: ix://agent-ix/quire-spec-language/FR-052, type: implemented_by }
+  - { target: ix://agent-ix/filament-spec-language/FR-052, type: implemented_by }
 ---
 # [VO-009] Native temporal evaluation request and result
 
@@ -17,7 +17,7 @@ relationships:
 - **outcome** — activation, execution, typed truth or non-value, settlement and exact decision-support position identities produced only by native evaluation.
 - **relation** — original, superseding or invalidating with exact direct predecessor identity/digest and corrected request identity.
 
-The request and result are immutable canonical QSL owner artifacts with public
+The request and result are immutable canonical FSL owner artifacts with public
 strict readers. Contract IR proves that their opaque observation references
-equal the separately admitted Quire Observation views; QSL owns their native
+equal the separately admitted Filament Observation views; FSL owns their native
 semantic evaluation and does not claim observation authority.

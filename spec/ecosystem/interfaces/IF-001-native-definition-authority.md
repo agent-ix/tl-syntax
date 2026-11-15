@@ -3,7 +3,7 @@ id: IF-001
 title: "Native definition authority interface"
 type: interface
 relationships:
-  - { target: ix://agent-ix/quire-spec-language/FR-051, type: implemented_by }
+  - { target: ix://agent-ix/filament-spec-language/FR-051, type: implemented_by }
 ---
 # [IF-001] Native definition authority interface
 

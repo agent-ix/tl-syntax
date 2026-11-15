@@ -119,11 +119,11 @@ acceptance are:
 4. `tl-syntax` owns the canonical shared schema/fixture corpus; each consumer
    owns replay evidence.
 5. Target adapters own target-specific mappings and loss reports;
-   `quire-contract-ir` owns the separately reviewed native Quire
+   `filament-contract-ir` owns the separately reviewed FSL
    clock/capture/predicate correspondence into this canonical graph.
 
 No repository adds its own alternate past semantics. Neither the internal text
-dialect nor formula wire is an editable formal-clause language; native Quire
+dialect nor formula wire is an editable formal-clause language; FSL
 remains the sole source authority.
 
 The eight repositories collectively implement DOM-001 and PROC-001. Their
@@ -170,5 +170,5 @@ Git-history lookup; its trusted input is the checked-in manifest.
 Depends on FR-004/FR-005 versioning and corpus foundations plus FR-011/FR-012.
 MRS-002 supplies the profile-evolution policy. The routed implementation
 tickets are `tl-syntax#53`, `tl-parse#35`, `tl-mltl#63`, `tl-rewrite#38`,
-`tl-syntax#54`, `quire-contract-ir#70`, and `quire-contract-ir#71`, under epic
+`tl-syntax#54`, `filament-contract-ir#70`, and `filament-contract-ir#71`, under epic
 `tl-syntax#52`.

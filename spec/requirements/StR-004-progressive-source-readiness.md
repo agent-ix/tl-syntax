@@ -38,12 +38,12 @@ was never assessed.
 |---|---|---|
 | StR-004-VC-1 | A release owner can identify the exact candidate, configuration, review state, evidence limitations and human disposition without inferring any missing field. | Demonstration (TC-059, TC-062) |
 | StR-004-VC-2 | An integrator can distinguish reusable source-release facts from adopter-supplied intended use, deployment configuration and validation obligations. | Demonstration (TC-061) |
-| StR-004-VC-3 | No artifact describes tl-syntax as a user-authored Quire alternative, certifies a tool or monitor, or grants automated release authority. | Inspection (TC-066) |
+| StR-004-VC-3 | No artifact describes tl-syntax as a user-authored FSL alternative, certifies a tool or monitor, or grants automated release authority. | Inspection (TC-066) |
 
 ## Stakeholders
 
 The tl-syntax human source-release owner, downstream TL crate maintainers,
-native Quire bridge maintainers, consuming-system integrators and independent
+FSL bridge maintainers, consuming-system integrators and independent
 assurance reviewers.
 
 ## Context and Assumptions

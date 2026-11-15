@@ -59,7 +59,7 @@ relationships:
 
 This profile prepares a human source-release decision for one exact Rust source
 candidate and configuration. It does not
-qualify the native Quire language, a generated MLTL formula, a parser/evaluator/
+qualify the FSL language, a generated MLTL formula, a parser/evaluator/
 rewriter/monitor, crates.io publication, a consuming system or an integrator's
 intended use.
 
