@@ -1,0 +1,5 @@
+{
+  "here": "tl-syntax",
+  "out": "docs/images",
+  "figures": ["hero","tl-stack","pipeline","scenario-sequence","corpus"]
+}

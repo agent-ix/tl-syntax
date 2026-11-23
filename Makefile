@@ -52,6 +52,8 @@ help:
 	@echo "  make rustdoc          - build warning-free public documentation"
 	@echo "  make build            - Release build"
 	@echo "  make clean            - cargo clean"
+	@echo "  make figures          - Regenerate docs/images with ixd-tl"
+	@echo "  make figures-check    - Fail on a missing or stale figure, writes nothing"
 	@echo "  make deny             - run all declared cargo-deny policy checks"
 	@echo "  make fuzz-check       - compile and dependency-audit the manual fuzz targets"
 	@echo "  make fuzz-smoke       - replay the checked-in fuzz corpora once per target"
@@ -233,11 +235,31 @@ coverage-branch:
 		-- --skip no_std_feature_matrix_and_default_dependency_gate_execute
 
 # =============================================================================
+# Documentation figures
+# =============================================================================
+#
+# docs/images/figures.json declares the figures; the shared TL figures and the
+# generate and check commands come from ix-diagrams. Install the tool once with
+#   cargo install --locked --git https://github.com/agent-ix/ix-diagrams ixd-tl
+# or point IXD_TL at a built binary. `figures-check` writes nothing and fails on
+# a missing or stale SVG or a README image whose alt text differs from the claim.
+
+IXD_TL ?= ixd-tl
+
+.PHONY: figures
+figures:
+	$(IXD_TL) generate
+
+.PHONY: figures-check
+figures-check:
+	$(IXD_TL) check
+
+# =============================================================================
 # Composite
 # =============================================================================
 
 # `ci` is the development composite. A release candidate additionally runs
 # `spec-release` under Task-007 after planned roadmap rows have backing.
 .PHONY: ci
-ci: fmt-check release-gate-test check-features check-default-dependencies lint test test-features check-corpus \
+ci: fmt-check release-gate-test check-features check-default-dependencies lint test test-features check-corpus figures-check \
 	conformance deny fuzz-check spec msrv rustdoc miri mutants-diff
