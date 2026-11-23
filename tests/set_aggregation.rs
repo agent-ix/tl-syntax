@@ -248,6 +248,20 @@ proptest! {
     }
 }
 
+/// TC-1516: the expansion of `at_least(2)` over three members equals the
+/// checked-in golden bytes, hand-derived from the FR-307 construction
+/// (rows built in decreasing i so operands precede their users).
+// Trace: TC-1516, FR-307-AC-1
+#[test]
+fn expansion_matches_checked_in_golden_bytes() {
+    let (catalog_document, document) = single(Quantifier::AtLeast { n: 2 }, 3);
+    let expanded = document.expand(catalog_document.validate().unwrap()).unwrap();
+    assert_eq!(
+        serde_json::to_vec(&expanded).unwrap(),
+        include_bytes!("fixtures/expanded-at_least-k3-n2.json")
+    );
+}
+
 /// TC-1517: node, predicate and expression counts equal the closed forms on
 /// the (k, n) grid, and every expansion is a valid formula.
 // Trace: TC-1517, FR-307-AC-1
@@ -495,21 +509,52 @@ fn aggregation_cases_carry_handwritten_forms_and_populations() {
     assert_eq!(read_json("manifest.json")["aggregation_compared_traces"], 567);
 }
 
-fn propositions(nodes: &[Node]) -> BTreeSet<PropositionId> {
-    nodes
-        .iter()
-        .filter_map(|node| match node.kind {
-            NodeKind::Proposition { proposition } => Some(proposition),
-            _ => None,
-        })
-        .collect()
+/// Propositions reachable from `root`. Instances that a constant quantifier
+/// result (`at_least(0)`, `n > k`) leaves unreferenced are not counted.
+fn propositions(nodes: &[Node], root: NodeId) -> BTreeSet<PropositionId> {
+    let mut reachable = vec![false; nodes.len()];
+    reachable[root.0 as usize] = true;
+    let mut found = BTreeSet::new();
+    for index in (0..nodes.len()).rev() {
+        if !reachable[index] {
+            continue;
+        }
+        let kind = nodes[index].kind;
+        if let NodeKind::Proposition { proposition } = kind {
+            found.insert(proposition);
+        }
+        for operand in kind.operands_for_test() {
+            reachable[operand.0 as usize] = true;
+        }
+    }
+    found
 }
 
-fn structural_match(expanded: &[Node], handwritten: &[Node]) -> bool {
-    propositions(expanded) == propositions(handwritten)
+trait Operands {
+    fn operands_for_test(self) -> Vec<NodeId>;
 }
 
-/// TC-1521: the expansion reads exactly the hand-written form's propositions,
+impl Operands for NodeKind {
+    fn operands_for_test(self) -> Vec<NodeId> {
+        match self {
+            NodeKind::Not { operand } => vec![operand],
+            NodeKind::And { left, right }
+            | NodeKind::Or { left, right }
+            | NodeKind::Implies { left, right }
+            | NodeKind::Equivalent { left, right } => vec![left, right],
+            NodeKind::False | NodeKind::True | NodeKind::Proposition { .. } => vec![],
+            other => panic!("aggregation corpus holds Boolean templates only: {other:?}"),
+        }
+    }
+}
+
+/// FR-308-AC-2. SPEC-GAP: the spec says "subset"; set equality over the
+/// reachable propositions is used so that an omitted member fails.
+fn structural_match(expanded: &[Node], root: NodeId, handwritten: &FormulaDocument) -> bool {
+    propositions(expanded, root) == propositions(handwritten.nodes(), handwritten.root())
+}
+
+/// TC-1521: the expansion reaches exactly the hand-written form's propositions,
 /// and an expansion with a member omitted fails the check.
 // Trace: TC-1521, FR-308-AC-2
 #[test]
@@ -526,7 +571,7 @@ fn structural_check_passes_and_detects_an_omitted_member() {
         let handwritten: FormulaDocument =
             serde_json::from_value(read_json(case["handwritten"].as_str().unwrap())).unwrap();
         assert!(
-            structural_match(&expanded.nodes, handwritten.nodes()),
+            structural_match(&expanded.nodes, expanded.roots[0], &handwritten),
             "{}",
             case["id"]
         );
@@ -544,7 +589,7 @@ fn structural_check_passes_and_detects_an_omitted_member() {
     let expanded = document.expand(catalog).unwrap();
     let handwritten: FormulaDocument =
         serde_json::from_value(read_json("handwritten/for_each-k3.json")).unwrap();
-    assert!(!structural_match(&expanded.nodes, handwritten.nodes()));
+    assert!(!structural_match(&expanded.nodes, expanded.roots[0], &handwritten));
 }
 
 /// TC-1538: fresh ranges are consecutive in source order above every caller

@@ -21,7 +21,7 @@
       "additionalProperties": false,
       "required": ["name", "members"],
       "properties": {
-        "name": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 255 },
         "members": { "type": "array", "maxItems": 1024, "items": { "$ref": "#/$defs/id" } }
       }
     },
@@ -48,9 +48,40 @@
       "properties": {
         "nodes": { "type": "array", "items": { "$ref": "#/$defs/template_node" } },
         "root": { "$ref": "#/$defs/id" },
-        "expressions": { "type": "array", "items": { "type": "object", "required": ["kind"] } },
-        "predicates": { "type": "array", "items": { "type": "object", "required": ["proposition", "operator", "left", "right"] } },
+        "expressions": { "type": "array", "maxItems": 100000, "items": { "$ref": "#/$defs/expression" } },
+        "predicates": { "type": "array", "maxItems": 100000, "items": { "$ref": "#/$defs/predicate" } },
         "inner": { "$ref": "#/$defs/aggregation" }
+      }
+    },
+    "i64": { "type": "integer", "minimum": -9223372036854775808, "maximum": 9223372036854775807 },
+    "scale": { "type": "integer", "minimum": 0, "maximum": 18 },
+    "expression": {
+      "oneOf": [
+        { "type": "object", "additionalProperties": false, "required": ["kind", "signal"],
+          "properties": { "kind": { "const": "signal" }, "signal": { "$ref": "#/$defs/id" } } },
+        { "type": "object", "additionalProperties": false, "required": ["kind", "depth"],
+          "properties": { "kind": { "const": "slot_signal" }, "depth": { "$ref": "#/$defs/depth" } } },
+        { "type": "object", "additionalProperties": false, "required": ["kind", "value"],
+          "properties": { "kind": { "const": "integer" }, "value": { "$ref": "#/$defs/i64" } } },
+        { "type": "object", "additionalProperties": false, "required": ["kind", "coefficient", "scale"],
+          "properties": { "kind": { "const": "decimal" }, "coefficient": { "$ref": "#/$defs/i64" }, "scale": { "$ref": "#/$defs/scale" } } },
+        { "type": "object", "additionalProperties": false, "required": ["kind", "operand"],
+          "properties": { "kind": { "enum": ["neg", "abs"] }, "operand": { "$ref": "#/$defs/id" } } },
+        { "type": "object", "additionalProperties": false, "required": ["kind", "left", "right"],
+          "properties": { "kind": { "enum": ["add", "sub", "mul"] }, "left": { "$ref": "#/$defs/id" }, "right": { "$ref": "#/$defs/id" } } },
+        { "type": "object", "additionalProperties": false, "required": ["kind", "operand", "scale"],
+          "properties": { "kind": { "const": "rescale" }, "operand": { "$ref": "#/$defs/id" }, "scale": { "$ref": "#/$defs/scale" } } }
+      ]
+    },
+    "predicate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["proposition", "operator", "left", "right"],
+      "properties": {
+        "proposition": { "$ref": "#/$defs/id" },
+        "operator": { "enum": ["lt", "le", "gt", "ge", "eq", "ne"] },
+        "left": { "$ref": "#/$defs/id" },
+        "right": { "$ref": "#/$defs/id" }
       }
     },
     "template_node": {

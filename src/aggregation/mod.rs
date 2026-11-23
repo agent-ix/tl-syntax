@@ -9,7 +9,7 @@
 
 use core::fmt;
 
-use crate::{Node, NodeId, NodeKind};
+use crate::{Node, NodeId, NodeKind, PredicateTableError, PropositionId, SignalId};
 
 #[cfg(feature = "alloc")]
 pub mod document;
@@ -118,6 +118,9 @@ pub enum AggregationRefusal {
         /// Exact required populations.
         required: ExpansionCounts,
     },
+    /// The document does not validate against the catalog given to the
+    /// expansion (it was validated against another one).
+    Invalid(SetAggregationError),
 }
 
 impl fmt::Display for AggregationRefusal {
@@ -136,6 +139,165 @@ impl fmt::Display for AggregationRefusal {
                 "expansion needs {} nodes, {} predicates and {} expression nodes",
                 required.nodes, required.predicates, required.expressions
             ),
+            Self::Invalid(error) => error.fmt(formatter),
+        }
+    }
+}
+
+/// Validation refusal of an aggregation document. No document exists.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub enum SetAggregationError {
+    /// A set name is empty.
+    EmptySetName {
+        /// Set index.
+        set: u32,
+    },
+    /// A set name exceeds 255 UTF-8 bytes.
+    SetNameTooLong {
+        /// Set index.
+        set: u32,
+    },
+    /// Two sets share a name.
+    DuplicateSetName {
+        /// First set index.
+        first: u32,
+        /// Second set index.
+        second: u32,
+    },
+    /// A member is not declared in the catalog.
+    UndeclaredMember {
+        /// Set index.
+        set: u32,
+        /// Member.
+        signal: SignalId,
+    },
+    /// A member appears twice in one set.
+    DuplicateMember {
+        /// Set index.
+        set: u32,
+        /// Member.
+        signal: SignalId,
+    },
+    /// An aggregation names no set.
+    UnknownSet {
+        /// Aggregation index (source order; nested ones share their parent's).
+        aggregation: u32,
+    },
+    /// `at_least(n)` with `n` above [`MAX_SET_MEMBERS`].
+    QuantifierOutOfRange {
+        /// Aggregation index.
+        aggregation: u32,
+        /// Rejected `n`.
+        n: u32,
+    },
+    /// Quantifier nesting deeper than [`MAX_AGGREGATION_DEPTH`].
+    AggregationTooDeep {
+        /// Aggregation index.
+        aggregation: u32,
+    },
+    /// An `inner` leaf without a nested template, or a nested template that
+    /// no `inner` leaf references.
+    InnerLeafMismatch {
+        /// Aggregation index.
+        aggregation: u32,
+        /// Template depth.
+        depth: u8,
+    },
+    /// A template node operand or the root does not identify a preceding node.
+    TemplateStructure {
+        /// Aggregation index.
+        aggregation: u32,
+        /// Template depth.
+        depth: u8,
+        /// Offending template node (or the root).
+        node: NodeId,
+    },
+    /// A slot leaf names an absent quantifier depth.
+    SlotOutsideTemplate {
+        /// Aggregation index.
+        aggregation: u32,
+        /// Template depth.
+        depth: u8,
+    },
+    /// The member-independent part of a template fails typing.
+    TemplatePredicate {
+        /// Aggregation index.
+        aggregation: u32,
+        /// Template depth.
+        depth: u8,
+        /// The table error.
+        error: PredicateTableError,
+    },
+    /// The template is ill-typed for one member.
+    TemplateIllTypedForMember {
+        /// Aggregation index.
+        aggregation: u32,
+        /// The member for which typing fails.
+        member: SignalId,
+        /// The typing error.
+        error: PredicateTableError,
+    },
+    /// `slot_proposition` is used but a member has no Boolean binding.
+    MemberHasNoBooleanBinding {
+        /// Aggregation index.
+        aggregation: u32,
+        /// The member.
+        member: SignalId,
+    },
+    /// The fresh identity range overlaps a catalog binding or a
+    /// template-referenced proposition, or exceeds `u32`.
+    FreshIdentityCollision {
+        /// First colliding identity (or the range start on overflow).
+        proposition: PropositionId,
+    },
+    /// The expansion would exceed a declared bound.
+    AggregationTooLarge {
+        /// The limited resource.
+        resource: AggregationLimit,
+        /// Required population (saturated on overflow).
+        actual: usize,
+        /// Stable ceiling.
+        limit: usize,
+    },
+    /// A member-independent predicate defines a proposition the catalog
+    /// already binds.
+    PredicateDefinedTwice {
+        /// The doubly defined proposition.
+        proposition: PropositionId,
+    },
+    /// A template leaf names a member-dependent placeholder of another
+    /// template, which the expansion would leave dangling.
+    PlaceholderOutOfScope {
+        /// The placeholder.
+        proposition: PropositionId,
+    },
+}
+
+impl fmt::Display for SetAggregationError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(formatter, "set aggregation refused: {self:?}")
+    }
+}
+
+impl From<AggregationRefusal> for SetAggregationError {
+    fn from(refusal: AggregationRefusal) -> Self {
+        match refusal {
+            AggregationRefusal::AggregationTooLarge {
+                resource,
+                actual,
+                limit,
+            } => Self::AggregationTooLarge {
+                resource,
+                actual,
+                limit,
+            },
+            AggregationRefusal::Invalid(error) => error,
+            AggregationRefusal::ExpansionTooSmall { required } => Self::AggregationTooLarge {
+                resource: AggregationLimit::Nodes,
+                actual: required.nodes,
+                limit: MAX_AGGREGATION_NODES,
+            },
         }
     }
 }
@@ -218,6 +380,10 @@ impl Writer<'_> {
         })
     }
 
+    // SPEC-GAP: FR-307 says cells are created "in increasing i"; T(i,j) reads
+    // T(i+1,.), so increasing i would put a user before its operands. Rows are
+    // built in decreasing i (then increasing j, And before Or); the node count
+    // is unchanged. FR-307 text to update.
     /// The `at_least` counting table. Rows are built from `i = k` down to 1
     /// so every operand precedes its user; within a row `j` increases and each
     /// cell writes its `And` then its `Or`.

@@ -134,8 +134,9 @@ variants!(
     UnknownSet, QuantifierOutOfRange, AggregationTooDeep, InnerLeafMismatch, TemplateStructure,
     SlotOutsideTemplate, TemplatePredicate, TemplateIllTypedForMember,
     MemberHasNoBooleanBinding, FreshIdentityCollision, AggregationTooLarge,
+    PredicateDefinedTwice, PlaceholderOutOfScope,
 );
-variants!(AggregationRefusal, REFUSAL: AggregationTooLarge, ExpansionTooSmall);
+variants!(AggregationRefusal, REFUSAL: AggregationTooLarge, ExpansionTooSmall, Invalid);
 variants!(
     ContractSetError, CONTRACT_SET:
     RootOutOfRange, ContractIdNotIncreasing, EmptyName, NameTooLong, DuplicateName,
@@ -1363,6 +1364,43 @@ fn set_aggregation_errors() {
             vec![quantified("a", Quantifier::AtLeast { n: 1 }, slot(0)); 50_001],
         )),
     );
+    let shared_predicate = AggregationTemplate {
+        nodes: vec![TemplateNode::Node {
+            node: Node::new(NodeKind::Proposition {
+                proposition: PropositionId(1),
+            }),
+        }],
+        root: NodeId(0),
+        expressions: vec![ExprNode::Integer { value: 1 }],
+        predicates: vec![Predicate {
+            proposition: PropositionId(1),
+            operator: ComparisonOperator::Eq,
+            left: ExprId(0),
+            right: ExprId(0),
+        }],
+        inner: None,
+    };
+    seen.is(
+        "PredicateDefinedTwice",
+        err(new(vec![set("a", &[2])], 100, vec![quantified("a", each, shared_predicate)])),
+    );
+    let mut stray = slot(0);
+    stray.nodes = vec![TemplateNode::Node {
+        node: Node::new(NodeKind::Proposition {
+            proposition: PropositionId(50),
+        }),
+    }];
+    seen.is(
+        "PlaceholderOutOfScope",
+        err(new(
+            vec![set("a", &[2])],
+            100,
+            vec![
+                quantified("a", each, numeric(ExprNode::SlotSignal { depth: 0 })),
+                quantified("a", each, stray),
+            ],
+        )),
+    );
     seen.complete(AGGREGATION, &["AggregationTooLarge"]);
 
     let mut seen = Seen::default();
@@ -1377,6 +1415,20 @@ fn set_aggregation_errors() {
         "AggregationTooLarge",
         err(expand_quantifier_into(Quantifier::ForEach, &many, NodeId(0), &mut out)),
     );
+    // Validated against one catalog, expanded against one without the binding.
+    let document = SetAggregationDocument::new(
+        catalog,
+        vec![set("a", &[1])],
+        PropositionId(100),
+        vec![quantified("a", each, slot(0))],
+    )
+    .unwrap();
+    let unbound = SignalCatalogDocument::new(
+        vec![OwnedSignalDeclaration::new(SignalId(1), "b".into(), SignalDomain::Boolean)],
+        vec![],
+    )
+    .unwrap();
+    seen.is("Invalid", err(document.expand(unbound.validate().unwrap())));
     seen.complete(REFUSAL, &[]);
 }
 

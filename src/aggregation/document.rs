@@ -14,7 +14,7 @@ use core::fmt;
 
 use super::{
     expand_quantifier_into, quantifier_node_count, AggregationLimit, AggregationRefusal,
-    ExpansionCounts, Quantifier, TemplateNode, MAX_AGGREGATION_DEPTH,
+    ExpansionCounts, Quantifier, SetAggregationError, TemplateNode, MAX_AGGREGATION_DEPTH,
     MAX_AGGREGATION_EXPRESSIONS, MAX_AGGREGATION_NODES, MAX_AGGREGATION_PREDICATES,
     MAX_SET_MEMBERS,
 };
@@ -102,151 +102,11 @@ pub struct AggregationTemplate {
     pub inner: Option<Box<Aggregation>>,
 }
 
-/// Validation refusal of an aggregation document. No document exists.
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-#[non_exhaustive]
-pub enum SetAggregationError {
-    /// A set name is empty.
-    EmptySetName {
-        /// Set index.
-        set: u32,
-    },
-    /// A set name exceeds 255 UTF-8 bytes.
-    SetNameTooLong {
-        /// Set index.
-        set: u32,
-    },
-    /// Two sets share a name.
-    DuplicateSetName {
-        /// First set index.
-        first: u32,
-        /// Second set index.
-        second: u32,
-    },
-    /// A member is not declared in the catalog.
-    UndeclaredMember {
-        /// Set index.
-        set: u32,
-        /// Member.
-        signal: SignalId,
-    },
-    /// A member appears twice in one set.
-    DuplicateMember {
-        /// Set index.
-        set: u32,
-        /// Member.
-        signal: SignalId,
-    },
-    /// An aggregation names no set.
-    UnknownSet {
-        /// Aggregation index (source order; nested ones share their parent's).
-        aggregation: u32,
-    },
-    /// `at_least(n)` with `n` above [`MAX_SET_MEMBERS`].
-    QuantifierOutOfRange {
-        /// Aggregation index.
-        aggregation: u32,
-        /// Rejected `n`.
-        n: u32,
-    },
-    /// Quantifier nesting deeper than [`MAX_AGGREGATION_DEPTH`].
-    AggregationTooDeep {
-        /// Aggregation index.
-        aggregation: u32,
-    },
-    /// An `inner` leaf without a nested template, or a nested template that
-    /// no `inner` leaf references.
-    InnerLeafMismatch {
-        /// Aggregation index.
-        aggregation: u32,
-        /// Template depth.
-        depth: u8,
-    },
-    /// A template node operand or the root does not identify a preceding node.
-    TemplateStructure {
-        /// Aggregation index.
-        aggregation: u32,
-        /// Template depth.
-        depth: u8,
-        /// Offending template node (or the root).
-        node: NodeId,
-    },
-    /// A slot leaf names an absent quantifier depth.
-    SlotOutsideTemplate {
-        /// Aggregation index.
-        aggregation: u32,
-        /// Template depth.
-        depth: u8,
-    },
-    /// The member-independent part of a template fails typing.
-    TemplatePredicate {
-        /// Aggregation index.
-        aggregation: u32,
-        /// Template depth.
-        depth: u8,
-        /// The table error.
-        error: PredicateTableError,
-    },
-    /// The template is ill-typed for one member.
-    TemplateIllTypedForMember {
-        /// Aggregation index.
-        aggregation: u32,
-        /// The member for which typing fails.
-        member: SignalId,
-        /// The typing error.
-        error: PredicateTableError,
-    },
-    /// `slot_proposition` is used but a member has no Boolean binding.
-    MemberHasNoBooleanBinding {
-        /// Aggregation index.
-        aggregation: u32,
-        /// The member.
-        member: SignalId,
-    },
-    /// The fresh identity range overlaps a catalog binding or a
-    /// template-referenced proposition, or exceeds `u32`.
-    FreshIdentityCollision {
-        /// First colliding identity (or the range start on overflow).
-        proposition: PropositionId,
-    },
-    /// The expansion would exceed a declared bound.
-    AggregationTooLarge {
-        /// The limited resource.
-        resource: AggregationLimit,
-        /// Required population (saturated on overflow).
-        actual: usize,
-        /// Stable ceiling.
-        limit: usize,
-    },
-}
-
-impl fmt::Display for SetAggregationError {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(formatter, "set aggregation refused: {self:?}")
-    }
-}
-
-impl From<AggregationRefusal> for SetAggregationError {
-    fn from(refusal: AggregationRefusal) -> Self {
-        match refusal {
-            AggregationRefusal::AggregationTooLarge {
-                resource,
-                actual,
-                limit,
-            } => Self::AggregationTooLarge {
-                resource,
-                actual,
-                limit,
-            },
-            AggregationRefusal::ExpansionTooSmall { required } => Self::AggregationTooLarge {
-                resource: AggregationLimit::Nodes,
-                actual: required.nodes,
-                limit: MAX_AGGREGATION_NODES,
-            },
-        }
-    }
-}
-
+// SPEC-GAP: FR-307 names one `root`; a document holds several quantified
+// templates (FR-307 "Identity precedence"), so the expansion returns one root
+// per top-level aggregation in document order. FR-307 "Outputs" to update.
+// SPEC-GAP: member-independent template items are written once in a shared
+// prefix and counted once; FR-307's counts assume this reading.
 /// The result of an expansion: ordinary nodes, predicates and expressions.
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize))]
@@ -360,6 +220,23 @@ fn template_counts(template: &AggregationTemplate, dependency: &Dependency) -> T
         nodes: Dependency::count(&dependency.nodes, true) - inner_leaves,
         predicates: Dependency::count(&dependency.predicates, true),
         expressions: Dependency::count(&dependency.expressions, true),
+    }
+}
+
+/// The expansion refusal for a document error: bounds pass through as
+/// `AggregationTooLarge`, anything else is `Invalid`.
+fn refusal(error: SetAggregationError) -> AggregationRefusal {
+    match error {
+        SetAggregationError::AggregationTooLarge {
+            resource,
+            actual,
+            limit,
+        } => AggregationRefusal::AggregationTooLarge {
+            resource,
+            actual,
+            limit,
+        },
+        other => AggregationRefusal::Invalid(other),
     }
 }
 
@@ -548,9 +425,11 @@ impl SetAggregationDocument {
             self.validate_structure(aggregation, index, 0)?;
         }
         let counts = self.counts()?;
+        let bindings = BindingIndex::new(catalog);
         for (index, aggregation) in self.aggregations.iter().enumerate() {
+            // The index fits `u32`: checked by `validate_structure` above.
             let index = index as u32;
-            self.validate_typing(catalog, aggregation, index, &mut Vec::new())?;
+            self.validate_typing(catalog, &bindings, aggregation, index)?;
         }
         self.validate_fresh_range(catalog, counts)
     }
@@ -625,62 +504,81 @@ impl SetAggregationDocument {
         }
     }
 
-    /// Types the template once without members (member-independent part)
-    /// and once per member context, then recurses into the nested template.
+    /// Types each template level once: the member-independent part in one
+    /// pass, then only the member-dependent expressions and predicates once
+    /// per distinct member domain (pair, for a nested level). The work is
+    /// bounded by the template sizes plus the dependent populations the
+    /// expansion bound already limits (NFR-019).
     fn validate_typing(
         &self,
         catalog: SignalCatalog<'_>,
+        bindings: &BindingIndex,
         aggregation: &Aggregation,
         index: u32,
-        context: &mut Vec<SignalId>,
     ) -> Result<(), SetAggregationError> {
-        let template = &aggregation.template;
-        let dependency = Dependency::of(template);
-        let level = context.len() as u8;
-        type_template(catalog, template, &dependency, None).map_err(|error| {
+        let outer_members = self.members(aggregation, index)?;
+        let mut outer = TemplateTyping::new(catalog, &aggregation.template).map_err(|error| {
             SetAggregationError::TemplatePredicate {
                 aggregation: index,
-                depth: level,
+                depth: 0,
                 error,
             }
         })?;
-        let members = self.members(aggregation, index)?;
-        for member in members {
-            context.push(*member);
-            for node in &template.nodes {
-                if let TemplateNode::SlotProposition { depth } = node {
-                    let slot_member = context[usize::from(*depth)];
-                    if bound_proposition(catalog, slot_member).is_none() {
-                        return Err(SetAggregationError::MemberHasNoBooleanBinding {
-                            aggregation: index,
-                            member: slot_member,
-                        });
-                    }
-                }
-            }
-            type_template(catalog, template, &dependency, Some(context.as_slice())).map_err(|error| {
-                SetAggregationError::TemplateIllTypedForMember {
-                    aggregation: index,
-                    member: *member,
-                    error,
-                }
-            })?;
-            if let Some(inner) = &template.inner {
-                self.validate_typing(catalog, inner, index, context)?;
-            }
-            context.pop();
+        if outer.slot_propositions[0] {
+            bindings.require_all(outer_members, index)?;
         }
-        if members.is_empty() {
-            if let Some(inner) = &template.inner {
-                // Check the nested template's member-independent part too.
-                let inner_dependency = Dependency::of(&inner.template);
-                type_template(catalog, &inner.template, &inner_dependency, None).map_err(
-                    |error| SetAggregationError::TemplatePredicate {
+        let outer_domains = distinct_domains(catalog, outer_members);
+        if outer.has_dependents() {
+            for member in &outer_domains {
+                outer
+                    .member(catalog, &aggregation.template, &[*member])
+                    .map_err(|error| SetAggregationError::TemplateIllTypedForMember {
                         aggregation: index,
-                        depth: level + 1,
+                        member: *member,
                         error,
-                    },
-                )?;
+                    })?;
+            }
+        }
+        let Some(inner) = aggregation.template.inner.as_deref() else {
+            return Ok(());
+        };
+        let inner_members = self.members(inner, index)?;
+        let mut typing = TemplateTyping::new(catalog, &inner.template).map_err(|error| {
+            SetAggregationError::TemplatePredicate {
+                aggregation: index,
+                depth: 1,
+                error,
+            }
+        })?;
+        if typing.slot_propositions[0] {
+            bindings.require_all(outer_members, index)?;
+        }
+        if typing.slot_propositions[1] {
+            bindings.require_all(inner_members, index)?;
+        }
+        if !typing.has_dependents() {
+            return Ok(());
+        }
+        // A depth whose slot_signal is unused needs one representative only.
+        let representatives = |reads: bool, members: &[SignalId], domains: &[SignalId]| {
+            if reads {
+                domains.to_vec()
+            } else {
+                members.iter().take(1).copied().collect::<Vec<SignalId>>()
+            }
+        };
+        let inner_domains = distinct_domains(catalog, inner_members);
+        let outer_reps = representatives(typing.slot_signals[0], outer_members, &outer_domains);
+        let inner_reps = representatives(typing.slot_signals[1], inner_members, &inner_domains);
+        for outer_member in &outer_reps {
+            for inner_member in &inner_reps {
+                typing
+                    .member(catalog, &inner.template, &[*outer_member, *inner_member])
+                    .map_err(|error| SetAggregationError::TemplateIllTypedForMember {
+                        aggregation: index,
+                        member: *inner_member,
+                        error,
+                    })?;
             }
         }
         Ok(())
@@ -758,6 +656,54 @@ impl SetAggregationDocument {
                 proposition: pair[0],
             });
         }
+        // A shared predicate may not also be a catalog binding (review L-12).
+        if let Some(proposition) = shared
+            .iter()
+            .find(|proposition| catalog.signal_for_proposition(**proposition).is_some())
+        {
+            return Err(SetAggregationError::PredicateDefinedTwice {
+                proposition: *proposition,
+            });
+        }
+        self.validate_placeholder_scope()
+    }
+
+    /// A member-dependent placeholder is renamed only inside its own template;
+    /// a leaf of any other template naming it would dangle (review L-12).
+    fn validate_placeholder_scope(&self) -> Result<(), SetAggregationError> {
+        let mut levels: Vec<(&AggregationTemplate, Vec<PropositionId>)> = Vec::new();
+        for aggregation in &self.aggregations {
+            let mut level = Some(aggregation);
+            while let Some(current) = level {
+                let template = &current.template;
+                let dependency = Dependency::of(template);
+                let own: Vec<PropositionId> = template
+                    .predicates
+                    .iter()
+                    .zip(&dependency.predicates)
+                    .filter(|(_, dependent)| **dependent)
+                    .map(|(predicate, _)| predicate.proposition)
+                    .collect();
+                levels.push((template, own));
+                level = template.inner.as_deref();
+            }
+        }
+        let mut all: Vec<PropositionId> =
+            levels.iter().flat_map(|(_, own)| own.iter().copied()).collect();
+        all.sort_unstable();
+        for (template, own) in &levels {
+            for node in &template.nodes {
+                let TemplateNode::Node { node } = node else {
+                    continue;
+                };
+                let NodeKind::Proposition { proposition } = node.kind else {
+                    continue;
+                };
+                if all.binary_search(&proposition).is_ok() && !own.contains(&proposition) {
+                    return Err(SetAggregationError::PlaceholderOutOfScope { proposition });
+                }
+            }
+        }
         Ok(())
     }
 
@@ -771,9 +717,11 @@ impl SetAggregationDocument {
         Ok(fresh)
     }
 
-    /// Expands into caller-owned slices without allocating output. Refuses with
-    /// `ExpansionTooSmall` and the exact counts, writing nothing, when any slice
-    /// is too small. Returns the roots written into `roots` and the report.
+    /// Expands into caller-owned slices without allocating output. The
+    /// document is first re-validated against `catalog` (review M-13), so a
+    /// catalog other than the validating one cannot yield dangling or
+    /// ill-typed output. Refuses with `ExpansionTooSmall` and the exact counts,
+    /// writing nothing, when any slice is too small.
     pub fn expand_into(
         &self,
         catalog: SignalCatalog<'_>,
@@ -782,22 +730,8 @@ impl SetAggregationDocument {
         expressions: &mut [ExprNode],
         roots: &mut [NodeId],
     ) -> Result<ExpansionCounts, AggregationRefusal> {
-        let required = self.counts().map_err(|error| match error {
-            SetAggregationError::AggregationTooLarge {
-                resource,
-                actual,
-                limit,
-            } => AggregationRefusal::AggregationTooLarge {
-                resource,
-                actual,
-                limit,
-            },
-            _ => AggregationRefusal::AggregationTooLarge {
-                resource: AggregationLimit::Arithmetic,
-                actual: usize::MAX,
-                limit: MAX_AGGREGATION_NODES,
-            },
-        })?;
+        self.validate(catalog).map_err(refusal)?;
+        let required = self.counts().map_err(refusal)?;
         if nodes.len() < required.nodes
             || predicates.len() < required.predicates
             || expressions.len() < required.expressions
@@ -806,7 +740,6 @@ impl SetAggregationDocument {
             return Err(AggregationRefusal::ExpansionTooSmall { required });
         }
         let mut expander = Expander {
-            catalog,
             document: self,
             nodes,
             predicates,
@@ -815,6 +748,7 @@ impl SetAggregationDocument {
             predicate_count: 0,
             expression_count: 0,
             next_fresh: self.first_proposition.0,
+            bindings: BindingIndex::new(catalog),
             shared: Vec::new(),
         };
         expander.shared_prefix();
@@ -835,12 +769,12 @@ impl SetAggregationDocument {
     }
 
     /// Owned convenience: sizes the output from [`Self::counts`] and expands.
-    pub fn expand(&self, catalog: SignalCatalog<'_>) -> Result<ExpandedAggregation, AggregationRefusal> {
-        let required = self.counts().map_err(|_| AggregationRefusal::AggregationTooLarge {
-            resource: AggregationLimit::Nodes,
-            actual: usize::MAX,
-            limit: MAX_AGGREGATION_NODES,
-        })?;
+    /// Refusals are the same as [`Self::expand_into`]'s (review M-14).
+    pub fn expand(
+        &self,
+        catalog: SignalCatalog<'_>,
+    ) -> Result<ExpandedAggregation, AggregationRefusal> {
+        let required = self.counts().map_err(refusal)?;
         let mut nodes = vec![Node::new(NodeKind::False); required.nodes];
         let mut predicates = vec![
             Predicate {
@@ -853,7 +787,13 @@ impl SetAggregationDocument {
         ];
         let mut expressions = vec![ExprNode::Integer { value: 0 }; required.expressions];
         let mut roots = vec![NodeId(0); self.aggregations.len()];
-        let report = self.expand_into(catalog, &mut nodes, &mut predicates, &mut expressions, &mut roots)?;
+        let report = self.expand_into(
+            catalog,
+            &mut nodes,
+            &mut predicates,
+            &mut expressions,
+            &mut roots,
+        )?;
         Ok(ExpandedAggregation {
             nodes,
             predicates,
@@ -885,75 +825,209 @@ impl SetAggregationDocument {
     }
 }
 
-/// The smallest proposition the catalog binds directly to `member`.
-fn bound_proposition(catalog: SignalCatalog<'_>, member: SignalId) -> Option<PropositionId> {
-    let signal = catalog.signal(member)?;
-    if signal.domain() != SignalDomain::Boolean {
-        return None;
-    }
-    catalog
-        .bindings()
-        .iter()
-        .find(|binding| binding.signal() == member)
-        .map(|binding| binding.proposition())
+/// Catalog bindings indexed by signal: the smallest proposition bound to each
+/// Boolean signal. Built once per validation or expansion, O(B log B).
+struct BindingIndex {
+    by_signal: Vec<(SignalId, PropositionId)>,
 }
 
-/// Types a template's expressions and checks its predicates. With no
-/// context, member-dependent nodes and predicates are skipped.
-fn type_template(
-    catalog: SignalCatalog<'_>,
-    template: &AggregationTemplate,
-    dependency: &Dependency,
-    context: Option<&[SignalId]>,
-) -> Result<(), PredicateTableError> {
-    let expressions = &template.expressions;
-    let mut types: Vec<ExprType> = Vec::with_capacity(expressions.len());
-    let mut depths: Vec<usize> = Vec::with_capacity(expressions.len());
-    let member = |node: ExprId, depth: u8| -> Result<ExprType, ExpressionError> {
-        let signal = context
-            .and_then(|members| members.get(usize::from(depth)))
-            .copied()
-            .ok_or(ExpressionError::SlotOutsideTemplate { node })?;
-        catalog_signal_type(catalog, node, signal)
-    };
-    for (index, node) in expressions.iter().copied().enumerate() {
-        let node_id = ExprId(u32::try_from(index).map_err(|_| {
-            PredicateTableError::Expression(ExpressionError::ExpressionLimitExceeded {
-                resource: crate::ExpressionLimit::Nodes,
-                actual: expressions.len(),
-                limit: crate::MAX_EXPRESSION_NODES,
+impl BindingIndex {
+    fn new(catalog: SignalCatalog<'_>) -> Self {
+        let mut by_signal: Vec<(SignalId, PropositionId)> = catalog
+            .bindings()
+            .iter()
+            .filter(|binding| {
+                catalog
+                    .signal(binding.signal())
+                    .is_some_and(|signal| signal.domain() == SignalDomain::Boolean)
             })
-        })?);
-        let mut depth = 1_usize;
-        for operand in node.operands().into_iter().flatten() {
-            match operand.index().filter(|position| *position < index) {
-                Some(position) => depth = depth.max(depths[position] + 1),
-                None => {
-                    return Err(PredicateTableError::Expression(
-                        ExpressionError::OperandNotPreceding {
-                            node: node_id,
-                            operand,
-                        },
-                    ))
+            .map(|binding| (binding.signal(), binding.proposition()))
+            .collect();
+        by_signal.sort_unstable();
+        by_signal.dedup_by_key(|entry| entry.0);
+        Self { by_signal }
+    }
+
+    fn proposition(&self, member: SignalId) -> Option<PropositionId> {
+        self.by_signal
+            .binary_search_by_key(&member, |entry| entry.0)
+            .ok()
+            .map(|index| self.by_signal[index].1)
+    }
+
+    fn require_all(&self, members: &[SignalId], aggregation: u32) -> Result<(), SetAggregationError> {
+        match members.iter().find(|member| self.proposition(**member).is_none()) {
+            Some(member) => Err(SetAggregationError::MemberHasNoBooleanBinding {
+                aggregation,
+                member: *member,
+            }),
+            None => Ok(()),
+        }
+    }
+}
+
+/// The first member of each distinct declared domain, in document order.
+fn distinct_domains(catalog: SignalCatalog<'_>, members: &[SignalId]) -> Vec<SignalId> {
+    let mut seen: Vec<Option<SignalDomain>> = Vec::new();
+    let mut representatives = Vec::new();
+    for member in members {
+        let domain = catalog.signal(*member).map(|signal| signal.domain());
+        if !seen.contains(&domain) {
+            seen.push(domain);
+            representatives.push(*member);
+        }
+    }
+    representatives
+}
+
+/// One template level's typing: member-independent types computed once, and
+/// the dependent expression and predicate indices re-typed per member.
+struct TemplateTyping {
+    dependent_expressions: Vec<usize>,
+    dependent_predicates: Vec<usize>,
+    types: Vec<ExprType>,
+    /// Whether a `slot_proposition` names each depth.
+    slot_propositions: [bool; MAX_AGGREGATION_DEPTH],
+    /// Whether a `slot_signal` names each depth.
+    slot_signals: [bool; MAX_AGGREGATION_DEPTH],
+}
+
+impl TemplateTyping {
+    /// Checks operand order, depth, predicate order and roots, and types the
+    /// member-independent part. Dependent nodes get a placeholder type.
+    fn new(
+        catalog: SignalCatalog<'_>,
+        template: &AggregationTemplate,
+    ) -> Result<Self, PredicateTableError> {
+        let dependency = Dependency::of(template);
+        let expressions = &template.expressions;
+        let mut types: Vec<ExprType> = Vec::with_capacity(expressions.len());
+        let mut depths: Vec<usize> = Vec::with_capacity(expressions.len());
+        let mut slot_signals = [false; MAX_AGGREGATION_DEPTH];
+        for (index, node) in expressions.iter().copied().enumerate() {
+            let node_id = ExprId(u32::try_from(index).map_err(|_| {
+                PredicateTableError::Expression(ExpressionError::ExpressionLimitExceeded {
+                    resource: crate::ExpressionLimit::Nodes,
+                    actual: expressions.len(),
+                    limit: crate::MAX_EXPRESSION_NODES,
+                })
+            })?);
+            let mut depth = 1_usize;
+            for operand in node.operands().into_iter().flatten() {
+                match operand.index().filter(|position| *position < index) {
+                    Some(position) => depth = depth.max(depths[position] + 1),
+                    None => {
+                        return Err(PredicateTableError::Expression(
+                            ExpressionError::OperandNotPreceding {
+                                node: node_id,
+                                operand,
+                            },
+                        ))
+                    }
+                }
+            }
+            if depth > MAX_EXPRESSION_DEPTH {
+                return Err(PredicateTableError::Expression(
+                    ExpressionError::ExpressionLimitExceeded {
+                        resource: crate::ExpressionLimit::Depth,
+                        actual: depth,
+                        limit: MAX_EXPRESSION_DEPTH,
+                    },
+                ));
+            }
+            depths.push(depth);
+            if let ExprNode::SlotSignal { depth: slot } = node {
+                if let Some(flag) = slot_signals.get_mut(usize::from(slot)) {
+                    *flag = true;
+                }
+            }
+            let ty = if dependency.expressions[index] {
+                ExprType::default()
+            } else {
+                type_node(
+                    node_id,
+                    node,
+                    |operand| {
+                        operand
+                            .index()
+                            .and_then(|position| types.get(position))
+                            .copied()
+                            .unwrap_or_default()
+                    },
+                    |id, signal| catalog_signal_type(catalog, id, signal),
+                    None,
+                )?
+            };
+            types.push(ty);
+        }
+        for (position, predicate) in template.predicates.iter().enumerate() {
+            if let Some(previous) = position.checked_sub(1).map(|item| &template.predicates[item])
+            {
+                if previous.proposition >= predicate.proposition {
+                    return Err(PredicateTableError::PropositionNotIncreasing {
+                        previous: previous.proposition,
+                        current: predicate.proposition,
+                    });
+                }
+            }
+            for root in [predicate.left, predicate.right] {
+                if root.index().filter(|index| *index < types.len()).is_none() {
+                    return Err(PredicateTableError::RootOutOfRange {
+                        proposition: predicate.proposition,
+                        root,
+                    });
+                }
+            }
+            if !dependency.predicates[position] {
+                check_scales(predicate, &types)?;
+            }
+        }
+        let mut slot_propositions = [false; MAX_AGGREGATION_DEPTH];
+        for node in &template.nodes {
+            if let TemplateNode::SlotProposition { depth } = node {
+                if let Some(flag) = slot_propositions.get_mut(usize::from(*depth)) {
+                    *flag = true;
                 }
             }
         }
-        if depth > MAX_EXPRESSION_DEPTH {
-            return Err(PredicateTableError::Expression(
-                ExpressionError::ExpressionLimitExceeded {
-                    resource: crate::ExpressionLimit::Depth,
-                    actual: depth,
-                    limit: MAX_EXPRESSION_DEPTH,
-                },
-            ));
-        }
-        depths.push(depth);
-        let ty = if context.is_none() && dependency.expressions[index] {
-            ExprType::default()
-        } else {
-            type_node(
+        Ok(Self {
+            dependent_expressions: (0..expressions.len())
+                .filter(|index| dependency.expressions[*index])
+                .collect(),
+            dependent_predicates: (0..template.predicates.len())
+                .filter(|index| dependency.predicates[*index])
+                .collect(),
+            types,
+            slot_propositions,
+            slot_signals,
+        })
+    }
+
+    fn has_dependents(&self) -> bool {
+        !self.dependent_expressions.is_empty() || !self.dependent_predicates.is_empty()
+    }
+
+    /// Re-types only the dependent expressions and predicates for `context`.
+    fn member(
+        &mut self,
+        catalog: SignalCatalog<'_>,
+        template: &AggregationTemplate,
+        context: &[SignalId],
+    ) -> Result<(), PredicateTableError> {
+        let member = |node: ExprId, depth: u8| -> Result<ExprType, ExpressionError> {
+            let signal = context
+                .get(usize::from(depth))
+                .copied()
+                .ok_or(ExpressionError::SlotOutsideTemplate { node })?;
+            catalog_signal_type(catalog, node, signal)
+        };
+        for &index in &self.dependent_expressions {
+            // `index` is below the template length, checked to fit `u32`.
+            let node_id = ExprId(index as u32);
+            let types = &self.types;
+            let ty = type_node(
                 node_id,
-                node,
+                template.expressions[index],
                 |operand| {
                     operand
                         .index()
@@ -963,44 +1037,35 @@ fn type_template(
                 },
                 |id, signal| catalog_signal_type(catalog, id, signal),
                 Some(&member as &dyn Fn(ExprId, u8) -> Result<ExprType, ExpressionError>),
-            )?
-        };
-        types.push(ty);
+            )?;
+            self.types[index] = ty;
+        }
+        for &index in &self.dependent_predicates {
+            check_scales(&template.predicates[index], &self.types)?;
+        }
+        Ok(())
     }
-    for (position, predicate) in template.predicates.iter().enumerate() {
-        if let Some(previous) = position.checked_sub(1).map(|item| &template.predicates[item]) {
-            if previous.proposition >= predicate.proposition {
-                return Err(PredicateTableError::PropositionNotIncreasing {
-                    previous: previous.proposition,
-                    current: predicate.proposition,
-                });
-            }
-        }
-        let mut scales = [0_u8; 2];
-        for (side, root) in [predicate.left, predicate.right].into_iter().enumerate() {
-            scales[side] = root
-                .index()
-                .and_then(|index| types.get(index))
-                .ok_or(PredicateTableError::RootOutOfRange {
-                    proposition: predicate.proposition,
-                    root,
-                })?
-                .scale;
-        }
-        if (context.is_some() || !dependency.predicates[position]) && scales[0] != scales[1] {
-            return Err(PredicateTableError::ScaleMismatch {
-                proposition: predicate.proposition,
-                left: scales[0],
-                right: scales[1],
-            });
-        }
+}
+
+fn check_scales(predicate: &Predicate, types: &[ExprType]) -> Result<(), PredicateTableError> {
+    let scale = |root: ExprId| {
+        root.index()
+            .and_then(|index| types.get(index))
+            .map_or(0, |ty| ty.scale)
+    };
+    let (left, right) = (scale(predicate.left), scale(predicate.right));
+    if left != right {
+        return Err(PredicateTableError::ScaleMismatch {
+            proposition: predicate.proposition,
+            left,
+            right,
+        });
     }
     Ok(())
 }
 
 /// Writes one validated expansion into pre-sized slices.
-struct Expander<'d, 'c, 'o> {
-    catalog: SignalCatalog<'c>,
+struct Expander<'d, 'o> {
     document: &'d SetAggregationDocument,
     nodes: &'o mut [Node],
     predicates: &'o mut [Predicate],
@@ -1009,15 +1074,18 @@ struct Expander<'d, 'c, 'o> {
     predicate_count: usize,
     expression_count: usize,
     next_fresh: u32,
+    bindings: BindingIndex,
     /// Shared-prefix identities per aggregation, per template depth.
     shared: Vec<Vec<SharedMap>>,
 }
 
-/// Output identities of one template's shared (member-independent) items.
+/// Output identities of one template's shared (member-independent) items,
+/// with the template's dependency flags computed once (review M-12).
 #[derive(Clone, Debug, Default)]
 struct SharedMap {
     expressions: Vec<Option<ExprId>>,
     nodes: Vec<Option<NodeId>>,
+    dependency: Dependency,
 }
 
 fn lookup<T: Copy>(local: &[Option<T>], shared: &[Option<T>], index: usize) -> Option<T> {
@@ -1028,7 +1096,7 @@ fn lookup<T: Copy>(local: &[Option<T>], shared: &[Option<T>], index: usize) -> O
         .or_else(|| shared.get(index).copied().flatten())
 }
 
-impl Expander<'_, '_, '_> {
+impl Expander<'_, '_> {
     // Counts were checked against MAX_AGGREGATION_* (all below u32::MAX)
     // before any write, so the identity casts below are lossless.
     fn push_node(&mut self, kind: NodeKind) -> NodeId {
@@ -1069,6 +1137,7 @@ impl Expander<'_, '_, '_> {
         let mut map = SharedMap {
             expressions: vec![None; template.expressions.len()],
             nodes: vec![None; template.nodes.len()],
+            dependency: Dependency::default(),
         };
         for (index, node) in template.expressions.iter().copied().enumerate() {
             if !dependency.expressions[index] {
@@ -1095,6 +1164,7 @@ impl Expander<'_, '_, '_> {
                 map.nodes[index] = Some(self.push_node(kind));
             }
         }
+        map.dependency = dependency;
         map
     }
 
@@ -1136,8 +1206,8 @@ impl Expander<'_, '_, '_> {
         depth: usize,
         context: &mut Vec<SignalId>,
     ) -> NodeId {
-        let dependency = Dependency::of(template);
         let shared = core::mem::take(&mut self.shared[index][depth]);
+        let dependency = &shared.dependency;
         let mut expressions = vec![None; template.expressions.len()];
         for (position, node) in template.expressions.iter().copied().enumerate() {
             if dependency.expressions[position] {
@@ -1173,7 +1243,7 @@ impl Expander<'_, '_, '_> {
                     let member = context[usize::from(*slot)];
                     // Validated: every member of a slot_proposition set is bound.
                     let proposition =
-                        bound_proposition(self.catalog, member).unwrap_or(PropositionId(0));
+                        self.bindings.proposition(member).unwrap_or(PropositionId(0));
                     self.push_node(NodeKind::Proposition { proposition })
                 }
                 TemplateNode::Inner => match template.inner.as_deref() {
