@@ -693,7 +693,8 @@ fn temporal_core_identities_are_unchanged() {
         .is_err());
 }
 
-const REQUIRED_CLASSES: [&str; 4] = ["valid", "refused-table", "refused-wire", "aggregation"];
+const REQUIRED_CLASSES: [&str; 5] =
+    ["valid", "refused-table", "refused-wire", "aggregation", "contract-set"];
 
 fn check_manifest(manifest: &Value, root: &std::path::Path) -> Result<(), String> {
     if manifest["corpus"] != "tl-syntax.numeric-corpus/v1" {
@@ -704,7 +705,7 @@ fn check_manifest(manifest: &Value, root: &std::path::Path) -> Result<(), String
     for case in manifest["cases"].as_array().ok_or("cases")? {
         let class = case["class"].as_str().ok_or("class")?;
         *counted.entry(class.to_owned()).or_default() += 1;
-        for key in ["table", "catalog", "truth", "document", "handwritten"] {
+        for key in ["table", "catalog", "truth", "document", "handwritten", "formula"] {
             if let Some(path) = case[key].as_str() {
                 if !root.join(path).is_file() {
                     return Err(format!("missing {path}"));

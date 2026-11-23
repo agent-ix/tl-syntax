@@ -1,0 +1,1 @@
+{"schema_version":"tl-syntax.contract-set/v1","semantic_profile":"mltl.closed-trace/v1","graph_identity":"0000000000000000000000000000000000000000000000000000000000000000","contracts":[{"id":1,"name":"door-alarm","assumption":2,"guarantee":3},{"id":2,"name":"same-root","assumption":2,"guarantee":2}]}

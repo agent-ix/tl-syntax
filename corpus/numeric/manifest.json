@@ -7,7 +7,8 @@
     "valid": 2,
     "refused-table": 12,
     "refused-wire": 7,
-    "aggregation": 54
+    "aggregation": 54,
+    "contract-set": 8
   },
   "aggregation_compared_traces": 567,
   "cases": [
@@ -1145,6 +1146,62 @@
         "trace_length": 1
       },
       "traces": 32
+    },
+    {
+      "id": "contract-valid-shared-roots",
+      "class": "contract-set",
+      "formula": "contracts/formula.json",
+      "document": "contracts/valid-shared-roots.json",
+      "outcome": "valid"
+    },
+    {
+      "id": "contract-valid-empty",
+      "class": "contract-set",
+      "formula": "contracts/formula.json",
+      "document": "contracts/valid-empty.json",
+      "outcome": "valid"
+    },
+    {
+      "id": "contract-root-out-of-range",
+      "class": "contract-set",
+      "formula": "contracts/formula.json",
+      "document": "contracts/root-out-of-range.json",
+      "outcome": "RootOutOfRange"
+    },
+    {
+      "id": "contract-duplicate-name",
+      "class": "contract-set",
+      "formula": "contracts/formula.json",
+      "document": "contracts/duplicate-name.json",
+      "outcome": "DuplicateName"
+    },
+    {
+      "id": "contract-id-not-increasing",
+      "class": "contract-set",
+      "formula": "contracts/formula.json",
+      "document": "contracts/id-not-increasing.json",
+      "outcome": "ContractIdNotIncreasing"
+    },
+    {
+      "id": "contract-empty-name",
+      "class": "contract-set",
+      "formula": "contracts/formula.json",
+      "document": "contracts/empty-name.json",
+      "outcome": "EmptyName"
+    },
+    {
+      "id": "contract-graph-identity-mismatch",
+      "class": "contract-set",
+      "formula": "contracts/formula.json",
+      "document": "contracts/graph-identity-mismatch.json",
+      "outcome": "GraphIdentityMismatch"
+    },
+    {
+      "id": "contract-profile-mismatch",
+      "class": "contract-set",
+      "formula": "contracts/formula.json",
+      "document": "contracts/profile-mismatch.json",
+      "outcome": "ProfileMismatch"
     }
   ]
 }

@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://agent-ix.github.io/tl-syntax/schema/contract-set-v1.schema.json",
+  "title": "tl-syntax contract set v1",
+  "description": "Structural Draft 7 contract for assume-guarantee contracts bound to one formula graph (FR-309). graph_identity is the CONTENT_IDENTITY_DOMAIN_V1 identity of the canonical formula document (ADR-019 register item 3). The tl-syntax ContractSetDocument reader is mandatory for the graph, profile and clock binding, root ranges, increasing identities and unique names.",
+  "x-tl-syntax-semantic-reader": "ContractSetDocument::from_json_bytes",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "semantic_profile", "graph_identity", "contracts"],
+  "properties": {
+    "schema_version": { "const": "tl-syntax.contract-set/v1" },
+    "semantic_profile": { "type": "string", "minLength": 1 },
+    "clock": { "const": "event_position" },
+    "graph_identity": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "contracts": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "assumption", "guarantee"],
+        "properties": {
+          "id": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
+          "name": { "type": "string", "minLength": 1 },
+          "assumption": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
+          "guarantee": { "type": "integer", "minimum": 0, "maximum": 4294967295 }
+        }
+      }
+    }
+  }
+}

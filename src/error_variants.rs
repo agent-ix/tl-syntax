@@ -13,7 +13,8 @@ use alloc::{
 };
 
 use crate::{
-    AggregationRefusal, ExpressionError, PredicateBindingError, PredicateTableError,
+    AggregationRefusal, ContractAssumptionError, ContractObligationError, ContractSetError,
+    ExpressionError, PredicateBindingError, PredicateTableError,
     SetAggregationError,
     contracts::limits::OWNER_PROPOSITIONS, lower_infinite_future, select_infinite_profile,
     FairnessPremisesDocument, FairnessPremisesError, FairnessReadError, FixedDecimalSignalDomain,
@@ -128,6 +129,13 @@ variants!(
     MemberHasNoBooleanBinding, FreshIdentityCollision, AggregationTooLarge,
 );
 variants!(AggregationRefusal, REFUSAL: AggregationTooLarge, ExpansionTooSmall);
+variants!(
+    ContractSetError, CONTRACT_SET:
+    RootOutOfRange, ContractIdNotIncreasing, EmptyName, NameTooLong, DuplicateName,
+    ContractLimitExceeded, GraphIdentityMismatch, ProfileMismatch, ClockMismatch,
+);
+variants!(ContractObligationError, OBLIGATION: RootOutOfRange, NodeLimit);
+variants!(ContractAssumptionError, ASSUMPTION: RootOutOfRange, Binding, NotInput);
 variants!(
     PredicateBindingError, PREDICATE_BINDING:
     PropositionUnbound, PropositionDefinedTwice, NonNumericSignal,
@@ -1347,6 +1355,125 @@ fn set_aggregation_errors() {
         err(expand_quantifier_into(Quantifier::ForEach, &many, NodeId(0), &mut out)),
     );
     seen.complete(REFUSAL, &[]);
+}
+
+// Trace: TC-166, TC-1523, TC-1527, NFR-006-AC-4, FR-309-AC-2, FR-310-AC-3
+#[test]
+fn contract_errors() {
+    use crate::{
+        check_assumption_inputs, lower_contract_obligation, Contract, ContractGraph,
+        ContractSetDocument, InfiniteClock, OwnedSignalDeclaration, SignalCatalogDocument,
+        SignalDirection, MAX_CONTRACTS,
+    };
+    let nodes = vec![
+        Node::new(NodeKind::Proposition {
+            proposition: PropositionId(1),
+        }),
+        Node::new(NodeKind::Proposition {
+            proposition: PropositionId(2),
+        }),
+    ];
+    let formula = FormulaDocument::new_v2(SemanticProfile::ClosedTraceV1, NodeId(1), nodes.clone())
+        .unwrap();
+    let graph = ContractGraph::Bounded(&formula);
+    let identity = graph.content_identity().unwrap();
+    let contract = |id: u32, name: &str, assumption: u32| Contract {
+        id,
+        name: name.into(),
+        assumption: NodeId(assumption),
+        guarantee: NodeId(1),
+    };
+    let new = |contracts: Vec<Contract>| {
+        ContractSetDocument::new(graph, identity.clone(), contracts).map(|_| ())
+    };
+    let mut seen = Seen::default();
+    seen.is("RootOutOfRange", err(new(vec![contract(1, "a", 9)])));
+    seen.is(
+        "ContractIdNotIncreasing",
+        err(new(vec![contract(1, "a", 0), contract(1, "b", 0)])),
+    );
+    seen.is("EmptyName", err(new(vec![contract(1, "", 0)])));
+    let long = "x".repeat(MAX_SIGNAL_NAME_BYTES + 1);
+    seen.is("NameTooLong", err(new(vec![contract(1, &long, 0)])));
+    seen.is(
+        "DuplicateName",
+        err(new(vec![contract(1, "a", 0), contract(2, "a", 0)])),
+    );
+    #[cfg(not(miri))]
+    {
+        let many = (0..=MAX_CONTRACTS as u32)
+            .map(|id| contract(id, &id.to_string(), 0))
+            .collect();
+        seen.is("ContractLimitExceeded", err(new(many)));
+    }
+    seen.is(
+        "GraphIdentityMismatch",
+        err(ContractSetDocument::new(graph, "0".repeat(64), vec![]).map(|_| ())),
+    );
+    seen.is(
+        "ProfileMismatch",
+        err(ContractSetDocument::bind(
+            graph,
+            SemanticProfile::OnlinePrefixV1,
+            None,
+            identity.clone(),
+            vec![],
+        )
+        .map(|_| ())),
+    );
+    seen.is(
+        "ClockMismatch",
+        err(ContractSetDocument::bind(
+            graph,
+            SemanticProfile::ClosedTraceV1,
+            Some(InfiniteClock::EventPosition),
+            identity.clone(),
+            vec![],
+        )
+        .map(|_| ())),
+    );
+    seen.complete(CONTRACT_SET, &["ContractLimitExceeded"]);
+
+    let mut seen = Seen::default();
+    let mut grown = nodes.clone();
+    seen.is(
+        "RootOutOfRange",
+        err(lower_contract_obligation(&mut grown, NodeId(5), NodeId(0))),
+    );
+    #[cfg(not(miri))]
+    {
+        let mut full = vec![Node::new(NodeKind::True); MAX_FORMULA_DOCUMENT_NODES];
+        seen.is(
+            "NodeLimit",
+            err(lower_contract_obligation(&mut full, NodeId(0), NodeId(0))),
+        );
+    }
+    seen.complete(OBLIGATION, &["NodeLimit"]);
+
+    let catalog_document = SignalCatalogDocument::new_v2(
+        vec![
+            OwnedSignalDeclaration::new(SignalId(1), "a".into(), SignalDomain::Boolean)
+                .with_direction(SignalDirection::Output),
+        ],
+        vec![PropositionBinding::new(PropositionId(1), SignalId(1))],
+    )
+    .unwrap();
+    let catalog = catalog_document.validate().unwrap();
+    let view = formula.validate().unwrap();
+    let mut seen = Seen::default();
+    seen.is(
+        "RootOutOfRange",
+        err(check_assumption_inputs(catalog, view, NodeId(9))),
+    );
+    seen.is(
+        "Binding",
+        err(check_assumption_inputs(catalog, view, NodeId(1))),
+    );
+    seen.is(
+        "NotInput",
+        err(check_assumption_inputs(catalog, view, NodeId(0))),
+    );
+    seen.complete(ASSUMPTION, &[]);
 }
 
 #[test]

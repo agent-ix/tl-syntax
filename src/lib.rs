@@ -8,6 +8,7 @@ extern crate alloc;
 #[cfg(feature = "alloc")]
 mod bounded_string;
 pub mod aggregation;
+pub mod assume_guarantee;
 mod context;
 pub mod contracts;
 #[cfg(all(test, feature = "serde"))]
@@ -133,6 +134,19 @@ pub use aggregation::document::{
 };
 #[cfg(feature = "serde")]
 pub use aggregation::document::{SET_AGGREGATION_V1_SCHEMA, SET_AGGREGATION_V1_SCHEMA_BYTES};
+
+pub use assume_guarantee::{
+    assumption_prefix_verdict, contract_obligation_node, contract_outcome,
+    AssumptionPrefixVerdict, ContractAssumptionError, ContractObligationError, ContractOutcome,
+    ContractStatus, ContractTruth, MAX_CONTRACTS,
+};
+#[cfg(feature = "alloc")]
+pub use assume_guarantee::{check_assumption_inputs, lower_contract_obligation};
+#[cfg(feature = "serde")]
+pub use assume_guarantee::document::{
+    Contract, ContractGraph, ContractSetDocument, ContractSetError, ContractSetReadError,
+    ContractView, CONTRACT_SET_V1, CONTRACT_SET_V1_SCHEMA, CONTRACT_SET_V1_SCHEMA_BYTES,
+};
 
 /// Stable revision identifier for the checked-in shared temporal corpus.
 pub const CORPUS_REVISION: &str = "tl-syntax-corpus/v1";

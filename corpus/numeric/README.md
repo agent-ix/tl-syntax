@@ -18,3 +18,6 @@ tl-solve through `tl_syntax::CORPUS_DIR` instead of vendored copies.
   independently hand-built formula and a population declaration (Boolean
   members, trace length 1). The manifest records the 567 compared traces;
   tl-mltl FR-054 runs the comparison.
+- `contracts/` holds FR-309 contract-set cases bound to one formula/v2 graph
+  by its content identity (the one retained digest, ADR-019 register item 3),
+  each with its expected outcome (valid or a refusal class).

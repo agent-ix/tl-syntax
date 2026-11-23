@@ -354,6 +354,57 @@ def aggregation_cases():
         yield name, quantifier, k, n
 
 
+# --------------------------------------------------------------- contracts --
+# FR-309: one formula/v2 graph and contract sets bound to it by the
+# CONTENT_IDENTITY_DOMAIN_V1 identity (ADR-019 register item 3, retained).
+
+import hashlib
+
+CONTRACT_FORMULA = {
+    "schema_version": "tl-syntax.formula/v2",
+    "semantic_profile": "mltl.closed-trace/v1",
+    "root": 4,
+    "nodes": [
+        {"kind": "proposition", "proposition": 1},
+        {"kind": "proposition", "proposition": 2},
+        {"kind": "future", "interval": {"start": 0, "end": 2}, "operand": 0},
+        {"kind": "globally", "interval": {"start": 0, "end": 1}, "operand": 1},
+        {"kind": "and", "left": 2, "right": 3},
+    ],
+}
+
+
+def content_identity(contract, text):
+    digest = hashlib.sha256()
+    digest.update(b"tl-syntax.content-identity/v1\0")
+    digest.update(contract.encode())
+    digest.update(b"\0")
+    digest.update(text.encode())
+    return digest.hexdigest()
+
+
+def contract_set(identity, contracts, profile="mltl.closed-trace/v1"):
+    return {
+        "schema_version": "tl-syntax.contract-set/v1",
+        "semantic_profile": profile,
+        "graph_identity": identity,
+        "contracts": [{"id": i, "name": n, "assumption": a, "guarantee": g} for i, n, a, g in contracts],
+    }
+
+
+def contract_cases():
+    identity = content_identity("tl-syntax.formula/v2", canonical(CONTRACT_FORMULA))
+    good = [(1, "door-alarm", 2, 3), (2, "same-root", 2, 2)]
+    yield "valid-shared-roots", contract_set(identity, good), "valid"
+    yield "valid-empty", contract_set(identity, []), "valid"
+    yield "root-out-of-range", contract_set(identity, [(1, "a", 9, 3)]), "RootOutOfRange"
+    yield "duplicate-name", contract_set(identity, [(1, "a", 2, 3), (2, "a", 2, 3)]), "DuplicateName"
+    yield "id-not-increasing", contract_set(identity, [(2, "a", 2, 3), (2, "b", 2, 3)]), "ContractIdNotIncreasing"
+    yield "empty-name", contract_set(identity, [(1, "", 2, 3)]), "EmptyName"
+    yield "graph-identity-mismatch", contract_set("0" * 64, good), "GraphIdentityMismatch"
+    yield "profile-mismatch", contract_set(identity, good, "mltl.online-prefix/v1"), "ProfileMismatch"
+
+
 def main():
     cases = []
     write("catalogs/catalog-1.json", canonical(CATALOG) + "\n")
@@ -393,6 +444,13 @@ def main():
             "traces": traces,
         })
     assert compared == 567, compared
+    write("contracts/formula.json", canonical(CONTRACT_FORMULA))
+    for name, document, outcome in contract_cases():
+        write(f"contracts/{name}.json", canonical(document))
+        cases.append({
+            "id": f"contract-{name}", "class": "contract-set", "formula": "contracts/formula.json",
+            "document": f"contracts/{name}.json", "outcome": outcome,
+        })
     counts = {}
     for case in cases:
         counts[case["class"]] = counts.get(case["class"], 0) + 1

@@ -1,0 +1,1 @@
+{"schema_version":"tl-syntax.contract-set/v1","semantic_profile":"mltl.online-prefix/v1","graph_identity":"3cbc25c05dfe431da53ef7438c9a050c2252aa9e4e60d0ed41254c90b9a5c966","contracts":[{"id":1,"name":"door-alarm","assumption":2,"guarantee":3},{"id":2,"name":"same-root","assumption":2,"guarantee":2}]}
