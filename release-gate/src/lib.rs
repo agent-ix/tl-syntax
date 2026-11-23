@@ -506,6 +506,19 @@ pub fn check(set: &CandidateSet, inputs: &[CandidateInput]) -> GateReport {
             ));
         }
     }
+    // A crate making its first coordinated release has no preceding tag, so
+    // the golden, API and legacy-decoder lanes have no baseline. The gate
+    // refuses rather than skipping those lanes (release-time blocker for
+    // tl-solve; recorded in PLAN-022's deferred ledger).
+    for declared in &set.candidates {
+        if declared.previous_tag.trim().is_empty() {
+            failures.push(format!(
+                "{}: no preceding release tag; golden, API and legacy-decoder lanes \
+                 have no baseline",
+                declared.name
+            ));
+        }
+    }
     for input in inputs {
         if !CRATES.contains(&input.fact.name.as_str()) {
             failures.push(format!(
@@ -701,7 +714,8 @@ pub fn edge_shape_failures(edges: &[EdgeFact]) -> Vec<String> {
         }
     }
     let mut graph: BTreeMap<&str, BTreeSet<&str>> = BTreeMap::new();
-    for edge in edges {
+    // A self-edge (a crate's own path dev-dependency) is not a member cycle.
+    for edge in edges.iter().filter(|edge| edge.owner != edge.package) {
         graph
             .entry(edge.owner.as_str())
             .or_default()
@@ -895,6 +909,7 @@ pub fn authorized_tag_plan(
             commit: candidate.commit.clone(),
         });
     }
+    check_tag_plan_order(&actions)?;
     Ok(actions)
 }
 

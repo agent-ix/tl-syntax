@@ -768,15 +768,37 @@ fn forbidden_edges_cycles_and_split_revisions_fail() {
     add_edge(&mut inputs, "tl-syntax", "tl-parse", &selected("tl-parse"));
     failure(&set, &inputs, "dependency cycle through");
 
+    // Split revision: tl-solve pins a second tl-mltl, so tl-rewrite's lockfile
+    // resolves tl-mltl twice (once through tl-solve, once directly).
     let (set, mut inputs) = fixture();
     let solve = rewrite_index(&inputs, "tl-solve");
-    inputs[solve].manifest["dependencies"]["tl-syntax"]["rev"] = toml::Value::String(sha('9'));
-    failure(&set, &inputs, "tl-solve:tl-syntax: normal edge revision");
-
-    let (set, mut inputs) = fixture();
     let rewrite = rewrite_index(&inputs, "tl-rewrite");
-    inputs[rewrite].manifest["dependencies"]["tl-mltl"]["rev"] = toml::Value::String(sha('9'));
-    failure(&set, &inputs, "tl-rewrite:tl-mltl: normal edge revision");
+    let split = sha('9');
+    inputs[solve].manifest["dependencies"]["tl-mltl"]["rev"] = toml::Value::String(split.clone());
+    for index in [solve, rewrite] {
+        let entry: toml::Value = format!(
+            "name = \"tl-mltl\"\nversion = \"0.4.0\"\nsource = \"git+https://github.com/agent-ix/tl-mltl.git?rev={split}#{split}\""
+        )
+        .parse()
+        .unwrap();
+        inputs[index].lockfile["package"]
+            .as_array_mut()
+            .unwrap()
+            .push(entry);
+    }
+    let mltl_entries = inputs[rewrite].lockfile["package"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|entry| entry["name"].as_str() == Some("tl-mltl"))
+        .count();
+    assert_eq!(mltl_entries, 2);
+    failure(&set, &inputs, "tl-solve:tl-mltl: normal edge revision");
+    failure(
+        &set,
+        &inputs,
+        &format!("tl-rewrite: lockfile resolves tl-mltl at undeclared revision {split}"),
+    );
 
     // A dev edge to the unpublished tl-oracle is not a sixth member.
     let (set, mut inputs) = fixture();
@@ -790,4 +812,36 @@ fn forbidden_edges_cycles_and_split_revisions_fail() {
         .insert("dev-dependencies".to_owned(), dev["dev-dependencies"].clone());
     let report = check(&set, &inputs);
     assert!(report.accepted, "{:?}", report.failures);
+}
+
+/// FR-362 / H-4: a crate with no preceding release tag cannot pass; the gate
+/// refuses honestly instead of skipping its golden, API and decoder lanes.
+// Trace: TC-251, FR-362-AC-2, FR-031-AC-1
+#[test]
+fn a_member_without_a_preceding_tag_is_refused() {
+    let (mut set, inputs) = fixture();
+    assert!(check(&set, &inputs).accepted);
+    let solve = set
+        .candidates
+        .iter()
+        .position(|candidate| candidate.name == "tl-solve")
+        .unwrap();
+    set.candidates[solve].previous_tag = String::new();
+    failure(&set, &inputs, "tl-solve: no preceding release tag");
+}
+
+/// L-9: a crate's own path dev-dependency is not a member cycle.
+// Trace: TC-252, FR-362-AC-3
+#[test]
+fn self_edges_are_not_cycles() {
+    let edges = vec![tl_release_gate::EdgeFact {
+        owner: "tl-solve".to_owned(),
+        alias: "tl-solve".to_owned(),
+        package: "tl-solve".to_owned(),
+        scope: "dev".to_owned(),
+        version: None,
+        revision: None,
+        source: None,
+    }];
+    assert!(tl_release_gate::edge_shape_failures(&edges).is_empty());
 }
