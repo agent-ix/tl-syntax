@@ -1,5 +1,5 @@
 ---
-id: SR-614
+id: SR-615
 title: Independent specification review of P-TL-149 slice in tl-syntax
 type: SpecReview
 analysis: base
@@ -24,3 +24,8 @@ rise by planned rows only.
 | FND-1411 | low | FR-034 points to ADR-004 decision 4 for the P-TL-150 interface; the interface is decision 5. | FR-034 line 122 |
 | FND-1412 | low | P-TL-150 FR-303 predicate table binds the v1 catalog; use of a v2 catalog with numeric signals and MixedDirectionAtom is unspecified on both sides. | FR-034; TL-150 FR-303 |
 | FND-1413 | low | v2 schema is v1 plus direction and version const (jq diff); ids FR-034, TM-008, TC-180..184 collide with no sibling branch; quire validate delta none. | schema |
+
+## Fix pass
+
+All findings above were addressed in specification text in this branch on
+2026-11-23; see tl-solve SR-100 "Fix pass" for dispositions. No build was run.

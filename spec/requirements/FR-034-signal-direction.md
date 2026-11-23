@@ -99,6 +99,18 @@ verdict; those belong to `ix://agent-ix/tl-mltl/FR-043` and to tl-solve
   cannot be bound directly to a proposition.
 - Name and identity limits, ordering rules and resource limits of FR-007 apply
   unchanged to v2 documents.
+- Use of a v2 catalog with P-TL-150 numeric predicates (tl-syntax FR-303, on
+  the TL-150 branch; not edited here). The rule: `partition` reads direction
+  only through the direct Boolean binding of FR-007, so a proposition defined
+  by a predicate-table atom has no `proposition_direction` and `partition`
+  reports it as `SignalPartitionError::Binding`, never as a direction. A
+  numeric signal's declared direction is carried in v2 and is unread by
+  partition in this version. Consumers (tl-solve FR-100) therefore return
+  `Unsupported` for a request that uses a predicate table. A later version may
+  define an atom's direction as the common direction of every numeric signal its
+  lowering reads and treat a mixture as `MixedDirectionAtom`; that needs the
+  lowering to expose its signal reads and belongs to P-TL-150, not to this
+  requirement.
 
 ## Acceptance Criteria
 
@@ -119,4 +131,4 @@ typed refusal of a realizability request; tl-mltl
 `ix://agent-ix/tl-mltl/FR-043` consumes `SignalPartition` for its reference
 play-out. P-TL-150 numeric-predicate lowering (TL-419) and the assume-guarantee
 contract form (TL-425) are siblings; the interface they must meet is recorded in
-tl-mltl ADR-004, decision 4.
+tl-mltl ADR-004, decision 5 (the contract interface; decision 4 is the direction declaration this requirement implements).
