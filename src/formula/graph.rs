@@ -307,17 +307,24 @@ pub enum NodeKind {
         /// Right operand.
         right: NodeId,
     },
+    // The six LTLf-only kinds below have their wire form only in
+    // `tl-syntax.formula-ltlf/v1` (tags `future`, ..., `strong_next`); no
+    // bounded or unbounded reader accepts them, so `Node`'s generic
+    // serialization refuses them instead of emitting unreadable tags.
     /// LTLf Future: some position from here to the last (no interval).
+    #[cfg_attr(feature = "serde", serde(skip_serializing))]
     LtlfFuture {
         /// Operand node.
         operand: NodeId,
     },
     /// LTLf Globally: every position from here to the last (no interval).
+    #[cfg_attr(feature = "serde", serde(skip_serializing))]
     LtlfGlobally {
         /// Operand node.
         operand: NodeId,
     },
     /// LTLf Until over the remaining finite trace (no interval).
+    #[cfg_attr(feature = "serde", serde(skip_serializing))]
     LtlfUntil {
         /// Left operand.
         left: NodeId,
@@ -325,6 +332,7 @@ pub enum NodeKind {
         right: NodeId,
     },
     /// LTLf Release, the dual of Until (no interval).
+    #[cfg_attr(feature = "serde", serde(skip_serializing))]
     LtlfRelease {
         /// Left operand.
         left: NodeId,
@@ -332,11 +340,13 @@ pub enum NodeKind {
         right: NodeId,
     },
     /// Strong next `Xs`: false at the last position (ADR-045).
+    #[cfg_attr(feature = "serde", serde(skip_serializing))]
     StrongNext {
         /// Operand node.
         operand: NodeId,
     },
     /// Weak next `Xw`: true at the last position (ADR-045).
+    #[cfg_attr(feature = "serde", serde(skip_serializing))]
     WeakNext {
         /// Operand node.
         operand: NodeId,
@@ -360,9 +370,10 @@ impl NodeKind {
     /// The LTLf refusal class of a node the LTLf profile does not admit.
     pub const fn ltlf_refusal(self) -> Option<LtlfRefusal> {
         match self {
-            Self::Future { .. } | Self::Globally { .. } | Self::Until { .. } | Self::Release { .. } => {
-                Some(LtlfRefusal::ClosedInterval)
-            }
+            Self::Future { .. }
+            | Self::Globally { .. }
+            | Self::Until { .. }
+            | Self::Release { .. } => Some(LtlfRefusal::ClosedInterval),
             Self::Once { .. } => Some(LtlfRefusal::Once),
             Self::Historically { .. } => Some(LtlfRefusal::Historically),
             Self::StrongPrevious { .. } => Some(LtlfRefusal::Previous),

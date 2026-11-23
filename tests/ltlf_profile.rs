@@ -9,8 +9,8 @@ use tl_syntax::{
     select_ltlf_identity, validate_ltlf, Formula, FormulaDocument, FormulaError,
     InfiniteFormulaDocument, Interval, LtlfFormulaDocument, LtlfFormulaError, LtlfIdentityError,
     LtlfReadError, LtlfRefusal, Node, NodeId, NodeKind, PropositionId, SemanticProfile,
-    SyntaxArtifactLimits, TemporalFamily, CORPUS_DIR, FORMULA_LTLF_V1, FORMULA_LTLF_V1_SCHEMA_BYTES,
-    LTLF_FINITE_TRACE_PROFILE, MAX_FORMULA_DOCUMENT_DEPTH, MAX_FORMULA_DOCUMENT_NODES,
+    InfiniteNodeKind, StrictDocumentReadError, SyntaxArtifactLimits, TemporalFamily, CORPUS_DIR,
+    FORMULA_LTLF_V1, FORMULA_LTLF_V1_SCHEMA, FORMULA_LTLF_V1_SCHEMA_BYTES, LTLF_FINITE_TRACE_PROFILE, MAX_FORMULA_DOCUMENT_DEPTH, MAX_FORMULA_DOCUMENT_NODES,
 };
 
 const LTLF: SemanticProfile = SemanticProfile::LtlfFiniteTraceV1;
@@ -147,10 +147,19 @@ fn nine_refusal_classes_are_typed() {
     ];
     let mut seen = BTreeSet::new();
     for (nodes, expected) in cases {
-        let root = nodes.matches("\"kind\"").count() as u32 - 1;
+        // The refused node is always the last top-level node.
+        let value: Value = serde_json::from_str(&format!("[{nodes}]")).unwrap();
+        let root = value.as_array().unwrap().len() as u32 - 1;
         assert_eq!(refused_wire(&wire(&nodes, root)), expected);
         seen.insert(expected);
     }
+    // A refused node that carries a span, as a parser emits it, keeps its cause.
+    let spanned = format!(
+        r#"{p},{q},{{"kind":"weak_until","left":0,"right":1,"span":{{"start":0,"end":5}}}}"#
+    );
+    assert_eq!(refused_wire(&wire(&spanned, 2)), LtlfRefusal::WeakUntil);
+    let spanned = format!(r#"{p},{{"kind":"once","operand":0,"span":{{"start":0,"end":3}}}}"#);
+    assert_eq!(refused_wire(&wire(&spanned, 1)), LtlfRefusal::Once);
     assert_eq!(seen.len(), LtlfRefusal::ALL.len());
 
     let interval = Interval::new(0, 3).unwrap();
@@ -279,7 +288,19 @@ fn identity_refusals_name_the_axis() {
         &format!(r#""semantic_profile":"{LTLF_FINITE_TRACE_PROFILE}","#),
         "",
     );
-    assert!(read(&missing).is_err());
+    assert!(matches!(
+        read(&missing),
+        Err(LtlfReadError::Formula(LtlfFormulaError::Identity(
+            LtlfIdentityError::MissingProfile
+        )))
+    ));
+    let missing = wire(p, 0).replace(&format!(r#""schema_version":"{FORMULA_LTLF_V1}","#), "");
+    assert!(matches!(
+        read(&missing),
+        Err(LtlfReadError::Formula(LtlfFormulaError::Identity(
+            LtlfIdentityError::MissingEdition
+        )))
+    ));
 }
 
 /// TC-223: `Xs p` and `Xw p` are different graphs and both round-trip.
@@ -398,16 +419,30 @@ fn next_nodes_are_refused_outside_ltlf() {
             r#""clock":"event_position","#,
         ),
     ] {
-        for tag in ["strong_next", "weak_next"] {
-            let text = format!(
-                r#"{{"schema_version":"{edition}","semantic_profile":"{profile}",{extra}"root":1,"nodes":[{p},{{"kind":"{tag}","operand":0}}]}}"#
-            );
-            let limits = SyntaxArtifactLimits::default();
+        let document = |second: &str| {
+            format!(
+                r#"{{"schema_version":"{edition}","semantic_profile":"{profile}",{extra}"root":1,"nodes":[{p},{second}]}}"#
+            )
+        };
+        let limits = SyntaxArtifactLimits::default();
+        let decode = |text: &str| -> Result<(), String> {
             if edition.contains("unbounded") {
-                assert!(InfiniteFormulaDocument::from_json_bytes(text.as_bytes(), limits).is_err());
+                InfiniteFormulaDocument::from_json_bytes(text.as_bytes(), limits)
+                    .map(|_| ())
+                    .map_err(|error| format!("{error:?} {error}"))
             } else {
-                assert!(FormulaDocument::from_json_bytes(text.as_bytes(), limits).is_err());
+                FormulaDocument::from_json_bytes(text.as_bytes(), limits)
+                    .map(|_| ())
+                    .map_err(|error| format!("{error:?} {error}"))
             }
+        };
+        // Control: the same document with `not` in place of the next node reads.
+        decode(&document(r#"{"kind":"not","operand":0}"#)).unwrap();
+        for tag in ["strong_next", "weak_next"] {
+            let error = decode(&document(&format!(r#"{{"kind":"{tag}","operand":0}}"#)))
+                .unwrap_err();
+            assert!(error.contains("InvalidDocument"), "{edition} {tag}: {error}");
+            assert!(error.contains(&format!("unknown variant `{tag}`")), "{edition}: {error}");
         }
     }
     // A bounded edition cannot carry the LTLf profile at all.
@@ -421,7 +456,9 @@ fn next_nodes_are_refused_outside_ltlf() {
 ///
 /// SPEC-GAP: FR-334-AC-1 asks for pre-change digests; decision 7 adds no new
 /// digest, so this replays the existing fixtures and asserts their identity
-/// strings, and the release gate's byte comparison (FR-031) covers bytes.
+/// strings. Byte drift is owned by the release gate: its FR-031 golden lane
+/// compares every pre-existing `corpus/` file byte for byte with the
+/// preceding tag, so this test does not claim byte identity.
 // Trace: TC-226, FR-334-AC-1, StR-045-VC-1
 #[test]
 fn existing_corpus_and_profile_wire_forms_are_unchanged() {
@@ -459,9 +496,19 @@ fn existing_corpus_and_profile_wire_forms_are_unchanged() {
 fn existing_decoders_refuse_the_ltlf_edition() {
     let text = wire(r#"{"kind":"proposition","proposition":0}"#, 0);
     let limits = SyntaxArtifactLimits::default();
-    assert!(FormulaDocument::from_json_bytes(text.as_bytes(), limits).is_err());
-    assert!(InfiniteFormulaDocument::from_json_bytes(text.as_bytes(), limits).is_err());
-    assert!(serde_json::from_str::<FormulaDocument>(&text).is_err());
+    let unknown_schema = format!("unknown variant `{FORMULA_LTLF_V1}`");
+    match FormulaDocument::from_json_bytes(text.as_bytes(), limits) {
+        Err(StrictDocumentReadError::InvalidDocument(error)) => {
+            assert!(error.to_string().contains(&unknown_schema), "{error}")
+        }
+        other => panic!("formula decoder: {other:?}"),
+    }
+    match InfiniteFormulaDocument::from_json_bytes(text.as_bytes(), limits) {
+        Err(StrictDocumentReadError::InvalidDocument(error)) => {
+            assert!(error.to_string().contains(&unknown_schema), "{error}")
+        }
+        other => panic!("unbounded decoder: {other:?}"),
+    }
 }
 
 /// TC-228: five distinct profile identities, four old strings verbatim.
@@ -620,10 +667,17 @@ fn check_ltlf_manifest(manifest: &Value) -> Result<(), String> {
     {
         return Err("counterexample entry count".into());
     }
-    for pair in counterexamples.chunks(2) {
+    for (pair, number) in counterexamples.chunks(2).zip(1..) {
         let (ltlf, infinite) = (&pair[0], &pair[1]);
         if ltlf["reading"] != "ltlf" || infinite["reading"] != "infinite" {
             return Err("counterexample readings".into());
+        }
+        for (entry, reading) in [(ltlf, "ltlf"), (infinite, "infinite")] {
+            if entry["id"] != format!("CE-{number}-{reading}")
+                || entry["formula"] != format!("formulas/ce{number}-{reading}.json")
+            {
+                return Err(format!("{}: id or formula path mismatch", entry["id"]));
+            }
         }
         if ltlf["expected"] == infinite["expected"] {
             return Err("a counterexample must separate the two readings".into());
@@ -641,14 +695,73 @@ fn check_ltlf_manifest(manifest: &Value) -> Result<(), String> {
         }
         let bytes = fs::read(ltlf_dir().join(infinite["formula"].as_str().ok_or("formula")?))
             .map_err(|error| error.to_string())?;
-        InfiniteFormulaDocument::from_json_bytes(&bytes, SyntaxArtifactLimits::default())
-            .map_err(|error| error.to_string())?;
+        let unbounded =
+            InfiniteFormulaDocument::from_json_bytes(&bytes, SyntaxArtifactLimits::default())
+                .map_err(|error| error.to_string())?;
+        // Constant formulas read no proposition, so every lasso agrees with the
+        // one-state lasso, where every temporal operator returns its operand.
+        let verdict = constant_lasso(&unbounded, unbounded.root().0 as usize)
+            .ok_or("infinite counterexample is not a constant formula")?;
+        if infinite["expected"].as_bool() != Some(verdict) {
+            return Err(format!("{}: infinite verdict differs", infinite["id"]));
+        }
     }
     let count = depth_one_population().len() as u64;
     if manifest["depth_one_enumerator"]["count"].as_u64() != Some(count) || count != 120 {
         return Err("enumerator count".into());
     }
     Ok(())
+}
+
+/// Test-only lasso reference for constant unbounded formulas: on the
+/// one-state lasso F, G, U and R over any nonempty interval return the value
+/// of their operand(s) (U and R: the right operand).
+fn constant_lasso(document: &InfiniteFormulaDocument, index: usize) -> Option<bool> {
+    let at = |id: NodeId| constant_lasso(document, id.0 as usize);
+    Some(match document.nodes()[index].kind {
+        InfiniteNodeKind::True => true,
+        InfiniteNodeKind::False => false,
+        InfiniteNodeKind::Not { operand } => !at(operand)?,
+        InfiniteNodeKind::And { left, right } => at(left)? && at(right)?,
+        InfiniteNodeKind::Or { left, right } => at(left)? || at(right)?,
+        InfiniteNodeKind::Future { operand, .. } | InfiniteNodeKind::Globally { operand, .. } => {
+            at(operand)?
+        }
+        _ => return None,
+    })
+}
+
+/// L-6: the embedded LTLf schema accepts every corpus LTLf formula and
+/// refuses interval-carrying, W/M and bare-next nodes, like the reader.
+// Trace: TC-220, TC-224, FR-332-AC-1, FR-333-AC-2
+#[test]
+fn ltlf_schema_agrees_with_the_reader() {
+    use jsonschema::{Draft, JSONSchema};
+    let schema: Value = serde_json::from_str(FORMULA_LTLF_V1_SCHEMA).unwrap();
+    let schema = JSONSchema::options()
+        .with_draft(Draft::Draft7)
+        .compile(&schema)
+        .unwrap();
+    for node in RULE_NODES {
+        let bytes = fs::read(ltlf_dir().join(format!("formulas/{node}.json"))).unwrap();
+        let value: Value = serde_json::from_slice(&bytes).unwrap();
+        assert!(schema.is_valid(&value), "{node}");
+        assert!(LtlfFormulaDocument::from_json_bytes(&bytes, SyntaxArtifactLimits::default())
+            .is_ok());
+    }
+    let p = r#"{"kind":"proposition","proposition":0}"#;
+    for second in [
+        r#"{"kind":"future","interval":{"kind":"closed","start":0,"end":3},"operand":0}"#,
+        r#"{"kind":"weak_until","left":0,"right":0}"#,
+        r#"{"kind":"strong_release","left":0,"right":0}"#,
+        r#"{"kind":"next","operand":0}"#,
+        r#"{"kind":"once","operand":0}"#,
+    ] {
+        let text = wire(&format!("{p},{second}"), 1);
+        let value: Value = serde_json::from_str(&text).unwrap();
+        assert!(!schema.is_valid(&value), "{second}");
+        assert!(read(&text).is_err(), "{second}");
+    }
 }
 
 /// TC-229: 18 rule cases, 4 counterexample entries, 120 enumerated formulas.
@@ -674,7 +787,7 @@ fn ltlf_corpus_census() {
 #[test]
 fn ltlf_manifest_mutations_are_detected() {
     let manifest = ltlf_manifest();
-    let mutations: [fn(&mut Value); 7] = [
+    let mutations: [fn(&mut Value); 9] = [
         |m| m["rule_cases"][0]["formula"] = Value::from("formulas/weak-next.json"),
         |m| m["rule_cases"][1]["trace"] = serde_json::json!([[], []]),
         |m| {
@@ -685,6 +798,11 @@ fn ltlf_manifest_mutations_are_detected() {
         |m| m["counterexample_entry_count"] = Value::from(3),
         |m| m["counterexamples"][1]["expected"] = Value::from(false),
         |m| m["depth_one_enumerator"]["count"] = Value::from(121),
+        |m| m["counterexamples"][1]["formula"] = Value::from("formulas/ce2-infinite.json"),
+        |m| {
+            m["counterexamples"][0]["expected"] = Value::from(true);
+            m["counterexamples"][1]["expected"] = Value::from(false);
+        },
     ];
     for (index, mutate) in mutations.iter().enumerate() {
         let mut mutated = manifest.clone();

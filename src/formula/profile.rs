@@ -52,6 +52,16 @@ pub const LTLF_OPERATORS_V1: &str = "tl-syntax.ltlf-operators/v1";
 
 /// The nine node classes the LTLf profile refuses, each its own typed cause
 /// (FR-332).
+///
+/// Which entry point produces which class: `Formula::new` / `validate_ltlf`
+/// (in-memory graphs) produce `ClosedInterval` (any bounded F/G/U/R node) and
+/// the five past classes; `OpenInterval`, `WeakUntil` and `StrongRelease`
+/// have no in-memory node form and are produced only by the
+/// `tl-syntax.formula-ltlf/v1` reader.
+///
+/// SPEC-GAP: FR-332-AC-2 says every class is refused before construction; a
+/// text front end builds graphs in memory, so tl-parse (clean-ascii/v6,
+/// decision 2) owns refusing W, M and `[a,)` in LTLf text.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub enum LtlfRefusal {
     /// A closed interval `[a,b]` on a temporal node.

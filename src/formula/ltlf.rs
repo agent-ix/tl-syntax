@@ -250,8 +250,8 @@ impl LtlfFormulaDocument {
     #[cfg(feature = "serde")]
     fn wire(&self, spans: bool) -> LtlfFormulaWire {
         LtlfFormulaWire {
-            schema_version: String::from(FORMULA_LTLF_V1),
-            semantic_profile: String::from(LTLF_FINITE_TRACE_PROFILE),
+            schema_version: Some(String::from(FORMULA_LTLF_V1)),
+            semantic_profile: Some(String::from(LTLF_FINITE_TRACE_PROFILE)),
             root: self.root,
             nodes: self
                 .nodes
@@ -268,10 +268,11 @@ impl LtlfFormulaDocument {
         bytes: &[u8],
         limits: SyntaxArtifactLimits,
     ) -> Result<Self, LtlfReadError> {
-        let wire: LtlfFormulaWire = read_strict_document(bytes, limits).map_err(LtlfReadError::Read)?;
+        let wire: LtlfFormulaWire =
+            read_strict_document(bytes, limits).map_err(LtlfReadError::Read)?;
         let profile = select_ltlf_identity(
-            Some(wire.schema_version.as_str()),
-            Some(wire.semantic_profile.as_str()),
+            wire.schema_version.as_deref(),
+            wire.semantic_profile.as_deref(),
         )
             .map_err(|error| LtlfReadError::Formula(LtlfFormulaError::Identity(error)))?;
         let mut nodes = Vec::with_capacity(wire.nodes.len());
@@ -315,8 +316,13 @@ impl fmt::Display for LtlfReadError {
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(deny_unknown_fields)]
 struct LtlfFormulaWire {
-    schema_version: String,
-    semantic_profile: String,
+    // Optional on the wire so that an absent identity is refused with its
+    // axis named (MissingEdition / MissingProfile, FR-332-AC-3); canonical
+    // output always writes both.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    schema_version: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    semantic_profile: Option<String>,
     root: NodeId,
     nodes: Vec<LtlfNodeWire>,
 }
@@ -414,38 +420,52 @@ enum LtlfNodeWire {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         interval: Option<TemporalInterval>,
         operand: NodeId,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        span: Option<SourceSpan>,
     },
     Historically {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         interval: Option<TemporalInterval>,
         operand: NodeId,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        span: Option<SourceSpan>,
     },
     StrongPrevious {
         operand: NodeId,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        span: Option<SourceSpan>,
     },
     Since {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         interval: Option<TemporalInterval>,
         left: NodeId,
         right: NodeId,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        span: Option<SourceSpan>,
     },
     Triggered {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         interval: Option<TemporalInterval>,
         left: NodeId,
         right: NodeId,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        span: Option<SourceSpan>,
     },
     WeakUntil {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         interval: Option<TemporalInterval>,
         left: NodeId,
         right: NodeId,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        span: Option<SourceSpan>,
     },
     StrongRelease {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         interval: Option<TemporalInterval>,
         left: NodeId,
         right: NodeId,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        span: Option<SourceSpan>,
     },
 }
 
