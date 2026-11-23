@@ -143,6 +143,8 @@ conformance:
 check-corpus:
 	$(CARGO) run --quiet --example corpus_gate --features serde
 	$(CARGO) test --quiet --example corpus_gate --features serde
+	$(CARGO) run --quiet --example numeric_corpus --features serde
+	$(CARGO) test --quiet --example numeric_corpus --features serde
 
 # Specification-first work is allowed to land before its implementation. The
 # authoring gate reports those rows without treating them as evidence; the

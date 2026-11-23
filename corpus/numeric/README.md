@@ -8,8 +8,11 @@ tl-solve through `tl_syntax::CORPUS_DIR` instead of vendored copies.
   per-class counts. It records no per-file digest (ADR-019 register item 2):
   the corpus is immutable by its version identity, and any changed case needs
   `tl-syntax.numeric-corpus/v2`.
-- `provenance/generate.py` is the independent generator. It shares no code
-  with the crate; truth tables use exact rational arithmetic.
+- `examples/numeric_corpus.rs` is the independent generator and gate
+  (`make check-corpus` runs it). It shares no code with the crate; truth
+  tables use exact decimal arithmetic in i128, and it fails unless it
+  reproduces every committed file byte for byte. It replaced a Python
+  generator (STD-228: executable logic is Rust).
 - tl-syntax evaluates nothing: it checks the classes, files, counts, refusal
   classes and derived types (`tests/numeric_predicates.rs`); tl-mltl FR-054
   replays the truth tables.

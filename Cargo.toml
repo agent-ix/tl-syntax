@@ -21,6 +21,10 @@ required-features = ["serde"]
 name = "corpus_gate"
 required-features = ["serde"]
 
+[[example]]
+name = "numeric_corpus"
+required-features = ["serde"]
+
 [features]
 default = []
 alloc = []
