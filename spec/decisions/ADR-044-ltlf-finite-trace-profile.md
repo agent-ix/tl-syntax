@@ -69,7 +69,36 @@ time.
    translation from LTLf to a bounded profile is the mission-bound closure
    of tl-mltl ADR-045 and is never implicit.
 
+## Type shape (PROPOSED)
+
+`NodeKind` is exhaustive (not `non_exhaustive`) and its `Future`, `Globally`,
+`Until` and `Release` variants carry a mandatory `Interval`
+(`src/formula/graph.rs`), so LTLf nodes cannot reuse them without a sentinel
+interval, and a sentinel would let a bounded consumer read an LTLf node as
+bounded. Proposed shape, for human decision with the rest of this ADR:
+
+- Add six **new** `NodeKind` variants, distinct from the interval-bearing ones:
+  `LtlfFuture { operand }`, `LtlfGlobally { operand }`, `LtlfUntil { left, right }`,
+  `LtlfRelease { left, right }`, `StrongNext { operand }`, `WeakNext { operand }`.
+  None carries an interval. The wire tags follow the existing
+  `serde(tag = "kind", rename_all = "snake_case")` convention: `ltlf_future`,
+  `ltlf_globally`, `ltlf_until`, `ltlf_release`, `strong_next`, `weak_next`.
+- Every existing exhaustive `match` over `NodeKind` in tl-syntax, tl-mltl,
+  tl-rewrite and tl-parse gains explicit arms for the new variants: the bounded
+  evaluators and rewriters arm them as a typed refusal ("not in this profile"),
+  never `_ =>` defaults that would silently treat an LTLf node as something else.
+  The change is source-breaking for those crates and wire-compatible for every
+  existing document (the new tags are accepted only by the LTLf edition, FR-333).
+- Rejected alternative: a separate formula type for LTLf (as `InfiniteFormula`
+  does for the unbounded edition). It avoids the source break, but it duplicates
+  the graph, hashing and validation, and leaves tl-mltl, tl-rewrite and tl-parse
+  with two graph types to hold in sync. If the human decision prefers it, FR-332
+  and FR-333 keep their behavior and only the type names change.
+- Sequencing of the downstream compile changes is in PLAN-051 (pin bump) and
+  tl-mltl PLAN-050.
+
 ## Alternatives rejected
+
 
 - Redefine closed-trace padding as truncation: changes the meaning of existing
   documents under an existing identity.
@@ -84,6 +113,7 @@ time.
 ## Consequences
 
 `SemanticProfile::ALL` grows from four to five and downstream exhaustive
-matches must name the new variant (source-breaking in Rust, wire-compatible).
+matches must name the new variant, and `NodeKind` grows by six variants (type
+shape above, PROPOSED); both are source-breaking in Rust and wire-compatible.
 Release-gate corpus decoders and the cross-crate corpus gain one edition.
 tl-mltl owns evaluation (tl-mltl FR-083); tl-parse owns text (tl-parse FR-058).

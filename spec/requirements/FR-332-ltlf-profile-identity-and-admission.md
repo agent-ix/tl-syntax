@@ -20,9 +20,9 @@ relationships:
 ## Description
 
 When a formula document names the semantic profile `mltl.ltlf-finite-trace/v1`,
-tl-syntax shall validate it against the closed operator catalog
-`tl-syntax.ltlf-operators/v1` in the edition `tl-syntax.formula-ltlf/v1` and
-shall construct it only if every node is admitted.
+tl-syntax shall construct a formula from it only if every node is admitted by the
+closed operator catalog `tl-syntax.ltlf-operators/v1` in the edition
+`tl-syntax.formula-ltlf/v1`.
 
 ## Inputs
 
@@ -37,9 +37,12 @@ shall construct it only if every node is admitted.
 ## Behavior
 
 Admitted nodes: `False`, `True`, `Proposition`, `Not`, `And`, `Or`, `Implies`,
-`Equivalent`, `Future` (`F`), `Globally` (`G`), `Until` (`U`), `Release` (`R`),
-`StrongNext`, `WeakNext`. `F/G/U/R` carry no interval field: their reading is
-"from the current position to the last position". Refused with a distinct typed
+`Equivalent`, `LtlfFuture` (`F`), `LtlfGlobally` (`G`), `LtlfUntil` (`U`), `LtlfRelease` (`R`),
+`StrongNext`, `WeakNext`. These are new node kinds distinct from the
+interval-bearing `Future`, `Globally`, `Until` and `Release` (type shape
+PROPOSED in ADR-044), and the LTLf edition admits none of the interval-bearing
+kinds. `F/G/U/R` carry no interval field: their reading is "from the current
+position to the last position". Refused with a distinct typed
 cause each: a closed interval `[a,b]` on any temporal node; an open interval
 `[a,)` for any `a`; `O`, `H`, `Y`, `S`, `T`; `W`; `M`. A document whose profile
 is absent, unknown, or one of the four existing identities but whose edition is

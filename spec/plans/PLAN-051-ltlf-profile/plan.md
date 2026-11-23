@@ -37,6 +37,15 @@ layer 1  TL-428
 layer 2  TL-429 (tl-parse v5) consumes the graphs and corpus
 ```
 
+Pin sequencing (the new `NodeKind` variants break exhaustive matches downstream,
+ADR-044 type shape): (1) TL-428 lands the tl-syntax change on tl-syntax main and
+is released at a tag or revision; (2) only then do tl-parse, tl-mltl and tl-rewrite
+bump their tl-syntax pin, each in its own PR that adds the explicit arms and
+changes nothing else (tl-mltl currently pins a tl-syntax git revision and a tl-parse
+revision, so tl-parse bumps first and tl-mltl bumps both together); (3) tl-solve
+bumps last. No downstream repository carries LTLf code against an unreleased
+tl-syntax; the downstream compile check is DEFERRED until (1).
+
 Reason for Task-001 before Task-002: the corpus and the byte-identity proof need
 the new variants to exist.
 
