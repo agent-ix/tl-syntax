@@ -146,7 +146,7 @@ variants!(ContractObligationError, OBLIGATION: RootOutOfRange, NodeLimit);
 variants!(ContractAssumptionError, ASSUMPTION: RootOutOfRange, Binding, NotInput);
 variants!(
     PredicateBindingError, PREDICATE_BINDING:
-    PropositionUnbound, PropositionDefinedTwice, NonNumericSignal,
+    PropositionUnbound, PropositionDefinedTwice, NonNumericSignal, IllTyped,
 );
 
 /// The variants produced by one test, checked against the enum's full list.
@@ -1197,7 +1197,8 @@ fn numeric_expression_table_and_binding_errors() {
     };
     let bind = |nodes: &[Node], table: PredicateTable<'_>| {
         let formula = Formula::new(SemanticProfile::ClosedTraceV1, NodeId(0), nodes).unwrap();
-        BoundPredicateFormula::new(formula, catalog, table).map(|_| ())
+        let mut slots = [ExprSlot::EMPTY; 8];
+        BoundPredicateFormula::new(formula, catalog, table, &mut slots).map(|_| ())
     };
     let mut seen = Seen::default();
     seen.is("PropositionUnbound", err(bind(&atom(9), valid)));
@@ -1207,9 +1208,28 @@ fn numeric_expression_table_and_binding_errors() {
     let other = SignalCatalog::new(&boolean, &[], &mut other_order).unwrap();
     let nodes = atom(5);
     let formula = Formula::new(SemanticProfile::ClosedTraceV1, NodeId(0), &nodes).unwrap();
+    let mut slots = [ExprSlot::EMPTY; 8];
     seen.is(
         "NonNumericSignal",
-        err(BoundPredicateFormula::new(formula, other, valid).map(|_| ())),
+        err(BoundPredicateFormula::new(formula, other, valid, &mut slots).map(|_| ())),
+    );
+    // Typed with signal 2 at scale 0; bound where signal 2 has scale 1.
+    let literal = [read(2), ExprNode::Integer { value: 1 }];
+    let compare = [predicate(5, 0, 1)];
+    let mut scratch = [ExprSlot::EMPTY; 2];
+    let scaled_table = PredicateTable::new(catalog, &compare, &literal, &mut scratch).unwrap();
+    let scaled = [SignalDeclaration::new(
+        SignalId(2),
+        "count",
+        SignalDomain::FixedDecimal(FixedDecimalSignalDomain::new(0, 9, 1).unwrap()),
+    )];
+    let mut scaled_order = [0_u32; 1];
+    let scaled_catalog = SignalCatalog::new(&scaled, &[], &mut scaled_order).unwrap();
+    let mut slots = [ExprSlot::EMPTY; 8];
+    seen.is(
+        "IllTyped",
+        err(BoundPredicateFormula::new(formula, scaled_catalog, scaled_table, &mut slots)
+            .map(|_| ())),
     );
     seen.complete(PREDICATE_BINDING, &[]);
 }

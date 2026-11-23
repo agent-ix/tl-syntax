@@ -169,6 +169,18 @@ impl ExprSlot {
         depth: 0,
     };
 
+    /// A marker slot used by predicate binding's reachability pass.
+    pub(crate) const fn marked(value: i64) -> Self {
+        Self {
+            ty: ExprType {
+                scale: 0,
+                minimum: value,
+                maximum: value,
+            },
+            depth: 1,
+        }
+    }
+
     /// Returns the derived type written by validation.
     pub const fn ty(self) -> ExprType {
         self.ty

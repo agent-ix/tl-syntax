@@ -50,7 +50,9 @@ mod tests {
             proposition: PropositionId(3),
         })];
         let formula = Formula::new(SemanticProfile::ClosedTraceV1, NodeId(0), &nodes).unwrap();
-        let bound = BoundPredicateFormula::new(formula, catalog, table).unwrap();
+        let mut binding_slots = [ExprSlot::EMPTY; 2];
+        let bound =
+            BoundPredicateFormula::new(formula, catalog, table, &mut binding_slots).unwrap();
         assert!(bound.source(PropositionId(3)).is_some());
     }
 }

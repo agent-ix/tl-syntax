@@ -226,34 +226,6 @@ impl<'a> PredicateTable<'a> {
             .and_then(|index| self.predicates.get(index))
     }
 
-    /// The first catalog signal read in the arena prefix a predicate may reach
-    /// (indices up to its larger root) that is not numeric in `catalog`.
-    ///
-    /// SPEC-GAP: FR-304 names the predicate's signals; an exact reachable set
-    /// needs scratch, so the borrowed check scans the prefix. A table typed
-    /// against the same catalog has no Boolean read anywhere, so the prefix
-    /// scan never refuses a predicate the exact check would accept there.
-    fn first_non_numeric_read(
-        self,
-        catalog: SignalCatalog<'_>,
-        predicate: &Predicate,
-    ) -> Option<SignalId> {
-        let end = predicate
-            .left
-            .index()
-            .max(predicate.right.index())
-            .map(|index| index.saturating_add(1))
-            .unwrap_or(0)
-            .min(self.expressions.len());
-        self.expressions[..end].iter().find_map(|node| match node {
-            ExprNode::Signal { signal } => match catalog.signal(*signal).map(|s| s.domain()) {
-                Some(SignalDomain::Integer(_) | SignalDomain::FixedDecimal(_)) => None,
-                _ => Some(*signal),
-            },
-            _ => None,
-        })
-    }
-
     /// Exact set of catalog signals reachable from `predicate`, ascending.
     #[cfg(feature = "alloc")]
     pub fn predicate_signals(self, predicate: &Predicate) -> alloc::vec::Vec<SignalId> {
@@ -282,6 +254,19 @@ impl<'a> PredicateTable<'a> {
         signals.dedup();
         signals
     }
+}
+
+/// Records "reaches non-numeric `signal`" in a scratch slot: depth 1 marks
+/// it, and the minimum bound carries the signal identity.
+fn mark(signal: Option<SignalId>) -> ExprSlot {
+    match signal {
+        Some(signal) => ExprSlot::marked(i64::from(signal.0)),
+        None => ExprSlot::EMPTY,
+    }
+}
+
+fn slot_signal(slot: ExprSlot) -> Option<SignalId> {
+    (slot.depth() == 1).then(|| SignalId(u32::try_from(slot.ty().minimum).unwrap_or(u32::MAX)))
 }
 
 /// How one proposition occurrence is defined.
@@ -314,6 +299,12 @@ pub enum PredicateBindingError {
         /// Signal that is Boolean or absent in this catalog.
         signal: SignalId,
     },
+    /// The table, re-typed against the binding catalog, is ill-typed there
+    /// (a scale or range that differs from the typing catalog's).
+    IllTyped {
+        /// The FR-302/FR-303 refusal under the binding catalog.
+        error: PredicateTableError,
+    },
 }
 
 impl fmt::Display for PredicateBindingError {
@@ -337,6 +328,10 @@ impl fmt::Display for PredicateBindingError {
                 "predicate {} reads signal {} which is not numeric in this catalog",
                 proposition.0, signal.0
             ),
+            Self::IllTyped { error } => write!(
+                formatter,
+                "predicate table is ill-typed under the binding catalog: {error}"
+            ),
         }
     }
 }
@@ -351,12 +346,45 @@ pub struct BoundPredicateFormula<'f, 'c, 't> {
 }
 
 impl<'f, 'c, 't> BoundPredicateFormula<'f, 'c, 't> {
-    /// Resolves every proposition occurrence in formula-node order.
+    /// Resolves every proposition occurrence in formula-node order and
+    /// re-types the table against `catalog` (review M-5), using one
+    /// caller-owned scratch slot per expression node; nothing is allocated.
+    ///
+    /// The non-numeric check is exact: a forward pass marks, per expression
+    /// node, the first non-numeric signal it reaches.
     pub fn new(
         formula: Formula<'f>,
         catalog: SignalCatalog<'c>,
         table: PredicateTable<'t>,
+        scratch: &mut [ExprSlot],
     ) -> Result<Self, PredicateBindingError> {
+        let expressions = table.expressions;
+        if scratch.len() < expressions.len() {
+            return Err(PredicateBindingError::IllTyped {
+                error: PredicateTableError::Expression(ExpressionError::ScratchTooSmall {
+                    provided: scratch.len(),
+                    required: expressions.len(),
+                }),
+            });
+        }
+        // Pass 1: the first non-numeric signal each node reaches, if any,
+        // recorded in the scratch slot before pass 2 overwrites it.
+        for (index, node) in expressions.iter().enumerate() {
+            let own = match node {
+                ExprNode::Signal { signal } => match catalog.signal(*signal).map(|s| s.domain()) {
+                    Some(SignalDomain::Integer(_) | SignalDomain::FixedDecimal(_)) => None,
+                    _ => Some(*signal),
+                },
+                _ => None,
+            };
+            let inherited = node.operands().into_iter().flatten().find_map(|operand| {
+                operand
+                    .index()
+                    .filter(|position| *position < index)
+                    .and_then(|position| slot_signal(scratch[position]))
+            });
+            scratch[index] = mark(own.or(inherited));
+        }
         for node in formula.nodes() {
             let NodeKind::Proposition { proposition } = node.kind else {
                 continue;
@@ -373,7 +401,12 @@ impl<'f, 'c, 't> BoundPredicateFormula<'f, 'c, 't> {
                 }
                 (Some(_), None) => {}
                 (None, Some(predicate)) => {
-                    if let Some(signal) = table.first_non_numeric_read(catalog, predicate) {
+                    let read = |root: ExprId| {
+                        root.index()
+                            .and_then(|index| scratch.get(index))
+                            .and_then(|slot| slot_signal(*slot))
+                    };
+                    if let Some(signal) = read(predicate.left).or_else(|| read(predicate.right)) {
                         return Err(PredicateBindingError::NonNumericSignal {
                             proposition,
                             signal,
@@ -382,6 +415,13 @@ impl<'f, 'c, 't> BoundPredicateFormula<'f, 'c, 't> {
                 }
             }
         }
+        // Pass 2: re-type against the binding catalog.
+        type_arena(catalog, expressions, scratch, None)
+            .map_err(|error| PredicateBindingError::IllTyped {
+                error: PredicateTableError::Expression(error),
+            })?;
+        check_predicates(table.predicates, scratch, expressions.len())
+            .map_err(|error| PredicateBindingError::IllTyped { error })?;
         Ok(Self {
             formula,
             catalog,

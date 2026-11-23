@@ -602,7 +602,8 @@ fn mixed_atoms_bind_in_node_order() {
             }),
         ];
         let formula = Formula::new(SemanticProfile::ClosedTraceV1, NodeId(4), &nodes).unwrap();
-        let bound = BoundPredicateFormula::new(formula, catalog, table).unwrap();
+        let bound = BoundPredicateFormula::new(formula, catalog, table, &mut [ExprSlot::EMPTY; 3])
+            .unwrap();
         let occurrences: Vec<_> = bound.occurrences().collect();
         assert_eq!(occurrences.len(), 3);
         assert_eq!(occurrences[0].1, PropositionId(6));
@@ -622,7 +623,8 @@ fn binding_refusals_are_distinct_and_bind_formula_fails_closed() {
         let unbound = [proposition(5), proposition(9)];
         let formula = Formula::new(SemanticProfile::ClosedTraceV1, NodeId(1), &unbound).unwrap();
         assert_eq!(
-            BoundPredicateFormula::new(formula, catalog, table).unwrap_err(),
+            BoundPredicateFormula::new(formula, catalog, table, &mut [ExprSlot::EMPTY; 3])
+                .unwrap_err(),
             PredicateBindingError::PropositionUnbound {
                 proposition: PropositionId(9)
             }
@@ -650,7 +652,8 @@ fn binding_refusals_are_distinct_and_bind_formula_fails_closed() {
         let atom = [proposition(1)];
         let formula = Formula::new(SemanticProfile::ClosedTraceV1, NodeId(0), &atom).unwrap();
         assert_eq!(
-            BoundPredicateFormula::new(formula, catalog, doubled).unwrap_err(),
+            BoundPredicateFormula::new(formula, catalog, doubled, &mut [ExprSlot::EMPTY; 1])
+                .unwrap_err(),
             PredicateBindingError::PropositionDefinedTwice {
                 proposition: PropositionId(1)
             }
@@ -663,34 +666,113 @@ fn binding_refusals_are_distinct_and_bind_formula_fails_closed() {
         let atom = [proposition(5)];
         let formula = Formula::new(SemanticProfile::ClosedTraceV1, NodeId(0), &atom).unwrap();
         assert_eq!(
-            BoundPredicateFormula::new(formula, other, table).unwrap_err(),
+            BoundPredicateFormula::new(formula, other, table, &mut [ExprSlot::EMPTY; 3])
+                .unwrap_err(),
             PredicateBindingError::NonNumericSignal {
                 proposition: PropositionId(5),
                 signal: SignalId(2)
             }
         );
+
+        // Review M-5: the table is re-typed against the binding catalog.
+        let scaled = [
+            SignalDeclaration::new(SignalId(2), "count", decimal_domain(-50, 70, 1)),
+            SignalDeclaration::new(SignalId(3), "temp", decimal_domain(-400, 1250, 1)),
+        ];
+        let mut order = [0; 2];
+        let scaled = SignalCatalog::new(&scaled, &[], &mut order).unwrap();
+        assert_eq!(
+            BoundPredicateFormula::new(formula, scaled, table, &mut [ExprSlot::EMPTY; 3])
+                .unwrap_err(),
+            PredicateBindingError::IllTyped {
+                error: PredicateTableError::ScaleMismatch {
+                    proposition: PropositionId(5),
+                    left: 1,
+                    right: 0
+                }
+            }
+        );
     });
 }
 
-/// TC-1510: the temporal core is unchanged by the numeric layer.
+/// TC-1510: the numeric layer adds no node kind and no profile. The kind
+/// list below is the vocabulary after TL-428 (23 kinds, none numeric); the
+/// numeric layer (TL-420) contributes none of them.
+///
+/// SPEC-GAP: FR-304-AC-3 says the vocabulary and profile set are
+/// "unchanged"; TL-428 later extends both, so the criterion is read as
+/// "unchanged by the numeric layer" (spec text to update).
 // Trace: TC-1510, FR-304-AC-3
 #[test]
-fn temporal_core_identities_are_unchanged() {
-    for (profile, text) in [
-        (SemanticProfile::ClosedTraceV1, "mltl.closed-trace/v1"),
-        (SemanticProfile::OnlinePrefixV1, "mltl.online-prefix/v1"),
-        (
-            SemanticProfile::OriginCompleteHistoryV1,
-            "mltl.origin-complete-history/v1",
-        ),
-        (SemanticProfile::InfiniteTraceV1, "mltl.infinite-trace/v1"),
-    ] {
-        assert_eq!(profile.as_str(), text);
+fn numeric_layer_adds_no_node_kind_or_profile() {
+    fn kind_name(kind: NodeKind) -> &'static str {
+        match kind {
+            NodeKind::False => "false",
+            NodeKind::True => "true",
+            NodeKind::Proposition { .. } => "proposition",
+            NodeKind::Not { .. } => "not",
+            NodeKind::And { .. } => "and",
+            NodeKind::Or { .. } => "or",
+            NodeKind::Implies { .. } => "implies",
+            NodeKind::Equivalent { .. } => "equivalent",
+            NodeKind::Future { .. } => "future",
+            NodeKind::Globally { .. } => "globally",
+            NodeKind::Until { .. } => "until",
+            NodeKind::Release { .. } => "release",
+            NodeKind::Once { .. } => "once",
+            NodeKind::Historically { .. } => "historically",
+            NodeKind::StrongPrevious { .. } => "strong_previous",
+            NodeKind::Since { .. } => "since",
+            NodeKind::Triggered { .. } => "triggered",
+            NodeKind::LtlfFuture { .. } => "ltlf_future",
+            NodeKind::LtlfGlobally { .. } => "ltlf_globally",
+            NodeKind::LtlfUntil { .. } => "ltlf_until",
+            NodeKind::LtlfRelease { .. } => "ltlf_release",
+            NodeKind::StrongNext { .. } => "strong_next",
+            NodeKind::WeakNext { .. } => "weak_next",
+        }
     }
+    let numeric = ["lt", "le", "gt", "ge", "eq", "ne", "add", "sub", "mul", "neg", "abs"];
+    let (n, i) = (NodeId(0), tl_syntax::Interval::new(0, 1).unwrap());
+    let kinds = [
+        NodeKind::False,
+        NodeKind::True,
+        NodeKind::Proposition {
+            proposition: PropositionId(0),
+        },
+        NodeKind::Not { operand: n },
+        NodeKind::And { left: n, right: n },
+        NodeKind::Or { left: n, right: n },
+        NodeKind::Implies { left: n, right: n },
+        NodeKind::Equivalent { left: n, right: n },
+        NodeKind::Future { interval: i, operand: n },
+        NodeKind::Globally { interval: i, operand: n },
+        NodeKind::Until { interval: i, left: n, right: n },
+        NodeKind::Release { interval: i, left: n, right: n },
+        NodeKind::Once { interval: i, operand: n },
+        NodeKind::Historically { interval: i, operand: n },
+        NodeKind::StrongPrevious { operand: n },
+        NodeKind::Since { interval: i, left: n, right: n },
+        NodeKind::Triggered { interval: i, left: n, right: n },
+        NodeKind::LtlfFuture { operand: n },
+        NodeKind::LtlfGlobally { operand: n },
+        NodeKind::LtlfUntil { left: n, right: n },
+        NodeKind::LtlfRelease { left: n, right: n },
+        NodeKind::StrongNext { operand: n },
+        NodeKind::WeakNext { operand: n },
+    ];
+    let names: std::collections::BTreeSet<&str> = kinds.into_iter().map(kind_name).collect();
+    assert_eq!(names.len(), 23);
+    assert!(names.iter().all(|name| !numeric.contains(name)));
+    assert!(!SemanticProfile::ALL
+        .iter()
+        .any(|profile| profile.as_str().contains("numeric")));
     // A comparison is never a formula node: the wire refuses the tag.
     let refused = br#"{"schema_version":"tl-syntax.formula/v2","semantic_profile":"mltl.closed-trace/v1","root":0,"nodes":[{"kind":"lt","left":0,"right":0}]}"#;
-    assert!(tl_syntax::FormulaDocument::from_json_bytes(refused, SyntaxArtifactLimits::default())
-        .is_err());
+    assert!(
+        tl_syntax::FormulaDocument::from_json_bytes(refused, SyntaxArtifactLimits::default())
+            .is_err()
+    );
 }
 
 const REQUIRED_CLASSES: [&str; 5] =
