@@ -16,7 +16,7 @@ relationships:
 ## Description
 
 When preparing a coordinated TL release, the release gate shall replay the
-digest-pinned tl-syntax owner corpora through tl-parse, tl-rewrite and tl-mltl, and through tl-solve's encoder and witness re-check (tl-solve FR-019)
+digest-pinned tl-syntax owner corpora through tl-parse, tl-rewrite and tl-mltl
 at exactly the candidate revisions selected by FR-029.
 
 ## Inputs

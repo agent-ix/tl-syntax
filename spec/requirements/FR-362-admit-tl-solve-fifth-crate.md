@@ -46,6 +46,14 @@ crate is presented as a member.
 - The dependency-ordered tag plan (FR-033) lists tl-syntax, tl-parse, tl-mltl,
   tl-solve, tl-rewrite, and a plan that places tl-solve after tl-rewrite is
   refused.
+- tl-oracle is unpublished and dev-only and is not a member; a dev edge to it
+  seen by the graph check is not a sixth crate.
+- Scope: this requirement and the four-to-five edits of FR-029 through FR-033
+  change counts only. Replaying owner corpora through tl-solve and a
+  satisfiability step in the consumer smoke are not added here; they would be
+  new behavior of FR-030 and FR-032 and need their own requirement and ticket
+  (tl-solve FR-019 is an oracle cross-check on tl-solve's own corpus, not a
+  release-gate replay).
 - This requirement adds no human-decision step; FR-033 still requires one
   attributed decision for the exact five-crate candidate.
 

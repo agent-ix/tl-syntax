@@ -44,7 +44,7 @@ smoke is insufficient; each named path yields an asserted result.
 
 | ID | Criteria | Verification |
 |---|---|---|
-| FR-032-AC-1 | The consumer uses all five exact proposed tag target commits and executes parsing, rewriting, satisfiability checking, evaluation, signal binding and C2PO mapping with asserted results. | Test (TC-177) |
+| FR-032-AC-1 | The consumer uses all five exact proposed tag target commits and executes parsing, rewriting, evaluation, signal binding and C2PO mapping with asserted results. | Test (TC-177) |
 | FR-032-AC-2 | The same locked consumer builds and runs at the shared MSRV and current stable; a wrong pin, absent operation or local path override fails. | Test (TC-178) |
 
 ## Dependencies
