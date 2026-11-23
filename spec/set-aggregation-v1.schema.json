@@ -1,0 +1,64 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://agent-ix.github.io/tl-syntax/schema/set-aggregation-v1.schema.json",
+  "title": "tl-syntax set aggregation v1",
+  "description": "Structural Draft 7 contract for named member sets and quantified templates (FR-306). Template formula nodes carry an ordinary tl-syntax.formula/v2 node, a slot_proposition leaf or the inner leaf; template expressions follow tl-syntax.predicate-table/v1 plus the slot_signal leaf. The tl-syntax SetAggregationDocument reader is mandatory for catalog membership, per-member typing, the fresh identity range, nesting depth and the expansion bound.",
+  "x-tl-syntax-semantic-reader": "SetAggregationDocument::from_json_bytes",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "sets", "first_proposition", "aggregations"],
+  "properties": {
+    "schema_version": { "const": "tl-syntax.set-aggregation/v1" },
+    "sets": { "type": "array", "items": { "$ref": "#/$defs/set" } },
+    "first_proposition": { "$ref": "#/$defs/id" },
+    "aggregations": { "type": "array", "items": { "$ref": "#/$defs/aggregation" } }
+  },
+  "$defs": {
+    "id": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
+    "depth": { "type": "integer", "minimum": 0, "maximum": 1 },
+    "set": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "members"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "members": { "type": "array", "maxItems": 1024, "items": { "$ref": "#/$defs/id" } }
+      }
+    },
+    "quantifier": {
+      "oneOf": [
+        { "type": "object", "additionalProperties": false, "required": ["kind"], "properties": { "kind": { "enum": ["for_each", "for_some"] } } },
+        { "type": "object", "additionalProperties": false, "required": ["kind", "n"], "properties": { "kind": { "const": "at_least" }, "n": { "type": "integer", "minimum": 0, "maximum": 1024 } } }
+      ]
+    },
+    "aggregation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["set", "quantifier", "template"],
+      "properties": {
+        "set": { "type": "string", "minLength": 1 },
+        "quantifier": { "$ref": "#/$defs/quantifier" },
+        "template": { "$ref": "#/$defs/template" }
+      }
+    },
+    "template": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["nodes", "root", "expressions", "predicates"],
+      "properties": {
+        "nodes": { "type": "array", "items": { "$ref": "#/$defs/template_node" } },
+        "root": { "$ref": "#/$defs/id" },
+        "expressions": { "type": "array", "items": { "type": "object", "required": ["kind"] } },
+        "predicates": { "type": "array", "items": { "type": "object", "required": ["proposition", "operator", "left", "right"] } },
+        "inner": { "$ref": "#/$defs/aggregation" }
+      }
+    },
+    "template_node": {
+      "oneOf": [
+        { "type": "object", "additionalProperties": false, "required": ["kind", "node"], "properties": { "kind": { "const": "node" }, "node": { "type": "object", "required": ["kind"] } } },
+        { "type": "object", "additionalProperties": false, "required": ["kind", "depth"], "properties": { "kind": { "const": "slot_proposition" }, "depth": { "$ref": "#/$defs/depth" } } },
+        { "type": "object", "additionalProperties": false, "required": ["kind"], "properties": { "kind": { "const": "inner" } } }
+      ]
+    }
+  }
+}

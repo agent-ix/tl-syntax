@@ -283,6 +283,77 @@ WIRE = {
 }
 
 
+# ------------------------------------------------------------ aggregation ---
+# FR-308: Boolean members, trace length 1, k in 0..=5, n in 0..=6. The
+# hand-written forms below are built independently of the crate's expansion
+# (left-leaning chains and a disjunction of all n-subsets).
+
+BOOLEAN_CATALOG = {
+    "schema_version": "tl-syntax.signal-catalog/v1",
+    "signals": [{"id": i, "name": f"b{i}", "domain": {"kind": "boolean"}} for i in range(1, 6)],
+    "bindings": [{"proposition": i, "signal": i} for i in range(1, 6)],
+}
+
+
+def chain(nodes, leaves, kind):
+    current = leaves[0]
+    for leaf in leaves[1:]:
+        nodes.append({"kind": kind, "left": current, "right": leaf})
+        current = len(nodes) - 1
+    return current
+
+
+def handwritten(quantifier, k, n):
+    nodes = []
+
+    def constant(value):
+        nodes.append({"kind": "true" if value else "false"})
+        return len(nodes) - 1
+
+    def atoms(members):
+        ids = []
+        for member in members:
+            nodes.append({"kind": "proposition", "proposition": member})
+            ids.append(len(nodes) - 1)
+        return ids
+
+    members = list(range(1, k + 1))
+    if quantifier == "for_each":
+        root = constant(True) if k == 0 else chain(nodes, atoms(members), "and")
+    elif quantifier == "for_some":
+        root = constant(False) if k == 0 else chain(nodes, atoms(members), "or")
+    elif n == 0:
+        root = constant(True)
+    elif n > k:
+        root = constant(False)
+    else:
+        terms = [chain(nodes, atoms(subset), "and") for subset in itertools.combinations(members, n)]
+        root = chain(nodes, terms, "or")
+    return {"schema_version": "tl-syntax.formula/v1", "semantic_profile": "mltl.closed-trace/v1", "root": root, "nodes": nodes}
+
+
+def aggregation_document(quantifier, k, n):
+    q = {"kind": quantifier} if quantifier != "at_least" else {"kind": "at_least", "n": n}
+    return {
+        "schema_version": "tl-syntax.set-aggregation/v1",
+        "sets": [{"name": "members", "members": list(range(1, k + 1))}],
+        "first_proposition": 100,
+        "aggregations": [{
+            "set": "members",
+            "quantifier": q,
+            "template": {"nodes": [{"kind": "slot_proposition", "depth": 0}], "root": 0, "expressions": [], "predicates": []},
+        }],
+    }
+
+
+def aggregation_cases():
+    grid = [("for_each", k, 0) for k in range(6)] + [("for_some", k, 0) for k in range(6)]
+    grid += [("at_least", k, n) for k in range(6) for n in range(7)]
+    for quantifier, k, n in grid:
+        name = f"{quantifier}-k{k}" + (f"-n{n}" if quantifier == "at_least" else "")
+        yield name, quantifier, k, n
+
+
 def main():
     cases = []
     write("catalogs/catalog-1.json", canonical(CATALOG) + "\n")
@@ -308,6 +379,20 @@ def main():
     for name, (text, refusal) in WIRE.items():
         write(f"wire/{name}.json", text)
         cases.append({"id": f"wire-{name}", "class": "refused-wire", "catalog": "catalogs/catalog-1.json", "table": f"wire/{name}.json", "refusal": refusal})
+    write("catalogs/boolean-members.json", canonical(BOOLEAN_CATALOG) + "\n")
+    compared = 0
+    for name, quantifier, k, n in aggregation_cases():
+        write(f"aggregation/{name}.json", canonical(aggregation_document(quantifier, k, n)))
+        write(f"handwritten/{name}.json", canonical(handwritten(quantifier, k, n)) + "\n")
+        traces = 2**k
+        compared += traces
+        cases.append({
+            "id": f"aggregation-{name}", "class": "aggregation", "catalog": "catalogs/boolean-members.json",
+            "document": f"aggregation/{name}.json", "handwritten": f"handwritten/{name}.json",
+            "population": {"members": k, "valuations": [False, True], "trace_length": 1},
+            "traces": traces,
+        })
+    assert compared == 567, compared
     counts = {}
     for case in cases:
         counts[case["class"]] = counts.get(case["class"], 0) + 1
@@ -317,6 +402,7 @@ def main():
         "predicate_table": "tl-syntax.predicate-table/v1",
         "generator": "provenance/generate.py",
         "class_counts": counts,
+        "aggregation_compared_traces": compared,
         "cases": cases,
     }
     write("manifest.json", json.dumps(manifest, indent=2) + "\n")

@@ -1,0 +1,1 @@
+{"schema_version":"tl-syntax.set-aggregation/v1","sets":[{"name":"members","members":[1,2,3,4]}],"first_proposition":100,"aggregations":[{"set":"members","quantifier":{"kind":"at_least","n":0},"template":{"nodes":[{"kind":"slot_proposition","depth":0}],"root":0,"expressions":[],"predicates":[]}}]}

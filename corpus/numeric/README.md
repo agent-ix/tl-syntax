@@ -13,3 +13,8 @@ tl-solve through `tl_syntax::CORPUS_DIR` instead of vendored copies.
 - tl-syntax evaluates nothing: it checks the classes, files, counts, refusal
   classes and derived types (`tests/numeric_predicates.rs`); tl-mltl FR-054
   replays the truth tables.
+- `aggregation/`, `handwritten/` and `catalogs/boolean-members.json` hold the
+  FR-308 set-aggregation cases: each quantified document beside an
+  independently hand-built formula and a population declaration (Boolean
+  members, trace length 1). The manifest records the 567 compared traces;
+  tl-mltl FR-054 runs the comparison.

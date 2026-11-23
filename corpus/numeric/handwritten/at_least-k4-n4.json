@@ -1,0 +1,1 @@
+{"schema_version":"tl-syntax.formula/v1","semantic_profile":"mltl.closed-trace/v1","root":6,"nodes":[{"kind":"proposition","proposition":1},{"kind":"proposition","proposition":2},{"kind":"proposition","proposition":3},{"kind":"proposition","proposition":4},{"kind":"and","left":0,"right":1},{"kind":"and","left":4,"right":2},{"kind":"and","left":5,"right":3}]}

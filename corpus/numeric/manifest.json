@@ -6,8 +6,10 @@
   "class_counts": {
     "valid": 2,
     "refused-table": 12,
-    "refused-wire": 7
+    "refused-wire": 7,
+    "aggregation": 54
   },
+  "aggregation_compared_traces": 567,
   "cases": [
     {
       "id": "every-node-and-operator",
@@ -279,6 +281,870 @@
       "catalog": "catalogs/catalog-1.json",
       "table": "wire/trailing-data.json",
       "refusal": "InvalidDocument"
+    },
+    {
+      "id": "aggregation-for_each-k0",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/for_each-k0.json",
+      "handwritten": "handwritten/for_each-k0.json",
+      "population": {
+        "members": 0,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 1
+    },
+    {
+      "id": "aggregation-for_each-k1",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/for_each-k1.json",
+      "handwritten": "handwritten/for_each-k1.json",
+      "population": {
+        "members": 1,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 2
+    },
+    {
+      "id": "aggregation-for_each-k2",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/for_each-k2.json",
+      "handwritten": "handwritten/for_each-k2.json",
+      "population": {
+        "members": 2,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 4
+    },
+    {
+      "id": "aggregation-for_each-k3",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/for_each-k3.json",
+      "handwritten": "handwritten/for_each-k3.json",
+      "population": {
+        "members": 3,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 8
+    },
+    {
+      "id": "aggregation-for_each-k4",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/for_each-k4.json",
+      "handwritten": "handwritten/for_each-k4.json",
+      "population": {
+        "members": 4,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 16
+    },
+    {
+      "id": "aggregation-for_each-k5",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/for_each-k5.json",
+      "handwritten": "handwritten/for_each-k5.json",
+      "population": {
+        "members": 5,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 32
+    },
+    {
+      "id": "aggregation-for_some-k0",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/for_some-k0.json",
+      "handwritten": "handwritten/for_some-k0.json",
+      "population": {
+        "members": 0,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 1
+    },
+    {
+      "id": "aggregation-for_some-k1",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/for_some-k1.json",
+      "handwritten": "handwritten/for_some-k1.json",
+      "population": {
+        "members": 1,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 2
+    },
+    {
+      "id": "aggregation-for_some-k2",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/for_some-k2.json",
+      "handwritten": "handwritten/for_some-k2.json",
+      "population": {
+        "members": 2,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 4
+    },
+    {
+      "id": "aggregation-for_some-k3",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/for_some-k3.json",
+      "handwritten": "handwritten/for_some-k3.json",
+      "population": {
+        "members": 3,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 8
+    },
+    {
+      "id": "aggregation-for_some-k4",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/for_some-k4.json",
+      "handwritten": "handwritten/for_some-k4.json",
+      "population": {
+        "members": 4,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 16
+    },
+    {
+      "id": "aggregation-for_some-k5",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/for_some-k5.json",
+      "handwritten": "handwritten/for_some-k5.json",
+      "population": {
+        "members": 5,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 32
+    },
+    {
+      "id": "aggregation-at_least-k0-n0",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k0-n0.json",
+      "handwritten": "handwritten/at_least-k0-n0.json",
+      "population": {
+        "members": 0,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 1
+    },
+    {
+      "id": "aggregation-at_least-k0-n1",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k0-n1.json",
+      "handwritten": "handwritten/at_least-k0-n1.json",
+      "population": {
+        "members": 0,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 1
+    },
+    {
+      "id": "aggregation-at_least-k0-n2",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k0-n2.json",
+      "handwritten": "handwritten/at_least-k0-n2.json",
+      "population": {
+        "members": 0,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 1
+    },
+    {
+      "id": "aggregation-at_least-k0-n3",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k0-n3.json",
+      "handwritten": "handwritten/at_least-k0-n3.json",
+      "population": {
+        "members": 0,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 1
+    },
+    {
+      "id": "aggregation-at_least-k0-n4",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k0-n4.json",
+      "handwritten": "handwritten/at_least-k0-n4.json",
+      "population": {
+        "members": 0,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 1
+    },
+    {
+      "id": "aggregation-at_least-k0-n5",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k0-n5.json",
+      "handwritten": "handwritten/at_least-k0-n5.json",
+      "population": {
+        "members": 0,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 1
+    },
+    {
+      "id": "aggregation-at_least-k0-n6",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k0-n6.json",
+      "handwritten": "handwritten/at_least-k0-n6.json",
+      "population": {
+        "members": 0,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 1
+    },
+    {
+      "id": "aggregation-at_least-k1-n0",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k1-n0.json",
+      "handwritten": "handwritten/at_least-k1-n0.json",
+      "population": {
+        "members": 1,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 2
+    },
+    {
+      "id": "aggregation-at_least-k1-n1",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k1-n1.json",
+      "handwritten": "handwritten/at_least-k1-n1.json",
+      "population": {
+        "members": 1,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 2
+    },
+    {
+      "id": "aggregation-at_least-k1-n2",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k1-n2.json",
+      "handwritten": "handwritten/at_least-k1-n2.json",
+      "population": {
+        "members": 1,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 2
+    },
+    {
+      "id": "aggregation-at_least-k1-n3",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k1-n3.json",
+      "handwritten": "handwritten/at_least-k1-n3.json",
+      "population": {
+        "members": 1,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 2
+    },
+    {
+      "id": "aggregation-at_least-k1-n4",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k1-n4.json",
+      "handwritten": "handwritten/at_least-k1-n4.json",
+      "population": {
+        "members": 1,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 2
+    },
+    {
+      "id": "aggregation-at_least-k1-n5",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k1-n5.json",
+      "handwritten": "handwritten/at_least-k1-n5.json",
+      "population": {
+        "members": 1,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 2
+    },
+    {
+      "id": "aggregation-at_least-k1-n6",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k1-n6.json",
+      "handwritten": "handwritten/at_least-k1-n6.json",
+      "population": {
+        "members": 1,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 2
+    },
+    {
+      "id": "aggregation-at_least-k2-n0",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k2-n0.json",
+      "handwritten": "handwritten/at_least-k2-n0.json",
+      "population": {
+        "members": 2,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 4
+    },
+    {
+      "id": "aggregation-at_least-k2-n1",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k2-n1.json",
+      "handwritten": "handwritten/at_least-k2-n1.json",
+      "population": {
+        "members": 2,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 4
+    },
+    {
+      "id": "aggregation-at_least-k2-n2",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k2-n2.json",
+      "handwritten": "handwritten/at_least-k2-n2.json",
+      "population": {
+        "members": 2,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 4
+    },
+    {
+      "id": "aggregation-at_least-k2-n3",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k2-n3.json",
+      "handwritten": "handwritten/at_least-k2-n3.json",
+      "population": {
+        "members": 2,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 4
+    },
+    {
+      "id": "aggregation-at_least-k2-n4",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k2-n4.json",
+      "handwritten": "handwritten/at_least-k2-n4.json",
+      "population": {
+        "members": 2,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 4
+    },
+    {
+      "id": "aggregation-at_least-k2-n5",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k2-n5.json",
+      "handwritten": "handwritten/at_least-k2-n5.json",
+      "population": {
+        "members": 2,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 4
+    },
+    {
+      "id": "aggregation-at_least-k2-n6",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k2-n6.json",
+      "handwritten": "handwritten/at_least-k2-n6.json",
+      "population": {
+        "members": 2,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 4
+    },
+    {
+      "id": "aggregation-at_least-k3-n0",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k3-n0.json",
+      "handwritten": "handwritten/at_least-k3-n0.json",
+      "population": {
+        "members": 3,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 8
+    },
+    {
+      "id": "aggregation-at_least-k3-n1",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k3-n1.json",
+      "handwritten": "handwritten/at_least-k3-n1.json",
+      "population": {
+        "members": 3,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 8
+    },
+    {
+      "id": "aggregation-at_least-k3-n2",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k3-n2.json",
+      "handwritten": "handwritten/at_least-k3-n2.json",
+      "population": {
+        "members": 3,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 8
+    },
+    {
+      "id": "aggregation-at_least-k3-n3",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k3-n3.json",
+      "handwritten": "handwritten/at_least-k3-n3.json",
+      "population": {
+        "members": 3,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 8
+    },
+    {
+      "id": "aggregation-at_least-k3-n4",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k3-n4.json",
+      "handwritten": "handwritten/at_least-k3-n4.json",
+      "population": {
+        "members": 3,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 8
+    },
+    {
+      "id": "aggregation-at_least-k3-n5",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k3-n5.json",
+      "handwritten": "handwritten/at_least-k3-n5.json",
+      "population": {
+        "members": 3,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 8
+    },
+    {
+      "id": "aggregation-at_least-k3-n6",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k3-n6.json",
+      "handwritten": "handwritten/at_least-k3-n6.json",
+      "population": {
+        "members": 3,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 8
+    },
+    {
+      "id": "aggregation-at_least-k4-n0",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k4-n0.json",
+      "handwritten": "handwritten/at_least-k4-n0.json",
+      "population": {
+        "members": 4,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 16
+    },
+    {
+      "id": "aggregation-at_least-k4-n1",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k4-n1.json",
+      "handwritten": "handwritten/at_least-k4-n1.json",
+      "population": {
+        "members": 4,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 16
+    },
+    {
+      "id": "aggregation-at_least-k4-n2",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k4-n2.json",
+      "handwritten": "handwritten/at_least-k4-n2.json",
+      "population": {
+        "members": 4,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 16
+    },
+    {
+      "id": "aggregation-at_least-k4-n3",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k4-n3.json",
+      "handwritten": "handwritten/at_least-k4-n3.json",
+      "population": {
+        "members": 4,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 16
+    },
+    {
+      "id": "aggregation-at_least-k4-n4",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k4-n4.json",
+      "handwritten": "handwritten/at_least-k4-n4.json",
+      "population": {
+        "members": 4,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 16
+    },
+    {
+      "id": "aggregation-at_least-k4-n5",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k4-n5.json",
+      "handwritten": "handwritten/at_least-k4-n5.json",
+      "population": {
+        "members": 4,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 16
+    },
+    {
+      "id": "aggregation-at_least-k4-n6",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k4-n6.json",
+      "handwritten": "handwritten/at_least-k4-n6.json",
+      "population": {
+        "members": 4,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 16
+    },
+    {
+      "id": "aggregation-at_least-k5-n0",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k5-n0.json",
+      "handwritten": "handwritten/at_least-k5-n0.json",
+      "population": {
+        "members": 5,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 32
+    },
+    {
+      "id": "aggregation-at_least-k5-n1",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k5-n1.json",
+      "handwritten": "handwritten/at_least-k5-n1.json",
+      "population": {
+        "members": 5,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 32
+    },
+    {
+      "id": "aggregation-at_least-k5-n2",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k5-n2.json",
+      "handwritten": "handwritten/at_least-k5-n2.json",
+      "population": {
+        "members": 5,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 32
+    },
+    {
+      "id": "aggregation-at_least-k5-n3",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k5-n3.json",
+      "handwritten": "handwritten/at_least-k5-n3.json",
+      "population": {
+        "members": 5,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 32
+    },
+    {
+      "id": "aggregation-at_least-k5-n4",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k5-n4.json",
+      "handwritten": "handwritten/at_least-k5-n4.json",
+      "population": {
+        "members": 5,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 32
+    },
+    {
+      "id": "aggregation-at_least-k5-n5",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k5-n5.json",
+      "handwritten": "handwritten/at_least-k5-n5.json",
+      "population": {
+        "members": 5,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 32
+    },
+    {
+      "id": "aggregation-at_least-k5-n6",
+      "class": "aggregation",
+      "catalog": "catalogs/boolean-members.json",
+      "document": "aggregation/at_least-k5-n6.json",
+      "handwritten": "handwritten/at_least-k5-n6.json",
+      "population": {
+        "members": 5,
+        "valuations": [
+          false,
+          true
+        ],
+        "trace_length": 1
+      },
+      "traces": 32
     }
   ]
 }

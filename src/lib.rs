@@ -7,6 +7,7 @@ extern crate alloc;
 
 #[cfg(feature = "alloc")]
 mod bounded_string;
+pub mod aggregation;
 mod context;
 pub mod contracts;
 #[cfg(all(test, feature = "serde"))]
@@ -117,6 +118,21 @@ pub use numeric::document::{
 };
 #[cfg(feature = "serde")]
 pub use numeric::document::{PREDICATE_TABLE_V1_SCHEMA, PREDICATE_TABLE_V1_SCHEMA_BYTES};
+
+pub use aggregation::{
+    expand_quantifier_into, quantifier_node_count, AggregationLimit, AggregationRefusal,
+    ExpansionCounts, Quantifier, TemplateNode, MAX_AGGREGATION_DEPTH,
+    MAX_AGGREGATION_EXPRESSIONS, MAX_AGGREGATION_NODES, MAX_AGGREGATION_PREDICATES,
+    MAX_SET_MEMBERS,
+};
+#[cfg(feature = "alloc")]
+pub use aggregation::document::{
+    Aggregation, AggregationTemplate, ExpandedAggregation, MemberSet, SetAggregationDocument,
+    SetAggregationError, SetAggregationReadError, SetAggregationSchemaVersion,
+    SET_AGGREGATION_V1,
+};
+#[cfg(feature = "serde")]
+pub use aggregation::document::{SET_AGGREGATION_V1_SCHEMA, SET_AGGREGATION_V1_SCHEMA_BYTES};
 
 /// Stable revision identifier for the checked-in shared temporal corpus.
 pub const CORPUS_REVISION: &str = "tl-syntax-corpus/v1";

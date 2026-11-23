@@ -693,7 +693,7 @@ fn temporal_core_identities_are_unchanged() {
         .is_err());
 }
 
-const REQUIRED_CLASSES: [&str; 3] = ["valid", "refused-table", "refused-wire"];
+const REQUIRED_CLASSES: [&str; 4] = ["valid", "refused-table", "refused-wire", "aggregation"];
 
 fn check_manifest(manifest: &Value, root: &std::path::Path) -> Result<(), String> {
     if manifest["corpus"] != "tl-syntax.numeric-corpus/v1" {
@@ -704,7 +704,7 @@ fn check_manifest(manifest: &Value, root: &std::path::Path) -> Result<(), String
     for case in manifest["cases"].as_array().ok_or("cases")? {
         let class = case["class"].as_str().ok_or("class")?;
         *counted.entry(class.to_owned()).or_default() += 1;
-        for key in ["table", "catalog", "truth"] {
+        for key in ["table", "catalog", "truth", "document", "handwritten"] {
             if let Some(path) = case[key].as_str() {
                 if !root.join(path).is_file() {
                     return Err(format!("missing {path}"));
@@ -787,6 +787,9 @@ fn corpus_cases_yield_their_declared_outcomes() {
     let catalog_document = corpus_catalog();
     let catalog = catalog_document.validate().unwrap();
     for case in manifest()["cases"].as_array().unwrap() {
+        if !["valid", "refused-table", "refused-wire"].contains(&case["class"].as_str().unwrap()) {
+            continue; // aggregation and contract cases have their own suites
+        }
         let bytes = fs::read(numeric_dir().join(case["table"].as_str().unwrap())).unwrap();
         let result =
             PredicateTableDocument::from_json_bytes(&bytes, SyntaxArtifactLimits::default(), catalog);

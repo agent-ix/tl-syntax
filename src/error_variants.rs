@@ -13,7 +13,8 @@ use alloc::{
 };
 
 use crate::{
-    ExpressionError, PredicateBindingError, PredicateTableError,
+    AggregationRefusal, ExpressionError, PredicateBindingError, PredicateTableError,
+    SetAggregationError,
     contracts::limits::OWNER_PROPOSITIONS, lower_infinite_future, select_infinite_profile,
     FairnessPremisesDocument, FairnessPremisesError, FairnessReadError, FixedDecimalSignalDomain,
     Formula, FormulaBindingError, FormulaConversionError, FormulaDocument, FormulaError,
@@ -119,6 +120,14 @@ variants!(
     PredicateTableError, PREDICATE_TABLE:
     Expression, PredicateLimitExceeded, PropositionNotIncreasing, RootOutOfRange, ScaleMismatch,
 );
+variants!(
+    SetAggregationError, AGGREGATION:
+    EmptySetName, SetNameTooLong, DuplicateSetName, UndeclaredMember, DuplicateMember,
+    UnknownSet, QuantifierOutOfRange, AggregationTooDeep, InnerLeafMismatch, TemplateStructure,
+    SlotOutsideTemplate, TemplatePredicate, TemplateIllTypedForMember,
+    MemberHasNoBooleanBinding, FreshIdentityCollision, AggregationTooLarge,
+);
+variants!(AggregationRefusal, REFUSAL: AggregationTooLarge, ExpansionTooSmall);
 variants!(
     PredicateBindingError, PREDICATE_BINDING:
     PropositionUnbound, PropositionDefinedTwice, NonNumericSignal,
@@ -1171,6 +1180,173 @@ fn numeric_expression_table_and_binding_errors() {
         err(BoundPredicateFormula::new(formula, other, valid).map(|_| ())),
     );
     seen.complete(PREDICATE_BINDING, &[]);
+}
+
+// Trace: TC-166, TC-1515, NFR-006-AC-4, FR-306-AC-2
+#[test]
+fn set_aggregation_errors() {
+    use crate::{
+        expand_quantifier_into, Aggregation, AggregationTemplate, ComparisonOperator, ExprId,
+        ExprNode, MemberSet, OwnedSignalDeclaration, Predicate, Quantifier,
+        SetAggregationDocument, SignalCatalogDocument, TemplateNode,
+    };
+    let catalog_document = SignalCatalogDocument::new(
+        vec![
+            OwnedSignalDeclaration::new(SignalId(1), "b".into(), SignalDomain::Boolean),
+            OwnedSignalDeclaration::new(
+                SignalId(2),
+                "i".into(),
+                SignalDomain::Integer(IntegerSignalDomain::new(0, 9).unwrap()),
+            ),
+        ],
+        vec![PropositionBinding::new(PropositionId(1), SignalId(1))],
+    )
+    .unwrap();
+    let catalog = catalog_document.validate().unwrap();
+    let set = |name: &str, members: &[u32]| MemberSet {
+        name: name.into(),
+        members: members.iter().copied().map(SignalId).collect(),
+    };
+    let slot = |depth: u8| AggregationTemplate {
+        nodes: vec![TemplateNode::SlotProposition { depth }],
+        root: NodeId(0),
+        expressions: vec![],
+        predicates: vec![],
+        inner: None,
+    };
+    let quantified = |set: &str, quantifier, template| Aggregation {
+        set: set.into(),
+        quantifier,
+        template,
+    };
+    let numeric = |left: ExprNode| AggregationTemplate {
+        nodes: vec![TemplateNode::Node {
+            node: Node::new(NodeKind::Proposition {
+                proposition: PropositionId(50),
+            }),
+        }],
+        root: NodeId(0),
+        expressions: vec![left, ExprNode::Integer { value: 1 }],
+        predicates: vec![Predicate {
+            proposition: PropositionId(50),
+            operator: ComparisonOperator::Lt,
+            left: ExprId(0),
+            right: ExprId(1),
+        }],
+        inner: None,
+    };
+    let nest = |inner: Aggregation, leaves: usize| AggregationTemplate {
+        nodes: vec![TemplateNode::Inner; leaves],
+        root: NodeId(0),
+        expressions: vec![],
+        predicates: vec![],
+        inner: Some(alloc::boxed::Box::new(inner)),
+    };
+    let new = |sets: Vec<MemberSet>, first: u32, aggregations: Vec<Aggregation>| {
+        SetAggregationDocument::new(catalog, sets, PropositionId(first), aggregations).map(|_| ())
+    };
+    let each = Quantifier::ForEach;
+    let mut seen = Seen::default();
+    seen.is("EmptySetName", err(new(vec![set("", &[])], 100, vec![])));
+    let long = "x".repeat(MAX_SIGNAL_NAME_BYTES + 1);
+    seen.is("SetNameTooLong", err(new(vec![set(&long, &[])], 100, vec![])));
+    seen.is(
+        "DuplicateSetName",
+        err(new(vec![set("a", &[]), set("a", &[])], 100, vec![])),
+    );
+    seen.is("UndeclaredMember", err(new(vec![set("a", &[9])], 100, vec![])));
+    seen.is("DuplicateMember", err(new(vec![set("a", &[1, 1])], 100, vec![])));
+    seen.is(
+        "UnknownSet",
+        err(new(vec![], 100, vec![quantified("a", each, slot(0))])),
+    );
+    seen.is(
+        "QuantifierOutOfRange",
+        err(new(
+            vec![set("a", &[1])],
+            100,
+            vec![quantified("a", Quantifier::AtLeast { n: 1_025 }, slot(0))],
+        )),
+    );
+    let deep = quantified("a", each, nest(quantified("a", each, nest(quantified("a", each, slot(0)), 1)), 1));
+    seen.is("AggregationTooDeep", err(new(vec![set("a", &[1])], 100, vec![deep])));
+    seen.is(
+        "InnerLeafMismatch",
+        err(new(
+            vec![set("a", &[1])],
+            100,
+            vec![quantified("a", each, nest(quantified("a", each, slot(1)), 2))],
+        )),
+    );
+    let mut forward = slot(0);
+    forward.nodes = vec![TemplateNode::Node {
+        node: Node::new(NodeKind::Not { operand: NodeId(0) }),
+    }];
+    seen.is(
+        "TemplateStructure",
+        err(new(vec![set("a", &[1])], 100, vec![quantified("a", each, forward)])),
+    );
+    seen.is(
+        "SlotOutsideTemplate",
+        err(new(vec![set("a", &[1])], 100, vec![quantified("a", each, slot(1))])),
+    );
+    seen.is(
+        "TemplatePredicate",
+        err(new(
+            vec![set("a", &[2])],
+            100,
+            vec![quantified(
+                "a",
+                each,
+                numeric(ExprNode::Signal {
+                    signal: SignalId(1),
+                }),
+            )],
+        )),
+    );
+    seen.is(
+        "TemplateIllTypedForMember",
+        err(new(
+            vec![set("a", &[1])],
+            100,
+            vec![quantified("a", each, numeric(ExprNode::SlotSignal { depth: 0 }))],
+        )),
+    );
+    seen.is(
+        "MemberHasNoBooleanBinding",
+        err(new(vec![set("a", &[2])], 100, vec![quantified("a", each, slot(0))])),
+    );
+    seen.is(
+        "FreshIdentityCollision",
+        err(new(
+            vec![set("a", &[2])],
+            1,
+            vec![quantified("a", each, numeric(ExprNode::SlotSignal { depth: 0 }))],
+        )),
+    );
+    seen.is(
+        "AggregationTooLarge",
+        err(new(
+            vec![set("a", &[1])],
+            100,
+            vec![quantified("a", Quantifier::AtLeast { n: 1 }, slot(0)); 50_001],
+        )),
+    );
+    seen.complete(AGGREGATION, &["AggregationTooLarge"]);
+
+    let mut seen = Seen::default();
+    let roots = [NodeId(0); 2];
+    let mut out = [Node::new(NodeKind::True); 1];
+    seen.is(
+        "ExpansionTooSmall",
+        err(expand_quantifier_into(Quantifier::AtLeast { n: 1 }, &roots, NodeId(2), &mut out)),
+    );
+    let many = vec![NodeId(0); crate::MAX_SET_MEMBERS + 1];
+    seen.is(
+        "AggregationTooLarge",
+        err(expand_quantifier_into(Quantifier::ForEach, &many, NodeId(0), &mut out)),
+    );
+    seen.complete(REFUSAL, &[]);
 }
 
 #[test]
