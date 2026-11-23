@@ -2,7 +2,8 @@ use std::collections::BTreeMap;
 use std::path::PathBuf;
 
 use tl_release_gate::{
-    authorized_tag_plan, check, check_tag_plan_order, compare_goldens_with_exceptions, compare_legacy_goldens,
+    authorized_tag_plan, check, check_tag_plan_order, compare_goldens_with_exceptions,
+    compare_legacy_goldens,
     consumer_lock_differences, consumer_manifest, declared_break_fixtures, duplicated_owner_blobs,
     parse_declared_decoder_breaks, parse_golden_exceptions, parse_semver_findings,
     reconcile_api_migrations, reconcile_breaking_exceptions, reconcile_declared_decoder_breaks,

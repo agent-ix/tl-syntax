@@ -196,7 +196,9 @@ proptest! {
             })
             .collect();
         let bindings: Vec<PropositionBinding> = (0..directions.len())
-            .map(|index| PropositionBinding::new(PropositionId(index as u32 * 2), SignalId(index as u32)))
+            .map(|index| {
+                PropositionBinding::new(PropositionId(index as u32 * 2), SignalId(index as u32))
+            })
             .collect();
         let mut scratch = vec![0; signals.len()];
         let catalog = SignalCatalog::new(&signals, &bindings, &mut scratch).unwrap();
@@ -247,10 +249,16 @@ proptest! {
             let union: BTreeSet<_> = inputs.union(&outputs).copied().collect();
             prop_assert_eq!(&union, &occurring);
             for proposition in &inputs {
-                prop_assert_eq!(catalog.proposition_direction(*proposition), Some(SignalDirection::Input));
+                prop_assert_eq!(
+                    catalog.proposition_direction(*proposition),
+                    Some(SignalDirection::Input)
+                );
             }
             for proposition in &outputs {
-                prop_assert_eq!(catalog.proposition_direction(*proposition), Some(SignalDirection::Output));
+                prop_assert_eq!(
+                    catalog.proposition_direction(*proposition),
+                    Some(SignalDirection::Output)
+                );
             }
         }
     }

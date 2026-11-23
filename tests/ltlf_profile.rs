@@ -8,9 +8,10 @@ use serde_json::Value;
 use tl_syntax::{
     select_ltlf_identity, validate_ltlf, Formula, FormulaDocument, FormulaError,
     InfiniteFormulaDocument, Interval, LtlfFormulaDocument, LtlfFormulaError, LtlfIdentityError,
-    LtlfReadError, LtlfRefusal, Node, NodeId, NodeKind, PropositionId, SemanticProfile,
-    InfiniteNodeKind, StrictDocumentReadError, SyntaxArtifactLimits, TemporalFamily, CORPUS_DIR,
-    FORMULA_LTLF_V1, FORMULA_LTLF_V1_SCHEMA, FORMULA_LTLF_V1_SCHEMA_BYTES, LTLF_FINITE_TRACE_PROFILE, MAX_FORMULA_DOCUMENT_DEPTH, MAX_FORMULA_DOCUMENT_NODES,
+    InfiniteNodeKind, LtlfReadError, LtlfRefusal, Node, NodeId, NodeKind, PropositionId,
+    SemanticProfile, StrictDocumentReadError, SyntaxArtifactLimits, TemporalFamily, CORPUS_DIR,
+    FORMULA_LTLF_V1, FORMULA_LTLF_V1_SCHEMA, FORMULA_LTLF_V1_SCHEMA_BYTES,
+    LTLF_FINITE_TRACE_PROFILE, MAX_FORMULA_DOCUMENT_DEPTH, MAX_FORMULA_DOCUMENT_NODES,
 };
 
 const LTLF: SemanticProfile = SemanticProfile::LtlfFiniteTraceV1;
@@ -565,7 +566,14 @@ fn ltlf_manifest() -> Value {
     serde_json::from_slice(&fs::read(ltlf_dir().join("manifest.json")).unwrap()).unwrap()
 }
 
-const RULE_NODES: [&str; 6] = ["strong-next", "weak-next", "future", "globally", "until", "release"];
+const RULE_NODES: [&str; 6] = [
+    "strong-next",
+    "weak-next",
+    "future",
+    "globally",
+    "until",
+    "release",
+];
 const SHAPES: [&str; 3] = ["length-1", "length-2-satisfying", "length-2-violating"];
 
 /// The depth-one population: 4 leaves, 5 unary operators over each leaf,

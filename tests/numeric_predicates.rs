@@ -21,6 +21,13 @@ fn numeric_dir() -> PathBuf {
     PathBuf::from(CORPUS_DIR).join("numeric")
 }
 
+fn read_table(
+    bytes: &[u8],
+    catalog: SignalCatalog<'_>,
+) -> Result<PredicateTableDocument, PredicateTableReadError> {
+    PredicateTableDocument::from_json_bytes(bytes, SyntaxArtifactLimits::default(), catalog)
+}
+
 fn manifest() -> Value {
     serde_json::from_slice(&fs::read(numeric_dir().join("manifest.json")).unwrap()).unwrap()
 }
@@ -92,7 +99,7 @@ fn derived_types_equal_independent_corpus_types() {
         }
         let bytes = fs::read(numeric_dir().join(case["table"].as_str().unwrap())).unwrap();
         let table =
-            PredicateTableDocument::from_json_bytes(&bytes, SyntaxArtifactLimits::default(), catalog)
+            read_table(&bytes, catalog)
                 .unwrap();
         let derived = table.expression_types(catalog).unwrap();
         let expected: Vec<ExprType> = case["expected_types"]
@@ -294,7 +301,12 @@ fn each_expression_error_has_a_minimal_input() {
 }
 
 /// Test-only exact reference: the coefficient of `node` at its own scale.
-fn reference(nodes: &[ExprNode], types: &[ExprType], index: usize, inputs: &BTreeMap<u32, i64>) -> i128 {
+fn reference(
+    nodes: &[ExprNode],
+    types: &[ExprType],
+    index: usize,
+    inputs: &BTreeMap<u32, i64>,
+) -> i128 {
     let operand = |id: ExprId| reference(nodes, types, id.0 as usize, inputs);
     match nodes[index] {
         ExprNode::Signal { signal } => i128::from(inputs[&signal.0]),
@@ -430,7 +442,7 @@ fn predicate_table_round_trips_and_embeds_its_schema() {
         let table = sample_table(catalog);
         let bytes = table.canonical_json_bytes().unwrap();
         let reread =
-            PredicateTableDocument::from_json_bytes(&bytes, SyntaxArtifactLimits::default(), catalog)
+            read_table(&bytes, catalog)
                 .unwrap();
         assert_eq!(reread, table);
         assert_eq!(reread.canonical_json_bytes().unwrap(), bytes);
@@ -451,7 +463,9 @@ fn predicate_table_round_trips_and_embeds_its_schema() {
 }
 
 fn read_error(bytes: &[u8], limits: SyntaxArtifactLimits) -> PredicateTableReadError {
-    with_catalog(|catalog| PredicateTableDocument::from_json_bytes(bytes, limits, catalog).unwrap_err())
+    with_catalog(|catalog| {
+        PredicateTableDocument::from_json_bytes(bytes, limits, catalog).unwrap_err()
+    })
 }
 
 /// TC-1505: every listed wire violation is refused with its typed error.
@@ -462,8 +476,12 @@ fn strict_reader_refuses_every_wire_violation() {
     let text = String::from_utf8(base).unwrap();
     let variant = |error: PredicateTableReadError| match error {
         PredicateTableReadError::Read(StrictDocumentReadError::InvalidDocument(_)) => "invalid",
-        PredicateTableReadError::Read(StrictDocumentReadError::NonCanonicalDocument) => "noncanonical",
-        PredicateTableReadError::Read(StrictDocumentReadError::DocumentTooLarge { .. }) => "oversize",
+        PredicateTableReadError::Read(StrictDocumentReadError::NonCanonicalDocument) => {
+            "noncanonical"
+        }
+        PredicateTableReadError::Read(StrictDocumentReadError::DocumentTooLarge { .. }) => {
+            "oversize"
+        }
         PredicateTableReadError::Read(StrictDocumentReadError::DepthLimitExceeded { .. }) => "deep",
         PredicateTableReadError::Table(PredicateTableError::PropositionNotIncreasing { .. }) => {
             "increasing"
@@ -516,7 +534,8 @@ fn existing_documents_are_unchanged() {
         "large-bound-future",
         "short-trace-future",
     ] {
-        let bytes = fs::read(PathBuf::from(CORPUS_DIR).join(format!("formulas/{name}.json"))).unwrap();
+        let path = PathBuf::from(CORPUS_DIR).join(format!("formulas/{name}.json"));
+        let bytes = fs::read(path).unwrap();
         let document: tl_syntax::FormulaDocument = serde_json::from_slice(&bytes).unwrap();
         let canonical = document.canonical_json_bytes().unwrap();
         let reread =
@@ -544,10 +563,13 @@ fn deserialization_fails_exactly_as_construction() {
         }
         let bytes = fs::read(numeric_dir().join(case["table"].as_str().unwrap())).unwrap();
         let value: Value = serde_json::from_slice(&bytes).unwrap();
-        let expressions: Vec<ExprNode> = serde_json::from_value(value["expressions"].clone()).unwrap();
-        let predicates: Vec<Predicate> = serde_json::from_value(value["predicates"].clone()).unwrap();
+        let expressions: Vec<ExprNode> =
+            serde_json::from_value(value["expressions"].clone()).unwrap();
+        let predicates: Vec<Predicate> =
+            serde_json::from_value(value["predicates"].clone()).unwrap();
         let direct = PredicateTableDocument::new(catalog, expressions, predicates).unwrap_err();
-        match PredicateTableDocument::from_json_bytes(&bytes, SyntaxArtifactLimits::default(), catalog) {
+        let read = read_table(&bytes, catalog);
+        match read {
             Err(PredicateTableReadError::Table(read)) => assert_eq!(read, direct, "{}", case["id"]),
             other => panic!("{}: {other:?}", case["id"]),
         }
@@ -607,9 +629,15 @@ fn mixed_atoms_bind_in_node_order() {
         let occurrences: Vec<_> = bound.occurrences().collect();
         assert_eq!(occurrences.len(), 3);
         assert_eq!(occurrences[0].1, PropositionId(6));
-        assert!(matches!(occurrences[0].2, PropositionSource::Predicate(p) if p.proposition == PropositionId(6)));
+        assert!(matches!(
+            occurrences[0].2,
+            PropositionSource::Predicate(p) if p.proposition == PropositionId(6)
+        ));
         assert!(matches!(occurrences[1].2, PropositionSource::Signal(s) if s.id() == SignalId(1)));
-        assert!(matches!(occurrences[2].2, PropositionSource::Predicate(p) if p.proposition == PropositionId(5)));
+        assert!(matches!(
+            occurrences[2].2,
+            PropositionSource::Predicate(p) if p.proposition == PropositionId(5)
+        ));
         assert_eq!(bound.numeric_signals(), vec![SignalId(2), SignalId(3)]);
     });
 }
@@ -835,11 +863,13 @@ fn numeric_manifest_is_closed_and_complete() {
 
 fn refusal_class(error: &PredicateTableReadError) -> &'static str {
     match error {
-        PredicateTableReadError::Read(StrictDocumentReadError::InvalidDocument(_)) => "InvalidDocument",
+        PredicateTableReadError::Read(StrictDocumentReadError::InvalidDocument(_)) => {
+            "InvalidDocument"
+        }
         PredicateTableReadError::Read(StrictDocumentReadError::NonCanonicalDocument) => {
             "NonCanonicalDocument"
         }
-        PredicateTableReadError::Table(PredicateTableError::Expression(expression)) => match expression {
+        PredicateTableReadError::Table(PredicateTableError::Expression(error)) => match error {
             ExpressionError::RangeOverflow { .. } => "RangeOverflow",
             ExpressionError::ScaleMismatch { .. } => "ScaleMismatch",
             ExpressionError::ScaleOverflow { .. } => "ScaleOverflow",
@@ -857,7 +887,9 @@ fn refusal_class(error: &PredicateTableReadError) -> &'static str {
         PredicateTableReadError::Table(PredicateTableError::PropositionNotIncreasing { .. }) => {
             "PropositionNotIncreasing"
         }
-        PredicateTableReadError::Table(PredicateTableError::RootOutOfRange { .. }) => "RootOutOfRange",
+        PredicateTableReadError::Table(PredicateTableError::RootOutOfRange { .. }) => {
+            "RootOutOfRange"
+        }
         _ => "other",
     }
 }
@@ -875,7 +907,7 @@ fn corpus_cases_yield_their_declared_outcomes() {
         }
         let bytes = fs::read(numeric_dir().join(case["table"].as_str().unwrap())).unwrap();
         let result =
-            PredicateTableDocument::from_json_bytes(&bytes, SyntaxArtifactLimits::default(), catalog);
+            read_table(&bytes, catalog);
         match case["class"].as_str().unwrap() {
             "valid" => {
                 let table = result.unwrap();
@@ -983,10 +1015,10 @@ fn corpus_replay_is_byte_identical() {
         }
         let bytes = fs::read(numeric_dir().join(case["table"].as_str().unwrap())).unwrap();
         let first =
-            PredicateTableDocument::from_json_bytes(&bytes, SyntaxArtifactLimits::default(), catalog)
+            read_table(&bytes, catalog)
                 .unwrap();
         let second =
-            PredicateTableDocument::from_json_bytes(&bytes, SyntaxArtifactLimits::default(), catalog)
+            read_table(&bytes, catalog)
                 .unwrap();
         assert_eq!(first.canonical_json_bytes().unwrap(), bytes);
         assert_eq!(second.canonical_json_bytes().unwrap(), bytes);

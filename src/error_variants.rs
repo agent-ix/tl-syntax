@@ -13,9 +13,11 @@ use alloc::{
 };
 
 use crate::{
-    AggregationRefusal, ContractAssumptionError, LtlfFormulaError, LtlfIdentityError, ContractObligationError, ContractSetError,
-    ExpressionError, PredicateBindingError, PredicateTableError,
-    SetAggregationError,
+    AggregationRefusal, ContractAssumptionError, ContractObligationError, ContractSetError,
+    ExpressionError, LtlfFormulaError, LtlfIdentityError, PredicateBindingError,
+    PredicateTableError, SetAggregationError,
+};
+use crate::{
     contracts::limits::OWNER_PROPOSITIONS, lower_infinite_future, select_infinite_profile,
     FairnessPremisesDocument, FairnessPremisesError, FairnessReadError, FixedDecimalSignalDomain,
     Formula, FormulaBindingError, FormulaConversionError, FormulaDocument, FormulaError,
@@ -26,8 +28,8 @@ use crate::{
     PropositionEntry, PropositionId, PropositionMapDocument, PropositionMapError, RawBounds,
     RequirementContext, RequirementContextError, SemanticProfile, SignalCatalog,
     SignalCatalogError, SignalDeclaration, SignalDomain, SignalDomainError, SignalId,
-    SignalPartitionError, SourceSpan,
-    StrictDocumentReadError, SyntaxArtifactLimits, TemporalInterval, TemporalIntervalParseError,
+    SignalPartitionError, SourceSpan, StrictDocumentReadError, SyntaxArtifactLimits,
+    TemporalInterval, TemporalIntervalParseError,
     TraceObservation, UnboundedInterval, ValuationEntry, FUTURE_LOWERING_REQUEST_V1,
     FUTURE_OPERATORS_V1, MAX_FORMULA_DOCUMENT_DEPTH, MAX_FORMULA_DOCUMENT_NODES,
     MAX_FUTURE_LOWERING_IDENTITY_BYTES, MAX_FUTURE_LOWERING_KIND_BYTES,
@@ -1320,7 +1322,9 @@ fn set_aggregation_errors() {
             vec![quantified("a", Quantifier::AtLeast { n: 1_025 }, slot(0))],
         )),
     );
-    let deep = quantified("a", each, nest(quantified("a", each, nest(quantified("a", each, slot(0)), 1)), 1));
+    let innermost = quantified("a", each, slot(0));
+    let middle = quantified("a", each, nest(innermost, 1));
+    let deep = quantified("a", each, nest(middle, 1));
     seen.is("AggregationTooDeep", err(new(vec![set("a", &[1])], 100, vec![deep])));
     seen.is(
         "InnerLeafMismatch",

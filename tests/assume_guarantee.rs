@@ -8,7 +8,8 @@ use proptest::prelude::*;
 use serde_json::Value;
 use tl_syntax::{
     assumption_prefix_verdict, check_assumption_inputs, contract_outcome,
-    lower_contract_obligation, settled_positions, AssumptionPrefixVerdict, Contract, ContractAssumptionError, ContractGraph,
+    lower_contract_obligation, settled_positions, AssumptionPrefixVerdict, Contract,
+    ContractAssumptionError, ContractGraph,
     ContractObligationError, ContractOutcome, ContractSetDocument, ContractSetError,
     ContractSetReadError, ContractStatus, ContractTruth, FormulaBindingError, FormulaDocument,
     InfiniteClock, InfiniteFormulaDocument, InfiniteNode, InfiniteNodeKind, Interval, Node,
@@ -44,6 +45,10 @@ fn bounded_nodes() -> Vec<Node> {
     ]
 }
 
+fn bounded_v2() -> FormulaDocument {
+    FormulaDocument::new_v2(SemanticProfile::ClosedTraceV1, NodeId(4), bounded_nodes()).unwrap()
+}
+
 fn contract(id: u32, name: &str, assumption: u32, guarantee: u32) -> Contract {
     Contract {
         id,
@@ -66,8 +71,9 @@ fn shared_roots() -> Vec<Contract> {
 // Trace: TC-1522, FR-309-AC-1
 #[test]
 fn contract_sets_round_trip_over_every_edition() {
-    let v1 = FormulaDocument::new(SemanticProfile::ClosedTraceV1, NodeId(4), bounded_nodes()).unwrap();
-    let v2 = FormulaDocument::new_v2(SemanticProfile::ClosedTraceV1, NodeId(4), bounded_nodes()).unwrap();
+    let v1 =
+        FormulaDocument::new(SemanticProfile::ClosedTraceV1, NodeId(4), bounded_nodes()).unwrap();
+    let v2 = bounded_v2();
     let unbounded = InfiniteFormulaDocument::new(
         SemanticProfile::InfiniteTraceV1,
         InfiniteClock::EventPosition,
@@ -123,10 +129,11 @@ fn contract_sets_round_trip_over_every_edition() {
 // Trace: TC-1523, FR-309-AC-2
 #[test]
 fn contract_set_errors_are_distinct() {
-    let v2 = FormulaDocument::new_v2(SemanticProfile::ClosedTraceV1, NodeId(4), bounded_nodes()).unwrap();
+    let v2 = bounded_v2();
     let graph = ContractGraph::Bounded(&v2);
     let identity = graph.content_identity().unwrap();
-    let new = |contracts: Vec<Contract>| ContractSetDocument::new(graph, identity.clone(), contracts);
+    let new =
+        |contracts: Vec<Contract>| ContractSetDocument::new(graph, identity.clone(), contracts);
     assert_eq!(
         new(vec![contract(1, "a", 9, 3)]),
         Err(ContractSetError::RootOutOfRange {
@@ -196,7 +203,13 @@ fn contract_set_errors_are_distinct() {
         Err(ContractSetError::GraphIdentityMismatch)
     );
     assert_eq!(
-        ContractSetDocument::bind(graph, SemanticProfile::OnlinePrefixV1, None, identity.clone(), vec![]),
+        ContractSetDocument::bind(
+            graph,
+            SemanticProfile::OnlinePrefixV1,
+            None,
+            identity.clone(),
+            vec![]
+        ),
         Err(ContractSetError::ProfileMismatch)
     );
     assert_eq!(
@@ -213,7 +226,8 @@ fn contract_set_errors_are_distinct() {
     let document = new(shared_roots()).unwrap();
     let mut other_nodes = bounded_nodes();
     other_nodes[0] = proposition(7);
-    let other = FormulaDocument::new_v2(SemanticProfile::ClosedTraceV1, NodeId(4), other_nodes).unwrap();
+    let other =
+        FormulaDocument::new_v2(SemanticProfile::ClosedTraceV1, NodeId(4), other_nodes).unwrap();
     assert!(matches!(
         ContractSetDocument::from_json_bytes(
             &document.canonical_json_bytes().unwrap(),
@@ -228,10 +242,11 @@ fn contract_set_errors_are_distinct() {
 // Trace: TC-1524, FR-309-AC-3
 #[test]
 fn contract_sets_leave_the_graph_unchanged() {
-    let v2 = FormulaDocument::new_v2(SemanticProfile::ClosedTraceV1, NodeId(4), bounded_nodes()).unwrap();
+    let v2 = bounded_v2();
     let before = v2.canonical_json_bytes().unwrap();
     let identity = v2.content_identity().unwrap();
-    let _ = ContractSetDocument::new(ContractGraph::Bounded(&v2), identity.clone(), shared_roots()).unwrap();
+    let _ = ContractSetDocument::new(ContractGraph::Bounded(&v2), identity.clone(), shared_roots())
+        .unwrap();
     assert_eq!(v2.canonical_json_bytes().unwrap(), before);
     assert_eq!(v2.content_identity().unwrap(), identity);
     assert_eq!(
@@ -378,11 +393,13 @@ fn contract_view_exposes_roots_and_obligation_only() {
         }
     );
     let wire: Value = serde_json::from_slice(&document.canonical_json_bytes().unwrap()).unwrap();
-    let top: BTreeSet<String> = ["schema_version", "semantic_profile", "graph_identity", "contracts"]
-        .map(String::from)
-        .into();
+    let top: BTreeSet<String> =
+        ["schema_version", "semantic_profile", "graph_identity", "contracts"]
+            .map(String::from)
+            .into();
     assert_eq!(keys(&wire), top);
-    let member: BTreeSet<String> = ["id", "name", "assumption", "guarantee"].map(String::from).into();
+    let member: BTreeSet<String> =
+        ["id", "name", "assumption", "guarantee"].map(String::from).into();
     for contract in wire["contracts"].as_array().unwrap() {
         assert_eq!(keys(contract), member);
     }

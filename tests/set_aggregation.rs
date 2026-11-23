@@ -19,7 +19,9 @@ use tl_syntax::{
 /// Integer signals 1001..=1000+integers in [0, 9].
 fn catalog(count: u32, integers: u32) -> SignalCatalogDocument {
     let mut signals: Vec<OwnedSignalDeclaration> = (1..=count)
-        .map(|id| OwnedSignalDeclaration::new(SignalId(id), format!("b{id}"), SignalDomain::Boolean))
+        .map(|id| {
+            OwnedSignalDeclaration::new(SignalId(id), format!("b{id}"), SignalDomain::Boolean)
+        })
         .collect();
     signals.extend((1..=integers).map(|offset| {
         OwnedSignalDeclaration::new(
@@ -139,7 +141,11 @@ fn aggregation_document_round_trips() {
     .unwrap();
     let bytes = document.canonical_json_bytes().unwrap();
     let reread =
-        SetAggregationDocument::from_json_bytes(&bytes, SyntaxArtifactLimits::default(), catalog)
+        SetAggregationDocument::from_json_bytes(
+                &bytes,
+                SyntaxArtifactLimits::default(),
+                catalog,
+            )
             .unwrap();
     assert_eq!(reread, document);
     assert_eq!(reread.canonical_json_bytes().unwrap(), bytes);
@@ -224,7 +230,12 @@ fn aggregation_refusals_are_distinct() {
         }
     );
     assert_eq!(
-        refused(&catalog_document, vec![set("s", [1])], 100, vec![quantified("t", Quantifier::ForEach, slot_template(0))]),
+        refused(
+            &catalog_document,
+            vec![set("s", [1])],
+            100,
+            vec![quantified("t", Quantifier::ForEach, slot_template(0))]
+        ),
         SetAggregationError::UnknownSet { aggregation: 0 }
     );
 }
@@ -365,7 +376,12 @@ fn expansion_bounds_are_refused_before_output() {
     };
     let members = || vec![set("s", 1_001..=2_024)];
     assert!(matches!(
-        refused(&numeric, members(), 100_000, vec![quantified("s", Quantifier::ForEach, chain_template(98))]),
+        refused(
+            &numeric,
+            members(),
+            100_000,
+            vec![quantified("s", Quantifier::ForEach, chain_template(98))]
+        ),
         SetAggregationError::AggregationTooLarge {
             resource: AggregationLimit::Expressions,
             actual: 100_352,
@@ -393,7 +409,12 @@ fn expansion_bounds_are_refused_before_output() {
         inner: Some(Box::new(quantified("s", Quantifier::ForEach, slot_template(1)))),
     };
     assert!(matches!(
-        refused(&pairs, vec![set("s", 1..=400)], 100_000, vec![quantified("s", Quantifier::ForEach, nested)]),
+        refused(
+            &pairs,
+            vec![set("s", 1..=400)],
+            100_000,
+            vec![quantified("s", Quantifier::ForEach, nested)]
+        ),
         SetAggregationError::AggregationTooLarge {
             resource: AggregationLimit::Nodes,
             ..
@@ -565,7 +586,11 @@ fn structural_check_passes_and_detects_an_omitted_member() {
         let catalog = catalog_document.validate().unwrap();
         let bytes = fs::read(numeric_dir().join(case["document"].as_str().unwrap())).unwrap();
         let document =
-            SetAggregationDocument::from_json_bytes(&bytes, SyntaxArtifactLimits::default(), catalog)
+            SetAggregationDocument::from_json_bytes(
+                &bytes,
+                SyntaxArtifactLimits::default(),
+                catalog,
+            )
                 .unwrap();
         let expanded = document.expand(catalog).unwrap();
         let handwritten: FormulaDocument =
@@ -584,7 +609,11 @@ fn structural_check_passes_and_detects_an_omitted_member() {
     assert_ne!(altered, original);
     let bytes = altered.into_bytes();
     let document =
-        SetAggregationDocument::from_json_bytes(&bytes, SyntaxArtifactLimits::default(), catalog)
+        SetAggregationDocument::from_json_bytes(
+                &bytes,
+                SyntaxArtifactLimits::default(),
+                catalog,
+            )
             .unwrap();
     let expanded = document.expand(catalog).unwrap();
     let handwritten: FormulaDocument =
@@ -628,7 +657,8 @@ fn fresh_identities_follow_source_order_and_nesting_is_bounded() {
         [1_001, 1_002, 1_003, 1_001, 1_002].map(SignalId)
     );
     let mut scratch = vec![ExprSlot::EMPTY; expanded.expressions.len()];
-    PredicateTable::new(catalog, &expanded.predicates, &expanded.expressions, &mut scratch).unwrap();
+    PredicateTable::new(catalog, &expanded.predicates, &expanded.expressions, &mut scratch)
+        .unwrap();
     for root in &expanded.roots {
         Formula::new(SemanticProfile::ClosedTraceV1, *root, &expanded.nodes).unwrap();
     }

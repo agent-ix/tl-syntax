@@ -309,7 +309,11 @@ impl SetAggregationDocument {
         &self.aggregations
     }
 
-    fn members(&self, aggregation: &Aggregation, index: u32) -> Result<&[SignalId], SetAggregationError> {
+    fn members(
+        &self,
+        aggregation: &Aggregation,
+        index: u32,
+    ) -> Result<&[SignalId], SetAggregationError> {
         self.sets
             .iter()
             .find(|set| set.name == aggregation.set)
@@ -325,7 +329,8 @@ impl SetAggregationDocument {
             let (shared, fresh) = self.aggregation_counts(aggregation, index, 0)?;
             total.nodes = add(add(total.nodes, shared.nodes)?, fresh.nodes)?;
             total.predicates = add(add(total.predicates, shared.predicates)?, fresh.predicates)?;
-            total.expressions = add(add(total.expressions, shared.expressions)?, fresh.expressions)?;
+            total.expressions =
+                add(add(total.expressions, shared.expressions)?, fresh.expressions)?;
             total.members = add(total.members, self.members(aggregation, index)?.len())?;
         }
         for (resource, actual, limit) in [
@@ -392,7 +397,10 @@ impl SetAggregationDocument {
             if set.name.len() > MAX_SIGNAL_NAME_BYTES {
                 return Err(SetAggregationError::SetNameTooLong { set: set_index });
             }
-            if let Some(first) = self.sets[..index].iter().position(|other| other.name == set.name) {
+            if let Some(first) = self.sets[..index]
+                .iter()
+                .position(|other| other.name == set.name)
+            {
                 return Err(SetAggregationError::DuplicateSetName {
                     first: first as u32,
                     second: set_index,
@@ -855,7 +863,11 @@ impl BindingIndex {
             .map(|index| self.by_signal[index].1)
     }
 
-    fn require_all(&self, members: &[SignalId], aggregation: u32) -> Result<(), SetAggregationError> {
+    fn require_all(
+        &self,
+        members: &[SignalId],
+        aggregation: u32,
+    ) -> Result<(), SetAggregationError> {
         match members.iter().find(|member| self.proposition(**member).is_none()) {
             Some(member) => Err(SetAggregationError::MemberHasNoBooleanBinding {
                 aggregation,
@@ -1188,7 +1200,9 @@ impl Expander<'_, '_> {
         }
         let first = NodeId(self.node_count as u32);
         let start = self.node_count;
-        match expand_quantifier_into(aggregation.quantifier, &roots, first, &mut self.nodes[start..]) {
+        let quantified =
+            expand_quantifier_into(aggregation.quantifier, &roots, first, &mut self.nodes[start..]);
+        match quantified {
             Ok((root, written)) => {
                 self.node_count += written;
                 root
@@ -1211,8 +1225,12 @@ impl Expander<'_, '_> {
         let mut expressions = vec![None; template.expressions.len()];
         for (position, node) in template.expressions.iter().copied().enumerate() {
             if dependency.expressions[position] {
-                let remapped =
-                    remap_expression(node, &shared.expressions, &expressions, Some(context.as_slice()));
+                let remapped = remap_expression(
+                    node,
+                    &shared.expressions,
+                    &expressions,
+                    Some(context.as_slice()),
+                );
                 expressions[position] = Some(self.push_expression(remapped));
             }
         }

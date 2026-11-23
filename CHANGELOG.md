@@ -29,7 +29,14 @@ has been built or tested; every item awaits `make ci`.
   `LtlfRelease`, `StrongNext` and `WeakNext`, and `SemanticProfile` gains
   `LtlfFiniteTraceV1`; exhaustive downstream matches must name them. Existing
   wire editions and bytes are unchanged. The API migration inventory is written
-  when `cargo-semver-checks` runs on a release candidate.
+  when `cargo-semver-checks` runs on a release candidate; the bump to `0.5.0`
+  is recorded in PLAN-022's deferred ledger.
+- A `tl-syntax.signal-catalog/v1` document carrying a `direction` member is
+  still refused, but the cause is now `DirectionInV1Document` inside
+  `InvalidDocument` instead of serde's `unknown field "direction"` (the
+  member is admitted by the shared signal shape and refused by version).
+- `examples/numeric_corpus.rs` generates and gates `corpus/numeric/` (no
+  Python generator).
 
 ## 0.4.0
 

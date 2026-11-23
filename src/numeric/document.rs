@@ -82,7 +82,10 @@ impl PredicateTableDocument {
     }
 
     /// Re-validates against `catalog` and returns the borrowed view.
-    pub fn table(&self, catalog: SignalCatalog<'_>) -> Result<PredicateTable<'_>, PredicateTableError> {
+    pub fn table(
+        &self,
+        catalog: SignalCatalog<'_>,
+    ) -> Result<PredicateTable<'_>, PredicateTableError> {
         let mut scratch = alloc::vec![ExprSlot::EMPTY; self.expressions.len()];
         PredicateTable::new(catalog, &self.predicates, &self.expressions, &mut scratch)
     }
@@ -130,7 +133,8 @@ impl PredicateTableDocument {
         let wire: PredicateTableWire =
             read_strict_document(bytes, limits).map_err(PredicateTableReadError::Read)?;
         let _ = wire.schema_version;
-        Self::new(catalog, wire.expressions, wire.predicates).map_err(PredicateTableReadError::Table)
+        Self::new(catalog, wire.expressions, wire.predicates)
+            .map_err(PredicateTableReadError::Table)
     }
 }
 
