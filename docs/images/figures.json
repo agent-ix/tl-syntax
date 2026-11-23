@@ -1,0 +1,69 @@
+{
+  "style": "ix-docs",
+  "data": {
+    "fnodes": {"from": "json", "path": "corpus/formulas/short-trace-future.json", "pointer": "/nodes"},
+    "nnodes": {"from": "json", "path": "corpus/formulas/short-trace-future.json", "pointer": "/nodes", "length": true},
+    "fn0": {"from": "node", "of": "fnodes", "index": 0},
+    "fn1": {"from": "node", "of": "fnodes", "index": 1},
+    "profile": {"from": "json", "path": "corpus/formulas/short-trace-future.json", "pointer": "/semantic_profile"},
+    "sigs": {"from": "json", "path": "tests/fixtures/valid-signal-catalog.json", "pointer": "/signals"},
+    "nsig": {"from": "json", "path": "tests/fixtures/valid-signal-catalog.json", "pointer": "/signals", "length": true},
+    "nbind": {"from": "json", "path": "tests/fixtures/valid-signal-catalog.json", "pointer": "/bindings", "length": true},
+    "sg0": {"from": "signal", "of": "sigs", "index": 0},
+    "sg1": {"from": "signal", "of": "sigs", "index": 1},
+    "sg2": {"from": "signal", "of": "sigs", "index": 2},
+    "nprof": {"from": "matches", "glob": "src/formula/profile.rs", "pattern": "Self::\\w+ => \"mltl\\.[a-z-]+/v\\d+\""},
+    "shared": {"from": "json", "path": "corpus/manifest.json", "pointer": "/fixtures", "length": true},
+    "future": {"from": "json", "path": "corpus/future-operators/cases.json", "pointer": "/cases", "length": true},
+    "past": {"from": "json", "path": "corpus/past-history/cases.json", "pointer": "/evaluations", "length": true},
+    "infinite": {"from": "json", "path": "corpus/infinite-trace/cases.json", "pointer": "/cases", "length": true},
+    "total": {"from": "sum", "of": ["shared", "future", "past", "infinite"]}
+  },
+  "figures": [
+    {
+      "id": "hero", "width": 980, "height": 426,
+      "label": "A node table of {nnodes} nodes and a semantic profile, {profile}, go into Formula::new, which returns a borrowed Formula or the first FormulaError. A signal catalog of {nsig} signals and {nbind} binding goes into SignalCatalog::new, which returns a SignalCatalog or the first SignalCatalogError. bind_formula joins the two into a BoundFormula when every proposition has a binding to a Boolean signal. The crate defines {nprof} semantic profiles.",
+      "items": [
+        {"k": "text", "at": [0, 12], "text": "FORMULA GRAPH", "role": "muted", "size": 12},
+        {"k": "box", "at": [0, 24, 380, 68], "role": "code", "title": "node table", "subs": ["{fn0}", "{fn1}"]},
+        {"k": "box", "at": [0, 112, 380, 56], "role": "ink", "title": "semantic profile", "subs": ["{profile}"]},
+        {"k": "box", "at": [450, 56, 190, 62], "role": "logic", "title": "Formula::new", "subs": ["order · profile fit"]},
+        {"k": "box", "at": [690, 56, 130, 62], "role": "model", "title": "Formula", "subs": ["borrowed view"]},
+        {"k": "box", "at": [450, 150, 190, 56], "role": "evidence", "title": "FormulaError", "subs": ["first bad node"]},
+        {"k": "line", "points": [[380, 58], [410, 58], [410, 80], [447, 80]], "role": "code"},
+        {"k": "note", "at": [386, 52], "text": "nodes", "role": "code"},
+        {"k": "line", "points": [[380, 140], [410, 140], [410, 96], [447, 96]], "role": "ink"},
+        {"k": "note", "at": [386, 160], "text": "profile", "role": "ink"},
+        {"k": "line", "points": [[640, 87], [687, 87]], "role": "logic", "weight": 2.4},
+        {"k": "line", "points": [[545, 118], [545, 147]], "role": "evidence"},
+        {"k": "text", "at": [0, 236], "text": "SIGNALS", "role": "muted", "size": 12},
+        {"k": "box", "at": [0, 248, 380, 78], "role": "code", "title": "signal catalog", "subs": ["{sg0}", "{sg1}", "{sg2}"]},
+        {"k": "box", "at": [0, 346, 380, 56], "role": "code", "title": "bindings", "subs": ["{nbind} proposition to Boolean signal"]},
+        {"k": "box", "at": [450, 282, 190, 62], "role": "logic", "title": "SignalCatalog::new", "subs": ["ids · names · targets"]},
+        {"k": "box", "at": [690, 282, 130, 62], "role": "model", "title": "SignalCatalog", "subs": ["borrowed view"]},
+        {"k": "box", "at": [450, 366, 190, 36], "role": "evidence", "title": "SignalCatalogError"},
+        {"k": "line", "points": [[380, 287], [410, 287], [410, 306], [447, 306]], "role": "code"},
+        {"k": "line", "points": [[380, 374], [410, 374], [410, 324], [447, 324]], "role": "code"},
+        {"k": "line", "points": [[640, 313], [687, 313]], "role": "logic", "weight": 2.4},
+        {"k": "line", "points": [[545, 344], [545, 363]], "role": "evidence"},
+        {"k": "box", "at": [840, 160, 140, 62], "role": "logic", "title": "bind_formula", "subs": ["all bound"]},
+        {"k": "box", "at": [840, 282, 140, 62], "role": "model", "title": "BoundFormula", "subs": ["formula + catalog"]},
+        {"k": "line", "points": [[820, 87], [830, 87], [830, 180], [837, 180]], "role": "model"},
+        {"k": "line", "points": [[820, 313], [830, 313], [830, 204], [837, 204]], "role": "model"},
+        {"k": "line", "points": [[910, 222], [910, 279]], "role": "logic", "weight": 2.4},
+        {"k": "legend", "at": [0, 422], "entries": [["code", "authored source", "box"], ["logic", "processing step", "box"], ["model", "checked document / view", "box"], ["evidence", "outcome", "box"], ["ink", "input", "box"]]}
+      ]
+    },
+    {
+      "id": "corpus", "width": 980, "height": 236,
+      "label": "The checked-in corpora hold {total} counted cases: tl-syntax-corpus/v1 {shared}, future-operators {future}, past-history evaluations {past}, infinite-trace {infinite}.",
+      "items": [
+        {"k": "text", "at": [0, 16], "text": "CASES PER CORPUS", "role": "muted", "size": 12},
+        {"k": "columns", "at": [0, 30, 980, 202], "values": ["shared", "future", "past", "infinite"], "labels": ["tl-syntax-corpus/v1", "future-operators", "past-history evaluations", "infinite-trace"], "role": "evidence"}
+      ]
+    },
+    {"id": "tl-stack", "construct": {"name": "tl-stack", "here": "tl-syntax"}},
+    {"id": "pipeline", "construct": {"name": "tl-pipeline", "here": "tl-syntax"}},
+    {"id": "scenario-sequence", "construct": {"name": "tl-scenario", "here": "tl-syntax"}}
+  ]
+}
