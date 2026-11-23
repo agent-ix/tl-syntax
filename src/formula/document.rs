@@ -403,7 +403,9 @@ impl FormulaDocument {
     pub fn try_to_v1(&self) -> Result<Self, FormulaConversionError> {
         if matches!(
             self.semantic_profile,
-            SemanticProfile::OriginCompleteHistoryV1 | SemanticProfile::InfiniteTraceV1
+            SemanticProfile::OriginCompleteHistoryV1
+                | SemanticProfile::InfiniteTraceV1
+                | SemanticProfile::LtlfFiniteTraceV1
         ) {
             return Err(FormulaConversionError::UnsupportedSemanticProfile {
                 profile: self.semantic_profile,
@@ -426,6 +428,9 @@ impl FormulaDocument {
     fn validate_schema_compatibility(&self) -> Result<(), FormulaError> {
         if self.semantic_profile == SemanticProfile::InfiniteTraceV1 {
             return Err(FormulaError::InfiniteProfileRequiresUnboundedEdition);
+        }
+        if self.semantic_profile == SemanticProfile::LtlfFiniteTraceV1 {
+            return Err(FormulaError::LtlfProfileRequiresLtlfEdition);
         }
         if self.schema_version == FormulaSchemaVersion::V2 {
             return Ok(());

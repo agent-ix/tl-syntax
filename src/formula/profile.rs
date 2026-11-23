@@ -19,15 +19,20 @@ pub enum SemanticProfile {
     /// Discrete infinite trace semantics, admitting future and past operators.
     #[cfg_attr(feature = "serde", serde(rename = "mltl.infinite-trace/v1"))]
     InfiniteTraceV1,
+    /// LTLf over a nonempty finite trace with no padding (ADR-044): unbounded
+    /// F/G/U/R read to the last position, explicit strong and weak next.
+    #[cfg_attr(feature = "serde", serde(rename = "mltl.ltlf-finite-trace/v1"))]
+    LtlfFiniteTraceV1,
 }
 
 impl SemanticProfile {
     /// Every profile; `as_str`'s exhaustive match names the same set.
-    pub const ALL: [Self; 4] = [
+    pub const ALL: [Self; 5] = [
         Self::ClosedTraceV1,
         Self::OnlinePrefixV1,
         Self::OriginCompleteHistoryV1,
         Self::InfiniteTraceV1,
+        Self::LtlfFiniteTraceV1,
     ];
 
     /// Returns the stable wire identifier.
@@ -37,8 +42,51 @@ impl SemanticProfile {
             Self::OnlinePrefixV1 => "mltl.online-prefix/v1",
             Self::OriginCompleteHistoryV1 => "mltl.origin-complete-history/v1",
             Self::InfiniteTraceV1 => "mltl.infinite-trace/v1",
+            Self::LtlfFiniteTraceV1 => "mltl.ltlf-finite-trace/v1",
         }
     }
+}
+
+/// Closed LTLf operator-catalog identity (ADR-044).
+pub const LTLF_OPERATORS_V1: &str = "tl-syntax.ltlf-operators/v1";
+
+/// The nine node classes the LTLf profile refuses, each its own typed cause
+/// (FR-332).
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub enum LtlfRefusal {
+    /// A closed interval `[a,b]` on a temporal node.
+    ClosedInterval,
+    /// An open interval `[a,)` on a temporal node, for any `a`.
+    OpenInterval,
+    /// Past `O`.
+    Once,
+    /// Past `H`.
+    Historically,
+    /// Past `Y`.
+    Previous,
+    /// Past `S`.
+    Since,
+    /// Past `T`.
+    Triggered,
+    /// Derived weak until `W`.
+    WeakUntil,
+    /// Derived strong release `M`.
+    StrongRelease,
+}
+
+impl LtlfRefusal {
+    /// Every refusal class.
+    pub const ALL: [Self; 9] = [
+        Self::ClosedInterval,
+        Self::OpenInterval,
+        Self::Once,
+        Self::Historically,
+        Self::Previous,
+        Self::Since,
+        Self::Triggered,
+        Self::WeakUntil,
+        Self::StrongRelease,
+    ];
 }
 
 /// Temporal direction owned by a primitive node.

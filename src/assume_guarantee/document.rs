@@ -15,8 +15,8 @@ use crate::{
             array_field_population, read_strict_document, StrictDocument, StrictDocumentReadError,
         },
     },
-    FormulaDocument, InfiniteClock, InfiniteFormulaDocument, Node, NodeId, SemanticProfile,
-    SyntaxArtifactLimits, MAX_SIGNAL_NAME_BYTES,
+    FormulaDocument, InfiniteClock, InfiniteFormulaDocument, LtlfFormulaDocument, Node, NodeId,
+    SemanticProfile, SyntaxArtifactLimits, MAX_SIGNAL_NAME_BYTES,
 };
 
 /// Stable identity of the contract-set edition.
@@ -38,6 +38,8 @@ pub enum ContractGraph<'a> {
     Bounded(&'a FormulaDocument),
     /// `tl-syntax.formula-unbounded/v1`.
     Unbounded(&'a InfiniteFormulaDocument),
+    /// `tl-syntax.formula-ltlf/v1`.
+    Ltlf(&'a LtlfFormulaDocument),
 }
 
 impl ContractGraph<'_> {
@@ -46,13 +48,14 @@ impl ContractGraph<'_> {
         match self {
             Self::Bounded(document) => document.semantic_profile(),
             Self::Unbounded(document) => document.semantic_profile(),
+            Self::Ltlf(document) => document.semantic_profile(),
         }
     }
 
     /// The graph's clock, where the edition has one.
     pub fn clock(self) -> Option<InfiniteClock> {
         match self {
-            Self::Bounded(_) => None,
+            Self::Bounded(_) | Self::Ltlf(_) => None,
             Self::Unbounded(document) => Some(document.clock()),
         }
     }
@@ -62,6 +65,7 @@ impl ContractGraph<'_> {
         match self {
             Self::Bounded(document) => document.nodes().len(),
             Self::Unbounded(document) => document.nodes().len(),
+            Self::Ltlf(document) => document.nodes().len(),
         }
     }
 
@@ -70,6 +74,7 @@ impl ContractGraph<'_> {
         match self {
             Self::Bounded(document) => document.content_identity(),
             Self::Unbounded(document) => document.content_identity(),
+            Self::Ltlf(document) => document.content_identity(),
         }
     }
 }

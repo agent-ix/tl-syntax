@@ -164,7 +164,13 @@ fn required(nodes: &[tl_syntax::Node], id: NodeId) -> Option<u64> {
         NodeKind::Future { .. }
         | NodeKind::Globally { .. }
         | NodeKind::Until { .. }
-        | NodeKind::Release { .. } => None,
+        | NodeKind::Release { .. }
+        | NodeKind::LtlfFuture { .. }
+        | NodeKind::LtlfGlobally { .. }
+        | NodeKind::LtlfUntil { .. }
+        | NodeKind::LtlfRelease { .. }
+        | NodeKind::StrongNext { .. }
+        | NodeKind::WeakNext { .. } => None,
     }
 }
 

@@ -13,7 +13,7 @@ use alloc::{
 };
 
 use crate::{
-    AggregationRefusal, ContractAssumptionError, ContractObligationError, ContractSetError,
+    AggregationRefusal, ContractAssumptionError, LtlfFormulaError, LtlfIdentityError, ContractObligationError, ContractSetError,
     ExpressionError, PredicateBindingError, PredicateTableError,
     SetAggregationError,
     contracts::limits::OWNER_PROPOSITIONS, lower_infinite_future, select_infinite_profile,
@@ -79,8 +79,15 @@ variants!(
     FormulaError, FORMULA:
     RootOutOfRange, TooManyNodes, DocumentNodeLimitExceeded, DocumentDepthLimitExceeded,
     OperandNotPreceding, ProfileIncompatibleNode, FormulaV1ProfileUnsupported,
-    InfiniteProfileRequiresUnboundedEdition, FormulaV1NodeUnsupported,
+    InfiniteProfileRequiresUnboundedEdition, FormulaV1NodeUnsupported, LtlfNodeRefused,
+    LtlfProfileRequiresLtlfEdition,
 );
+variants!(
+    LtlfIdentityError, LTLF_IDENTITY:
+    MissingEdition, UnknownEdition, MismatchedEdition, MissingProfile, UnknownProfile,
+    MismatchedProfile,
+);
+variants!(LtlfFormulaError, LTLF_FORMULA: Identity, Refused, Graph);
 variants!(PropositionMapError, MAP: EmptyName, IdentityNotIncreasing, DuplicateName);
 variants!(
     SignalDomainError, DOMAIN: IntegerBoundsInverted, DecimalBoundsInverted, DecimalScaleOutOfRange,
@@ -596,6 +603,22 @@ fn formula_graph_and_conversion_errors() {
     seen.is(
         "FormulaV1NodeUnsupported",
         err(FormulaDocument::new(closed, NodeId(1), past())),
+    );
+    seen.is(
+        "LtlfNodeRefused",
+        err(Formula::new(
+            SemanticProfile::LtlfFiniteTraceV1,
+            NodeId(1),
+            &past(),
+        )),
+    );
+    seen.is(
+        "LtlfProfileRequiresLtlfEdition",
+        err(FormulaDocument::new_v2(
+            SemanticProfile::LtlfFiniteTraceV1,
+            NodeId(0),
+            truth(),
+        )),
     );
     seen.complete(
         FORMULA,
@@ -1474,6 +1497,53 @@ fn contract_errors() {
         err(check_assumption_inputs(catalog, view, NodeId(0))),
     );
     seen.complete(ASSUMPTION, &[]);
+}
+
+// Trace: TC-166, TC-221, TC-222, NFR-006-AC-4, FR-332-AC-2, FR-332-AC-3
+#[test]
+fn ltlf_errors() {
+    use crate::{select_ltlf_identity, validate_ltlf, LtlfFormulaDocument, FORMULA_LTLF_V1};
+    let ltlf = Some("mltl.ltlf-finite-trace/v1");
+    let mut seen = Seen::default();
+    seen.is("MissingEdition", err(select_ltlf_identity(None, ltlf)));
+    seen.is("UnknownEdition", err(select_ltlf_identity(Some("x"), ltlf)));
+    seen.is(
+        "MismatchedEdition",
+        err(select_ltlf_identity(Some("tl-syntax.formula/v2"), ltlf)),
+    );
+    seen.is(
+        "MissingProfile",
+        err(select_ltlf_identity(Some(FORMULA_LTLF_V1), None)),
+    );
+    seen.is(
+        "UnknownProfile",
+        err(select_ltlf_identity(Some(FORMULA_LTLF_V1), Some("x"))),
+    );
+    seen.is(
+        "MismatchedProfile",
+        err(select_ltlf_identity(
+            Some(FORMULA_LTLF_V1),
+            Some("mltl.closed-trace/v1"),
+        )),
+    );
+    seen.complete(LTLF_IDENTITY, &[]);
+
+    let mut seen = Seen::default();
+    seen.is(
+        "Identity",
+        err(LtlfFormulaDocument::new(
+            SemanticProfile::ClosedTraceV1,
+            NodeId(0),
+            vec![Node::new(NodeKind::True)],
+        )),
+    );
+    let past = [
+        Node::new(NodeKind::True),
+        Node::new(NodeKind::StrongPrevious { operand: NodeId(0) }),
+    ];
+    seen.is("Refused", err(validate_ltlf(NodeId(1), &past)));
+    seen.is("Graph", err(validate_ltlf(NodeId(9), &past)));
+    seen.complete(LTLF_FORMULA, &[]);
 }
 
 #[test]

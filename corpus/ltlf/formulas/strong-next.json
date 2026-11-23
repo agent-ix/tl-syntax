@@ -1,0 +1,1 @@
+{"schema_version":"tl-syntax.formula-ltlf/v1","semantic_profile":"mltl.ltlf-finite-trace/v1","root":1,"nodes":[{"kind":"proposition","proposition":0},{"kind":"strong_next","operand":0}]}

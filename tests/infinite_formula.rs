@@ -132,7 +132,9 @@ fn infinite_profile_is_fourth_distinct_tl_identity() {
         .into_iter()
         .map(SemanticProfile::as_str)
         .collect();
-    assert_eq!(identities.len(), 4);
+    // Five since FR-334 added mltl.ltlf-finite-trace/v1; all stay distinct.
+    assert_eq!(identities.len(), SemanticProfile::ALL.len());
+    assert_eq!(identities.len(), 5);
     assert!(identities.contains("mltl.infinite-trace/v1"));
     assert!(!identities.contains("filament.temporal.infinite-trace/v1"));
     assert!(

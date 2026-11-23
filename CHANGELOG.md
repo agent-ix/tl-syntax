@@ -3,6 +3,34 @@
 All notable user-visible changes to `tl-syntax` are recorded here. The crate is
 distributed as a git source release (`publish = false`); versions are git tags.
 
+## Unreleased (UNBUILT, UNTESTED)
+
+Release train TL-394, TL-414, TL-420, TL-424, TL-425 and TL-428. Nothing below
+has been built or tested; every item awaits `make ci`.
+
+### Added
+
+- Signal direction (TL-414, FR-034): `SignalDirection`, catalog edition
+  `tl-syntax.signal-catalog/v2`, `SignalCatalog::partition`/`partition_all`.
+- Numeric predicates (TL-420, FR-302..305): `numeric` module, document
+  `tl-syntax.predicate-table/v1`, corpus `tl-syntax.numeric-corpus/v1`.
+- Set aggregation (TL-424, FR-306..308): `aggregation` module, document
+  `tl-syntax.set-aggregation/v1`.
+- Assume-guarantee contracts (TL-425, FR-309..311): `assume_guarantee` module,
+  document `tl-syntax.contract-set/v1`, option C prefix verdict.
+- LTLf profile (TL-428, FR-332..335): `SemanticProfile::LtlfFiniteTraceV1`
+  (`mltl.ltlf-finite-trace/v1`), edition `tl-syntax.formula-ltlf/v1`, corpus
+  `tl-syntax.ltlf-corpus/v1`. `SemanticProfile::ALL` has five entries.
+- The release gate admits tl-solve as the fifth crate (TL-394, FR-362).
+
+### Changed
+
+- Breaking: `NodeKind` gains `LtlfFuture`, `LtlfGlobally`, `LtlfUntil`,
+  `LtlfRelease`, `StrongNext` and `WeakNext`, and `SemanticProfile` gains
+  `LtlfFiniteTraceV1`; exhaustive downstream matches must name them. Existing
+  wire editions and bytes are unchanged. The API migration inventory is written
+  when `cargo-semver-checks` runs on a release candidate.
+
 ## 0.4.0
 
 Second coordinated release of the MLTL crates (`tl-syntax`, `tl-parse`,

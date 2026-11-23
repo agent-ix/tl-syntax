@@ -46,10 +46,19 @@ pub use formula::document::{
     MAX_TL_DOCUMENT_DEPTH,
 };
 pub use formula::graph::{
-    Formula, FormulaError, Interval, IntervalError, Node, NodeId, NodeKind, OperatorArity,
-    PastOperatorKind, PropositionId, SemanticProfile, SourceSpan, SourceSpanError, TemporalFamily,
-    MAX_FORMULA_DOCUMENT_DEPTH, MAX_FORMULA_DOCUMENT_NODES, PAST_OPERATORS_V1,
+    Formula, FormulaError, Interval, IntervalError, LtlfRefusal, Node, NodeId, NodeKind,
+    OperatorArity, PastOperatorKind, PropositionId, SemanticProfile, SourceSpan, SourceSpanError,
+    TemporalFamily, LTLF_OPERATORS_V1, MAX_FORMULA_DOCUMENT_DEPTH, MAX_FORMULA_DOCUMENT_NODES,
+    PAST_OPERATORS_V1,
 };
+pub use formula::ltlf::{
+    select_ltlf_identity, validate_ltlf, LtlfFormulaError, LtlfIdentityError, FORMULA_LTLF_V1,
+    LTLF_FINITE_TRACE_PROFILE,
+};
+#[cfg(feature = "alloc")]
+pub use formula::ltlf::LtlfFormulaDocument;
+#[cfg(feature = "serde")]
+pub use formula::ltlf::{LtlfReadError, FORMULA_LTLF_V1_SCHEMA, FORMULA_LTLF_V1_SCHEMA_BYTES};
 #[cfg(feature = "alloc")]
 pub use formula::infinite::InfiniteFormulaDocument;
 pub use formula::infinite::{

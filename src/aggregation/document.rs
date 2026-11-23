@@ -1328,6 +1328,26 @@ fn remap_kind(kind: NodeKind, map: impl Fn(NodeId) -> NodeId) -> NodeKind {
             left: map(left),
             right: map(right),
         },
+        NodeKind::LtlfFuture { operand } => NodeKind::LtlfFuture {
+            operand: map(operand),
+        },
+        NodeKind::LtlfGlobally { operand } => NodeKind::LtlfGlobally {
+            operand: map(operand),
+        },
+        NodeKind::LtlfUntil { left, right } => NodeKind::LtlfUntil {
+            left: map(left),
+            right: map(right),
+        },
+        NodeKind::LtlfRelease { left, right } => NodeKind::LtlfRelease {
+            left: map(left),
+            right: map(right),
+        },
+        NodeKind::StrongNext { operand } => NodeKind::StrongNext {
+            operand: map(operand),
+        },
+        NodeKind::WeakNext { operand } => NodeKind::WeakNext {
+            operand: map(operand),
+        },
         leaf @ (NodeKind::False | NodeKind::True | NodeKind::Proposition { .. }) => leaf,
     }
 }

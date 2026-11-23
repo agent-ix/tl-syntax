@@ -747,7 +747,11 @@ fn operands(kind: NodeKind) -> Vec<NodeId> {
         | NodeKind::Globally { operand, .. }
         | NodeKind::Once { operand, .. }
         | NodeKind::Historically { operand, .. }
-        | NodeKind::StrongPrevious { operand } => vec![operand],
+        | NodeKind::StrongPrevious { operand }
+        | NodeKind::LtlfFuture { operand }
+        | NodeKind::LtlfGlobally { operand }
+        | NodeKind::StrongNext { operand }
+        | NodeKind::WeakNext { operand } => vec![operand],
         NodeKind::And { left, right }
         | NodeKind::Or { left, right }
         | NodeKind::Implies { left, right }
@@ -755,7 +759,9 @@ fn operands(kind: NodeKind) -> Vec<NodeId> {
         | NodeKind::Until { left, right, .. }
         | NodeKind::Release { left, right, .. }
         | NodeKind::Since { left, right, .. }
-        | NodeKind::Triggered { left, right, .. } => vec![left, right],
+        | NodeKind::Triggered { left, right, .. }
+        | NodeKind::LtlfUntil { left, right }
+        | NodeKind::LtlfRelease { left, right } => vec![left, right],
     }
 }
 
@@ -781,6 +787,13 @@ fn spelling(kind: NodeKind) -> String {
         NodeKind::StrongPrevious { .. } => "Y".to_owned(),
         NodeKind::Since { interval, .. } => timed("S", interval.start(), interval.end()),
         NodeKind::Triggered { interval, .. } => timed("T", interval.start(), interval.end()),
+        // The W/M corpus is bounded; LTLf nodes never occur in it.
+        NodeKind::LtlfFuture { .. } => "F".to_owned(),
+        NodeKind::LtlfGlobally { .. } => "G".to_owned(),
+        NodeKind::LtlfUntil { .. } => "U".to_owned(),
+        NodeKind::LtlfRelease { .. } => "R".to_owned(),
+        NodeKind::StrongNext { .. } => "Xs".to_owned(),
+        NodeKind::WeakNext { .. } => "Xw".to_owned(),
     }
 }
 

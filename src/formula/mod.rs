@@ -2,6 +2,7 @@
 
 pub mod graph;
 pub mod infinite;
+pub mod ltlf;
 pub mod profile;
 
 #[cfg(feature = "alloc")]

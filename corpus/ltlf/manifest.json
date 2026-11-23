@@ -1,0 +1,297 @@
+{
+  "corpus": "tl-syntax.ltlf-corpus/v1",
+  "revision": 1,
+  "role": "evidence-input",
+  "formula_schema": "tl-syntax.formula-ltlf/v1",
+  "operator_profile": "tl-syntax.ltlf-operators/v1",
+  "semantic_profile": "mltl.ltlf-finite-trace/v1",
+  "rule_case_count": 18,
+  "rule_cases": [
+    {
+      "id": "strong-next-length-1",
+      "node": "strong-next",
+      "shape": "length-1",
+      "formula": "formulas/strong-next.json",
+      "trace": [
+        [
+          0
+        ]
+      ],
+      "expected_at_0": false
+    },
+    {
+      "id": "strong-next-length-2-satisfying",
+      "node": "strong-next",
+      "shape": "length-2-satisfying",
+      "formula": "formulas/strong-next.json",
+      "trace": [
+        [],
+        [
+          0
+        ]
+      ],
+      "expected_at_0": true
+    },
+    {
+      "id": "strong-next-length-2-violating",
+      "node": "strong-next",
+      "shape": "length-2-violating",
+      "formula": "formulas/strong-next.json",
+      "trace": [
+        [
+          0
+        ],
+        []
+      ],
+      "expected_at_0": false
+    },
+    {
+      "id": "weak-next-length-1",
+      "node": "weak-next",
+      "shape": "length-1",
+      "formula": "formulas/weak-next.json",
+      "trace": [
+        []
+      ],
+      "expected_at_0": true
+    },
+    {
+      "id": "weak-next-length-2-satisfying",
+      "node": "weak-next",
+      "shape": "length-2-satisfying",
+      "formula": "formulas/weak-next.json",
+      "trace": [
+        [],
+        [
+          0
+        ]
+      ],
+      "expected_at_0": true
+    },
+    {
+      "id": "weak-next-length-2-violating",
+      "node": "weak-next",
+      "shape": "length-2-violating",
+      "formula": "formulas/weak-next.json",
+      "trace": [
+        [
+          0
+        ],
+        []
+      ],
+      "expected_at_0": false
+    },
+    {
+      "id": "future-length-1",
+      "node": "future",
+      "shape": "length-1",
+      "formula": "formulas/future.json",
+      "trace": [
+        []
+      ],
+      "expected_at_0": false
+    },
+    {
+      "id": "future-length-2-satisfying",
+      "node": "future",
+      "shape": "length-2-satisfying",
+      "formula": "formulas/future.json",
+      "trace": [
+        [],
+        [
+          0
+        ]
+      ],
+      "expected_at_0": true
+    },
+    {
+      "id": "future-length-2-violating",
+      "node": "future",
+      "shape": "length-2-violating",
+      "formula": "formulas/future.json",
+      "trace": [
+        [],
+        []
+      ],
+      "expected_at_0": false
+    },
+    {
+      "id": "globally-length-1",
+      "node": "globally",
+      "shape": "length-1",
+      "formula": "formulas/globally.json",
+      "trace": [
+        [
+          0
+        ]
+      ],
+      "expected_at_0": true
+    },
+    {
+      "id": "globally-length-2-satisfying",
+      "node": "globally",
+      "shape": "length-2-satisfying",
+      "formula": "formulas/globally.json",
+      "trace": [
+        [
+          0
+        ],
+        [
+          0
+        ]
+      ],
+      "expected_at_0": true
+    },
+    {
+      "id": "globally-length-2-violating",
+      "node": "globally",
+      "shape": "length-2-violating",
+      "formula": "formulas/globally.json",
+      "trace": [
+        [
+          0
+        ],
+        []
+      ],
+      "expected_at_0": false
+    },
+    {
+      "id": "until-length-1",
+      "node": "until",
+      "shape": "length-1",
+      "formula": "formulas/until.json",
+      "trace": [
+        [
+          0
+        ]
+      ],
+      "expected_at_0": false
+    },
+    {
+      "id": "until-length-2-satisfying",
+      "node": "until",
+      "shape": "length-2-satisfying",
+      "formula": "formulas/until.json",
+      "trace": [
+        [
+          0
+        ],
+        [
+          1
+        ]
+      ],
+      "expected_at_0": true
+    },
+    {
+      "id": "until-length-2-violating",
+      "node": "until",
+      "shape": "length-2-violating",
+      "formula": "formulas/until.json",
+      "trace": [
+        [
+          0
+        ],
+        [
+          0
+        ]
+      ],
+      "expected_at_0": false
+    },
+    {
+      "id": "release-length-1",
+      "node": "release",
+      "shape": "length-1",
+      "formula": "formulas/release.json",
+      "trace": [
+        [
+          1
+        ]
+      ],
+      "expected_at_0": true
+    },
+    {
+      "id": "release-length-2-satisfying",
+      "node": "release",
+      "shape": "length-2-satisfying",
+      "formula": "formulas/release.json",
+      "trace": [
+        [
+          1
+        ],
+        [
+          1
+        ]
+      ],
+      "expected_at_0": true
+    },
+    {
+      "id": "release-length-2-violating",
+      "node": "release",
+      "shape": "length-2-violating",
+      "formula": "formulas/release.json",
+      "trace": [
+        [
+          1
+        ],
+        []
+      ],
+      "expected_at_0": false
+    }
+  ],
+  "counterexample_entry_count": 4,
+  "counterexamples": [
+    {
+      "id": "CE-1-ltlf",
+      "reading": "ltlf",
+      "formula": "formulas/ce1-ltlf.json",
+      "expected": false,
+      "quantifier": "every_nonempty_trace"
+    },
+    {
+      "id": "CE-1-infinite",
+      "reading": "infinite",
+      "formula": "formulas/ce1-infinite.json",
+      "expected": true,
+      "quantifier": "every_lasso"
+    },
+    {
+      "id": "CE-2-ltlf",
+      "reading": "ltlf",
+      "formula": "formulas/ce2-ltlf.json",
+      "expected": true,
+      "quantifier": "every_nonempty_trace"
+    },
+    {
+      "id": "CE-2-infinite",
+      "reading": "infinite",
+      "formula": "formulas/ce2-infinite.json",
+      "expected": false,
+      "quantifier": "every_lasso"
+    }
+  ],
+  "depth_one_enumerator": {
+    "leaves": [
+      "true",
+      "false",
+      "p0",
+      "p1"
+    ],
+    "unary": [
+      "not",
+      "future",
+      "globally",
+      "strong_next",
+      "weak_next"
+    ],
+    "binary": [
+      "and",
+      "or",
+      "implies",
+      "equivalent",
+      "until",
+      "release"
+    ],
+    "rule": "leaves, then each unary operator over each leaf, then each binary operator over each ordered pair of leaves",
+    "count": 120
+  }
+}

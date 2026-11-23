@@ -1,7 +1,8 @@
 use core::fmt;
 
 pub use super::profile::{
-    OperatorArity, PastOperatorKind, SemanticProfile, TemporalFamily, PAST_OPERATORS_V1,
+    LtlfRefusal, OperatorArity, PastOperatorKind, SemanticProfile, TemporalFamily,
+    LTLF_OPERATORS_V1, PAST_OPERATORS_V1,
 };
 use crate::contracts::limits::{OWNER_FORMULA_DEPTH, OWNER_FORMULA_NODES};
 
@@ -306,9 +307,71 @@ pub enum NodeKind {
         /// Right operand.
         right: NodeId,
     },
+    /// LTLf Future: some position from here to the last (no interval).
+    LtlfFuture {
+        /// Operand node.
+        operand: NodeId,
+    },
+    /// LTLf Globally: every position from here to the last (no interval).
+    LtlfGlobally {
+        /// Operand node.
+        operand: NodeId,
+    },
+    /// LTLf Until over the remaining finite trace (no interval).
+    LtlfUntil {
+        /// Left operand.
+        left: NodeId,
+        /// Right operand.
+        right: NodeId,
+    },
+    /// LTLf Release, the dual of Until (no interval).
+    LtlfRelease {
+        /// Left operand.
+        left: NodeId,
+        /// Right operand.
+        right: NodeId,
+    },
+    /// Strong next `Xs`: false at the last position (ADR-045).
+    StrongNext {
+        /// Operand node.
+        operand: NodeId,
+    },
+    /// Weak next `Xw`: true at the last position (ADR-045).
+    WeakNext {
+        /// Operand node.
+        operand: NodeId,
+    },
 }
 
 impl NodeKind {
+    /// Whether this node exists only in the LTLf profile and edition.
+    pub const fn is_ltlf_only(self) -> bool {
+        matches!(
+            self,
+            Self::LtlfFuture { .. }
+                | Self::LtlfGlobally { .. }
+                | Self::LtlfUntil { .. }
+                | Self::LtlfRelease { .. }
+                | Self::StrongNext { .. }
+                | Self::WeakNext { .. }
+        )
+    }
+
+    /// The LTLf refusal class of a node the LTLf profile does not admit.
+    pub const fn ltlf_refusal(self) -> Option<LtlfRefusal> {
+        match self {
+            Self::Future { .. } | Self::Globally { .. } | Self::Until { .. } | Self::Release { .. } => {
+                Some(LtlfRefusal::ClosedInterval)
+            }
+            Self::Once { .. } => Some(LtlfRefusal::Once),
+            Self::Historically { .. } => Some(LtlfRefusal::Historically),
+            Self::StrongPrevious { .. } => Some(LtlfRefusal::Previous),
+            Self::Since { .. } => Some(LtlfRefusal::Since),
+            Self::Triggered { .. } => Some(LtlfRefusal::Triggered),
+            _ => None,
+        }
+    }
+
     /// Returns this node's temporal direction, or `None` for a Boolean node.
     pub const fn temporal_family(self) -> Option<TemporalFamily> {
         match self {
@@ -323,7 +386,13 @@ impl NodeKind {
             Self::Future { .. }
             | Self::Globally { .. }
             | Self::Until { .. }
-            | Self::Release { .. } => Some(TemporalFamily::Future),
+            | Self::Release { .. }
+            | Self::LtlfFuture { .. }
+            | Self::LtlfGlobally { .. }
+            | Self::LtlfUntil { .. }
+            | Self::LtlfRelease { .. }
+            | Self::StrongNext { .. }
+            | Self::WeakNext { .. } => Some(TemporalFamily::Future),
             Self::Once { .. }
             | Self::Historically { .. }
             | Self::StrongPrevious { .. }
@@ -352,7 +421,11 @@ impl NodeKind {
             | Self::Globally { operand, .. }
             | Self::Once { operand, .. }
             | Self::Historically { operand, .. }
-            | Self::StrongPrevious { operand } => [Some(operand), None],
+            | Self::StrongPrevious { operand }
+            | Self::LtlfFuture { operand }
+            | Self::LtlfGlobally { operand }
+            | Self::StrongNext { operand }
+            | Self::WeakNext { operand } => [Some(operand), None],
             Self::And { left, right }
             | Self::Or { left, right }
             | Self::Implies { left, right }
@@ -360,7 +433,9 @@ impl NodeKind {
             | Self::Until { left, right, .. }
             | Self::Release { left, right, .. }
             | Self::Since { left, right, .. }
-            | Self::Triggered { left, right, .. } => [Some(left), Some(right)],
+            | Self::Triggered { left, right, .. }
+            | Self::LtlfUntil { left, right }
+            | Self::LtlfRelease { left, right } => [Some(left), Some(right)],
         }
     }
 }
@@ -413,13 +488,25 @@ impl<'a> Formula<'a> {
                 }
             }
 
+            if profile == SemanticProfile::LtlfFiniteTraceV1 {
+                if let Some(refusal) = node.kind.ltlf_refusal() {
+                    let node = u32::try_from(index).map(NodeId).map_err(|_| {
+                        FormulaError::TooManyNodes {
+                            node_count: nodes.len(),
+                        }
+                    })?;
+                    return Err(FormulaError::LtlfNodeRefused { node, refusal });
+                }
+            }
             if let Some(family) = node.kind.temporal_family() {
                 let compatible = match profile {
                     SemanticProfile::ClosedTraceV1 | SemanticProfile::OnlinePrefixV1 => {
-                        family == TemporalFamily::Future
+                        family == TemporalFamily::Future && !node.kind.is_ltlf_only()
                     }
                     SemanticProfile::OriginCompleteHistoryV1 => family == TemporalFamily::Past,
-                    SemanticProfile::InfiniteTraceV1 => true,
+                    SemanticProfile::InfiniteTraceV1 => !node.kind.is_ltlf_only(),
+                    // Every remaining temporal node is LTLf-only here.
+                    SemanticProfile::LtlfFiniteTraceV1 => node.kind.is_ltlf_only(),
                 };
                 if !compatible {
                     let node = u32::try_from(index).map(NodeId).map_err(|_| {
@@ -537,6 +624,15 @@ pub enum FormulaError {
         /// Past operator found there.
         operator: PastOperatorKind,
     },
+    /// The LTLf profile refuses this node class (FR-332).
+    LtlfNodeRefused {
+        /// First refused node in topological order.
+        node: NodeId,
+        /// The refusal class.
+        refusal: LtlfRefusal,
+    },
+    /// The LTLf profile requires the `tl-syntax.formula-ltlf/v1` edition.
+    LtlfProfileRequiresLtlfEdition,
 }
 
 impl fmt::Display for FormulaError {
@@ -590,6 +686,13 @@ impl fmt::Display for FormulaError {
                 operator.semantic_name(),
                 node.0
             ),
+            Self::LtlfNodeRefused { node, refusal } => write!(
+                formatter,
+                "mltl.ltlf-finite-trace/v1 refuses node {} ({refusal:?})",
+                node.0
+            ),
+            Self::LtlfProfileRequiresLtlfEdition => formatter
+                .write_str("mltl.ltlf-finite-trace/v1 requires tl-syntax.formula-ltlf/v1"),
         }
     }
 }

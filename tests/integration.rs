@@ -74,6 +74,10 @@ fn derived_horizon(document: &FormulaDocument) -> u64 {
             | NodeKind::Triggered { .. } => {
                 panic!("formula-v1 future corpus cannot contain a past-time node")
             }
+            other if other.is_ltlf_only() => {
+                panic!("formula-v1 future corpus cannot contain an LTLf node")
+            }
+            _ => unreachable!(),
         };
         horizons.push(value);
     }
