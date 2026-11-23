@@ -13,6 +13,13 @@ Specification stage (TL-427). No test below exists yet; every row is `🚧` unti
 the owning build ticket (TL-428) lands it. Rows trace to criteria only; read
 coverage from `quire matrix`.
 
+Identifier scope: ids in this repository are local. `TC-nnn`, `FR-nnn` and
+`ADR-nnn` numbers may coincide with ids of the same shape in sibling repositories
+(for example tl-mltl TC-227..231 versus this repository's TC-227..231); when a
+document cites an id of another repository it qualifies it with the repository
+name (`tl-mltl FR-092`, `tl-mltl TC-300`). Unqualified ids always mean this
+repository.
+
 Ticket acceptance mapping (TL-428, syntax half): "new profile identifier and
 admission rules; existing profiles unchanged" is FR-332 and FR-334; "weak and
 strong next both representable" is FR-333. The evaluation and reference-agreement
