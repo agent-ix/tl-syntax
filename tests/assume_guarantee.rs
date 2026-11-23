@@ -2,13 +2,13 @@
 //! with ADR-017 option C as decided on 2026-11-23.
 #![cfg(feature = "serde")]
 
-use std::{fs, path::PathBuf};
+use std::{collections::BTreeSet, fs, path::PathBuf};
 
 use proptest::prelude::*;
 use serde_json::Value;
 use tl_syntax::{
-    assumption_prefix_verdict, check_assumption_inputs, contract_outcome, lower_contract_obligation,
-    AssumptionPrefixVerdict, Contract, ContractAssumptionError, ContractGraph,
+    assumption_prefix_verdict, check_assumption_inputs, contract_outcome,
+    lower_contract_obligation, settled_positions, AssumptionPrefixVerdict, Contract, ContractAssumptionError, ContractGraph,
     ContractObligationError, ContractOutcome, ContractSetDocument, ContractSetError,
     ContractSetReadError, ContractStatus, ContractTruth, FormulaBindingError, FormulaDocument,
     InfiniteClock, InfiniteFormulaDocument, InfiniteNode, InfiniteNodeKind, Interval, Node,
@@ -339,19 +339,27 @@ fn directed_catalog() -> SignalCatalogDocument {
     .unwrap()
 }
 
-/// TC-1528: the view exposes ids, names, roots and the obligation, and no
-/// scope; option C reads the outcome series and refuses non-Input
-/// assumptions.
-// Trace: TC-1528, TC-1537, FR-311-AC-1, StR-016-VC-2
-#[test]
-fn contract_view_exposes_roots_and_obligation_only() {
-    let v2 = FormulaDocument::new_v2(SemanticProfile::ClosedTraceV1, NodeId(4), bounded_nodes()).unwrap();
-    let document = ContractSetDocument::new(
-        ContractGraph::Bounded(&v2),
+fn shared_roots_set(v2: &FormulaDocument) -> ContractSetDocument {
+    ContractSetDocument::new(
+        ContractGraph::Bounded(v2),
         v2.content_identity().unwrap(),
         shared_roots(),
     )
-    .unwrap();
+    .unwrap()
+}
+
+fn keys(value: &Value) -> BTreeSet<String> {
+    value.as_object().unwrap().keys().cloned().collect()
+}
+
+/// TC-1528: the view exposes ids, names, roots and the obligation, and the
+/// wire form has no member beyond them (no scope or realizability field).
+// Trace: TC-1528, FR-311-AC-1
+#[test]
+fn contract_view_exposes_roots_and_obligation_only() {
+    let v2 = FormulaDocument::new_v2(SemanticProfile::ClosedTraceV1, NodeId(4), bounded_nodes())
+        .unwrap();
+    let document = shared_roots_set(&v2);
     let view = document.view();
     assert_eq!(view.contracts().len(), 3);
     let first = view.contract(1).unwrap();
@@ -369,31 +377,64 @@ fn contract_view_exposes_roots_and_obligation_only() {
             right: NodeId(2)
         }
     );
-    // The wire form carries no scope or realizability member.
-    let text = String::from_utf8(document.canonical_json_bytes().unwrap()).unwrap();
-    for absent in ["scope", "invariant", "realiz", "environment"] {
-        assert!(!text.contains(absent));
+    let wire: Value = serde_json::from_slice(&document.canonical_json_bytes().unwrap()).unwrap();
+    let top: BTreeSet<String> = ["schema_version", "semantic_profile", "graph_identity", "contracts"]
+        .map(String::from)
+        .into();
+    assert_eq!(keys(&wire), top);
+    let member: BTreeSet<String> = ["id", "name", "assumption", "guarantee"].map(String::from).into();
+    for contract in wire["contracts"].as_array().unwrap() {
+        assert_eq!(keys(contract), member);
     }
+}
 
-    // Option C: G holds at every position where A has held so far.
+/// Option C with the settled-positions rule (decision 1; tl-mltl ADR-004
+/// decision 5). SPEC-GAP: no tl-syntax matrix row covers this reading; the
+/// consuming rows are tl-solve FR-100's, so it is traced to FR-311 only.
+// Trace: FR-311-AC-1
+#[test]
+fn settled_positions_decide_the_option_c_verdict() {
     let verified = ContractOutcome::Status(ContractStatus::Verified);
     let inactive = ContractOutcome::Status(ContractStatus::Inactive);
     let invalid = ContractOutcome::Status(ContractStatus::Invalid);
-    assert_eq!(assumption_prefix_verdict(&[]), AssumptionPrefixVerdict::Holds);
+    let pending = ContractOutcome::Pending;
+    // Lookahead 2 over a 5-position play: positions 0..=2 are settled.
+    assert_eq!(settled_positions(5, 2), 3);
+    assert_eq!(settled_positions(1, 2), 0);
+    assert_eq!(assumption_prefix_verdict(&[], 0), AssumptionPrefixVerdict::Holds);
+    // A winning play: its unsettled tail is pending and decides nothing.
     assert_eq!(
-        assumption_prefix_verdict(&[verified, inactive, invalid]),
+        assumption_prefix_verdict(&[verified, verified, verified, pending, pending], 3),
+        AssumptionPrefixVerdict::Holds
+    );
+    // An invalid in the unsettled tail does not decide either.
+    assert_eq!(
+        assumption_prefix_verdict(&[verified, verified, verified, invalid, pending], 3),
+        AssumptionPrefixVerdict::Holds
+    );
+    // An earlier inactive position ends the obligation.
+    assert_eq!(
+        assumption_prefix_verdict(&[verified, inactive, invalid, pending, pending], 3),
         AssumptionPrefixVerdict::Holds
     );
     assert_eq!(
-        assumption_prefix_verdict(&[verified, invalid, inactive]),
+        assumption_prefix_verdict(&[verified, invalid, inactive, pending, pending], 3),
         AssumptionPrefixVerdict::Violated { position: 1 }
     );
+    // Pending at a settled position is a tool fault, never a verdict.
     assert_eq!(
-        assumption_prefix_verdict(&[verified, ContractOutcome::Pending, invalid]),
-        AssumptionPrefixVerdict::Pending { position: 1 }
+        assumption_prefix_verdict(&[verified, pending, invalid, pending, pending], 3),
+        AssumptionPrefixVerdict::Fault { position: 1 }
     );
+}
 
-    // Assumptions must read Input signals only.
+/// Assumptions must read Input signals only (decision 1); traced like the
+/// test above (SPEC-GAP: the consuming row is tl-solve FR-100's).
+// Trace: FR-311-AC-1
+#[test]
+fn assumptions_must_read_input_signals_only() {
+    let v2 = FormulaDocument::new_v2(SemanticProfile::ClosedTraceV1, NodeId(4), bounded_nodes())
+        .unwrap();
     let catalog_document = directed_catalog();
     let catalog = catalog_document.validate().unwrap();
     let formula = v2.validate().unwrap();
@@ -405,12 +446,9 @@ fn contract_view_exposes_roots_and_obligation_only() {
             direction: SignalDirection::Output
         })
     );
-    let undeclared = FormulaDocument::new_v2(
-        SemanticProfile::ClosedTraceV1,
-        NodeId(0),
-        vec![proposition(3)],
-    )
-    .unwrap();
+    let undeclared =
+        FormulaDocument::new_v2(SemanticProfile::ClosedTraceV1, NodeId(0), vec![proposition(3)])
+            .unwrap();
     assert_eq!(
         check_assumption_inputs(catalog, undeclared.validate().unwrap(), NodeId(0)),
         Err(ContractAssumptionError::NotInput {
@@ -418,12 +456,9 @@ fn contract_view_exposes_roots_and_obligation_only() {
             direction: SignalDirection::Undeclared
         })
     );
-    let unbound = FormulaDocument::new_v2(
-        SemanticProfile::ClosedTraceV1,
-        NodeId(0),
-        vec![proposition(8)],
-    )
-    .unwrap();
+    let unbound =
+        FormulaDocument::new_v2(SemanticProfile::ClosedTraceV1, NodeId(0), vec![proposition(8)])
+            .unwrap();
     assert_eq!(
         check_assumption_inputs(catalog, unbound.validate().unwrap(), NodeId(0)),
         Err(ContractAssumptionError::Binding(

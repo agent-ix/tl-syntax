@@ -144,7 +144,7 @@ pub use aggregation::document::{
 pub use aggregation::document::{SET_AGGREGATION_V1_SCHEMA, SET_AGGREGATION_V1_SCHEMA_BYTES};
 
 pub use assume_guarantee::{
-    assumption_prefix_verdict, contract_obligation_node, contract_outcome,
+    assumption_prefix_verdict, contract_obligation_node, contract_outcome, settled_positions,
     AssumptionPrefixVerdict, ContractAssumptionError, ContractObligationError, ContractOutcome,
     ContractStatus, ContractTruth, MAX_CONTRACTS,
 };

@@ -9,7 +9,15 @@
   "required": ["schema_version", "semantic_profile", "graph_identity", "contracts"],
   "properties": {
     "schema_version": { "const": "tl-syntax.contract-set/v1" },
-    "semantic_profile": { "type": "string", "minLength": 1 },
+    "semantic_profile": {
+      "enum": [
+        "mltl.closed-trace/v1",
+        "mltl.online-prefix/v1",
+        "mltl.origin-complete-history/v1",
+        "mltl.infinite-trace/v1",
+        "mltl.ltlf-finite-trace/v1"
+      ]
+    },
     "clock": { "const": "event_position" },
     "graph_identity": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
     "contracts": {
@@ -21,7 +29,7 @@
         "required": ["id", "name", "assumption", "guarantee"],
         "properties": {
           "id": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
-          "name": { "type": "string", "minLength": 1 },
+          "name": { "type": "string", "minLength": 1, "maxLength": 255 },
           "assumption": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
           "guarantee": { "type": "integer", "minimum": 0, "maximum": 4294967295 }
         }

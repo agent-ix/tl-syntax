@@ -97,7 +97,10 @@ impl ContractOutcome {
 /// | True | True | Verified |
 /// | True | Pending | Pending |
 /// | Pending | any | Pending |
-pub const fn contract_outcome(assumption: ContractTruth, guarantee: ContractTruth) -> ContractOutcome {
+pub const fn contract_outcome(
+    assumption: ContractTruth,
+    guarantee: ContractTruth,
+) -> ContractOutcome {
     match (assumption, guarantee) {
         (ContractTruth::False, _) => ContractOutcome::Status(ContractStatus::Inactive),
         (ContractTruth::True, ContractTruth::False) => {
@@ -112,32 +115,54 @@ pub const fn contract_outcome(assumption: ContractTruth, guarantee: ContractTrut
     }
 }
 
-/// The prefix-conditional reading of a per-position outcome series
-/// (decision 1, option C): "the guarantee holds at every position at which
-/// the assumption has held so far".
+// SPEC-GAP: FR-311 and StR-016-VC-2 leave the realizability reading and the
+// Input-only check to P-TL-149 (tl-solve FR-100). Decision 1 (2026-11-23)
+// adopts option C and requires the typed refusal, so the shared, total pieces
+// live here for tl-solve and tl-mltl to call; FR-311 text to amend ("the
+// prefix verdict and Input-only check are offered by tl-syntax and applied
+// by tl-solve"). tl-syntax still states no assumption scope on any document.
+
+/// The settled-positions reading of a per-position outcome series (decision
+/// 1, option C, with tl-mltl ADR-004 decision 5): "the guarantee holds at
+/// every settled position at which the assumption has held so far".
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum AssumptionPrefixVerdict {
-    /// Every settled position before the first `inactive` (or all positions,
-    /// if there is none) is `verified`.
+    /// No settled position is `invalid` before the first `inactive` one.
     Holds,
-    /// The first `invalid` position before any `inactive` one.
+    /// The first settled `invalid` position with no earlier `inactive` one:
+    /// the system loses the play.
     Violated {
         /// The violating position.
         position: usize,
     },
-    /// The first unsettled (`pending`) position decides nothing yet.
-    Pending {
-        /// The first unsettled position.
+    /// A settled position reports `pending`: a tool fault (`Failed`), never
+    /// a verdict.
+    Fault {
+        /// The first settled pending position.
         position: usize,
     },
 }
 
-/// Reads a per-position outcome series under option C. Positions are visited
-/// in order: `inactive` ends the obligation (the assumption stopped holding),
-/// `invalid` violates it, `verified` continues, and `pending` leaves the
-/// verdict pending at that position (only settled positions decide).
-pub fn assumption_prefix_verdict(series: &[ContractOutcome]) -> AssumptionPrefixVerdict {
-    for (position, outcome) in series.iter().enumerate() {
+/// The number of settled positions of a complete play of `play_length`
+/// positions for a contract of lookahead `look = max(lookahead(A),
+/// lookahead(G))`: position `p` is settled when `p + look <= H`, where
+/// `H = play_length - 1` is the last position, so that no read at `p`
+/// reaches past the play.
+pub const fn settled_positions(play_length: usize, look: usize) -> usize {
+    play_length.saturating_sub(look)
+}
+
+/// Decides a complete play from its per-position outcome series. Only the
+/// first `settled` positions decide; the unsettled tail is ignored, so a
+/// winning play's pending tail still reads `Holds`. In order: `inactive` ends
+/// the obligation (the assumption stopped holding), `invalid` violates it,
+/// `verified` continues, and `pending` at a settled position is a `Fault`.
+pub fn assumption_prefix_verdict(
+    series: &[ContractOutcome],
+    settled: usize,
+) -> AssumptionPrefixVerdict {
+    let settled = settled.min(series.len());
+    for (position, outcome) in series[..settled].iter().enumerate() {
         match outcome {
             ContractOutcome::Status(ContractStatus::Inactive) => {
                 return AssumptionPrefixVerdict::Holds
@@ -146,7 +171,7 @@ pub fn assumption_prefix_verdict(series: &[ContractOutcome]) -> AssumptionPrefix
                 return AssumptionPrefixVerdict::Violated { position }
             }
             ContractOutcome::Status(ContractStatus::Verified) => {}
-            ContractOutcome::Pending => return AssumptionPrefixVerdict::Pending { position },
+            ContractOutcome::Pending => return AssumptionPrefixVerdict::Fault { position },
         }
     }
     AssumptionPrefixVerdict::Holds
