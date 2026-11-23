@@ -14,13 +14,13 @@ relationships:
 ## Description
 
 Before pushing coordinated TL release tags, a non-workspace `release-smoke/`
-consumer shall depend on the exact four candidate commits that the proposed
+consumer shall depend on the exact five candidate commits that the proposed
 tags will name and exercise the public integration path at the shared MSRV and
 current stable Rust.
 
 ## Inputs
 
-- Proposed tag names and exact candidate commits for tl-syntax, tl-parse, tl-mltl and
+- Proposed tag names and exact candidate commits for tl-syntax, tl-parse, tl-mltl, tl-solve and
   tl-rewrite, with one locked dependency resolution.
 - A representative formula, signal catalog, trace and C2PO mapping request.
 
@@ -37,16 +37,16 @@ same accepted commit. The consumer parses and round-trips the formula, rewrites 
 catalog, evaluates the trace and maps an applicable formula to C2PO through
 public APIs. It lives outside the tl-syntax workspace and has no reverse
 dependency on the repository being released. Its lockfile must resolve the
-four proposed revisions, with no local path substitution. A compile-only
+five proposed revisions, with no local path substitution. A compile-only
 smoke is insufficient; each named path yields an asserted result.
 
 ## Acceptance Criteria
 
 | ID | Criteria | Verification |
 |---|---|---|
-| FR-032-AC-1 | The consumer uses all four exact proposed tag target commits and executes parsing, rewriting, evaluation, signal binding and C2PO mapping with asserted results. | Test (TC-177) |
+| FR-032-AC-1 | The consumer uses all five exact proposed tag target commits and executes parsing, rewriting, satisfiability checking, evaluation, signal binding and C2PO mapping with asserted results. | Test (TC-177) |
 | FR-032-AC-2 | The same locked consumer builds and runs at the shared MSRV and current stable; a wrong pin, absent operation or local path override fails. | Test (TC-178) |
 
 ## Dependencies
 
-The four crate APIs supply the integration path; FR-029 fixes its exact pins.
+The five crate APIs supply the integration path; FR-029 fixes its exact pins.

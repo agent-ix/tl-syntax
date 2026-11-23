@@ -26,7 +26,7 @@ tool versions and toolchains so a second run can identify the same subject.
 
 ## Scope
 
-Applies to FR-029 through FR-033 and their four-crate release candidate. It
+Applies to FR-029 through FR-033 and their five-crate release candidate. It
 does not define a local evidence framework or replace shared assurance
 retention and human decision authorities.
 

@@ -13,18 +13,18 @@ relationships:
 
 When tagging is proposed for a coordinated TL release after 0.3.0, a Rust
 checker shall verify the exact release candidate graph for tl-syntax,
-tl-parse, tl-mltl and tl-rewrite.
+tl-parse, tl-mltl, tl-solve and tl-rewrite.
 
 ## Inputs
 
-- Immutable candidate commits and proposed tags for the four crates.
+- Immutable candidate commits and proposed tags for the five crates.
 - Each crate's Cargo manifests, resolved dependency graph, toolchain and
   declared minimum supported Rust version (MSRV).
 - Explicitly declared historical compatibility lanes, if any.
 
 ## Outputs
 
-- A deterministic per-edge pin and MSRV report bound to the four candidate
+- A deterministic per-edge pin and MSRV report bound to the five candidate
   commits, or a refusal naming every inconsistent edge.
 
 ## Behavior
@@ -32,7 +32,7 @@ tl-parse, tl-mltl and tl-rewrite.
 Every production dependency on a TL crate resolves to the one selected
 candidate revision for that crate. Each `version = "=..."` agrees with the
 package version at its pinned revision; no branch, floating tag, or unstated
-path override is a release pin. All four crates declare the same MSRV, and the
+path override is a release pin. All five crates declare the same MSRV, and the
 candidate builds at that MSRV. Each dependency revision is reachable from the
 corresponding proposed release tag's commit. The checker does not infer
 reachability from a version string alone.
@@ -48,7 +48,7 @@ its documented light-gate exception does not apply to a later tag.
 | ID | Criteria | Verification |
 |---|---|---|
 | FR-029-AC-1 | At the candidate commits, each production TL dependency resolves to exactly one selected revision and its exact version matches that revision's package version. | Test (TC-170) |
-| FR-029-AC-2 | Four identical declared MSRVs, successful MSRV builds and reachability from the proposed tags are checked from the candidate graph; a one-axis mutation fails. | Test (TC-171) |
+| FR-029-AC-2 | Five identical declared MSRVs, successful MSRV builds and reachability from the proposed tags are checked from the candidate graph; a one-axis mutation fails. | Test (TC-171) |
 | FR-029-AC-3 | A declared historical test lane stays isolated and cannot mask a duplicate production revision; undeclared or leaking historical pins fail. | Test (TC-172) |
 
 ## Dependencies

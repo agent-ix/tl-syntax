@@ -16,13 +16,13 @@ relationships:
 ## Description
 
 When preparing a coordinated TL release, the release gate shall replay the
-digest-pinned tl-syntax owner corpora through tl-parse, tl-rewrite and tl-mltl
+digest-pinned tl-syntax owner corpora through tl-parse, tl-rewrite and tl-mltl, and through tl-solve's encoder and witness re-check (tl-solve FR-019)
 at exactly the candidate revisions selected by FR-029.
 
 ## Inputs
 
 - The owner corpus manifests, bytes, schema identities and digests.
-- The four exact candidate revisions and their built binaries.
+- The five exact candidate revisions and their built binaries.
 
 ## Outputs
 

@@ -20,7 +20,7 @@ relationships:
 ## Description
 
 When a coordinated TL release after 0.3.0 is proposed, the release process shall
-require an attributed human decision for the exact four-crate candidate after
+require an attributed human decision for the exact five-crate candidate after
 all required gates and reviews, before any tag is pushed.
 
 ## Inputs
