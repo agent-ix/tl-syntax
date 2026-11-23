@@ -13,6 +13,7 @@ pub mod contracts;
 mod error_variants;
 pub mod formula;
 mod future;
+pub mod numeric;
 pub mod signal;
 
 #[cfg(feature = "alloc")]
@@ -100,6 +101,22 @@ pub use signal::document::{
     PROPOSITION_MAP_V1_SCHEMA_SHA256, SIGNAL_CATALOG_V1_SCHEMA, SIGNAL_CATALOG_V1_SCHEMA_BYTES,
     SIGNAL_CATALOG_V1_SCHEMA_SHA256, SIGNAL_CATALOG_V2_SCHEMA, SIGNAL_CATALOG_V2_SCHEMA_BYTES,
 };
+
+pub use numeric::expr::{
+    ExprId, ExprNode, ExprSlot, ExprType, ExpressionArena, ExpressionError, ExpressionLimit,
+    MAX_DECIMAL_SCALE, MAX_EXPRESSION_DEPTH, MAX_EXPRESSION_NODES,
+};
+pub use numeric::predicate::{
+    BoundPredicateFormula, ComparisonOperator, Predicate, PredicateBindingError, PredicateTable,
+    PredicateTableError, PropositionSource, MAX_PREDICATES,
+};
+#[cfg(feature = "alloc")]
+pub use numeric::document::{
+    PredicateTableDocument, PredicateTableReadError, PredicateTableSchemaVersion,
+    PREDICATE_TABLE_V1,
+};
+#[cfg(feature = "serde")]
+pub use numeric::document::{PREDICATE_TABLE_V1_SCHEMA, PREDICATE_TABLE_V1_SCHEMA_BYTES};
 
 /// Stable revision identifier for the checked-in shared temporal corpus.
 pub const CORPUS_REVISION: &str = "tl-syntax-corpus/v1";

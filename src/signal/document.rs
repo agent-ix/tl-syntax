@@ -347,7 +347,7 @@ where
 }
 
 #[cfg(feature = "serde")]
-fn deserialize_bounded_vec<'de, D, T>(
+pub(crate) fn deserialize_bounded_vec<'de, D, T>(
     deserializer: D,
     limit: usize,
     description: &'static str,

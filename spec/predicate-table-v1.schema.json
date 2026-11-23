@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://agent-ix.github.io/tl-syntax/schema/predicate-table-v1.schema.json",
+  "title": "tl-syntax predicate table v1",
+  "description": "Structural Draft 7 contract for numeric comparison atoms (FR-303). Expressions form one arena in which every operand precedes its user. The tl-syntax PredicateTableDocument reader is mandatory for exact interval typing against the signal catalog, equal comparison scales, increasing proposition identities, canonical bytes and resource limits.",
+  "x-tl-syntax-semantic-reader": "PredicateTableDocument::from_json_bytes",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "expressions", "predicates"],
+  "properties": {
+    "schema_version": { "const": "tl-syntax.predicate-table/v1" },
+    "expressions": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": { "$ref": "#/$defs/expression" }
+    },
+    "predicates": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": { "$ref": "#/$defs/predicate" }
+    }
+  },
+  "$defs": {
+    "id": { "type": "integer", "minimum": 0, "maximum": 4294967295 },
+    "i64": { "type": "integer", "minimum": -9223372036854775808, "maximum": 9223372036854775807 },
+    "scale": { "type": "integer", "minimum": 0, "maximum": 18 },
+    "expression": {
+      "oneOf": [
+        { "type": "object", "additionalProperties": false, "required": ["kind", "signal"],
+          "properties": { "kind": { "const": "signal" }, "signal": { "$ref": "#/$defs/id" } } },
+        { "type": "object", "additionalProperties": false, "required": ["kind", "value"],
+          "properties": { "kind": { "const": "integer" }, "value": { "$ref": "#/$defs/i64" } } },
+        { "type": "object", "additionalProperties": false, "required": ["kind", "coefficient", "scale"],
+          "properties": { "kind": { "const": "decimal" }, "coefficient": { "$ref": "#/$defs/i64" }, "scale": { "$ref": "#/$defs/scale" } } },
+        { "type": "object", "additionalProperties": false, "required": ["kind", "operand"],
+          "properties": { "kind": { "enum": ["neg", "abs"] }, "operand": { "$ref": "#/$defs/id" } } },
+        { "type": "object", "additionalProperties": false, "required": ["kind", "left", "right"],
+          "properties": { "kind": { "enum": ["add", "sub", "mul"] }, "left": { "$ref": "#/$defs/id" }, "right": { "$ref": "#/$defs/id" } } },
+        { "type": "object", "additionalProperties": false, "required": ["kind", "operand", "scale"],
+          "properties": { "kind": { "const": "rescale" }, "operand": { "$ref": "#/$defs/id" }, "scale": { "$ref": "#/$defs/scale" } } }
+      ]
+    },
+    "predicate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["proposition", "operator", "left", "right"],
+      "properties": {
+        "proposition": { "$ref": "#/$defs/id" },
+        "operator": { "enum": ["lt", "le", "gt", "ge", "eq", "ne"] },
+        "left": { "$ref": "#/$defs/id" },
+        "right": { "$ref": "#/$defs/id" }
+      }
+    }
+  }
+}

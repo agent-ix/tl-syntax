@@ -1,0 +1,1 @@
+{"schema_version":"tl-syntax.predicate-table/v1","expressions":[{"kind":"signal","signal":2},{"kind":"integer","value":3e0}],"predicates":[{"proposition":9,"operator":"lt","left":0,"right":1}]}

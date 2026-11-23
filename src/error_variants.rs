@@ -13,6 +13,7 @@ use alloc::{
 };
 
 use crate::{
+    ExpressionError, PredicateBindingError, PredicateTableError,
     contracts::limits::OWNER_PROPOSITIONS, lower_infinite_future, select_infinite_profile,
     FairnessPremisesDocument, FairnessPremisesError, FairnessReadError, FixedDecimalSignalDomain,
     Formula, FormulaBindingError, FormulaConversionError, FormulaDocument, FormulaError,
@@ -108,6 +109,20 @@ variants!(
 );
 variants!(FormulaBindingError, BINDING: MissingPropositionBinding);
 variants!(SignalPartitionError, PARTITION: Binding, UndeclaredDirection);
+variants!(
+    ExpressionError, EXPRESSION:
+    RangeOverflow, ScaleMismatch, ScaleOverflow, RescaleNarrowing, NonNumericSignal,
+    UnknownSignal, ExpressionLimitExceeded, OperandNotPreceding, ScratchTooSmall,
+    SlotOutsideTemplate,
+);
+variants!(
+    PredicateTableError, PREDICATE_TABLE:
+    Expression, PredicateLimitExceeded, PropositionNotIncreasing, RootOutOfRange, ScaleMismatch,
+);
+variants!(
+    PredicateBindingError, PREDICATE_BINDING:
+    PropositionUnbound, PropositionDefinedTwice, NonNumericSignal,
+);
 
 /// The variants produced by one test, checked against the enum's full list.
 #[derive(Default)]
@@ -994,6 +1009,168 @@ fn signal_catalog_and_binding_errors() {
         Formula::new(SemanticProfile::ClosedTraceV1, NodeId(0), &undeclared_nodes).unwrap();
     seen.is("UndeclaredDirection", err(catalog.partition(undeclared)));
     seen.complete(PARTITION, &[]);
+}
+
+// Trace: TC-166, TC-1502, NFR-006-AC-4, FR-302-AC-2
+#[test]
+fn numeric_expression_table_and_binding_errors() {
+    use crate::{
+        BoundPredicateFormula, ComparisonOperator, ExprId, ExprNode, ExprSlot, ExpressionArena,
+        Predicate, PredicateTable, MAX_EXPRESSION_DEPTH, MAX_EXPRESSION_NODES, MAX_PREDICATES,
+    };
+    let signals = [
+        SignalDeclaration::new(SignalId(1), "flag", SignalDomain::Boolean),
+        SignalDeclaration::new(
+            SignalId(2),
+            "count",
+            SignalDomain::Integer(IntegerSignalDomain::new(i64::MIN, i64::MAX).unwrap()),
+        ),
+        SignalDeclaration::new(
+            SignalId(3),
+            "temp",
+            SignalDomain::FixedDecimal(FixedDecimalSignalDomain::new(0, 9, 1).unwrap()),
+        ),
+    ];
+    let bindings = [PropositionBinding::new(PropositionId(1), SignalId(1))];
+    let mut order = [0_u32; 3];
+    let catalog = SignalCatalog::new(&signals, &bindings, &mut order).unwrap();
+    let typed = |nodes: &[ExprNode]| {
+        let mut scratch = vec![ExprSlot::EMPTY; nodes.len()];
+        ExpressionArena::new(catalog, nodes, &mut scratch).map(|_| ())
+    };
+    let read = |signal: u32| ExprNode::Signal {
+        signal: SignalId(signal),
+    };
+    let pair = |kind: fn(ExprId, ExprId) -> ExprNode, left: ExprNode, right: ExprNode| {
+        vec![left, right, kind(ExprId(0), ExprId(1))]
+    };
+    let mut seen = Seen::default();
+    seen.is(
+        "RangeOverflow",
+        err(typed(&pair(
+            |left, right| ExprNode::Mul { left, right },
+            read(2),
+            read(2),
+        ))),
+    );
+    seen.is(
+        "ScaleMismatch",
+        err(typed(&pair(
+            |left, right| ExprNode::Add { left, right },
+            read(2),
+            read(3),
+        ))),
+    );
+    seen.is(
+        "ScaleOverflow",
+        err(typed(&[ExprNode::Decimal {
+            coefficient: 1,
+            scale: 19,
+        }])),
+    );
+    seen.is(
+        "RescaleNarrowing",
+        err(typed(&[
+            read(3),
+            ExprNode::Rescale {
+                operand: ExprId(0),
+                scale: 0,
+            },
+        ])),
+    );
+    seen.is("NonNumericSignal", err(typed(&[read(1)])));
+    seen.is("UnknownSignal", err(typed(&[read(9)])));
+    let mut chain = vec![ExprNode::Integer { value: 0 }];
+    for index in 0..MAX_EXPRESSION_DEPTH as u32 {
+        chain.push(ExprNode::Neg {
+            operand: ExprId(index),
+        });
+    }
+    seen.is("ExpressionLimitExceeded", err(typed(&chain)));
+    #[cfg(not(miri))]
+    {
+        let wide = vec![ExprNode::Integer { value: 0 }; MAX_EXPRESSION_NODES + 1];
+        assert!(typed(&wide).is_err());
+    }
+    seen.is(
+        "OperandNotPreceding",
+        err(typed(&[ExprNode::Neg {
+            operand: ExprId(0),
+        }])),
+    );
+    let mut short = [ExprSlot::EMPTY; 0];
+    seen.is(
+        "ScratchTooSmall",
+        err(ExpressionArena::new(catalog, &[read(2)], &mut short)),
+    );
+    seen.is(
+        "SlotOutsideTemplate",
+        err(typed(&[ExprNode::SlotSignal { depth: 0 }])),
+    );
+    seen.complete(EXPRESSION, &[]);
+
+    let expressions = [read(2), read(3)];
+    let predicate = |proposition: u32, left: u32, right: u32| Predicate {
+        proposition: PropositionId(proposition),
+        operator: ComparisonOperator::Lt,
+        left: ExprId(left),
+        right: ExprId(right),
+    };
+    let table = |predicates: &[Predicate], expressions: &[ExprNode]| {
+        let mut scratch = vec![ExprSlot::EMPTY; expressions.len()];
+        PredicateTable::new(catalog, predicates, expressions, &mut scratch).map(|_| ())
+    };
+    let mut seen = Seen::default();
+    seen.is("Expression", err(table(&[], &[read(1)])));
+    #[cfg(not(miri))]
+    {
+        let many: Vec<Predicate> = (0..=MAX_PREDICATES as u32)
+            .map(|index| predicate(index + 2, 0, 0))
+            .collect();
+        seen.is("PredicateLimitExceeded", err(table(&many, &expressions)));
+    }
+    seen.is(
+        "PropositionNotIncreasing",
+        err(table(&[predicate(5, 0, 0), predicate(5, 0, 0)], &expressions)),
+    );
+    seen.is(
+        "RootOutOfRange",
+        err(table(&[predicate(5, 0, 7)], &expressions)),
+    );
+    seen.is(
+        "ScaleMismatch",
+        err(table(&[predicate(5, 0, 1)], &expressions)),
+    );
+    seen.complete(PREDICATE_TABLE, &["PredicateLimitExceeded"]);
+
+    let predicates = [predicate(5, 0, 0)];
+    let mut scratch = [ExprSlot::EMPTY; 2];
+    let valid = PredicateTable::new(catalog, &predicates, &expressions, &mut scratch).unwrap();
+    let twice = [predicate(1, 0, 0)];
+    let mut scratch = [ExprSlot::EMPTY; 2];
+    let doubled = PredicateTable::new(catalog, &twice, &expressions, &mut scratch).unwrap();
+    let atom = |id: u32| {
+        [Node::new(NodeKind::Proposition {
+            proposition: PropositionId(id),
+        })]
+    };
+    let bind = |nodes: &[Node], table: PredicateTable<'_>| {
+        let formula = Formula::new(SemanticProfile::ClosedTraceV1, NodeId(0), nodes).unwrap();
+        BoundPredicateFormula::new(formula, catalog, table).map(|_| ())
+    };
+    let mut seen = Seen::default();
+    seen.is("PropositionUnbound", err(bind(&atom(9), valid)));
+    seen.is("PropositionDefinedTwice", err(bind(&atom(1), doubled)));
+    let boolean = [SignalDeclaration::new(SignalId(2), "count", SignalDomain::Boolean)];
+    let mut other_order = [0_u32; 1];
+    let other = SignalCatalog::new(&boolean, &[], &mut other_order).unwrap();
+    let nodes = atom(5);
+    let formula = Formula::new(SemanticProfile::ClosedTraceV1, NodeId(0), &nodes).unwrap();
+    seen.is(
+        "NonNumericSignal",
+        err(BoundPredicateFormula::new(formula, other, valid).map(|_| ())),
+    );
+    seen.complete(PREDICATE_BINDING, &[]);
 }
 
 #[test]

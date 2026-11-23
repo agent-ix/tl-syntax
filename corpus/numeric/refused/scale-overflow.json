@@ -1,0 +1,1 @@
+{"schema_version":"tl-syntax.predicate-table/v1","expressions":[{"kind":"decimal","coefficient":1,"scale":18},{"kind":"decimal","coefficient":1,"scale":1},{"kind":"mul","left":0,"right":1}],"predicates":[]}
