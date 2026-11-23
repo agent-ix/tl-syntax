@@ -54,7 +54,11 @@ interpreting either one.
   bounds or an invalid scale cannot exist in a public `SignalDomain` value.
 - A direct MLTL proposition binding shall resolve to a declared Boolean signal.
   Integer and fixed-decimal declarations may be retained for a frontend's
-  explicit predicate-lowering boundary but shall not be treated as Boolean.
+  explicit predicate-lowering boundary, or, under the proposed amendment recorded in
+  [ADR-014](../assurance/ADR-014-numeric-expression-layer.md) decision 6 (pending
+  human acceptance), read by a predicate-table definition (FR-303); in neither case
+  shall they be treated as Boolean, and a predicate-table proposition is not a
+  direct Boolean binding.
 - Binding a formula produces a borrowed bound-formula view. Validation visits
   proposition occurrences in formula-node order and shall reject the first
   missing or non-Boolean binding in that order. Every occurrence shall resolve;
@@ -83,6 +87,14 @@ interpreting either one.
   establish that a caller's identity or provenance statement is truthful.
 
 ## Compatibility and ownership
+
+- PROPOSED AMENDMENT (ADR-014 decision 6, needs human acceptance): this requirement
+  still validates only the catalog and the caller-source context. It does not
+  validate the predicate table, aggregation document or contract set (FR-303,
+  FR-306, FR-309); those are derived interchange without FSL source-context fields,
+  attributed, if at all, by supplying the requirement-context document of this
+  requirement beside one bundle. The text of StR-003 that denies a predicate
+  expression to this crate is amended in the same step.
 
 - Existing checked-in `tl-syntax.formula/v1` and
   `tl-syntax.proposition-map/v1` fixture bytes remain unchanged and continue to

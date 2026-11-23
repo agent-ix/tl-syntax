@@ -15,6 +15,8 @@ relationships:
     type: realizes_requirement
   - target: ix://agent-ix/tl-syntax/ADR-002
     type: relates_to
+  - target: ix://agent-ix/tl-syntax/StR-003
+    type: relates_to
 ---
 
 # ADR-014: Carry numeric predicates as an expression layer that lowers to atoms
@@ -23,6 +25,12 @@ relationships:
 
 Proposed (TL-419, project P-TL-150). Ready for human acceptance; no agent
 advances this to accepted.
+
+Decision 6 is a PROPOSED AMENDMENT of [StR-003](../requirements/StR-003-formal-temporal-frontends.md)
+and [FR-007](../requirements/FR-007-typed-signal-context.md), which today say that
+this crate does not define the predicate expression. The amendment needs human
+acceptance. If it is rejected, this ADR fails and FR-302 to FR-311 are withdrawn;
+nothing else in the project depends on them being accepted piecemeal.
 
 ## Context
 
@@ -63,10 +71,29 @@ evaluators, the rewriter and the satisfiability encoder all operate on
 5. The core feature set stays `no_std` and allocation-free for borrowed
    validation (caller-owned scratch, as the catalog already does); owned
    documents and the wire form sit behind `alloc` and `serde`.
-6. FSL remains the only editable formal-clause authority. The predicate table is
-   derived interchange: it carries what an FSL typed-predicate bridge
-   (`agent-ix/filament-contract-ir#63`) or a TL text dialect lowers to, and it
-   grants no independent clause authority.
+6. FSL remains the only editable formal-clause authority. The predicate table,
+   the set-aggregation document (ADR-016) and the contract set (ADR-017) are
+   derived interchange: they carry what an FSL typed-predicate bridge
+   (`agent-ix/filament-contract-ir#63`) or a TL text dialect lowers to, and they
+   grant no independent clause authority. The mechanism, stated explicitly:
+   - **No FSL source context in the documents.** The v1 documents carry no
+     requirement id, revision, clause, anchor or source-span field. They are not
+     individually traceable to an FSL clause and this crate does not claim they
+     are.
+   - **Bundle-level attribution only.** A bridge that wants attribution supplies
+     the existing `tl-syntax.requirement-context/v1` document (FR-007) beside one
+     bundle (predicate table, aggregation, contract set) derived from one FSL
+     clause. This crate validates its shape and bytes only (FR-007), never that the
+     statement is true.
+   - **Not FSL-authoritative otherwise.** A bundle with no requirement context,
+     and any bundle parsed from author-written TL text (tl-parse dialect v5), is
+     unattributed interchange. It may be evaluated, exported and solved, but a
+     result derived from it makes no claim about an FSL requirement and no
+     assurance case may cite it as one.
+   - **No loss path inside this crate.** An FSL predicate that uses division,
+     modulo, a float or anything outside decision 2 has no lowering here. The
+     bridge refuses it with its own typed error and never substitutes an
+     approximation; this crate never receives it and records no loss for it.
 
 ## Alternatives rejected
 

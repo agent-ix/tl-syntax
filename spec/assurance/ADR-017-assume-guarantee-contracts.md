@@ -34,7 +34,8 @@ contract that was never exercised looks the same as one that was verified.
 
 1. A contract is a named pair of roots (assumption, guarantee) in one existing
    formula graph, carried by `tl-syntax.contract-set/v1`, which binds to that
-   graph by content identity exactly as `tl-syntax.fairness-premises/v1` does.
+   graph by content identity exactly as `tl-syntax.fairness-premises/v1` does
+   (retained, with a one-line justification, in the ADR-019 register).
 2. The status of a contract at an evaluation position is a total function of
    the two Boolean-or-pending results:
    - assumption false: `inactive` (the guarantee is not consulted);
@@ -77,6 +78,48 @@ Recommendation, not a decision: C needs no change here and keeps contract
 status per-position as the R2U2 differential requires; A is a later
 `contract-set/v2` if P-TL-149 needs it.
 
+## Open decisions (for Peter; none is made by this ADR)
+
+1. **Contract scope: option A, B or C. Recommendation: C**, stated precisely so it
+   can be compared with P-TL-149:
+   - What this project provides is the per-position outcome series of tl-mltl
+     FR-059, with `inactive`, `invalid`, `verified` and `pending` at every
+     position, and the first `invalid` and first `inactive` times in its summary.
+     There is no trace-level contract status; a whole-trace answer is a function a
+     consumer computes from the series.
+   - P-TL-149 under C consumes that series and defines its winning condition as
+     "G holds at every position where A has held so far": for each position `t`
+     such that the assumption held at every position `0..t`, the guarantee holds at
+     `t`. Over the series that is "no `invalid` outcome at a position before the
+     first `inactive` outcome" (all positions if there is none). This is the
+     prefix-conditional reading that P-TL-149 ADR-004 decision 5 lists as its known
+     limit (a) and does not specify; under C it becomes definable because the
+     series exists.
+   - C requires every proposition of an assumption to be bound to an `Input`
+     signal, because otherwise the system could win by falsifying its own
+     assumption. contract-set v1 does not and cannot check this: signal direction
+     lives in P-TL-149's catalog v2. The check belongs to P-TL-149 and is part of
+     what choosing C asks of it.
+   - **Disagreement to resolve.** P-TL-149 ADR-004 decision 5 as written has a
+     contract `(A, G)` contribute `A -> G` over the whole fixed trace, evaluated at
+     position zero, with the status coinciding with the play outcome, and refuses
+     non-`Input` assumptions. That differs from C in two ways (position-zero
+     implication versus per-position series, and the stronger prefix-conditional
+     winning condition). If C is chosen, P-TL-149 owns amending decision 5 to
+     consume the series; this project does not edit it.
+   - Option A needs `contract-set/v2` with an assumption-scope field and is the
+     choice if P-TL-149 insists on whole-trace invariant assumptions. Option B
+     keeps contracts and environment assumptions apart at the cost of a second
+     document type.
+2. **Who runs R2U2 and pins the numeric profile.** Not decided here. The profile
+   (ADR-015) and the retained exchange cannot be produced by any specified work.
+   See the matrix "Open and blocked acceptance criteria".
+3. **Hash and digest exemption.** Whether the family's content-identity pattern
+   (graph identity in this document, retained R2U2 bytes) is exempt from the
+   no-hash rule. Recommendation: exempt only what has no structural alternative;
+   the register in [ADR-019](./ADR-019-identity-and-digest-register.md) lists each
+   item with its disposition.
+
 ## Alternatives rejected
 
 - Contracts as plain implications: rejected, loses inactive versus verified.
@@ -86,5 +129,7 @@ status per-position as the R2U2 differential requires; A is a later
 ## Consequences
 
 Evaluators and exporters report one of four outcomes per position
-(three statuses plus pending). The assumption/guarantee roots are shared graph
+(three statuses plus pending); TL-425 and StR-016 name the three statuses, and the
+fourth, `pending`, exists only where a profile can leave a position undecided
+(tl-mltl FR-059). The assumption/guarantee roots are shared graph
 nodes, so a contract adds no formula copies.

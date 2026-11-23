@@ -45,7 +45,7 @@ Layers match `ix-board project-chunk P-TL-150` (blocker layers):
 
 | Layer | Tickets | tl-syntax tasks |
 |---|---|---|
-| 0 | TL-419 | this specification (ADR-014..018 proposed) |
+| 0 | TL-419 | this specification (ADR-014..019 proposed) |
 | 1 | TL-420, TL-425 | Task-001, Task-002 (independent of each other) |
 | 2 | TL-421, TL-422 | downstream in tl-parse, tl-mltl; consume Task-001/003 |
 | 3 | TL-423, TL-424 | Task-004 (after Task-001, Task-003) |
@@ -80,3 +80,5 @@ adds no test id.
 | Cross-target byte replay (TC-1532) beyond the CI host | No build capacity in the specification session; needs MSRV and Miri jobs | `make msrv`, `make miri` results at the final head |
 | Build, clippy, tests of every task | No build capacity during authoring | `make ci` at the implementation PR head |
 | Fresh R2U2 or C2PO output | Nothing in this repository executes R2U2 or C2PO | Retained exchange recorded by tl-mltl (PLAN in tl-mltl) |
+| TL-423 AC1 and TL-425 AC2 (R2U2 differential) | BLOCKED, not met by any task in this plan; the only deliverable is the refusal-until-pinned path | A human runs R2U2 locally, pins the numeric profile and retains the exchange (matrix section "Open and blocked acceptance criteria") |
+| Contract scope A, B or C; digest exemption | Human decisions | Peter; see ADR-017 Open decisions and ADR-019 |

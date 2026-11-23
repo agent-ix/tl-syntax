@@ -39,7 +39,7 @@ evidence is lost.
 |---|---|---|
 | StR-015-VC-1 | A reviewer can read, for every numeric predicate, its exact meaning (type, range, scale) from one versioned document, and every type or domain error is refused before any evaluation. | Demonstration |
 | StR-015-VC-2 | A group requirement expands to an ordinary formula that a reviewer can compare with the hand-written form, and an oversized expansion is refused rather than truncated. | Demonstration |
-| StR-015-VC-3 | The TL-419 specification package is complete: ADR-014 through ADR-018 recorded as proposed, requirements and a test matrix written in each of tl-syntax, tl-parse, tl-mltl and tl-solve, and a spec review recorded, with human acceptance left pending. | Inspection |
+| StR-015-VC-3 | The TL-419 specification package is complete: ADR-014 through ADR-019 recorded as proposed, requirements and a test matrix written in each of tl-syntax, tl-parse, tl-mltl and tl-solve, and a spec review recorded, with human acceptance left pending. | Inspection |
 
 ## Stakeholders
 
@@ -47,6 +47,10 @@ Requirement authors, FSL typed-predicate bridge maintainers, R2U2/C2PO users,
 and certification assessors.
 
 ## Context and Assumptions
+
+Under the proposed amendment of StR-003 (ADR-014 decision 6, needs human acceptance)
+the derived documents defined here are not FSL-authoritative and carry no per-clause
+source context; see ADR-014.
 
 FSL remains the only editable formal-clause language; predicate tables,
 aggregation documents and any TL text dialect are derived interchange. The

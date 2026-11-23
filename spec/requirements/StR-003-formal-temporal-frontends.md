@@ -42,7 +42,18 @@ The FSL frontend owns IR-field derivation and typed predicate lowering.
 tl-syntax owns only the internal parser-independent identity, bounded-domain,
 binding, and source-context contract. A non-Boolean source field may participate
 through an explicitly derived total Boolean signal, but this crate does not
-define that predicate expression or silently cast the field. FRETish is an
+silently cast the field.
+
+PROPOSED AMENDMENT (TL-419, [ADR-014](./../assurance/ADR-014-numeric-expression-layer.md)
+decision 6; needs human acceptance, not yet accepted). The original text said "this
+crate does not define that predicate expression". Under the amendment tl-syntax
+also defines, as derived interchange that is not FSL-authoritative, the predicate
+table (FR-303), the set-aggregation document (FR-306) and the contract set (FR-309).
+These documents carry no FSL source-context fields; attribution to an FSL clause is
+bundle-level only, through the existing requirement-context document of FR-007, and
+a bundle without one makes no FSL claim. FSL remains the only editable formal-clause
+authority and still owns IR-field derivation and the refusal of predicates tl-syntax
+cannot express (division, floats). FRETish is an
 export-only mapping and never an editable source authority or qualification
 dependency.
 

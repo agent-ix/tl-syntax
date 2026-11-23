@@ -29,9 +29,9 @@ a bounded strict byte reader, leaving every existing document unchanged.
 ## Outputs
 
 - An owned `PredicateTableDocument` (under `alloc`/`serde`) with exact embedded
-  schema bytes and SHA-256 constants following the pattern of
-  `SIGNAL_CATALOG_V1_SCHEMA` and `FORMULA_V1_SCHEMA_SHA256`, and a bounded public
-  reader.
+  schema bytes following the pattern of `SIGNAL_CATALOG_V1_SCHEMA`, identified by
+  its version string `tl-syntax.predicate-table/v1` and no digest constant (see the
+  ADR-019 register), and a bounded public reader.
 - Typed `PredicateTableError`.
 
 ## Behavior
@@ -54,7 +54,7 @@ a bounded strict byte reader, leaving every existing document unchanged.
 
 | ID | Criteria | Verification |
 |---|---|---|
-| FR-303-AC-1 | A table of every operator and every node kind round-trips byte-identically through the strict reader and its schema digest constants match the checked-in schema bytes. | integration-testing (TC-1504) |
+| FR-303-AC-1 | A table of every operator and every node kind round-trips byte-identically through the strict reader, and the embedded schema bytes equal the checked-in schema file byte for byte and carry the identity `tl-syntax.predicate-table/v1`. | integration-testing (TC-1504) |
 | FR-303-AC-2 | Each wire violation listed (float, exponent, `-0`, leading zero, duplicate or unknown member, trailing data, oversize, over-deep, non-increasing identities) is rejected with a distinct typed error and no output. | unit-testing (TC-1505) |
 | FR-303-AC-3 | Checked-in `tl-syntax.formula/v1`, `/v2`, `tl-syntax.formula-unbounded/v1`, signal-catalog and proposition-map fixture bytes are unchanged and decode as before. | integration-testing (TC-1506) |
 | FR-303-AC-4 | Deserializing a table whose expression overflows, mismatches scale, or reads a Boolean or undeclared signal fails exactly as direct construction does. | unit-testing (TC-1507) |

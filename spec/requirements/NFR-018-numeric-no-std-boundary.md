@@ -18,9 +18,9 @@ relationships:
 
 ## Statement
 
-The crate shall compile with `#![no_std]`, without allocation and with zero
-default dependencies when the new expression typing, predicate binding, set
-expansion core and contract status function are used through default features.
+When the new expression typing, predicate binding, set expansion core and contract
+status function are used through default features, the crate shall compile with
+`#![no_std]`, without allocation and with zero dependencies.
 
 ## Scope
 
@@ -41,6 +41,7 @@ adopt the borrowed model.
 | Default dependency count | 0 | 0 | Inspection |
 | New default-feature APIs that allocate | 0 | 0 | Test |
 | New default features | 0 | 0 | Inspection |
+| Owned-document and wire items reachable without `alloc` or `serde` | 0 | 0 | Test |
 
 ## Verification
 

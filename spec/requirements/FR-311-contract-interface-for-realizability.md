@@ -29,6 +29,11 @@ without this project deciding whether environment assumptions are contracts.
   `tl-syntax.contract-set/v2` carrying an explicit assumption scope; v1 remains
   per evaluation position and unchanged. If it selects B or C, nothing changes
   here.
+- Under the recommended option C, P-TL-149 consumes the per-position outcome series
+  of tl-mltl FR-059 and defines "G holds at every position where A has held so far"
+  over it; the requirement that every proposition of an assumption be an `Input`
+  signal is checked by P-TL-149 (signal direction is its catalog v2), not by this
+  interface. No trace-level contract status exists in this project.
 - Until the decision is recorded, no document in this project claims that a
   contract is an environment assumption.
 

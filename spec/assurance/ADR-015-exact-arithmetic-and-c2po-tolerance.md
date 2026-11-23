@@ -21,7 +21,11 @@ relationships:
 
 Proposed (TL-419). Ready for human acceptance. The numeric target profile
 values it needs are DEFERRED to a retained R2U2/C2PO observation (see Open
-points).
+points). Every statement below about how R2U2 or C2PO behave is UNGROUNDED: the
+retained corpus (`corpus/r2u2-v4.2` in tl-mltl) contains only Boolean `INPUT`
+declarations and `FTSPEC`/`PTSPEC` sections, and no numeric type, tolerance, `abs`,
+contract or aggregation construct. The rule is a design to be validated against a
+future observation, not a description of the target.
 
 ## Context
 
@@ -41,13 +45,31 @@ differential disagree for the wrong reason, or worse agree by luck.
    coefficients. No float exists in any tl-* evaluation path.
 2. **Export is admitted only when the target cannot change any verdict.** Let
    the *target numeric profile* be a recorded tuple
-   `(integer_bits, float_bits, equality_tolerance)` pinned from a retained
-   R2U2 observation. For a predicate, let `g = 10^-scale` be the grid spacing
-   shared by every value and constant in it, `R` a rounding-error bound for the
-   whole expression on the declared domain at `float_bits` (sum of one
-   half-ulp per operation at the domain's maximum magnitude, computed in exact
-   rational arithmetic), and `T = equality_tolerance` (zero when the target has
-   none). The predicate is admitted iff
+   `(integer_bits, float_bits, tolerance_model, tolerance)` pinned from a retained
+   R2U2 observation (UNGROUNDED until then). `tolerance_model` is `none`,
+   `equality_only` or `all_comparisons`; an unpinned or unknown model is treated as
+   `all_comparisons`, the worst case. For a predicate, let `g = 10^-scale` be the
+   grid spacing shared by every value and constant in it and `u` the unit roundoff
+   of `float_bits` (`2^-24` binary32, `2^-53` binary64; assumes round-to-nearest-even,
+   each operation rounded once at `float_bits`, no extended precision and no fused
+   multiply-add: UNGROUNDED). `R` is the exact-rational forward error bound of the
+   exported expression over the declared domain, the sum of
+   - **input conversion**: each signal read and each literal is a decimal fraction
+     that is generally not representable; it contributes `u * |v|max`, where `v` is
+     its largest magnitude (the observed values are converted by the target, also
+     UNGROUNDED);
+   - **operation rounding**: each `add`, `sub`, `mul` and `rescale` contributes
+     `u * |result|max`, with errors propagated by standard forward analysis (`add` and
+     `sub`: sum of operand errors; `mul`: `|a|max * err_b + |b|max * err_a + err_a *
+     err_b`; `neg` and `abs`: operand error unchanged; `rescale` multiplies by the
+     literal `10^k`, itself converted);
+   - **threshold conversion**: the rendered midpoint literal `c +- g/2` is also not
+     generally representable and contributes `u * |c +- g/2|max`.
+   `T` is the profile tolerance when `tolerance_model` is `all_comparisons` (the
+   tolerance may move any exported comparison, including the strict inequalities
+   below) and when it is unknown; it is zero for `none`, and for `equality_only`
+   because the export never emits a float `==` or `!=` (see the pair rendering
+   below). The predicate is admitted iff
    - every domain bound and literal lies within `integer_bits` (Integer) or is
      representable on the grid within the target range (Decimal), and
    - `R + T < g / 2`.
@@ -72,6 +94,8 @@ differential disagree for the wrong reason, or worse agree by luck.
   flips at grid points are the failure this ADR exists to prevent.
 - Treat the target's tolerance as the semantics: rejected; it would make
   results depend on an unpinned constant and break reproducibility.
+- Ignore input and threshold conversion error and count only operation rounding:
+  rejected; a bound that omits a term cannot prove that no verdict changes.
 - Scale everything to integers inside C2PO: viable and strictly safer, but it
   moves the scale into every exported expression; kept as the documented
   fallback if the midpoint rule cannot be satisfied on a real corpus.
@@ -85,7 +109,18 @@ countable, as the past-profile export already is (`corpus/README.md`: 42 of
 
 ## Open points
 
-- The numeric target profile (integer width, float width, equality tolerance,
-  integer-division and modulo behaviour, whether `abs` exists) is not grounded
-  in this repository: no R2U2 or C2PO source is retained here and nothing
-  executes either. DEFERRED to the retained exchange of TL-423.
+- The numeric target profile (integer width, float width, tolerance model and
+  value, integer-division and modulo behaviour, whether `abs` exists) is not
+  grounded in this repository: no R2U2 or C2PO source is retained here and nothing
+  executes either. DEFERRED to the retained exchange of TL-423, which no specified
+  work produces (see the matrix "Open and blocked acceptance criteria").
+- UNGROUNDED, each to be settled only by that exchange: the float type of the
+  target; its rounding mode and use of extended precision or fused operations; how
+  it converts decimal literals and trace values to float; whether and how a
+  tolerance applies to `<`, `<=`, `>` and `>=` and not only to `==`; whether `abs`
+  and typed `INPUT` declarations exist at all.
+- What the specified work can verify is the threshold algebra and the admission
+  test in exact rational arithmetic. Whether the target's floating-point evaluation
+  of an exported form really agrees with the exact semantics is not verifiable by
+  any tl-* crate (they use no float) and is established, if at all, only by the
+  retained R2U2 differential, which does not exist.

@@ -33,6 +33,8 @@ All artifacts of FR-302..FR-311.
 | Expression depth | 256 | 256 | Test |
 | Set members | 1,024 | 1,024 | Test |
 | Expansion nodes | 100,000 | 100,000 | Test |
+| Expansion expression nodes (k times member-dependent per template) | 100,000 | 100,000 | Test |
+| Aggregation nesting depth | 2 | 2 | Test |
 | Contracts per set | 10,000 | 10,000 | Test |
 | Document bytes / JSON depth | 64 MiB / 64 | 64 MiB / 64 | Test |
 | Platform-dependent output | none | none | Test |
@@ -48,3 +50,4 @@ corpus under the existing MSRV and Miri jobs.
 |---|---|---|
 | NFR-019-AC-1 | Every limit row accepts the limit and refuses limit plus one with a typed error before allocation proportional to the excess. | unit-testing (TC-1531) |
 | NFR-019-AC-2 | Corpus replay is byte-identical across repeated runs and targets. | integration-testing (TC-1532) |
+| NFR-019-AC-3 | No document, manifest or report defined by FR-302 to FR-311 contains a digest or pin other than the retained items of the ADR-019 register. | inspection (TC-1539) |

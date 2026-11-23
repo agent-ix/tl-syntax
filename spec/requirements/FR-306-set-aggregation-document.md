@@ -29,7 +29,11 @@ with a strict reader, separately from any formula or predicate table.
   stand for the current member. `slot_*` leaves are admitted only in a template,
   never in a formula document or predicate table.
 - A `first_proposition` base from which fresh proposition identities are
-  allocated.
+  allocated. The expander is the only allocator of identities for member-dependent
+  predicates (FR-307 "Identity precedence").
+- Nesting: a template may itself contain one nested quantified template, to a
+  total depth of 2 (`AggregationTooDeep` beyond that). The nested quantifier's set is
+  an ordered set of catalog signals and is fixed per document, not per outer member.
 
 ## Outputs
 
@@ -51,6 +55,9 @@ with a strict reader, separately from any formula or predicate table.
 - If the fresh identity range `[first_proposition, first_proposition + needed)`
   overlaps a catalog binding or a template-referenced proposition, or exceeds
   `u32`, then the validator shall refuse the document (`FreshIdentityCollision`).
+- A nested template may use the outer member's slot leaves as well as its own;
+  each slot leaf names the quantifier it belongs to by depth (0 outer, 1 inner),
+  and a leaf naming an absent depth is refused (`SlotOutsideTemplate`).
 - Wire rules follow FR-303.
 
 ## Acceptance Criteria
