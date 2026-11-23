@@ -1,6 +1,6 @@
 # TL candidate graph checker
 
-This standalone Rust tool checks the exact four-crate candidate graph before a
+This standalone Rust tool checks the exact five-crate candidate graph (tl-syntax, tl-parse, tl-mltl, tl-solve, tl-rewrite; FR-362) before a
 coordinated release. It reads each manifest, lockfile and toolchain declaration
 from the named Git commit. It verifies canonical Git sources, exact package
 versions and revisions on every TL edge, one resolved production revision per
@@ -12,18 +12,18 @@ marks builds `not-run` when the graph is already invalid.
 Every crate compares retained legacy corpus bytes with its `previous_tag`
 (initially `v0.3.0`). New wire editions may add paths; old paths may neither disappear nor change, except as declared in `golden-exceptions.toml` (repo, path, kind changed or deleted, the tag measured against, and a reason). An undeclared difference, a wrong-kind exception or a stale one (the file no longer differs) fails; exceptions measured against an older tag are ignored. A declared exception may record an in-place break of an existing schema identity (instead of a new identity) by setting `breaking = true`; the gate then fails unless the candidate version's `CHANGELOG.md` section has a line naming the exception path in backticks with a `Migration:` note. `breaking` is the declared-break marker only: the gate does not detect an unflagged in-place schema break, so a reviewer checks that. Undeclared changes keep the new-identity rule. tl-mltl's retained `schemas/` are included. A separate
 external replay produces formula, parser report, trace and rewrite report bytes
-using the four preceding tagged crates, then admits those same bytes through
-the four candidate public decoders. The checker also refuses byte-identical vendored copies
+using the preceding tagged crates, then admits those same bytes through
+the candidate public decoders. The checker also refuses byte-identical vendored copies
 of the syntax owner's infinite corpus in any downstream repository and runs
 the three owner-corpus test targets at the exact candidate revisions.
 
 The decoder replay expects the candidate to accept every previous-tag byte string unless the break is declared in `declared-decoder-breaks.toml` (repo, replay fixture, removed fields, schema identity, tag measured against, reason). The `parse` (parser report, `tl-parse.diagnostics/v1`), `rewrite` (rewrite report, `tl-rewrite.report/v1`) and `conformance` (conformance report, `tl-rewrite.conformance/v1`) fixtures can be declared; the declared identity must be the one the fixture carries and the fixture must belong to the declaring repo. The removed fields are wire names (`tl_syntax_revision` for the parser report, `syntaxRevision` and `evaluatorRevision` for the rewrite crate) without `:`, `,`, `+`, quotes or backslashes. For a declared fixture the candidate decoder must refuse the old bytes as they are, and must then decode the same bytes with the declared fields stripped from the raw bytes, keeping the key order so exact-encoding decoders still see canonical bytes, and pass the fixture's content checks, so the refusal is proven to come from that removal and nothing else. If the candidate accepts the original bytes the replay fails, so a declaration cannot go stale silently. Undeclared fixtures, including `replay.json`, must still be accepted. The wire name of each removed field is what the declaration lists (`tl_syntax_revision` for the parser report, `syntaxRevision` and `evaluatorRevision` for the rewrite crate). Each declaration also needs a line in the candidate version's `CHANGELOG.md` section naming the schema identity in backticks with a `Migration:` note. The replay proves only the fixtures it names (`parse`, `rewrite`, `conformance` and the required-accepted `replay.json`); other schema identities changed by the same edit are named in the CHANGELOG and checked by a reviewer, not by the gate.
 
 After the graph and MSRV lanes pass, a separate scratch consumer is generated
-with four exact Git commit dependencies and no path overrides. It asserts
+with five exact Git commit dependencies and no path overrides. It asserts
 public parsing, rewriting, signal binding, trace evaluation, and C2PO mapping,
 then runs with the same lockfile at the MSRV and installed `stable` toolchain.
-The scratch consumer's lock is checked against all four candidate commits.
+The scratch consumer's lock is checked against all five candidate commits.
 The proposed tag names are checked only after an attributed human decision;
 the checker does not create or push tags.
 
@@ -45,6 +45,7 @@ Create a JSON input outside the source tree:
     {"name":"tl-syntax","path":"/path/to/tl-syntax","commit":"<40-hex-sha>","previous_tag":"v0.3.0"},
     {"name":"tl-parse","path":"/path/to/tl-parse","commit":"<40-hex-sha>","previous_tag":"v0.3.0"},
     {"name":"tl-mltl","path":"/path/to/tl-mltl","commit":"<40-hex-sha>","previous_tag":"v0.3.0"},
+    {"name":"tl-solve","path":"/path/to/tl-solve","commit":"<40-hex-sha>","previous_tag":"<preceding tl-solve tag>"},
     {"name":"tl-rewrite","path":"/path/to/tl-rewrite","commit":"<40-hex-sha>","previous_tag":"v0.3.0"}
   ],
   "historical_lanes": []

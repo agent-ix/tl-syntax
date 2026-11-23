@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 use std::path::PathBuf;
 
 use tl_release_gate::{
-    authorized_tag_plan, check, compare_goldens_with_exceptions, compare_legacy_goldens,
+    authorized_tag_plan, check, check_tag_plan_order, compare_goldens_with_exceptions, compare_legacy_goldens,
     consumer_lock_differences, consumer_manifest, declared_break_fixtures, duplicated_owner_blobs,
     parse_declared_decoder_breaks, parse_golden_exceptions, parse_semver_findings,
     reconcile_api_migrations, reconcile_breaking_exceptions, reconcile_declared_decoder_breaks,
@@ -19,6 +19,7 @@ fn selected(name: &str) -> String {
         "tl-syntax" => '1',
         "tl-parse" => '2',
         "tl-mltl" => '3',
+        "tl-solve" => '5',
         "tl-rewrite" => '4',
         _ => panic!("unexpected crate"),
     })
@@ -50,7 +51,8 @@ fn fixture() -> (CandidateSet, Vec<CandidateInput>) {
         let deps: Vec<_> = match name {
             "tl-syntax" => vec![],
             "tl-parse" | "tl-mltl" => vec!["tl-syntax"],
-            "tl-rewrite" => vec!["tl-syntax", "tl-parse", "tl-mltl"],
+            "tl-solve" => vec!["tl-syntax", "tl-mltl"],
+            "tl-rewrite" => vec!["tl-syntax", "tl-parse", "tl-mltl", "tl-solve"],
             _ => unreachable!(),
         };
         let mut manifest = format!(
@@ -98,7 +100,7 @@ fn exact_candidate_graph_and_wrong_pin_refusal() {
     let (set, mut inputs) = fixture();
     let report = check(&set, &inputs);
     assert!(report.accepted, "{:?}", report.failures);
-    assert_eq!(report.edges.len(), 5);
+    assert_eq!(report.edges.len(), 8);
     inputs[1].manifest["dependencies"]["tl-syntax"]["rev"] = toml::Value::String(sha('9'));
     failure(&set, &inputs, "tl-parse:tl-syntax: normal edge revision");
     inputs[1].manifest["dependencies"]["tl-syntax"]["rev"] =
@@ -149,11 +151,11 @@ fn historical_test_lane_is_explicit_and_cannot_enter_production() {
     )
     .parse()
     .unwrap();
-    inputs[3].manifest.as_table_mut().unwrap().insert(
+    inputs[4].manifest.as_table_mut().unwrap().insert(
         "dev-dependencies".to_owned(),
         dev["dev-dependencies"].clone(),
     );
-    inputs[3].lockfile["package"].as_array_mut().unwrap().push(
+    inputs[4].lockfile["package"].as_array_mut().unwrap().push(
         format!(
             "name = \"tl-syntax\"\nversion = \"0.3.0\"\nsource = \"git+https://github.com/agent-ix/tl-syntax.git?rev={old}#{old}\""
         )
@@ -171,17 +173,17 @@ fn historical_test_lane_is_explicit_and_cannot_enter_production() {
     });
     let report = check(&set, &inputs);
     assert!(report.accepted, "{:?}", report.failures);
-    let old_entry = inputs[3].lockfile["package"]
+    let old_entry = inputs[4].lockfile["package"]
         .as_array_mut()
         .unwrap()
         .pop()
         .unwrap();
     failure(&set, &inputs, "lockfile lacks edge revision");
-    inputs[3].lockfile["package"]
+    inputs[4].lockfile["package"]
         .as_array_mut()
         .unwrap()
         .push(old_entry);
-    let table = inputs[3].manifest.as_table_mut().unwrap();
+    let table = inputs[4].manifest.as_table_mut().unwrap();
     let dev = table.remove("dev-dependencies").unwrap();
     table.insert("build-dependencies".to_owned(), dev);
     failure(&set, &inputs, "build edge revision");
@@ -302,7 +304,7 @@ fn api_findings_require_matching_migration_entries() {
 
 /// TC-177/178: the consumer cannot silently resolve a path or older pin.
 #[test]
-fn external_consumer_manifest_and_lock_bind_all_four_commits() {
+fn external_consumer_manifest_and_lock_bind_all_five_commits() {
     let (_, inputs) = fixture();
     let facts: Vec<_> = inputs.iter().map(|input| input.fact.clone()).collect();
     let manifest = consumer_manifest(&facts).unwrap();
@@ -627,4 +629,165 @@ fn method_findings_are_keyed_by_owner() {
     let error = parse_semver_findings("--- failure method_missing: x ---\nFailed in:\n  method\n")
         .unwrap_err();
     assert_eq!(error, "semver method finding lacks a name");
+}
+
+fn rewrite_index(inputs: &[CandidateInput], name: &str) -> usize {
+    inputs
+        .iter()
+        .position(|input| input.fact.name == name)
+        .expect("crate in fixture")
+}
+
+fn add_edge(inputs: &mut [CandidateInput], owner: &str, target: &str, revision: &str) {
+    let index = rewrite_index(inputs, owner);
+    let line: toml::Value = dependency(target, revision).parse().unwrap();
+    let table = inputs[index].manifest.as_table_mut().unwrap();
+    let deps = table
+        .entry("dependencies")
+        .or_insert_with(|| toml::Value::Table(toml::map::Map::new()));
+    deps.as_table_mut()
+        .unwrap()
+        .insert(target.to_owned(), line[target].clone());
+    let lock_entry: toml::Value = format!(
+        "name = \"{target}\"\nversion = \"0.4.0\"\nsource = \"git+https://github.com/agent-ix/{target}.git?rev={revision}#{revision}\""
+    )
+    .parse()
+    .unwrap();
+    let lock = inputs[index].lockfile.as_table_mut().unwrap();
+    lock.entry("package")
+        .or_insert_with(|| toml::Value::Array(Vec::new()))
+        .as_array_mut()
+        .unwrap()
+        .push(lock_entry);
+}
+
+fn decision_for(facts: &[CandidateFact], now: u64) -> HumanReleaseDecision {
+    HumanReleaseDecision {
+        decision_id: "FR-018-reviewed".to_owned(),
+        human_actor: "release-owner".to_owned(),
+        accepted: true,
+        expires_unix_seconds: now + 100,
+        candidate_revisions: facts
+            .iter()
+            .map(|fact| (fact.name.clone(), fact.commit.clone()))
+            .collect(),
+        evidence_sha256: "a".repeat(64),
+    }
+}
+
+/// TC-250: the consistent five-crate set passes and tags in dependency order.
+// Trace: TC-250, FR-362-AC-1, FR-029-AC-1, FR-033-AC-2
+#[test]
+fn five_crate_candidate_set_passes_with_dependency_ordered_tags() {
+    assert_eq!(
+        CRATES,
+        ["tl-syntax", "tl-parse", "tl-mltl", "tl-solve", "tl-rewrite"]
+    );
+    let (set, inputs) = fixture();
+    let report = check(&set, &inputs);
+    assert!(report.accepted, "{:?}", report.failures);
+    assert_eq!(report.candidates.len(), 5);
+    let mut facts: Vec<_> = inputs.iter().map(|input| input.fact.clone()).collect();
+    for fact in &mut facts {
+        fact.tag_commit = None;
+    }
+    let decision = decision_for(&facts, 1_000);
+    let plan = authorized_tag_plan(&facts, Some(&decision), true, 1_000).unwrap();
+    assert_eq!(
+        plan.iter().map(|action| action.name.as_str()).collect::<Vec<_>>(),
+        ["tl-syntax", "tl-parse", "tl-mltl", "tl-solve", "tl-rewrite"]
+    );
+    assert!(check_tag_plan_order(&plan).is_ok());
+    let mut swapped = plan.clone();
+    swapped.swap(3, 4);
+    assert!(check_tag_plan_order(&swapped)
+        .unwrap_err()
+        .contains("differs from dependency order"));
+    let mut four = decision.clone();
+    four.candidate_revisions.remove("tl-solve");
+    assert!(authorized_tag_plan(&facts, Some(&four), true, 1_000).is_err());
+}
+
+/// TC-251: each missing member is named and a sixth crate is refused.
+// Trace: TC-251, FR-362-AC-2
+#[test]
+fn missing_member_or_sixth_crate_fails() {
+    for name in CRATES {
+        let (mut set, mut inputs) = fixture();
+        set.candidates.retain(|candidate| candidate.name != name);
+        inputs.retain(|input| input.fact.name != name);
+        // Drop edges to the removed crate so only the membership failure remains in view.
+        for input in &mut inputs {
+            if let Some(deps) = input
+                .manifest
+                .get_mut("dependencies")
+                .and_then(toml::Value::as_table_mut)
+            {
+                deps.remove(name);
+            }
+        }
+        failure(&set, &inputs, &format!("{name}: expected exactly one candidate, found 0"));
+        failure(&set, &inputs, "candidate set must contain exactly the 5 TL crates");
+        let facts: Vec<_> = inputs.iter().map(|input| input.fact.clone()).collect();
+        assert!(consumer_manifest(&facts).is_err());
+    }
+    let (mut set, mut inputs) = fixture();
+    let mut extra = inputs[0].clone();
+    extra.fact.name = "tl-extra".to_owned();
+    extra.fact.commit = sha('6');
+    inputs.push(extra);
+    set.candidates.push(Candidate {
+        name: "tl-extra".to_owned(),
+        path: PathBuf::from("/tmp/tl-extra"),
+        commit: sha('6'),
+        proposed_tag: Some("tl-extra-v0.4.0".to_owned()),
+        previous_tag: "v0.3.0".to_owned(),
+    });
+    failure(&set, &inputs, "tl-extra: not a member of the coordinated release");
+    failure(&set, &inputs, "candidate set must contain exactly the 5 TL crates");
+}
+
+/// TC-252: forbidden tl-solve edges, cycles and split revisions fail.
+// Trace: TC-252, FR-362-AC-3
+#[test]
+fn forbidden_edges_cycles_and_split_revisions_fail() {
+    let (set, inputs) = fixture();
+    assert!(check(&set, &inputs).accepted);
+
+    let (set, mut inputs) = fixture();
+    add_edge(&mut inputs, "tl-solve", "tl-rewrite", &selected("tl-rewrite"));
+    failure(&set, &inputs, "forbidden normal edge tl-solve -> tl-rewrite");
+    failure(&set, &inputs, "dependency cycle through");
+
+    let (set, mut inputs) = fixture();
+    add_edge(&mut inputs, "tl-mltl", "tl-solve", &selected("tl-solve"));
+    failure(&set, &inputs, "forbidden normal edge tl-mltl -> tl-solve");
+    failure(&set, &inputs, "dependency cycle through");
+
+    let (set, mut inputs) = fixture();
+    add_edge(&mut inputs, "tl-syntax", "tl-parse", &selected("tl-parse"));
+    failure(&set, &inputs, "dependency cycle through");
+
+    let (set, mut inputs) = fixture();
+    let solve = rewrite_index(&inputs, "tl-solve");
+    inputs[solve].manifest["dependencies"]["tl-syntax"]["rev"] = toml::Value::String(sha('9'));
+    failure(&set, &inputs, "tl-solve:tl-syntax: normal edge revision");
+
+    let (set, mut inputs) = fixture();
+    let rewrite = rewrite_index(&inputs, "tl-rewrite");
+    inputs[rewrite].manifest["dependencies"]["tl-mltl"]["rev"] = toml::Value::String(sha('9'));
+    failure(&set, &inputs, "tl-rewrite:tl-mltl: normal edge revision");
+
+    // A dev edge to the unpublished tl-oracle is not a sixth member.
+    let (set, mut inputs) = fixture();
+    let dev: toml::Value = "[dev-dependencies]\ntl-oracle = { path = \"../tl-oracle\" }\n"
+        .parse()
+        .unwrap();
+    inputs[solve]
+        .manifest
+        .as_table_mut()
+        .unwrap()
+        .insert("dev-dependencies".to_owned(), dev["dev-dependencies"].clone());
+    let report = check(&set, &inputs);
+    assert!(report.accepted, "{:?}", report.failures);
 }

@@ -1,4 +1,4 @@
-//! Exact candidate graph admission for a four-crate TL release.
+//! Exact candidate graph admission for a five-crate TL release (FR-362).
 //!
 //! All manifest and lockfile facts come from the specified Git commits. The
 //! executable additionally checks tag targets and builds at the shared MSRV.
@@ -8,7 +8,25 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
-pub const CRATES: [&str; 4] = ["tl-syntax", "tl-parse", "tl-mltl", "tl-rewrite"];
+/// The coordinated release members in dependency (tag) order (FR-362).
+pub const CRATES: [&str; 5] = ["tl-syntax", "tl-parse", "tl-mltl", "tl-solve", "tl-rewrite"];
+
+/// Edges the release graph refuses in every scope (tl-solve ADR-004, FR-362):
+/// tl-solve depends on tl-syntax and tl-mltl only, and nothing below tl-solve
+/// depends on it. tl-rewrite may depend on tl-solve through its `solver` feature.
+pub const FORBIDDEN_EDGES: [(&str, &str); 5] = [
+    ("tl-solve", "tl-rewrite"),
+    ("tl-solve", "tl-parse"),
+    ("tl-syntax", "tl-solve"),
+    ("tl-parse", "tl-solve"),
+    ("tl-mltl", "tl-solve"),
+];
+
+/// Names the release members as an English count for messages, read from
+/// `CRATES` so no second literal can disagree with it.
+fn member_count() -> String {
+    format!("{} TL crates", CRATES.len())
+}
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -404,7 +422,7 @@ fn locked_entries(lock: &toml::Value, name: &str) -> Vec<LockedEntry> {
         .collect()
 }
 
-/// Validates the supplied immutable Git facts, all four manifests and lockfiles.
+/// Validates the supplied immutable Git facts, all five manifests and lockfiles.
 /// It collects every inconsistent edge rather than stopping at the first one.
 pub fn check(set: &CandidateSet, inputs: &[CandidateInput]) -> GateReport {
     let mut failures = Vec::new();
@@ -475,8 +493,28 @@ pub fn check(set: &CandidateSet, inputs: &[CandidateInput]) -> GateReport {
         }
     }
     if set.candidates.len() != CRATES.len() || inputs.len() != CRATES.len() {
-        failures.push("candidate set must contain exactly the four TL crates".to_owned());
+        failures.push(format!(
+            "candidate set must contain exactly the {}",
+            member_count()
+        ));
     }
+    for declared in &set.candidates {
+        if !CRATES.contains(&declared.name.as_str()) {
+            failures.push(format!(
+                "{}: not a member of the coordinated release",
+                declared.name
+            ));
+        }
+    }
+    for input in inputs {
+        if !CRATES.contains(&input.fact.name.as_str()) {
+            failures.push(format!(
+                "{}: not a member of the coordinated release",
+                input.fact.name
+            ));
+        }
+    }
+    failures.extend(edge_shape_failures(&edges));
     if let Some(first) = facts.first() {
         for fact in facts.iter().skip(1) {
             if fact.msrv != first.msrv {
@@ -646,6 +684,86 @@ pub fn check(set: &CandidateSet, inputs: &[CandidateInput]) -> GateReport {
     }
 }
 
+/// Refuse forbidden edges and cycles between release members (FR-362-AC-3).
+/// Every scope counts: a dev edge to a non-member such as tl-oracle never
+/// reaches this check because `read_edges` only records member targets.
+pub fn edge_shape_failures(edges: &[EdgeFact]) -> Vec<String> {
+    let mut failures = Vec::new();
+    for edge in edges {
+        if FORBIDDEN_EDGES
+            .iter()
+            .any(|(owner, target)| edge.owner == *owner && edge.package == *target)
+        {
+            failures.push(format!(
+                "{}:{}: forbidden {} edge {} -> {}",
+                edge.owner, edge.alias, edge.scope, edge.owner, edge.package
+            ));
+        }
+    }
+    let mut graph: BTreeMap<&str, BTreeSet<&str>> = BTreeMap::new();
+    for edge in edges {
+        graph
+            .entry(edge.owner.as_str())
+            .or_default()
+            .insert(edge.package.as_str());
+    }
+    if let Some(member) = first_cycle_member(&graph) {
+        failures.push(format!("dependency cycle through {member}"));
+    }
+    failures
+}
+
+/// Depth-first search with an explicit stack; returns a crate on a cycle.
+fn first_cycle_member<'a>(graph: &BTreeMap<&'a str, BTreeSet<&'a str>>) -> Option<&'a str> {
+    // 0 = unvisited, 1 = on the current path, 2 = finished.
+    let mut state: BTreeMap<&str, u8> = BTreeMap::new();
+    for start in graph.keys().copied() {
+        if state.get(start).copied().unwrap_or(0) != 0 {
+            continue;
+        }
+        let first: Vec<&str> = graph
+            .get(start)
+            .map(|next| next.iter().copied().collect())
+            .unwrap_or_default();
+        let mut stack: Vec<(&str, Vec<&str>)> = vec![(start, first)];
+        state.insert(start, 1);
+        while let Some((node, pending)) = stack.last_mut() {
+            let node = *node;
+            match pending.pop() {
+                Some(next) => match state.get(next).copied().unwrap_or(0) {
+                    1 => return Some(next),
+                    0 => {
+                        state.insert(next, 1);
+                        let children: Vec<&str> = graph
+                            .get(next)
+                            .map(|set| set.iter().copied().collect())
+                            .unwrap_or_default();
+                        stack.push((next, children));
+                    }
+                    _ => {}
+                },
+                None => {
+                    state.insert(node, 2);
+                    stack.pop();
+                }
+            }
+        }
+    }
+    None
+}
+
+/// Refuse a tag plan whose order differs from the dependency order of
+/// `CRATES` (FR-362: tl-solve is tagged before tl-rewrite).
+pub fn check_tag_plan_order(plan: &[TagAction]) -> Result<(), String> {
+    let names: Vec<&str> = plan.iter().map(|action| action.name.as_str()).collect();
+    if names != CRATES {
+        return Err(format!(
+            "tag plan order {names:?} differs from dependency order {CRATES:?}"
+        ));
+    }
+    Ok(())
+}
+
 /// Refuse byte-for-byte copies of the syntax-owned corpus in a consumer.
 /// Git blob identities are hashes of the bytes, independent of the path used
 /// by a consumer to hide a copy. The caller supplies blobs from exact commits.
@@ -665,7 +783,7 @@ pub fn duplicated_owner_blobs(
 /// commits. The smoke project has no path overrides or workspace membership.
 pub fn consumer_manifest(candidates: &[CandidateFact]) -> Result<String, String> {
     if candidates.len() != CRATES.len() {
-        return Err("consumer requires all four TL candidates".to_owned());
+        return Err(format!("consumer requires all {} candidates", member_count()));
     }
     let mut manifest = "[package]\nname = \"tl-release-smoke\"\nversion = \"0.0.0\"\nedition = \"2021\"\npublish = false\n\n[dependencies]\n".to_owned();
     for name in CRATES {
@@ -744,7 +862,10 @@ pub fn authorized_tag_plan(
         return Err("human release decision is rejected, expired or unattributed".to_owned());
     }
     if candidates.len() != CRATES.len() || decision.candidate_revisions.len() != CRATES.len() {
-        return Err("decision does not bind the four candidate revisions".to_owned());
+        return Err(format!(
+            "decision does not bind the candidate revisions of the {}",
+            member_count()
+        ));
     }
     let mut actions = Vec::new();
     for name in CRATES {

@@ -864,7 +864,7 @@ mod tests {
     /// TC-176 manual preflight lane: final admission executes this unconditionally
     /// after the exact candidate graph is fixed.
     #[test]
-    #[ignore = "requires four immutable Git revisions and Cargo network access"]
+    #[ignore = "requires five immutable Git revisions and Cargo network access"]
     fn tagged_legacy_decoder_replay_probe() {
         let path = std::env::var("TL_LEGACY_CANDIDATE_SET").expect("candidate set path");
         let bytes = fs::read(path).unwrap();
@@ -876,8 +876,8 @@ mod tests {
                 .unwrap(),
         )
         .unwrap();
-        assert_eq!(fact.previous_revisions.len(), 4);
-        assert_eq!(fact.candidate_revisions.len(), 4);
+        assert_eq!(fact.previous_revisions.len(), tl_release_gate::CRATES.len());
+        assert_eq!(fact.candidate_revisions.len(), tl_release_gate::CRATES.len());
         assert_eq!(fact.result, "passed");
     }
 

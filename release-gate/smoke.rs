@@ -1,4 +1,5 @@
-//! Compiled outside every TL workspace against the four exact candidate Git commits.
+//! Compiled outside every TL workspace against the five exact candidate Git commits.
+//! tl-solve is pinned by the generated manifest; FR-362 adds no satisfiability step here.
 
 use tl_mltl::{
     evaluate_closed, map_to_c2po, EvaluationLimits, MappingSourceIdentity, MappingSourceState,
