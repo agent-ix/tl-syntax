@@ -22,8 +22,8 @@ pub use super::proposition::{
     PROPOSITION_MAP_V1_SCHEMA_SHA256,
 };
 use crate::{
-    PropositionBinding, SignalCatalog, SignalCatalogError, SignalDeclaration, SignalDomain,
-    SignalId,
+    PropositionBinding, SignalCatalog, SignalCatalogError, SignalDeclaration, SignalDirection,
+    SignalDomain, SignalId,
 };
 
 /// Exact checked-in Draft 7 schema bytes for `tl-syntax.signal-catalog/v1`.
@@ -39,6 +39,19 @@ pub const SIGNAL_CATALOG_V1_SCHEMA_BYTES: &[u8] =
 pub const SIGNAL_CATALOG_V1_SCHEMA_SHA256: &str =
     "24fe7ccc26918e9a52dfa49a0e670ef932d0bfcd155d5d73dfd0be23dd276df8";
 
+/// Exact checked-in Draft 7 schema text for `tl-syntax.signal-catalog/v2`.
+///
+/// SPEC-GAP: FR-034 asks for a `SIGNAL_CATALOG_V2_SCHEMA_SHA256` constant; the
+/// 2026-11-23 program decision adds no new digest, so identity is the version
+/// string plus these embedded bytes compared with the checked-in file.
+#[cfg(feature = "serde")]
+pub const SIGNAL_CATALOG_V2_SCHEMA: &str = include_str!("../../spec/signal-catalog-v2.schema.json");
+
+/// Exact checked-in Draft 7 schema bytes for `tl-syntax.signal-catalog/v2`.
+#[cfg(feature = "serde")]
+pub const SIGNAL_CATALOG_V2_SCHEMA_BYTES: &[u8] =
+    include_bytes!("../../spec/signal-catalog-v2.schema.json");
+
 /// Version of the serialized signal-catalog document.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
@@ -46,6 +59,9 @@ pub enum SignalCatalogSchemaVersion {
     /// Initial tl-syntax signal-catalog schema.
     #[cfg_attr(feature = "serde", serde(rename = "tl-syntax.signal-catalog/v1"))]
     V1,
+    /// v1 plus an optional per-signal direction (FR-034).
+    #[cfg_attr(feature = "serde", serde(rename = "tl-syntax.signal-catalog/v2"))]
+    V2,
 }
 
 impl SignalCatalogSchemaVersion {
@@ -53,6 +69,7 @@ impl SignalCatalogSchemaVersion {
     pub const fn as_str(self) -> &'static str {
         match self {
             Self::V1 => "tl-syntax.signal-catalog/v1",
+            Self::V2 => "tl-syntax.signal-catalog/v2",
         }
     }
 }
@@ -66,6 +83,11 @@ pub struct OwnedSignalDeclaration {
     #[cfg_attr(feature = "serde", serde(deserialize_with = "deserialize_signal_name"))]
     name: String,
     domain: SignalDomain,
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "SignalDirection::is_undeclared")
+    )]
+    direction: SignalDirection,
 }
 
 #[cfg(feature = "serde")]
@@ -79,12 +101,28 @@ where
 impl OwnedSignalDeclaration {
     /// Constructs an unvalidated owned declaration.
     pub fn new(id: SignalId, name: String, domain: SignalDomain) -> Self {
-        Self { id, name, domain }
+        Self {
+            id,
+            name,
+            domain,
+            direction: SignalDirection::Undeclared,
+        }
+    }
+
+    /// Returns this declaration with the given direction (FR-034).
+    pub fn with_direction(mut self, direction: SignalDirection) -> Self {
+        self.direction = direction;
+        self
+    }
+
+    /// Returns the declared direction; `Undeclared` when none was declared.
+    pub const fn direction(&self) -> SignalDirection {
+        self.direction
     }
 
     /// Borrows this declaration without allocation.
     pub fn as_borrowed(&self) -> SignalDeclaration<'_> {
-        SignalDeclaration::new(self.id, &self.name, self.domain)
+        SignalDeclaration::new(self.id, &self.name, self.domain).with_direction(self.direction)
     }
 }
 
@@ -127,7 +165,18 @@ impl SignalCatalogDocument {
         Self::from_parts(SignalCatalogSchemaVersion::V1, signals, bindings)
     }
 
-    /// Reads exactly one bounded closed v1 JSON document through the owner type.
+    /// Constructs and validates a v2 signal-catalog document, which may carry a
+    /// direction per signal (FR-034).
+    pub fn new_v2(
+        signals: Vec<OwnedSignalDeclaration>,
+        bindings: Vec<PropositionBinding>,
+    ) -> Result<Self, SignalCatalogError> {
+        Self::from_parts(SignalCatalogSchemaVersion::V2, signals, bindings)
+    }
+
+    /// Reads exactly one bounded closed v1 or v2 JSON document through the
+    /// owner type and reports the identity it read; a v1 document reads as
+    /// every signal `Undeclared`.
     ///
     /// Duplicate members, trailing JSON, unknown fields and versions, excess
     /// population, and semantic validation failures are refused.
@@ -170,20 +219,42 @@ impl SignalCatalogDocument {
     }
 
     /// Copies a validated borrowed catalog into a v1 owned document.
+    ///
+    /// Directions are copied, so a catalog with a declared direction is refused
+    /// with `DirectionInV1Document`; use [`Self::from_catalog_v2`] for it.
     pub fn from_catalog(catalog: SignalCatalog<'_>) -> Result<Self, SignalCatalogError> {
-        Self::new(
-            catalog
-                .signals()
-                .map(|signal| {
-                    OwnedSignalDeclaration::new(signal.id(), signal.name().into(), signal.domain())
-                })
-                .collect(),
-            catalog.bindings().to_vec(),
-        )
+        Self::new(Self::owned_signals(catalog), catalog.bindings().to_vec())
+    }
+
+    /// Copies a validated borrowed catalog, with its directions, into a v2
+    /// owned document.
+    pub fn from_catalog_v2(catalog: SignalCatalog<'_>) -> Result<Self, SignalCatalogError> {
+        Self::new_v2(Self::owned_signals(catalog), catalog.bindings().to_vec())
+    }
+
+    fn owned_signals(catalog: SignalCatalog<'_>) -> Vec<OwnedSignalDeclaration> {
+        catalog
+            .signals()
+            .map(|signal| {
+                OwnedSignalDeclaration::new(signal.id(), signal.name().into(), signal.domain())
+                    .with_direction(signal.direction())
+            })
+            .collect()
     }
 
     /// Validates and returns an allocation-free view over this document.
+    ///
+    /// A v1 document is refused if any signal declares a direction.
     pub fn validate(&self) -> Result<SignalCatalog<'_>, SignalCatalogError> {
+        if self.schema_version == SignalCatalogSchemaVersion::V1 {
+            if let Some(signal) = self
+                .signals
+                .iter()
+                .find(|signal| !signal.direction.is_undeclared())
+            {
+                return Err(SignalCatalogError::DirectionInV1Document { signal: signal.id });
+            }
+        }
         let mut name_order_scratch = vec![0; self.signals.len()];
         SignalCatalog::from_owned(&self.signals, &self.bindings, &mut name_order_scratch)
     }

@@ -83,10 +83,12 @@ pub use future::{
 };
 pub use signal::catalog::{
     BoundFormula, FixedDecimalSignalDomain, FormulaBindingError, IntegerSignalDomain,
-    PropositionBinding, SignalCatalog, SignalCatalogError, SignalDeclaration, SignalDomain,
-    SignalDomainError, SignalId, SignalIter, MAX_SIGNAL_CATALOG_BINDINGS,
-    MAX_SIGNAL_CATALOG_SIGNALS, MAX_SIGNAL_NAME_BYTES,
+    PropositionBinding, SignalCatalog, SignalCatalogError, SignalDeclaration, SignalDirection,
+    SignalDomain, SignalDomainError, SignalId, SignalIter, SignalPartitionError,
+    MAX_SIGNAL_CATALOG_BINDINGS, MAX_SIGNAL_CATALOG_SIGNALS, MAX_SIGNAL_NAME_BYTES,
 };
+#[cfg(feature = "alloc")]
+pub use signal::catalog::SignalPartition;
 #[cfg(feature = "alloc")]
 pub use signal::document::{
     OwnedSignalDeclaration, PropositionEntry, PropositionMapDocument, PropositionMapError,
@@ -96,7 +98,7 @@ pub use signal::document::{
 pub use signal::document::{
     MAX_PROPOSITION_MAP_ENTRIES, PROPOSITION_MAP_V1_SCHEMA, PROPOSITION_MAP_V1_SCHEMA_BYTES,
     PROPOSITION_MAP_V1_SCHEMA_SHA256, SIGNAL_CATALOG_V1_SCHEMA, SIGNAL_CATALOG_V1_SCHEMA_BYTES,
-    SIGNAL_CATALOG_V1_SCHEMA_SHA256,
+    SIGNAL_CATALOG_V1_SCHEMA_SHA256, SIGNAL_CATALOG_V2_SCHEMA, SIGNAL_CATALOG_V2_SCHEMA_BYTES,
 };
 
 /// Stable revision identifier for the checked-in shared temporal corpus.

@@ -22,7 +22,8 @@ use crate::{
     NodeId, NodeKind, PartialValuation, PartialValuationError, PartialValue, PropositionBinding,
     PropositionEntry, PropositionId, PropositionMapDocument, PropositionMapError, RawBounds,
     RequirementContext, RequirementContextError, SemanticProfile, SignalCatalog,
-    SignalCatalogError, SignalDeclaration, SignalDomain, SignalDomainError, SignalId, SourceSpan,
+    SignalCatalogError, SignalDeclaration, SignalDomain, SignalDomainError, SignalId,
+    SignalPartitionError, SourceSpan,
     StrictDocumentReadError, SyntaxArtifactLimits, TemporalInterval, TemporalIntervalParseError,
     TraceObservation, UnboundedInterval, ValuationEntry, FUTURE_LOWERING_REQUEST_V1,
     FUTURE_OPERATORS_V1, MAX_FORMULA_DOCUMENT_DEPTH, MAX_FORMULA_DOCUMENT_NODES,
@@ -103,8 +104,10 @@ variants!(
     SignalLimitExceeded, BindingLimitExceeded, NameOrderScratchTooSmall,
     SignalIdentityNotIncreasing, EmptySignalName, SignalNameTooLong, DuplicateSignalName,
     BindingIdentityNotIncreasing, BindingTargetMissing, NonBooleanPropositionBinding,
+    DirectionInV1Document,
 );
 variants!(FormulaBindingError, BINDING: MissingPropositionBinding);
+variants!(SignalPartitionError, PARTITION: Binding, UndeclaredDirection);
 
 /// The variants produced by one test, checked against the enum's full list.
 #[derive(Default)]
@@ -956,6 +959,16 @@ fn signal_catalog_and_binding_errors() {
             2,
         )),
     );
+    seen.is(
+        "DirectionInV1Document",
+        err(crate::SignalCatalogDocument::new(
+            vec![
+                crate::OwnedSignalDeclaration::new(SignalId(1), "a".into(), SignalDomain::Boolean)
+                    .with_direction(crate::SignalDirection::Input),
+            ],
+            vec![],
+        )),
+    );
     seen.complete(CATALOG, &["SignalLimitExceeded", "BindingLimitExceeded"]);
 
     let mut order = [0_u32; 2];
@@ -971,6 +984,16 @@ fn signal_catalog_and_binding_errors() {
         err(catalog.bind_formula(formula)),
     );
     seen.complete(BINDING, &[]);
+
+    let mut seen = Seen::default();
+    seen.is("Binding", err(catalog.partition(formula)));
+    let undeclared_nodes = [Node::new(NodeKind::Proposition {
+        proposition: PropositionId(1),
+    })];
+    let undeclared =
+        Formula::new(SemanticProfile::ClosedTraceV1, NodeId(0), &undeclared_nodes).unwrap();
+    seen.is("UndeclaredDirection", err(catalog.partition(undeclared)));
+    seen.complete(PARTITION, &[]);
 }
 
 #[test]

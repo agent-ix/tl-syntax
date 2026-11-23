@@ -9,8 +9,11 @@ use crate::{
 use super::document::OwnedSignalDeclaration;
 pub use super::{
     binding::{BoundFormula, FormulaBindingError, PropositionBinding},
+    direction::{SignalDirection, SignalPartitionError},
     domain::{FixedDecimalSignalDomain, IntegerSignalDomain, SignalDomain, SignalDomainError},
 };
+#[cfg(feature = "alloc")]
+pub use super::direction::SignalPartition;
 
 /// Maximum number of signal declarations in one v1 catalog.
 pub const MAX_SIGNAL_CATALOG_SIGNALS: usize = OWNER_SIGNALS;
@@ -31,12 +34,35 @@ pub struct SignalDeclaration<'a> {
     id: SignalId,
     name: &'a str,
     domain: SignalDomain,
+    direction: SignalDirection,
 }
 
 impl<'a> SignalDeclaration<'a> {
     /// Constructs an unvalidated declaration for validation as part of a catalog.
+    ///
+    /// The direction is `Undeclared`; use [`Self::with_direction`] to declare one.
     pub const fn new(id: SignalId, name: &'a str, domain: SignalDomain) -> Self {
-        Self { id, name, domain }
+        Self {
+            id,
+            name,
+            domain,
+            direction: SignalDirection::Undeclared,
+        }
+    }
+
+    /// Returns this declaration with the given direction (FR-034).
+    pub const fn with_direction(self, direction: SignalDirection) -> Self {
+        Self {
+            id: self.id,
+            name: self.name,
+            domain: self.domain,
+            direction,
+        }
+    }
+
+    /// Returns the declared direction; `Undeclared` when none was declared.
+    pub const fn direction(self) -> SignalDirection {
+        self.direction
     }
 
     /// Returns the stable signal identity.
@@ -279,6 +305,58 @@ impl<'a> SignalCatalog<'a> {
             .and_then(|binding| self.signal(binding.signal()))
     }
 
+    /// Returns the direction of the signal a proposition is directly bound to,
+    /// or `None` when the proposition has no direct binding.
+    pub fn proposition_direction(self, proposition: PropositionId) -> Option<SignalDirection> {
+        self.signal_for_proposition(proposition)
+            .map(SignalDeclaration::direction)
+    }
+
+    /// Partitions the propositions occurring in `formula` into input and output
+    /// lists by the direction of their bound signals (FR-034).
+    #[cfg(feature = "alloc")]
+    pub fn partition(self, formula: Formula<'_>) -> Result<SignalPartition, SignalPartitionError> {
+        self.partition_all(&[formula])
+    }
+
+    /// Partitions the union of proposition occurrences of `formulas`, visited in
+    /// the given order and then in formula-node order. The first failure is
+    /// returned and no partial partition exists.
+    #[cfg(feature = "alloc")]
+    pub fn partition_all(
+        self,
+        formulas: &[Formula<'_>],
+    ) -> Result<SignalPartition, SignalPartitionError> {
+        let mut partition = SignalPartition::default();
+        for formula in formulas {
+            for node in formula.nodes() {
+                let NodeKind::Proposition { proposition } = node.kind else {
+                    continue;
+                };
+                let signal = self.signal_for_proposition(proposition).ok_or(
+                    SignalPartitionError::Binding(
+                        FormulaBindingError::MissingPropositionBinding { proposition },
+                    ),
+                )?;
+                match signal.direction() {
+                    SignalDirection::Input => partition.inputs.push(proposition),
+                    SignalDirection::Output => partition.outputs.push(proposition),
+                    SignalDirection::Undeclared => {
+                        return Err(SignalPartitionError::UndeclaredDirection {
+                            proposition,
+                            signal: signal.id(),
+                        });
+                    }
+                }
+            }
+        }
+        partition.inputs.sort_unstable();
+        partition.inputs.dedup();
+        partition.outputs.sort_unstable();
+        partition.outputs.dedup();
+        Ok(partition)
+    }
+
     /// Validates every proposition occurrence and returns a borrowed bound view.
     pub fn bind_formula<'formula>(
         self,
@@ -368,6 +446,9 @@ pub enum SignalCatalogError {
         proposition: PropositionId,
         signal: SignalId,
     },
+    /// A `tl-syntax.signal-catalog/v1` document cannot carry a declared
+    /// direction; v2 is required (FR-034).
+    DirectionInV1Document { signal: SignalId },
 }
 
 impl fmt::Display for SignalCatalogError {
@@ -429,6 +510,11 @@ impl fmt::Display for SignalCatalogError {
                 formatter,
                 "proposition {} binding targets non-Boolean signal {}",
                 proposition.0, signal.0
+            ),
+            Self::DirectionInV1Document { signal } => write!(
+                formatter,
+                "signal {} declares a direction, which tl-syntax.signal-catalog/v1 cannot carry",
+                signal.0
             ),
         }
     }

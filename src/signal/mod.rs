@@ -2,6 +2,7 @@
 
 pub mod binding;
 pub mod catalog;
+pub mod direction;
 pub mod domain;
 #[cfg(feature = "alloc")]
 mod proposition;
