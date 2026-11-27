@@ -33,7 +33,7 @@ Every production dependency on a TL crate resolves to the one selected
 candidate revision for that crate. Each `version = "=..."` agrees with the
 package version at its pinned revision; no branch, floating tag, or unstated
 path override is a release pin. All four crates declare the same MSRV, and the
-candidate builds at that MSRV. Each dependency revision is reachable from the
+candidate builds with the standard Rust 1.100.0 compiler at or above that MSRV. Each dependency revision is reachable from the
 corresponding proposed release tag's commit. The checker does not infer
 reachability from a version string alone.
 
@@ -48,7 +48,7 @@ its documented light-gate exception does not apply to a later tag.
 | ID | Criteria | Verification |
 |---|---|---|
 | FR-029-AC-1 | At the candidate commits, each production TL dependency resolves to exactly one selected revision and its exact version matches that revision's package version. | Test (TC-170) |
-| FR-029-AC-2 | Four identical declared MSRVs, successful MSRV builds and reachability from the proposed tags are checked from the candidate graph; a one-axis mutation fails. | Test (TC-171) |
+| FR-029-AC-2 | Four identical declared MSRVs, an exact build compiler at or above that floor, successful Rust 1.100.0 builds and reachability from the proposed tags are checked from the candidate graph; a one-axis mutation fails. | Test (TC-171) |
 | FR-029-AC-3 | A declared historical test lane stays isolated and cannot mask a duplicate production revision; undeclared or leaking historical pins fail. | Test (TC-172) |
 
 ## Dependencies
