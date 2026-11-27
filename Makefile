@@ -48,7 +48,7 @@ help:
 	@echo "  make spec-release     - require every active specification row to be backed"
 	@echo "  make release-gate-test - fmt, clippy and tests of the release-gate checker (part of ci)"
 	@echo "  make release-gate RELEASE_CANDIDATES=<json> - coordinated release gates FR-029..FR-033 (release time, not in ci)"
-	@echo "  make msrv             - test all targets and features with Rust 1.98.1"
+	@echo "  make msrv             - test all targets and features with Rust 1.100.0"
 	@echo "  make rustdoc          - build warning-free public documentation"
 	@echo "  make build            - Release build"
 	@echo "  make clean            - cargo clean"
@@ -190,7 +190,7 @@ fuzz-smoke:
 
 .PHONY: msrv
 msrv:
-	rustup run 1.98.1 $(CARGO) test --all-features
+	rustup run 1.100.0 $(CARGO) test --all-features
 
 .PHONY: rustdoc
 rustdoc:

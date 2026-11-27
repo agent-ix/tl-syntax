@@ -19,7 +19,7 @@ make conformance      # replay the shared temporal corpus through the crate
 make spec             # validate the specification with Quire
 make release-gate-test  # fmt, clippy and tests of the coordinated-release checker (in ci)
 make release-gate RELEASE_CANDIDATES=set.json  # release-time gates FR-029..033 (not in ci)
-make msrv             # test every target and feature at Rust 1.98.1
+make msrv             # test every target and feature at Rust 1.100.0
 make miri             # unit and property suites under Miri (pinned nightly)
 make ci               # complete local gate set (hosted CI is manual-only)
 ```
@@ -47,7 +47,7 @@ Backported from `agent-ix/ecaz`:
 - The workspace Clippy `undocumented_unsafe_blocks` lint enforces `// SAFETY:` comments on unsafe blocks during `make lint` and CI.
 - `rustfmt.toml` uses only stable 100-character-width settings.
 - `Cargo.toml` declares Rust 1.98.1 as the MSRV; `make msrv` checks every target
-  and feature at that version.
+  and feature with the standard Rust 1.100.0 compiler.
 
 ## Layout
 

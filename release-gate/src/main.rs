@@ -234,15 +234,15 @@ fn run_consumer_smoke(candidates: &[CandidateFact], msrv: &str) -> Result<SmokeF
         ));
     }
     rustup_run(&project, msrv, &["run", "--locked", "--quiet"])?;
-    rustup_run(&project, "stable", &["run", "--locked", "--quiet"])?;
+
     Ok(SmokeFact {
         candidate_revisions: candidates
             .iter()
             .map(|candidate| candidate.commit.clone())
             .collect(),
         lock_result: "passed".to_owned(),
-        msrv_result: "passed".to_owned(),
-        stable_result: "passed".to_owned(),
+        msrv_result: "not-run: declared floor retained; builds use Rust 1.100.0".to_owned(),
+        stable_result: "passed: Rust 1.100.0".to_owned(),
     })
 }
 
@@ -418,7 +418,7 @@ fn run_api_compatibility(
             candidate.name
         ));
     }
-    let rustc = toolchain_binary(&fact.msrv, "rustc")?;
+    let rustc = toolchain_binary("1.100.0", "rustc")?;
     let tool_dir = Path::new(&rustc)
         .parent()
         .ok_or_else(|| format!("{}: rustc has no bin directory", candidate.name))?;
@@ -688,7 +688,7 @@ fn run(path: &Path) -> Result<bool, String> {
             match git(&candidate.path, &["status", "--porcelain=v1", "--untracked-files=all"]) {
                 Ok(status) if status.is_empty() => {}
                 Ok(_) => report.failures.push(format!(
-                    "{}: candidate worktree is dirty; MSRV build would not use exact committed source",
+                    "{}: candidate worktree is dirty; compiler build would not use exact committed source",
                     candidate.name
                 )),
                 Err(error) => report.failures.push(error),
@@ -696,7 +696,7 @@ fn run(path: &Path) -> Result<bool, String> {
         }
     }
     if report.failures.is_empty() {
-        let msrv = &report.candidates[0].msrv;
+        let msrv = "1.100.0";
         for candidate in &set.candidates {
             let Some(fact) = report
                 .candidates

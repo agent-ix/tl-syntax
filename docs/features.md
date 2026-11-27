@@ -18,4 +18,4 @@ The crate is `#![no_std]` and `#![forbid(unsafe_code)]`. The `alloc` feature use
 
 ## Rust version
 
-The minimum supported Rust version is 1.98.1, set in `Cargo.toml` and `rust-toolchain.toml`. `make msrv` runs the tests with that toolchain.
+The minimum supported Rust version is 1.98.1, set in `Cargo.toml`. `rust-toolchain.toml` selects Rust 1.100.0 for builds, including `make msrv`.

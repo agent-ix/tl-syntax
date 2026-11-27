@@ -75,7 +75,7 @@ fn fixture() -> (CandidateSet, Vec<CandidateInput>) {
             },
             manifest: manifest.parse().unwrap(),
             lockfile: lock.parse().unwrap(),
-            toolchain: "[toolchain]\nchannel = \"1.98.1\"".parse().unwrap(),
+            toolchain: "[toolchain]\nchannel = \"1.100.0\"".parse().unwrap(),
         });
     }
     (set, inputs)
@@ -136,6 +136,35 @@ fn msrv_and_tag_mutations_fail() {
     failure(&set, &inputs, "proposed tag is absent");
     inputs[0].fact.tag_commit = Some(sha('9'));
     failure(&set, &inputs, "does not target candidate");
+}
+
+/// TC-171: an exact compiler at or above the declared floor is accepted.
+// Trace: TC-171, FR-029-AC-2
+#[test]
+fn compiler_channel_must_be_exact_and_at_least_the_msrv() {
+    let (set, mut inputs) = fixture();
+    for channel in ["1.98.1", "1.100.0"] {
+        inputs[0].toolchain["toolchain"]["channel"] = toml::Value::String(channel.to_owned());
+        let report = check(&set, &inputs);
+        assert!(report.accepted, "{:?}", report.failures);
+    }
+    for channel in [
+        "1.98.0",
+        "1.9.9",
+        "stable",
+        "nightly",
+        "1.100",
+        "1.100.0-beta",
+        "1.100.0.1",
+    ] {
+        inputs[0].toolchain["toolchain"]["channel"] = toml::Value::String(channel.to_owned());
+        failure(&set, &inputs, "below MSRV");
+    }
+    inputs[0].toolchain["toolchain"]
+        .as_table_mut()
+        .unwrap()
+        .remove("channel");
+    failure(&set, &inputs, "absent");
 }
 
 /// TC-172: only a declared, isolated dev pin can retain an older revision.

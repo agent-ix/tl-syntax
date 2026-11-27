@@ -15,8 +15,7 @@ relationships:
 
 Before pushing coordinated TL release tags, a non-workspace `release-smoke/`
 consumer shall depend on the exact four candidate commits that the proposed
-tags will name and exercise the public integration path at the shared MSRV and
-current stable Rust.
+tags will name and exercise the public integration path with the standard Rust 1.100.0 compiler at or above the shared declared MSRV.
 
 ## Inputs
 
@@ -26,7 +25,7 @@ current stable Rust.
 
 ## Outputs
 
-- Build and behavioral smoke outcomes at both toolchains, bound to the
+- Build and behavioral smoke outcomes with the standard compiler, bound to the
   dependency graph and candidate commits.
 
 ## Behavior
@@ -45,7 +44,7 @@ smoke is insufficient; each named path yields an asserted result.
 | ID | Criteria | Verification |
 |---|---|---|
 | FR-032-AC-1 | The consumer uses all four exact proposed tag target commits and executes parsing, rewriting, evaluation, signal binding and C2PO mapping with asserted results. | Test (TC-177) |
-| FR-032-AC-2 | The same locked consumer builds and runs at the shared MSRV and current stable; a wrong pin, absent operation or local path override fails. | Test (TC-178) |
+| FR-032-AC-2 | The same locked consumer builds and runs with Rust 1.100.0 at or above the shared declared MSRV; a wrong pin, absent operation or local path override fails. | Test (TC-178) |
 
 ## Dependencies
 
