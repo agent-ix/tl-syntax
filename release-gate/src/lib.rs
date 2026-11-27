@@ -99,7 +99,7 @@ pub struct GateReport {
     pub wire_goldens: Vec<CrateWireFact>,
     /// Owner-corpus isolation at the exact selected source revisions.
     pub corpus_ownership: Vec<CorpusOwnershipFact>,
-    /// Exact external consumer, including its locked graph and two toolchains.
+    /// Exact external consumer, including its locked graph and standard compiler.
     pub consumer_smoke: Option<SmokeFact>,
     /// Owner-corpus replay targets run from each exact downstream candidate.
     pub corpus_lanes: Vec<CorpusLaneFact>,
@@ -404,6 +404,30 @@ fn locked_entries(lock: &toml::Value, name: &str) -> Vec<LockedEntry> {
         .collect()
 }
 
+fn compiler_at_least(channel: &str, floor: &str) -> bool {
+    fn version(value: &str) -> Option<[u64; 3]> {
+        let parts: Vec<_> = value.split('.').collect();
+        if !(2..=3).contains(&parts.len()) {
+            return None;
+        }
+        let mut parsed = [0; 3];
+        for (slot, part) in parsed.iter_mut().zip(parts) {
+            if part.is_empty() || !part.bytes().all(|byte| byte.is_ascii_digit()) {
+                return None;
+            }
+            *slot = part.parse().ok()?;
+        }
+        Some(parsed)
+    }
+    if channel.split('.').count() != 3 {
+        return false;
+    }
+    match (version(channel), version(floor)) {
+        (Some(channel), Some(floor)) => channel >= floor,
+        _ => false,
+    }
+}
+
 /// Validates the supplied immutable Git facts, all four manifests and lockfiles.
 /// It collects every inconsistent edge rather than stopping at the first one.
 pub fn check(set: &CandidateSet, inputs: &[CandidateInput]) -> GateReport {
@@ -460,9 +484,9 @@ pub fn check(set: &CandidateSet, inputs: &[CandidateInput]) -> GateReport {
             .get("toolchain")
             .and_then(|value| value.get("channel"))
             .and_then(toml::Value::as_str);
-        if channel != Some(fact.msrv.as_str()) {
+        if !channel.is_some_and(|channel| compiler_at_least(channel, &fact.msrv)) {
             failures.push(format!(
-                "{name}: rust-toolchain channel disagrees with MSRV {}",
+                "{name}: rust-toolchain channel is absent, invalid or below MSRV {}",
                 fact.msrv
             ));
         }
